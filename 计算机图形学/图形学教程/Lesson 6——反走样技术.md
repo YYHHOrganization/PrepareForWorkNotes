@@ -89,19 +89,148 @@
 
 ​	可以参考DirectX的官方文档：https://learn.microsoft.com/zh-tw/windows/uwp/graphics-concepts/rasterization-rules
 
+MSAA就不看代码了，现在硬件直接支持了，不需要再写代码了。
+
+> 注：**这里可以补充问题及答案：为什么延迟渲染不支持MSAA？**不过延迟渲染还没有讲，因此先不说了，自己知道就行。
+
 
 
 ### （3）TAA
 
 基本上参考这一篇：https://zhuanlan.zhihu.com/p/425233743
 
-
+接下来我们通过核心的代码来介绍TAA算法的细节，这里用Unity作为开发环境（使用Unity是因为游戏引擎帮我们做好了很多底层的问题，比如渲染管线，我们可以聚焦于shader的编写，也就是算法的实现。如果读者没有安装Unity的话可以直接阅读代码以更好地掌握算法，如果有安装Unity 2020及以上的版本应该可以结合Github的程序来看）。这里参考的代码链接为：https://github.com/Raphael2048/AntiAliasing
 
 ## 2.基于图像后处理的方法
 
 ### （1）FXAA
 
 https://zhuanlan.zhihu.com/p/431384101
+
+​	FXAA可以理解为是基于屏幕后处理实现的，在Unity的Built-in管线中`OnRenderImage`函数作为程序入口，会将原始渲染图像的RenderTarget传入shader，经过shader后处理后呈现在屏幕上，因此下面的代码主要是依据shader来介绍的。NVIDIA为FXAA提供了两个版本，Quality和Console，可以用一个Enum字段传入shader：
+
+```glsl
+public enum FXAAMode
+{
+    Quality = 0,
+    Console = 1,
+};
+```
+
+​	以下分别介绍Quality和Console版本，并结合代码来看。Quality版本比较注重于反走样的质量，而Console则更偏向于速度。
+
+#### （a）Quality
+
+![img](./assets/v2-8f2778c2af4c2811a6017ea04e935ca4_r.jpg)
+
+FXAA的大致流程如上图，左边是输入的被处理的图像，中间是通过FXAA算法确认的边界，右侧则是将边界两侧像素混合后得到的抗锯齿效果。**FXAA(fast approximate antialiasing)** 是一种比较注重性能的形变抗锯齿方式，只需要一次 Pass 就能得到结果，FXAA 注重快速的视觉抗锯齿效果，而非追求完美的真实抗锯齿效果。
+
+**1.对比度计算**
+
+![img](./assets/v2-f2feb0d89d8040408c8503362d0dd9e7_1440w.webp)
+
+采样上图的五个点（M是像素中心），计算当前处理的像素点和周围像素点的亮度对比值，FXAA 通过确定水平和垂直方向上像素点的亮度差，来计算对比值。当对比度值较大时，我们认为需要进行抗锯齿处理。求亮度可以使用常用的求亮度公式 L = 0.213 * R + 0.715 * G + 0.072 * B，也可以直接使用G分量的颜色值作为亮度值，因为绿色对整体亮度的贡献是最大的。亮度值也可以在上一个 Pass中处理时，写入到 alpha 通道中，这样可以省去计算每个采样点的亮度的过程，还可以直接使用 Gather4 函数来加速采样的过程。对比度计算的逻辑是这样的（片元着色器）：
+
+```glsl
+float4 FXAAQualityFragement(Interpolators interpolators) : SV_Target
+{
+    float2 UV = interpolators.uv;
+    float2 TexelSize = _MainTex_TexelSize.xy;
+    float4 Origin = tex2D(_MainTex, UV);
+    float M  = Luminance(Origin);
+    float E  = Luminance(tex2D(_MainTex, UV + float2( TexelSize.x,            0)));
+    float N  = Luminance(tex2D(_MainTex, UV + float2(           0,  TexelSize.y)));
+    float W  = Luminance(tex2D(_MainTex, UV + float2(-TexelSize.x,            0)));
+    float S  = Luminance(tex2D(_MainTex, UV + float2(           0, -TexelSize.y)));
+
+    //计算出对比度的值
+    float MaxLuma = max(max(max(N, E), max(W, S)), M);
+    float MinLuma = min(min(min(N, E), min(W, S)), M);
+    float Contrast =  MaxLuma - MinLuma;
+
+    //如果对比度值很小，认为不需要进行抗锯齿，直接跳过抗锯齿计算
+    if(Contrast < max(_ContrastThreshold, MaxLuma * _RelativeThreshold))
+    {
+        return Origin;
+    }
+    //...
+}
+```
+
+_MinThreshold 和 _Threshold是可以配置的阈值。如果得到的对比度值比较小，可以认为当前的点，不需要进行锯齿处理。
+
+
+
+**2.基于亮度的混合系数计算**
+
+接下来就是确定当前像素点进行混合时的系数，在这里为了使结果更加精确，我们还需要对对角线上的四个点进行采样并计算亮度值，这样就需要再额外采样并得到斜对角上四个点的亮度值：
+
+![img](./assets/v2-6891934b2776d82da1641922f2409997_1440w.webp)
+
+通过计算目标像素和周围像素点的平均亮度的差值，我们来确定将来进行颜色混合时的权重。因为对角像素距离中心像素比较远，所以计算平均亮度值时的权重会略微低一些。
+
+![img](./assets/v2-b15e9129c245029f94369c9b4cca1713_1440w.webp)
+
+​											计算FXAA的基于亮度的混合系数时，九个采样点位置的权重
+
+计算出周围像素点平均亮度和中间亮度的差，再用亮度范围进行归一化。为了使混合权重更加平滑，我们对得到的混合权重再用 smoothstep 处理一下， 再将结果进行平方处理：
+
+```glsl
+//继续写在片元着色器里面
+float NW = Luminance(tex2D(_MainTex, UV + float2(-TexelSize.x,  TexelSize.y)));
+float NE = Luminance(tex2D(_MainTex, UV + float2( TexelSize.x,  TexelSize.y)));
+float SW = Luminance(tex2D(_MainTex, UV + float2(-TexelSize.x, -TexelSize.y)));
+float SE = Luminance(tex2D(_MainTex, UV + float2( TexelSize.x, -TexelSize.y)));
+
+// 这部分是基于亮度的混合系数计算
+float Filter = 2 * (N + E + S + W) + NE + NW + SE + SW;
+Filter = Filter / 12;
+Filter = abs(Filter -  M);
+Filter = saturate(Filter / Contrast);
+// 基于亮度的混合系数值
+float PixelBlend = smoothstep(0, 1, Filter);
+PixelBlend = PixelBlend * PixelBlend;
+```
+
+
+
+**3.计算混合方向**
+
+接下来就是确定进行混合计算的方向，锯齿边界通常不会是刚好水平或者垂直的，但是这里我们要寻找一个最接近的方向。如下图所示：
+
+![img](./assets/v2-355db30e96f383134fb2fb9babf16cc0_1440w.webp)
+
+通过下面的计算方式，我们来确定通过锯齿边界的方向，如果水平方向的亮度变化较大，锯齿边界就是垂直的，沿水平方向进行混合；如果垂直方向的亮度变化较大，锯齿边界是水平的，按垂直方向进行混合。计算得到混合方向后，我们接着来确定具体的混合是沿着正负方向的那个方向，我们取变化值最大的那个方向。当在垂直方向时，我们约定向上为正，向下为负。在水平方向时，向右为正，向左为负：
+
+```glsl
+// 先计算出亮度变换的方向，是水平方向还是垂直方向
+float Vertical   = abs(N + S - 2 * M) * 2 + abs(NE + SE - 2 * E) + abs(NW + SW - 2 * W);  //计算上下两侧相对于中间像素的亮度差，如果Vertical项大于Horizontal项说明这个锯齿是横向的，下类似
+float Horizontal = abs(E + W - 2 * M) * 2 + abs(NE + NW - 2 * N) + abs(SE + SW - 2 * S);
+bool IsHorizontal = Vertical > Horizontal;
+//混合的方向
+float2 PixelStep = IsHorizontal ? float2(0, TexelSize.y) : float2(TexelSize.x, 0);
+// 确定混合方向的正负值
+float Positive = abs((IsHorizontal ? N : E) - M);
+float Negative = abs((IsHorizontal ? S : W) - M);
+```
+
+
+
+**4.混合**
+
+
+
+> 关于FXAA有一个一开始让我迷惑的点，这里补充一下，关于最终渲染某个像素的结果为：`float4 Result = tex2D(_MainTex, UV + PixelStep * FinalBlend);`这里有个问题，就是为什么通过对贴图的采样UV做一点偏移就可以做反走样呢？
+>
+> **A：我的理解是一般贴图有做一步Mipmap/Lerp操作，比如双线性插值，这样其实得到的贴图的某个像素本身就包含了其周边像素的“平均信息”，这样只需要对UV进行偏移就相当于在双线性插值的贴图中做和周围像素的混合了（位置不同混合的权重自然不同，回忆一下双线性插值那个图，P在不同位置混合四周像素的权重肯定是不同的）**
+
+
+
+### 写进课程里的内容（不需要太详细介绍算法，我们自己能理解就好）
+
+
+
+
 
 ### （2）SMAA
 
