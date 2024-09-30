@@ -187,4 +187,43 @@ class SSR_algo_1(Scene):
         self.add(text_TL)
         self.wait(0.1)
 
+        # step 2: Calculate vec OQ
+        self.play(FadeOut(similar_text_3))
+        self.play(FadeOut(similar_text_4))
+        OQ_Text = Tex("\\vec{OQ} = \\vec{OBL} + \\vec{BLQ}")
+        OQ_Text.fix_in_frame()
+        OQ_Text.to_edge(RIGHT)
+        self.play(FadeIn(OQ_Text))
+        self.add(OQ_Text)
+
+        # arrow OQ
+        arrow_OQ = Arrow(axes.c2p(0, 0, 0), axes.c2p(intersect_point[0], intersect_point[1], intersect_point[2]), stroke_color=RED)
+        self.add(arrow_OQ)
+        self.play(ShowCreation(arrow_OQ))
+        self.play(Indicate(arrow_OQ))
+
+        # arrow OB
+        arrow_OB = Arrow(axes.c2p(0, 0, 0), BL, stroke_color=RED)
+        self.add(arrow_OB)
+        self.play(ShowCreation(arrow_OB))
+        self.play(Indicate(arrow_OB))
+
+        # arrow BLQ
+        arrow_BLQ = Arrow(BL, axes.c2p(intersect_point[0], intersect_point[1], intersect_point[2]), stroke_color=RED)
+        self.add(arrow_BLQ)
+        self.play(ShowCreation(arrow_BLQ))
+        self.play(Indicate(arrow_BLQ))
+
+        # BLQ could be calculated by Q's screen UV coordinate
+        tip_BLQ = Text("vec BLQ can be calculated by Q's screen UV coordinate")
+        tip_BLQ.fix_in_frame()
+        tip_BLQ.to_edge(BOTTOM)
+        tip_BLQ.shift(BOTTOM * 0.5)
+        self.play(FadeIn(tip_BLQ))
+        self.add(tip_BLQ)
+        self.wait(0.1)
+
+
+
+
 
