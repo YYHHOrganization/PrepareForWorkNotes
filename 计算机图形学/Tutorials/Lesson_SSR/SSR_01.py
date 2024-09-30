@@ -61,13 +61,34 @@ class SSR_algo_1(Scene):
             [2, 5, -2],
         ]
 
+        far_plane_points = [
+            [-4, 10, -4],
+            [-4, 10, 4],
+            [4, 10, 4],
+            [4, 10, -4],
+        ]
+
         # 点四个点
         for point in base_points:
             dot = Dot(axes.c2p(point[0], point[1], point[2]), fill_color=RED)
             self.add(dot)
 
+        # 绘制原裁剪面
+        for point in far_plane_points:
+            dot = Dot(axes.c2p(point[0], point[1], point[2]), fill_color=RED)
+            self.add(dot)
+
         # 创建底面的多边形
-        base = Polygon(*base_points)
+        base = Polygon(axes.c2p(base_points[0][0], base_points[0][1], base_points[0][2]),
+                          axes.c2p(base_points[1][0], base_points[1][1], base_points[1][2]),
+                          axes.c2p(base_points[2][0], base_points[2][1], base_points[2][2]),
+                          axes.c2p(base_points[3][0], base_points[3][1], base_points[3][2]))
+        base.set_fill(opacity=0.2, color=BLUE)
+        far_plane = Polygon(axes.c2p(far_plane_points[0][0], far_plane_points[0][1], far_plane_points[0][2]),
+                            axes.c2p(far_plane_points[1][0], far_plane_points[1][1], far_plane_points[1][2]),
+                            axes.c2p(far_plane_points[2][0], far_plane_points[2][1], far_plane_points[2][2]),
+                            axes.c2p(far_plane_points[3][0], far_plane_points[3][1], far_plane_points[3][2]))
+        far_plane.set_fill(opacity=0.2, color=GREEN)
 
         # 创建顶部的顶点
         top_point = [0, 0, 0]
@@ -82,14 +103,16 @@ class SSR_algo_1(Scene):
         for i in range(4):
             side = Polygon(
                 axes.c2p(top_point[0], top_point[1], top_point[2]),
-                axes.c2p(base_points[i][0], base_points[i][1], base_points[i][2]),
-                axes.c2p(base_points[(i + 1) % 4][0], base_points[(i + 1) % 4][1], base_points[(i + 1) % 4][2]),
+                axes.c2p(far_plane_points[i][0], far_plane_points[i][1], far_plane_points[i][2]),
+                axes.c2p(far_plane_points[(i + 1) % 4][0], far_plane_points[(i + 1) % 4][1], far_plane_points[(i + 1) % 4][2]),
             )
             side.set_fill(opacity=0.2, color=BLUE)
             sides.append(side)
 
+
         # 添加底面和侧面到场景中
         self.add(base)
+        self.add(far_plane)
         for side in sides:
             self.add(side)
 
@@ -202,7 +225,7 @@ class SSR_algo_1(Scene):
         self.play(ShowCreation(arrow_OQ))
         self.play(Indicate(arrow_OQ))
 
-        # arrow OB
+        # arrow OBL
         arrow_OB = Arrow(axes.c2p(0, 0, 0), BL, stroke_color=RED)
         self.add(arrow_OB)
         self.play(ShowCreation(arrow_OB))
