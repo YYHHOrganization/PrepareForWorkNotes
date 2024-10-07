@@ -6,7 +6,9 @@
 
 ![image-20231224144256103](./assets/image-20231224144256103.png)
 
-首先，看一遍上述youtube视频作者提供的PPT，然后就可以开始书写Stable Diffusion的代码了。
+首先，看一遍上述youtube视频作者提供的PPT，然后就可以开始书写Stable Diffusion的代码了。这里我们每次提到一个Stable Diffusion的核心框架之后就会标注在Stable Diffusion的官方仓库中的对应位置，方便复习的时候查找。
+
+推荐阅读的Stable Diffusion的架构的入口函数：
 
 
 
@@ -132,6 +134,8 @@ class VAE_Encoder(nn.Sequential):
 ```
 
 现在还有两个网络的结构和代码没有解决，分别是VAE_ResidualBlock以及VAE_AttentionBlock，接下来书写这两个部分。
+
+> VAE AutoEncoder的代码可以参考Stable Diffusion官方仓库中的stable_diffusion/ldm/modules/autoencoder.py
 
 
 

@@ -1,0 +1,18 @@
+对应数据集的dataset格式如下：
+跟.py文件同级目录的：
+dataset：
+- train
+      - albedo
+          - xxx.jpg
+          - xxx.jpg
+      - hutao
+          - xxx.jpg
+          - xxx.jpg
+
+ - test
+      - albedo
+          - xxx.jpg
+          - xxx.jpg
+      - hutao
+          - xxx.jpg
+          - xxx.jpg
