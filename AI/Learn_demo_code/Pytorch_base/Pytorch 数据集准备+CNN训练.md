@@ -231,3 +231,4 @@ summary(model, input_size=[1, 3, 64, 64])
 
 ## 2.train_step
 
+直接看代码吧，这里就不整理了。
