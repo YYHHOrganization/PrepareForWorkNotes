@@ -88,7 +88,7 @@ FaceG2E是一种渐进的文本到3D方法，首先生成一个高保真度的3D
 >
 > 【1】参数化3D 人脸模型：HIFI3D：论文为Highfidelity 3d digital human head creation from rgb-d selfies，链接：https://arxiv.org/abs/2010.05562
 >
-> 【2】SDS的基本介绍：
+> 【2】SDS的基本介绍：https://zhuanlan.zhihu.com/p/637863048，顺便这个也包含对DreamFusion工作的基本介绍。
 
 
 
@@ -159,13 +159,11 @@ cv2.imwrite(path, img_bgr)  # 这里有个坑，因为OpenCV似乎是以BGR格�
 !python main.py --stage "texture generation" --text "a zoomed out DSLR photo of Emma Watson"  --exp_root exp --exp_name demo --total_steps 401 --save_freq=40 --sds_input rendered --texture_generation latent --latent_sds_steps 200 --load_id_path "./exp/demo/a zoomed out DSLR photo of Emma Watson/coarse geometry generation/seed42/200_coeff.npy"
 ```
 
-注意，这里的`200_coeff.npy`是上一步生成mesh的时候会生成的文件，这里需要保证对应的id_path是存在的，跑这个代码的结果为：
-
-
+注意，这里的`200_coeff.npy`是上一步生成mesh的时候会生成的文件，这里需要保证对应的id_path是存在的。
 
 > 注：普通的Colab Tesla T4会一直报CUDA Out of Memory，无奈花钱租用A100了，效率至上，多点时间学别的。
 
-
+剩下的编辑也是正常跑就行，经过测试代码是可以跑通的。
 
 
 
@@ -176,3 +174,98 @@ cv2.imwrite(path, img_bgr)  # 这里有个坑，因为OpenCV似乎是以BGR格�
 ```python
 ```
 
+
+
+
+
+## 3.mesh generation
+
+```c
+//方便查看：这个是该阶段的opt
+Namespace(device='cuda', seed=42, total_steps=201, save_freq=40, exp_root='exp', exp_name='demo', path_debug=False, fit_param=['id', 'tex'], lr=0.05, stage='coarse geometry generation', render_resolution=224, viewpoint_range_X_min=-20, viewpoint_range_X_max=20, viewpoint_range_Y_min=-45, viewpoint_range_Y_max=45, viewpoint_range_Z_min=0, viewpoint_range_Z_max=0, force_fixed_viewpoint=True, t_z_min=0, t_z_max=3, display_rotation_x=10, display_rotation_y=10, display_rotation_z=0, display_translation_z=1.5, dp_map_scale=0.0025, texture_generation='direct', latent_init='zeros', textureLDM_path='./ckpts/TextureDiffusion/unet', edit_prompt_cfg=100, edit_img_cfg=20, edit_scope='tex', guidance_type='stable-diffusion', sd_version='2.1', controlnet_name='depth', vis_att=False, text='a zoomed out DSLR photo of Emma Watson', negative_text='', use_view_adjust_prompt=True, static_text='a diffuse texture map of a human face in UV space', use_static_text=True, sds_input=['norm', 'grey-rendered'], random_light=True, w_SD=1.0, w_texSD=3.0, cfg_SD=100, cfg_texSD=1, set_t_schedule=True, schedule_type='linear', set_w_schedule=False, w_schedule='linear', w_texSD_max=20, w_texSD_min=3, latent_sds_steps=201, employ_yuv=False, textureLDM_yuv_path='./ckpts/TextureDiffusion-yuv/unet', w_texYuv=1, w_reg_diffuse=1, attention_reg_diffuse=False, attention_sds=False, scp_fuse='avm2', indices_to_alter_str='', w_sym=0, w_smooth=0, load_id_path=None, load_dp_path=None, load_diffuse_path=None)
+```
+
+以下是关于这个阶段看代码的收获：
+
+- （1）会调用HuggingFace的StableDiffusion pipeline，默认使用2.1的管线，同时在这一步中不使用任何ControlNet
+  - `guidance = StableDiffusion(device, True, False, sd_version=opt.sd_version)  # use float32 for training  # fp16 vram_optim`
+  - StableDiffusion:`def __init__(self, device, fp16, vram_O, sd_version='2.1', hf_key=None,controlnet_name=None):`
+- （2）按照上述方法运行的时候，因为没有`'./unet_traced.pt'`这个文件，所以Stable Diffusion中`pipe.unet`并没有加载上TracedUNet，note：暂时不确定这个是用来做什么的（似乎在mesh生成的步骤是用不上的）。
+- （3）关于StageFitter：
+
+```python
+fitter = StageFitter(SD_guidance = guidance,  # stable Diffusion
+                            stage=opt.stage,  # coarse geometry generation
+                     		diffuse_generation_type=opt.texture_generation,  # direct
+                            render_resolution=opt.render_resolution,  # 224
+                         	saved_id_path=opt.load_id_path,  # None
+                     		saved_dp_path=opt.load_dp_path,  # None
+                     		saved_diffuse_path=opt.load_diffuse_path,  # None
+                            latent_init=opt.latent_init,   # 'zeros'
+                     		dp_map_scale=opt.dp_map_scale, # '0.0025'
+                     		edit_scope=opt.edit_scope)   # tex
+```
+
+StageFitter的构造函数如下（大概就是初始化Hifi 3DMM，一个Mesh Renderer，以及要优化的参数：`self.id_para, self.diffuse_texture, self.diffuse_latent`）：
+
+```python
+class StageFitter(object):
+    def __init__(self, SD_guidance,
+                stage='coarse geometry generation',
+                diffuse_generation_type = 'direct',
+                render_resolution=224,fov=12.593637,camera_d=10,
+                texture_resolution=512, dp_map_resolution=128,
+                device='cuda',
+                saved_id_path = None,
+                saved_dp_path = None,
+                saved_diffuse_path = None,
+                latent_init='zeros',
+                dp_map_scale=0.0025,
+                edit_scope='tex',
+                ):
+        self.stage = stage
+        self.guidance = SD_guidance
+        self.diffuse_generation_type = diffuse_generation_type
+        # camera setting
+        self.resolution = render_resolution
+        self.fov = fov
+        self.camera_d = camera_d
+        center = self.resolution / 2
+        self.focal = center / np.tan(self.fov * np.pi / 360)
+        self.edit_scope = edit_scope
+        # hifi 3dmm
+        self.facemodel = HIFIParametricFaceModel(
+                hifi_folder='./HIFI3D', camera_distance=self.camera_d, focal=self.focal, center=center,
+                is_train=True, 
+                opt_id_dim = 526,
+                opt_exp_dim = 203,
+                opt_tex_dim = 80,
+                use_region_uv = False,
+                used_region_tex_type = ['uv'],
+                use_external_exp = False
+            )
+        self.renderer = MeshRenderer(
+            rasterize_fov=self.fov, znear=1, zfar=20, rasterize_size=self.resolution
+        )
+        self.texRes = texture_resolution
+        self.dpRes = dp_map_resolution
+        self.device=device
+        self.latent_init=latent_init
+        self.dp_map_scale=dp_map_scale
+        self.init_parameters()
+        self.set_transformation_range()
+        
+        with torch.no_grad():
+            if self.stage != 'coarse geometry generation':
+                self.load_shape(saved_id_path,saved_dp_path)
+            if self.stage == 'edit':
+                self.load_diffuse(saved_diffuse_path)
+
+        self.define_optim_param()
+```
+
+- （4）T-Schecular：
+
+  - `ts = T_scheduler(opt.schedule_type,total_steps,max_t_step = guidance.scheduler.config.num_train_timesteps)`: `opt.schedule_type`是`linear`
+
+    
