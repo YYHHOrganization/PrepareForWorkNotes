@@ -92,6 +92,92 @@ FaceG2E是一种渐进的文本到3D方法，首先生成一个高保真度的3D
 
 
 
+### 对应文章3.2节 Geometry-Texture Decoupled Generation
+
+将几何和纹理分别生成有如下两点好处：
+
+1) It helps enhance geometric details in the generated faces. 
+2) It improves geometry-texture alignment by exploiting the generated geometry to guide the texture generation.
+
+翻译过来就是：
+
+1. 它有助于增强生成的面部的几何细节。
+2. 通过利用生成的几何形状来指导纹理生成，它改进了几何-纹理的对齐。
+
+
+
+#### （1）Geometry Phase
+
+理想的几何形体生成应该是高质量的（比如无Surface Distortion），并且要和输入文本保持对齐。使用的三维面部可变模型（3D Morphable model）提供了强大的先验信息，以确保生成的几何形状的质量。至于与输入文本的对齐，我们在Stable Diffusion[35]网络ϕsd上使用SDS，以指导几何生成。
+
+以前的研究[22、27、53]同时优化几何形状和纹理。我们注意到这可能会导致几何细节的丢失，因为某些几何信息可能被包含在纹理表示中。因此，我们的目标是增强SDS，在几何阶段提供更多以几何为中心的信息。为此，我们用无纹理渲染˜I = R˜(g)来渲染几何形状g，例如，表面法线阴影或常亮灰色的漫反射阴影。无纹理的阴影将所有图像细节仅归因于几何形状，从而允许SDS专注于以几何为中心的信息。以几何为中心的SDS损失定义为：
+
+![image-20240527103758369](./assets/image-20240527103758369.png)
+
+> 补充知识：[3D Morphable Models (3DMMs) - Metaphysic.ai](https://blog.metaphysic.ai/3d-morphable-models-3dmms/)
+>
+> 在上面的公式当中，w（t）是一个time-dependent weight function，g是指脸部的几何，β其实就是g参数化表达的一组系数，也就是我们要优化的地方。
+
+
+
+#### （2）Texture Phase
+
+许多研究[27、54]证明，通过最小化SDS损失可以生成纹理。然而，直接优化标准SDS损失可能会导致几何纹理对齐问题，如图.9所示。为了解决这个问题，我们提出了对生成的几何形有感知的纹理内容SDS(GaSDS)。我们采用ControlNet[55]赋予SDS对生成的几何形状的感知，从而使其能够维持几何-纹理的对齐。具体来说，**我们将g渲染成深度图e。然后，我们将depth-ControlNet ϕdc装备到SDS中，并将e作为条件，形成GaSDS：**
+
+![image-20240527110551174](./assets/image-20240527110551174.png)
+
+我们提出的GaSDS解决了几何不对齐的问题，但是，在纹理中仍然存在诸如局部色彩失真或亮度不均的问题。这是因为T2I模型缺乏纹理的先验知识，这阻碍了高质量纹理细节的合成。因此，我们提出了纹理先验SDS，以引入这样的纹理先验。受DreamFace[54]的启发，我们在纹理数据上训练扩散模型ϕtd1来估计纹理分布，从而提供先验。我们的训练数据集包含500种纹理，包括经过处理的扫描数据和选定的合成数据[3]。与DreamFace不同，后者在训练中使用标记的文本，我们对所有纹理使用固定的文本关键字（例如，“面部纹理”）。由于ϕtd1的目标是作为先验来建模纹理分布，因此不需要纹理-文本对齐。我们还在YUV色彩空间上训练另一个ϕtd2以提升均匀亮度，如图3所示。我们在Stable Diffusion上对ϕtd1和ϕtd2进行微调。纹理先验SDS是用训练过的ϕtd1和ϕtd2进行公式化的：
+
+![image-20240527110831117](./assets/image-20240527110831117.png)
+
+> 这里公式里面的$\mathcal{L}_{tex}^{ga}$​指的是上面公式（4）里那个使用了GaSDS，也就是Texture Phase中同样考虑了几何对齐的问题（用深度图去对齐）。
+
+
+
+### 对应文章3.3节  Self-guided Consistency Preserved Editing
+
+为了获得following editing instructions而不是生成prompts的能力，一个简单的想法是选择以文本为指导的图像编辑模型InstructPix2Pix [6] ϕip2p作为Stable Diffusion的替代品，以形成SDS。
+
+![image-20240527111919253](./assets/image-20240527111919253.png)
+
+其中，z' t 表示编辑过的面部的latent，original face被嵌入到 zt 作为额外的条件输入，**这是按照InstructPix2Pix的设置。**请注意，我们的几何和纹理由单独的参数β和u表示，因此可以独立优化其中一个，从而实现几何和纹理的单独编辑。此外，在编辑纹理时，我们将$\mathcal{L}_{tex}^{pr}$（见上文的公式（5））整合进来，以保持纹理的结构合理性。
+
+
+
+**Self-guided Consistency Weight**
+
+方程7中的编辑SDS使得面部编辑变得有效，然而，细粒度的编辑控制依然具有挑战性，例如，结果中可能会出现不可预测和不希望的变化，如Fig10所示。这阻碍了顺序编辑，因为早期的编辑可能会被后续的编辑无意中打乱。因此，应该鼓励编辑前后的面部间的一致性。然而，在编辑过程中面部之间的一致性与编辑效果的明显度，存在一定的矛盾。想象一下在纹理中的一个特定像素，鼓励一致性趋向于让像素与原始像素相同，而编辑可能需要它取得一个完全不同的值以达到期望的效果。**解决这个问题的一个关键观察是，不同区域的一致性权重应该是不同的：对于与编辑说明相关的区域，应该保持较低的一致性水平因为我们优先考虑编辑效果。相反，对于无关的区域，应该保证较高的一致性。**例如，给出“让她戴上蝙蝠侠的眼罩”的指示，我们希望在眼睛附近有眼罩效果，同时保持脸部的其它部分不变。**为了找到编辑说明的相关区域，我们在UV域提出了一种自我指导的一致性权重策略。我们利用InstructPix2Pix模型自身的内建交叉关注机制。（The built-in cross-attention of the InstructPix2Pix model iteself）**。Attention scores引入了不同图像区域和特定文本令牌之间的关联。一致性权重的一个例子在图4中展示。我们首先在说明中选择一个Region-indicating token`T*`，如`“眼罩”`。在每次迭代i中，我们从编辑的渲染图像I和令牌`T*`之间提取attention scores。根据当前视点，将得分归一化并解包（unwrap）到UV域，然后我们从解包得分中计算出时间一致性权重$\tilde{C_i}$：
+
+![image-20240527113143412](./assets/image-20240527113143412.png)
+
+where att(·, ·) denotes the cross-attention operation to predict the attention scores, the norm(·) denotes the normalization operation, and the proj denotes the unwrapping projection from image to UV domain. 由于$\tilde{C_i}$与视点相关，我们建立一个统一的一致性权重$C_i$来融合来自不同视点的$\tilde{C_i}$。$C_i$的初始状态是一个所有值为'one'的矩阵，表示将最高级别的一致性应用到所有区域。每步的$C_i$的更新受$\tilde{C_i}$的影响。具体来说，我们选择$\tilde{C_i}$i中的值低于$C_i$的区域进行更新（补充：根据上面的式子，我的理解是attention分数越高，$\tilde{C_i}$就越低，所以把attention比较高的部分进行更新）。然后我们采用移动平均策略（moving average strategy）得到$C_i$：
+
+![image-20240527130523671](./assets/image-20240527130523671.png)
+
+w是一个固定的moving average factor， We take the $C_i$​ as a weight to perform region-specific consistency.
+
+
+
+**Consistency Preservation Regularization**
+
+手里有了一致性权重$C_i$​，我们在UV域提出了一个区域特定的一致性保持正则化，以鼓励在纹理和几何中编辑前后的面部一致性：
+
+![image-20240527130801011](./assets/image-20240527130801011.png)
+
+其中 do, de 表示编辑前后的纹理，po, pe表示从编辑前后的面部几何形状解包的顶点位置图，⊙表示哈达玛积。有了一致性保持正则化，我们提出了我们的自我指导一致性保持编辑的最终损失函数：
+
+![image-20240527130903773](./assets/image-20240527130903773.png)
+
+
+
+## 5. Experiments
+
+实现基于Huggingface的Diffusers。我们使用Stable Diffusion的checkpoint用于几何生成，并使用sd-controlnet-depth来做纹理生成（https://huggingface.co/lllyasviel/sd-controlnet-depth）。我们使用了官方的instruct-pix2pix（https://huggingface.co/timbrooks/instruct-pix2pix）来做面部的编辑。RGB和YUV的texture diffusion models都基于stable-diffusion的checkpoint进行fine-tuned。我们使用NVdiffrast（https://arxiv.org/abs/2011.03277）来做differentiable rendering。我们使用了固定学习率为0.05的Adam [25]优化器。几何/纹理的生成和编辑分别需要200/400次迭代。在一台NVIDIA A30 GPU上生成或编辑一张面孔约需要4分钟。关于更多实现细节，我们建议读者参阅补充材料。
+
+
+
+
+
 # 二、源码阅读
 
 ## 1.如何跑出这个代码
@@ -268,4 +354,57 @@ class StageFitter(object):
 
   - `ts = T_scheduler(opt.schedule_type,total_steps,max_t_step = guidance.scheduler.config.num_train_timesteps)`: `opt.schedule_type`是`linear`
 
-    
+
+
+
+
+#  三、记录AutoDL如何跑出这个代码
+
+1. 配环境的过程暂时先略；
+2. 关于Google Drive上面的大型文件下载：暂时需要的模型参数都放到硬盘里了（E盘），到时候如果AutoDL不保存的话可以每次拽上去；
+3. AutoDL访问github和huggingface不行，可以参考这篇：https://www.autodl.com/docs/network_turbo/。注：学术加速用不了，用镜像；
+
+设置的launch.json文件如下：
+
+```json
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--stage", "coarse geometry generation",
+                "--text", "a zoomed out DSLR photo of Emma Watson",
+                "--exp_root", "exp",
+                "--exp_name", "demo",
+                "--total_steps", "201",
+                "--save_freq", "40",
+                "--sds_input", "norm grey-rendered",
+                "--texture_generation", "direct"
+            ],
+            "env": {
+                "HF_ENDPOINT": "https://hf-mirror.com"
+            }
+        }
+    ]
+}
+```
+
+`mv ~/.cache/huggingface /sys/fs/cgroup/huggingface`
+
+`export HF_HOME=/sys/fs/cgroup/huggingface`
+
+如果要永久修改的话，使用下面这个指令：
+
+```bash
+echo "export HF_HOME=/path/to/new/cache" >> ~/.bashrc
+source ~/.bashrc
+```
+
