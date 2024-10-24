@@ -110,13 +110,13 @@ FaceG2E是一种渐进的文本到3D方法，首先生成一个高保真度的3D
 
 理想的几何形体生成应该是高质量的（比如无Surface Distortion），并且要和输入文本保持对齐。使用的三维面部可变模型（3D Morphable model）提供了强大的先验信息，以确保生成的几何形状的质量。至于与输入文本的对齐，我们在Stable Diffusion[35]网络ϕsd上使用SDS，以指导几何生成。
 
-以前的研究[22、27、53]同时优化几何形状和纹理。我们注意到这可能会导致几何细节的丢失，因为某些几何信息可能被包含在纹理表示中。因此，我们的目标是增强SDS，在几何阶段提供更多以几何为中心的信息。为此，我们用无纹理渲染˜I = R˜(g)来渲染几何形状g，例如，表面法线阴影或常亮灰色的漫反射阴影。无纹理的阴影将所有图像细节仅归因于几何形状，从而允许SDS专注于以几何为中心的信息。以几何为中心的SDS损失定义为：
+以前的研究[22、27、53]同时优化几何形状和纹理。我们注意到这可能会导致几何细节的丢失，因为某些几何信息可能被包含在纹理表示中。因此，我们的目标是增强SDS，在几何阶段提供更多以几何为中心的信息。为此，==我们用无纹理渲染˜I = R˜(g)来渲染几何形状g，例如，表面法线阴影或常亮灰色的漫反射阴影。无纹理的阴影将所有图像细节仅归因于几何形状，从而允许SDS专注于以几何为中心的信息。==以几何为中心的SDS损失定义为：
 
 ![image-20240527103758369](./assets/image-20240527103758369.png)
 
 > 补充知识：[3D Morphable Models (3DMMs) - Metaphysic.ai](https://blog.metaphysic.ai/3d-morphable-models-3dmms/)
 >
-> 在上面的公式当中，w（t）是一个time-dependent weight function，g是指脸部的几何，β其实就是g参数化表达的一组系数，也就是我们要优化的地方。
+> 在上面的公式当中，w（t）是一个time-dependent weight function，g是指脸部的几何，β其实就是g参数化表达的一组系数，也就是我们要优化的地方。$y$是embedding of the input text.
 
 
 
@@ -126,11 +126,19 @@ FaceG2E是一种渐进的文本到3D方法，首先生成一个高保真度的3D
 
 ![image-20240527110551174](./assets/image-20240527110551174.png)
 
-我们提出的GaSDS解决了几何不对齐的问题，但是，在纹理中仍然存在诸如局部色彩失真或亮度不均的问题。这是因为T2I模型缺乏纹理的先验知识，这阻碍了高质量纹理细节的合成。因此，我们提出了纹理先验SDS，以引入这样的纹理先验。受DreamFace[54]的启发，我们在纹理数据上训练扩散模型ϕtd1来估计纹理分布，从而提供先验。我们的训练数据集包含500种纹理，包括经过处理的扫描数据和选定的合成数据[3]。与DreamFace不同，后者在训练中使用标记的文本，我们对所有纹理使用固定的文本关键字（例如，“面部纹理”）。由于ϕtd1的目标是作为先验来建模纹理分布，因此不需要纹理-文本对齐。我们还在YUV色彩空间上训练另一个ϕtd2以提升均匀亮度，如图3所示。我们在Stable Diffusion上对ϕtd1和ϕtd2进行微调。纹理先验SDS是用训练过的ϕtd1和ϕtd2进行公式化的：
+几何纹理对齐的问题：
+
+![image-20241024151319536](./assets/image-20241024151319536.png)
+
+我们提出的GaSDS解决了几何不对齐的问题，但是，在纹理中仍然存在诸如局部色彩失真或亮度不均的问题。==这是因为T2I模型缺乏纹理的先验知识，这阻碍了高质量纹理细节的合成。因此，我们提出了纹理先验SDS，以引入这样的纹理先验。受DreamFace[54]的启发，我们在纹理数据上训练扩散模型ϕtd1来估计纹理分布，从而提供先验。==我们的训练数据集包含500种纹理，包括经过处理的扫描数据和选定的合成数据[3]。与DreamFace不同，后者在训练中使用标记的文本，我们对所有纹理使用固定的文本关键字（例如，“面部纹理”）。由于ϕtd1的目标是作为先验来建模纹理分布，因此不需要纹理-文本对齐。我们还在YUV色彩空间上训练另一个ϕtd2以提升均匀亮度，如图3所示。我们在Stable Diffusion上对ϕtd1和ϕtd2进行微调。纹理先验SDS是用训练过的ϕtd1和ϕtd2进行公式化的：
 
 ![image-20240527110831117](./assets/image-20240527110831117.png)
 
 > 这里公式里面的$\mathcal{L}_{tex}^{ga}$​指的是上面公式（4）里那个使用了GaSDS，也就是Texture Phase中同样考虑了几何对齐的问题（用深度图去对齐）。
+
+训练Texture生成的Diffusion网络是这样的：
+
+![image-20241024151756848](./assets/image-20241024151756848.png)
 
 
 
@@ -140,17 +148,19 @@ FaceG2E是一种渐进的文本到3D方法，首先生成一个高保真度的3D
 
 ![image-20240527111919253](./assets/image-20240527111919253.png)
 
-其中，z' t 表示编辑过的面部的latent，original face被嵌入到 zt 作为额外的条件输入，**这是按照InstructPix2Pix的设置。**请注意，我们的几何和纹理由单独的参数β和u表示，因此可以独立优化其中一个，从而实现几何和纹理的单独编辑。此外，在编辑纹理时，我们将$\mathcal{L}_{tex}^{pr}$（见上文的公式（5））整合进来，以保持纹理的结构合理性。
+其中，$z' t$ 表示编辑过的面部的latent，original face被嵌入到 $z_t$ 作为额外的条件输入，**这是按照InstructPix2Pix的设置。**请注意，==我们的几何和纹理由单独的参数β和u表示，因此可以独立优化其中一个，从而实现几何和纹理的单独编辑。==此外，在编辑纹理时，我们将$\mathcal{L}_{tex}^{pr}$（见上文的公式（5））整合进来，以保持纹理的结构合理性。
 
 
 
 **Self-guided Consistency Weight**
 
-方程7中的编辑SDS使得面部编辑变得有效，然而，细粒度的编辑控制依然具有挑战性，例如，结果中可能会出现不可预测和不希望的变化，如Fig10所示。这阻碍了顺序编辑，因为早期的编辑可能会被后续的编辑无意中打乱。因此，应该鼓励编辑前后的面部间的一致性。然而，在编辑过程中面部之间的一致性与编辑效果的明显度，存在一定的矛盾。想象一下在纹理中的一个特定像素，鼓励一致性趋向于让像素与原始像素相同，而编辑可能需要它取得一个完全不同的值以达到期望的效果。**解决这个问题的一个关键观察是，不同区域的一致性权重应该是不同的：对于与编辑说明相关的区域，应该保持较低的一致性水平因为我们优先考虑编辑效果。相反，对于无关的区域，应该保证较高的一致性。**例如，给出“让她戴上蝙蝠侠的眼罩”的指示，我们希望在眼睛附近有眼罩效果，同时保持脸部的其它部分不变。**为了找到编辑说明的相关区域，我们在UV域提出了一种自我指导的一致性权重策略。我们利用InstructPix2Pix模型自身的内建交叉关注机制。（The built-in cross-attention of the InstructPix2Pix model iteself）**。Attention scores引入了不同图像区域和特定文本令牌之间的关联。一致性权重的一个例子在图4中展示。我们首先在说明中选择一个Region-indicating token`T*`，如`“眼罩”`。在每次迭代i中，我们从编辑的渲染图像I和令牌`T*`之间提取attention scores。根据当前视点，将得分归一化并解包（unwrap）到UV域，然后我们从解包得分中计算出时间一致性权重$\tilde{C_i}$：
+![image-20241024152408365](./assets/image-20241024152408365.png)
+
+方程7中的编辑SDS使得面部编辑变得有效，然而，细粒度的编辑控制依然具有挑战性，例如，结果中可能会出现不可预测和不希望的变化，如Fig10所示。这阻碍了顺序编辑，因为早期的编辑可能会被后续的编辑无意中打乱。因此，应该鼓励编辑前后的面部间的一致性。然而，在编辑过程中面部之间的一致性与编辑效果的明显度，存在一定的矛盾。想象一下在纹理中的一个特定像素，鼓励一致性趋向于让像素与原始像素相同，而编辑可能需要它取得一个完全不同的值以达到期望的效果。**解决这个问题的一个关键观察是，不同区域的一致性权重应该是不同的：对于与编辑说明相关的区域，应该保持较低的一致性水平因为我们优先考虑编辑效果。相反，对于无关的区域，应该保证较高的一致性。**例如，给出“让她戴上蝙蝠侠的眼罩”的指示，我们希望在眼睛附近有眼罩效果，同时保持脸部的其它部分不变。**为了找到编辑说明的相关区域，我们在UV域提出了一种自我指导的一致性权重策略。我们利用InstructPix2Pix模型自身的内建交叉关注机制。（The built-in cross-attention of the InstructPix2Pix model itself）**。Attention scores引入了不同图像区域和特定文本令牌之间的关联。一致性权重的一个例子在图4中展示。我们首先在说明中选择一个Region-indicating token`T*`，如`“眼罩”`。在每次迭代i中，我们从编辑的渲染图像I和令牌`T*`之间提取attention scores。根据当前视点，将得分归一化并解包（unwrap）到UV域，然后我们从解包得分中计算出时间一致性权重$\tilde{C_i}$：
 
 ![image-20240527113143412](./assets/image-20240527113143412.png)
 
-where att(·, ·) denotes the cross-attention operation to predict the attention scores, the norm(·) denotes the normalization operation, and the proj denotes the unwrapping projection from image to UV domain. 由于$\tilde{C_i}$与视点相关，我们建立一个统一的一致性权重$C_i$来融合来自不同视点的$\tilde{C_i}$。$C_i$的初始状态是一个所有值为'one'的矩阵，表示将最高级别的一致性应用到所有区域。每步的$C_i$的更新受$\tilde{C_i}$的影响。具体来说，我们选择$\tilde{C_i}$i中的值低于$C_i$的区域进行更新（补充：根据上面的式子，我的理解是attention分数越高，$\tilde{C_i}$就越低，所以把attention比较高的部分进行更新）。然后我们采用移动平均策略（moving average strategy）得到$C_i$：
+where att(·, ·) denotes the cross-attention operation to predict the attention scores, the norm(·) denotes the normalization operation, and the proj denotes the unwrapping projection from image to UV domain. 由于$\tilde{C_i}$与视点相关，我们建立一个统一的一致性权重$C_i$来融合来自不同视点的$\tilde{C_i}$。$C_i$的初始状态是一个所有值为'one'的矩阵，表示将最高级别的一致性应用到所有区域。每步的$C_i$的更新受$\tilde{C_i}$的影响。具体来说，我们选择$\tilde{C_i}$中的值低于$C_i$的区域进行更新（补充：根据上面的式子，我的理解是attention分数越高，$\tilde{C_i}$就越低，所以把attention比较高的部分进行更新）。然后我们采用移动平均策略（moving average strategy）得到$C_i$：
 
 ![image-20240527130523671](./assets/image-20240527130523671.png)
 
@@ -356,6 +366,25 @@ class StageFitter(object):
 
 
 
+### （1）一些记录的Prompt
+
+以下是原来的：
+
+> python main.py --stage "coarse geometry generation" --text "a zoomed out DSLR photo of Mark Elliot Zuckerberg" --exp_root exp --exp_name demo --total_steps 201 --save_freq 40 --sds_input "norm grey-rendered" --texture_generation direct
+
+--text：`a zoomed out DSLR photo of`Mark Elliot Zuckerberg
+
+
+
+## 4.Texture Generation
+
+对应的opt参数：
+
+```c++
+//方便查看：这个是该阶段的opt
+Namespace(attention_reg_diffuse=False, attention_sds=False, cfg_SD=100, cfg_texSD=1, controlnet_name='depth', device='cuda', display_rotation_x=10, display_rotation_y=10, display_rotation_z=0, display_translation_z=1.5, dp_map_scale=0.0025, edit_img_cfg=20, edit_prompt_cfg=100, edit_scope='tex', employ_yuv=False, exp_name='demo', exp_root='exp', fit_param=['id', 'tex'], force_fixed_viewpoint=True, guidance_type='stable-diffusion', indices_to_alter_str='', latent_init='zeros', latent_sds_steps=200, load_diffuse_path=None, load_dp_path=None, load_id_path='./exp/demo/a zoomed out DSLR photo of Emma Watson/coarse geometry generation/seed42/200_coeff.npy', lr=0.05, negative_text='', path_debug=False, random_light=True, render_resolution=224, save_freq=40, schedule_type='linear', scp_fuse='avm2', sd_version='2.1', sds_input=['rendered'], seed=42, set_t_schedule=True, set_w_schedule=False, stage='texture generation', static_text='a diffuse texture map of a human face in UV space', t_z_max=3, t_z_min=0, text='a zoomed out DSLR photo of Emma Watson', textureLDM_path='./ckpts/TextureDiffusion/unet', textureLDM_yuv_path='./ckpts/TextureDiffusion-yuv/unet', texture_generation='latent', total_steps=401, use_static_text=True, use_view_adjust_prompt=True, viewpoint_range_X_max=20, viewpoint_range_X_min=-20, viewpoint_range_Y_max=45, viewpoint_range_Y_min=-45, viewpoint_range_Z_max=0, viewpoint_range_Z_min=0, vis_att=False, w_SD=1.0, w_reg_diffuse=1, w_schedule='linear', w_smooth=0, w_sym=0, w_texSD=3.0, w_texSD_max=20, w_texSD_min=3, w_texYuv=1)
+```
+
 
 
 #  三、记录AutoDL如何跑出这个代码
@@ -408,3 +437,12 @@ echo "export HF_HOME=/path/to/new/cache" >> ~/.bashrc
 source ~/.bashrc
 ```
 
+
+
+# Q:
+
+【1】InstructP2P生成细节效果不好，如何处理细节的部分；
+
+【2】dis map可以通过SDS Loss 生成的话，要怎么加入到渲染当中，和2D Diffusion的结果对齐；
+
+【3】dis map在HRN中通过人脸扫描获得了先验知识，对应代码可以生成，但HRN和zhoukun那篇的3DMM不同，现有的dis map没法用，不知道要在哪份代码上修改；
