@@ -428,7 +428,7 @@ Namespace(attention_reg_diffuse=False, attention_sds=False, cfg_SD=100, cfg_texS
 
 `mv ~/.cache/huggingface /sys/fs/cgroup/huggingface`
 
-`export HF_HOME=/sys/fs/cgroup/huggingface`
+`export HF_HOME=/root/autodl-tmp/huggingface`
 
 如果要永久修改的话，使用下面这个指令：
 
@@ -446,3 +446,4 @@ source ~/.bashrc
 【2】dis map可以通过SDS Loss 生成的话，要怎么加入到渲染当中，和2D Diffusion的结果对齐；
 
 【3】dis map在HRN中通过人脸扫描获得了先验知识，对应代码可以生成，但HRN和zhoukun那篇的3DMM不同，现有的dis map没法用，不知道要在哪份代码上修改；
+
