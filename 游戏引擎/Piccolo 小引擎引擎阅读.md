@@ -6,6 +6,9 @@
 
 > `isDirty`字段通常用于表示对象的状态是否已经发生了变化。在游戏引擎中，当对象的属性发生变化时，可以将`isDirty`字段设置为true，以便在需要的时候对这些变化进行处理，比如更新渲染、保存数据或执行其他逻辑。这样可以帮助提高性能，只在需要时才进行相应的操作，而不是每次都进行无谓的处理。
 
+- （2）C++ 智能指针学习：https://zhuanlan.zhihu.com/p/150555165，可能乍一看会比较抽象，通过不断的学习加深理解吧。
+- （3）
+
 
 
 # 一、Animaton System
@@ -126,7 +129,62 @@ public:
 
 ## 2.在Play模式执行下的时序逻辑
 
+```mermaid
+sequenceDiagram
+    GameEngine ->>+ AnimationComponent:Tick
+    AnimationComponent ->>+ AnimationComponent: calculateBlendRatio
+    AnimationComponent ->>+ AnimationManager:getBlendStateWithClipData
+    AnimationManager ->>+ AnimationManager:tryLoadAnimation
+    AnimationManager ->>+ AnimationManager:tryLoadAnimationSkeletonMap
+    AnimationManager ->>+ AnimationManager:tryLoadSkeletonMask
+    AnimationManager ->>+ AnimationComponent: return BlendStateWithClipData
+    AnimationComponent ->>+ Skeleton: applyAnimation
+    AnimationComponent ->>+ Skeleton: outputAnimationResult
+```
+
+
+
 我们从`AnimationComponent:tick`这个函数开始看：
 
 ![image-20241101164011811](./assets/image-20241101164011811.png)
 
+### （1）AnimationComponent::tick
+
+```c++
+void AnimationComponent::tick(float delta_time)
+{
+    m_animation_res.blend_state.blend_ratio[0] +=
+        (delta_time / m_animation_res.blend_state.blend_clip_file_length[0]);
+    m_animation_res.blend_state.blend_ratio[0] -= floor(m_animation_res.blend_state.blend_ratio[0]);  //这个ratio始终是0~1，看逻辑可以理解
+    //LOG_INFO("blend ratio: {}", m_animation_res.blend_state.blend_ratio[0]);
+    m_skeleton.applyAnimation(AnimationManager::getBlendStateWithClipData(m_animation_res.blend_state));
+    m_animation_res.animation_result = m_skeleton.outputAnimationResult();
+}
+```
+
+
+
+## 3.在渲染的时候做蒙皮
+
+看一下这个函数：`void MeshComponent::tick(float delta_time)`
+
+以及这个函数：`void RenderSystem::processSwapData()`
+
+在渲染的时候看这个函数：
+
+```c++
+void RenderScene::updateVisibleObjectsDirectionalLight(std::shared_ptr<RenderResource> render_resource,
+                                                       std::shared_ptr<RenderCamera>   camera)
+```
+
+蒙皮的逻辑看这个逻辑链：
+
+`void RenderResource::uploadGameObjectRenderResource`->`RenderResource::getOrCreateVulkanMesh`->`RenderResource::updateMeshData`->
+
+新：看这里吧，太抽象了：
+
+```c++
+void MainCameraPass::drawMeshGbuffer()
+```
+
+直接看mesh.vert吧，太抽象了。
