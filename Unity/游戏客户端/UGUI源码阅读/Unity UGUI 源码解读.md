@@ -98,6 +98,24 @@
 
 
 
+【2】关于Toggle：其重写了Start方法，在开始的时候会设置Checkmark是否会被渲染（其graphics字段绑定Checkmark）。
+
+【3】复习一下ToggleGroup的概念：可以把很多Toggle放到一个Group当中，此时在Group中的Toggle，如果勾选了其中一个就会取消勾选其他所有的。如果没有勾选ToggleGroup的Allow Switch Off，那么一开始运行的时候就有一个默认是被选中的；否则如果开启了Allow Switch Off，则一开始可以没有toggle被选中。（找`Toggle.cs`文件当中的`Set`函数可以方便我们理解）
+
+【4】CanvasUpdateRegistry（画布更新注册处）是一个单例，它是UGUI与Canvas之间的中介，继承了 ICanvasElement接口的组件都可以注册到它 ，它监听了Canvas即将渲染的事件，并调用已注册组件的Rebuild等方法。以下可以看到谁会用到这个接口：
+
+![image-20241109150422662](./assets/image-20241109150422662.png)
+
+能够发现，Graphics类是有实现这个接口的。我们知道UGUI组件都继承自 UIBehaviour，而UIBehavior实现了 IsDestroyed方法。所有组件都继承自 Component，而 Component实现了 transform属性。所以继承自 ICanvasElement的UGUI组件不必再实现这两个成员。另外三个Rebuild（重建）、LayoutComplete（布局完成）、GraphicUpdateComplete（图像更新完成）就需要在代码中实现。
+
+（一个例外 LayoutRebuilder，它并不是组件，是一个负责重建布局的类，这个类的 GraphicUpdateComplete函数是空函数，后面会说）
+
+
+
+ 【5】todo：关于LayoutRebuilder：
+
+
+
 # 五、UGUI可能的面试题目大全
 
 
