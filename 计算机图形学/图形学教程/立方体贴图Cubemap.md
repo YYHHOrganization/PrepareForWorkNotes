@@ -53,7 +53,7 @@
 
 ![img](./assets/cubemaps_skybox.png)
 
-​	上图还是比较清晰的，top就是上面，left就是左面，依次类推。读者可以想象一下上述的Cubemap被”折成“一个立方体的过程，容易发现它是基于右手系的（top对应Y轴正方向，right对应X轴正方向，而front则对应Z轴正方向）。再比如Unity，它是基于左手系的。上图的left，right，bottom，top，front，back为了方便理解，很多渲染器/引擎也会将其命名为-X，+X，-Y，+Y，+Z和-Z（基于右手系）。Cubemap也可以使用左手系，左右手系的Cubemap互转时，需要将+X和-X的贴图对调，并将所有贴图的x方向取反。在以下的理论部分中，我们使用右手系进行讲解。而渲染器的实现也是基于右手系。
+​	上图还是比较清晰的，top就是上面，left就是左面，依次类推。读者可以想象一下上述的Cubemap被”折成“一个立方体的过程，容易发现它是基于左手系的（top对应Y轴正方向，right对应X轴正方向，而front则对应Z轴正方向，指向的是前面，也就是屏幕里面，这一点不要理解错误）。再比如Unity，它是基于左手系的。上图的left，right，bottom，top，front，back为了方便理解，很多渲染器/引擎也会将其命名为-X，+X，-Y，+Y，+Z和-Z（基于左手系）。Cubemap也可以使用右手系。在以下的理论部分中，我们使用左手系进行讲解。而渲染器的实现也是基于左手系。
 
 ​	可以在网上找到一些免费的Cubemap资源，比如下图就是本节教程中要使用的cubemap（在对应的github当中有提供）：
 
@@ -150,7 +150,7 @@ vec4_t skybox_vertex_shader(void* attribs_, void* varyings_, void* uniforms_)
 
 <img src="./assets/image-20241118112026045.png" alt="image-20241118112026045" style="zoom:67%;" />
 
-怎么确定黄色的向量与整个Cube的交点是什么呢？我们假设将一个**长宽都为2**的正方体放在坐标原点，将一张Cubemap贴上去，那么各点的坐标将如下图所示（注意，这个坐标系是右手坐标系，+Z指的是前面）：
+怎么确定黄色的向量与整个Cube的交点是什么呢？我们假设将一个**长宽都为2**的正方体放在坐标原点，将一张Cubemap贴上去，那么各点的坐标将如下图所示（注意，这个坐标系是左手坐标系，+Z指的是forward，前面，也就是屏幕向里的里面）：
 
 <img src="./assets/v2-8f24b8b97a2bc10c4fc0ba34b07f0037_r.jpg" alt="img" style="zoom:67%;" />
 
@@ -248,10 +248,21 @@ static int select_cubemap_face(vec3_t direction, vec2_t* texcoord) {
 
 注意：
 
-- （1）目前在渲染器中，我们读取完hdr的图片之后，Cubemap采用右手系的方式进行摆放，可以看一下按照右手系摆完之后的结果：
+- （1）目前在渲染器中，我们读取完hdr的图片之后，Cubemap采用左手系的方式进行摆放，可以看一下按照左手系摆完之后的结果：
 
   ![image-20241119224154121](./assets/image-20241119224154121.png)
 
-  而在渲染当中，我们也按照上面的算法来进行采样，这样得到的UV坐标就是正确的。这里面我们是手动推导了一遍Cubemap的映射关系，公式可能与OpenGL的不同，但其实都是正确的，原因是一些与纹理翻转有关的问题，更多可以看一下这篇：https://blog.csdn.net/qjh5606/article/details/89847297。**需要说明的是，我们目前的渲染器按照正确的推导方式推导出了右手系下的Cubemap的映射公式，重要的是读者需要理解其中的思路和思想。**
+  而在渲染当中，我们也按照上面的算法来进行采样，这样得到的UV坐标就是正确的。这里面我们是手动推导了一遍Cubemap的映射关系，公式可能与OpenGL的不同，但其实都是正确的，原因是一些与纹理翻转有关的问题，更多可以看一下这篇：https://blog.csdn.net/qjh5606/article/details/89847297。**需要说明的是，我们目前的渲染器按照正确的推导方式推导出了左手系下的Cubemap的映射公式，重要的是读者需要理解其中的思路和思想。**
 
-> 这一部分也可以参考OpenGL的白皮书：https://registry.khronos.org/OpenGL/specs/es/2.0/es_full_spec_2.0.pdf的第3.7.5小节。以及可以参考这一篇：https://www.khronos.org/opengl/wiki/Cubemap_Texture。
+> 这一部分也可以参考OpenGL的白皮书：https://registry.khronos.org/OpenGL/specs/es/2.0/es_full_spec_2.0.pdf的第3.7.5小节。以及可以参考这一篇：https://www.khronos.org/opengl/wiki/Cubemap_Texture。如果要按照OpenGL那套左手系的流程来做Cubemap的话，采样公式在上述链接的3.7.5小节可以看到，同时对采样结果的y要做一个翻转，如下：
+> ```c++
+> vec4_t cubemap_repeat_sample(std::shared_ptr<CubeMap> cubemap, vec3_t direction)
+> {
+> 	vec2_t texcoord;
+> 	int face_index = select_cubemap_face(direction, &texcoord);
+> 	texcoord.y = 1 - texcoord.y;
+> 	return texture_repeat_sample(cubemap->faces[face_index], texcoord);
+> }
+> ```
+>
+> 但这里不用细究了，按照渲染器的教程来进行学习即可理解Cubemap的概念和采样过程（渲染器也是左手坐标系）。
