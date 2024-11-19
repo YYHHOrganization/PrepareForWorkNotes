@@ -53,7 +53,7 @@
 
 ![img](./assets/cubemaps_skybox.png)
 
-​	上图还是比较清晰的，top就是上面，left就是左面，依次类推。读者可以想象一下上述的Cubemap被”折成“一个立方体的过程，容易发现它是基于左手系的（top对应Y轴正方向，right对应X轴正方向，而front则对应Z轴正方向）。再比如Unity，它也是基于左手系的。上图的left，right，bottom，top，front，back为了方便理解，很多渲染器/引擎也会将其命名为-X，+X，-Y，+Y，+Z和-Z（基于左手系）。Cubemap也可以使用右手系，左右手系的Cubemap互转时，需要将+X和-X的贴图对调，并将所有贴图的x方向取反。以下我们也是基于左手系来做。
+​	上图还是比较清晰的，top就是上面，left就是左面，依次类推。读者可以想象一下上述的Cubemap被”折成“一个立方体的过程，容易发现它是基于右手系的（top对应Y轴正方向，right对应X轴正方向，而front则对应Z轴正方向）。再比如Unity，它是基于左手系的。上图的left，right，bottom，top，front，back为了方便理解，很多渲染器/引擎也会将其命名为-X，+X，-Y，+Y，+Z和-Z（基于右手系）。Cubemap也可以使用左手系，左右手系的Cubemap互转时，需要将+X和-X的贴图对调，并将所有贴图的x方向取反。在以下的理论部分中，我们使用右手系进行讲解。而渲染器的实现也是基于右手系。
 
 ​	可以在网上找到一些免费的Cubemap资源，比如下图就是本节教程中要使用的cubemap（在对应的github当中有提供）：
 
@@ -134,7 +134,7 @@ vec4_t skybox_vertex_shader(void* attribs_, void* varyings_, void* uniforms_)
 ​	这里还有两个注意的点：
 
 - （1）顶点着色器传给片元着色器的结构体中的direction值就是传入顶点着色器的position值。这里我们在渲染器中渲染的Cube（作为Skybox）的顶点坐标范围是[-0.5，0.5]，这一点需要注意，在片元着色器采样的时候会用到这个配置。
-- （2）这个作为天空盒的立方体需要使用双面渲染，也就是不剔除背面，否则得到的结果是错误的。
+- （2）这个作为天空盒的立方体需要使用双面渲染，也就是不剔除背面。
 
 我们让片元着色器只输出蓝色，结果如下：
 
@@ -146,7 +146,112 @@ vec4_t skybox_vertex_shader(void* attribs_, void* varyings_, void* uniforms_)
 
 ### （4）Cubemap——片元着色器
 
+回顾一下Cubemap采样的图：
 
+<img src="./assets/image-20241118112026045.png" alt="image-20241118112026045" style="zoom:67%;" />
 
+怎么确定黄色的向量与整个Cube的交点是什么呢？我们假设将一个**长宽都为2**的正方体放在坐标原点，将一张Cubemap贴上去，那么各点的坐标将如下图所示（注意，这个坐标系是右手坐标系，+Z指的是前面）：
 
+<img src="./assets/v2-8f24b8b97a2bc10c4fc0ba34b07f0037_r.jpg" alt="img" style="zoom:67%;" />
 
+假设我们现在正在+Z表面上移动，那么对应Z的坐标是不变的，只有X轴坐标和Y轴坐标会发生变化。从上图可以看出整个cube的上下左右前后的面之间的交点的坐标。举个例子，+X，+Y，+Z面的共同交点坐标是（1，1，1），而+X，-Y，-Z面的共同交点则是（1，-1，-1）。如果我们对每个面都以左下角为uv原点，右上角为uv (1,1)，可用三维的坐标换算得到UV坐标。此时如下图：
+
+<img src="./assets/v2-1fdcf18a683908b4b23cc30fac4939e7_1440w.jpg" alt="img" style="zoom:80%;" />
+
+在每个面上，都有标注对应的纹理坐标系的U方向和V方向正方向（如果读者被绕蒙了的话，可以把上面一张图打印下来，折成一个立方体，比对着看一下）。此时用三维向量对Cubemap采样的实际步骤如下：
+
+- （1）取x，y，z坐标中绝对值最大的为主轴，再用正负号判定正负轴。例如(-0.8, 0.5, 0.4)，对应-X轴；
+- （2）坐标除以主轴的绝对值，换算到立方体上。举个例子，(-0.8, 0.5, 0.4)对应在-X轴上 ->对应在立方体上的值为 (-1, 0.625, 0.5)，这里就是一个简单的向量缩放，可以把采样点定位到-X面上。
+- （3）根据对应轴的UV坐标换算关系，求得UV，还是以上述为例， (-1, 0.625, 0.5)对应在-X面上，此时看上图，采样的u方向是z方向，v方向是y方向，所以有(-1, 0.625, 0.5) -> u = z = 0.5, v = y = 0.625；
+- （4）求得UV坐标为（0.5，0.625）。但注意，我们在采样的时候每个面的范围是[-1，1]，但是UV坐标应该是[0，1]，所以要做一步$y=0.5x+0.5$的操作，$x$是刚才求出的UV值，而$y$则是真正要采样的UV坐标，对应本例应该是（0.5，0.625）->（0.75，0.8125）
+- （5）从-X面的贴图上依据上述的UV坐标进行采样。
+
+实际上，在渲染天空盒的时候也是这样做的，每个片元都对应一个插值之后的向量方向，然后依据上述算法采样提前保存的每个面的纹理的对应的坐标。代码如下：
+
+```c++
+vec4_t cubemap_sample(std::shared_ptr<CubeMap> cubemap, vec3_t direction) 
+{
+	return cubemap_repeat_sample(cubemap, direction);
+}
+vec4_t cubemap_repeat_sample(std::shared_ptr<CubeMap> cubemap, vec3_t direction)
+{
+	vec2_t texcoord;
+	int face_index = select_cubemap_face(direction, &texcoord);
+	//texcoord.y = 1 - texcoord.y;
+	return texture_repeat_sample(cubemap->faces[face_index], texcoord);
+}
+```
+
+我们先来看`select_cubemap_face`这个函数，用于确定要采样的面是哪个面，以及采样的UV坐标是什么，对应上述算法的（1）（2）（3）（4）步骤。在渲染器的实现中，我们也是按照上面的情况来做的，这个函数如下：
+
+```c++
+/*
+ * for cubemap sampling, see subsection 3.7.5 of
+ * https://www.khronos.org/registry/OpenGL/specs/es/2.0/es_full_spec_2.0.pdf
+ */
+static int select_cubemap_face(vec3_t direction, vec2_t* texcoord) {
+	float abs_x = (float)fabs(direction.x);
+	float abs_y = (float)fabs(direction.y);
+	float abs_z = (float)fabs(direction.z);
+	float ma, sc, tc;
+	int face_index;
+
+	if (abs_x > abs_y && abs_x > abs_z) {   /* major axis -> x */
+		ma = abs_x;
+		if (direction.x > 0) {                  /* positive x */
+			face_index = 0;
+			sc = -direction.z;
+			tc = direction.y;
+		}
+		else {                                /* negative x */
+			face_index = 1;
+			sc = +direction.z;
+			tc = direction.y;
+		}
+	}
+	else if (abs_y > abs_z) {             /* major axis -> y */
+		ma = abs_y;
+		if (direction.y > 0) {                  /* positive y */
+			face_index = 2;
+			sc = +direction.x;
+			tc = -direction.z;
+		}
+		else {                                /* negative y */
+			face_index = 3;
+			sc = +direction.x;
+			tc = +direction.z;
+		}
+	}
+	else {                                /* major axis -> z */
+		ma = abs_z;
+		if (direction.z > 0) {                  /* positive z */
+			face_index = 4;
+			sc = +direction.x;
+			tc = +direction.y;
+		}
+		else {                                /* negative z */
+			face_index = 5;
+			sc = -direction.x;
+			tc = direction.y;
+		}
+	}
+
+	texcoord->x = (sc / ma + 1) / 2;
+	texcoord->y = (tc / ma + 1) / 2;
+	return face_index;
+}
+```
+
+这样做的话最终结果就会是正确的，最终实现的效果如下图：
+
+![image-20241119223759629](./assets/image-20241119223759629.png)
+
+注意：
+
+- （1）目前在渲染器中，我们读取完hdr的图片之后，Cubemap采用右手系的方式进行摆放，可以看一下按照右手系摆完之后的结果：
+
+  ![image-20241119224154121](./assets/image-20241119224154121.png)
+
+  而在渲染当中，我们也按照上面的算法来进行采样，这样得到的UV坐标就是正确的。这里面我们是手动推导了一遍Cubemap的映射关系，公式可能与OpenGL的不同，但其实都是正确的，原因是一些与纹理翻转有关的问题，更多可以看一下这篇：https://blog.csdn.net/qjh5606/article/details/89847297。**需要说明的是，我们目前的渲染器按照正确的推导方式推导出了右手系下的Cubemap的映射公式，重要的是读者需要理解其中的思路和思想。**
+
+> 这一部分也可以参考OpenGL的白皮书：https://registry.khronos.org/OpenGL/specs/es/2.0/es_full_spec_2.0.pdf的第3.7.5小节。以及可以参考这一篇：https://www.khronos.org/opengl/wiki/Cubemap_Texture。
