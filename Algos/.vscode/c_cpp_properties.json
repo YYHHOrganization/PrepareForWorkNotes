@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "compilerPath": "D:/IDE/VisualStudio2022/IDE/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64/cl.exe",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}
