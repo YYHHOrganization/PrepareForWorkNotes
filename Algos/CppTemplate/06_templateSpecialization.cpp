@@ -8,6 +8,17 @@ template<typename T> class AddFloatOrMulInt{
     }
 };
 
+template<typename T, typename U> class BALA
+{
+
+};
+
+template<typename T> class BALA<T, float> //partial specialization
+{
+
+};
+
+
 template<> class AddFloatOrMulInt<float>{
 public:
     static float Do(float a, float b){

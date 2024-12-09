@@ -26,5 +26,7 @@ int main(){
     cout << &ref_a_left << ' ';
     cout << &ref_a_right;  
 
+    cout << ref_a_right << endl; // 8
+
     return 0;
 }
