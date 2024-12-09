@@ -392,7 +392,7 @@ $$
 
 主要参考的链接：https://medium.com/@brianpulfer/enerating-images-with-ddpms-a-pytorch-implementation-cef5a2ba8cb1
 
-可执行的源代码在DDPM.ipynb文件中。
+可执行的源代码在DDPM.ipynb（以及本Github仓库的该路径下面，方便复习的时候参考，反正代码量也不大）当中。
 
 #### （1）导入必要的包
 
@@ -524,11 +524,17 @@ We now proceed and define a DDPM PyTorch module. Since in principle the DDPM sch
 - `device`: device onto which the model is run;
 - `image_chw`: tuple contining dimensionality of images.
 
-The `forward` process of DDPMs benefits from a nice property: We don't actually need to slowly add noise step-by-step, but we can directly skip to whathever step $t$ we want using coefficients $\alpha_bar$.
+The `forward` process of DDPMs benefits from a nice property: We don't actually need to slowly add noise step-by-step, but we can directly skip to whathever step $t$ we want using coefficients $\bar{\alpha}$.
 
 For the `backward` method instead, we simply let the network do the job.
 
 Note that in this implementation, $t$ is assumed to be a `(N, 1)` tensor, where `N` is the number of images in tensor `x`. We thus support different time-steps for multiple images.
+
+$\beta$和$\alpha$之间的关系可以参考原论文：
+
+![image-20241209160158302](./assets/image-20241209160158302.png)
+
+![image-20241209160233432](./assets/image-20241209160233432.png)
 
 ```python
 # DDPM class
@@ -584,6 +590,10 @@ We run the backward pass and generate new images with the `generate_new_images` 
 - $\sigma_t^2$ = $\beta_t$
 
 - $\sigma*_t^2$ = $\frac{1 - \bar{\alpha_*{t-1}}}{1 - \bar{\alpha_{t}}} \beta_t$
+
+原文有进行两种不同情况的测试，见下：
+
+![image-20241209160702914](./assets/image-20241209160702914.png)
 
 In this implementation, they are both a few line-comments away. However, the two terms are rougly always the same and little difference is noticeable. By default, I choose the first option out of simplicity.
 
