@@ -447,3 +447,148 @@ source ~/.bashrc
 
 【3】dis map在HRN中通过人脸扫描获得了先验知识，对应代码可以生成，但HRN和zhoukun那篇的3DMM不同，现有的dis map没法用，不知道要在哪份代码上修改；
 
+
+
+# 四、源码重要定位点
+
+## 1.几何生成阶段
+
+走的逻辑如下：
+
+- guidance的逻辑：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L274，进了Stable Diffusion；
+- SD的init函数：https://github.com/JiejiangWu/FaceG2E/blob/main/models/sd.py#L43
+  - 配置上：controlnet是none，vram_O：**根据 VRAM 的可用性来优化模型的内存使用和计算效率**。如果有足够的 VRAM，启用多种内存管理策略以降低内存占用；如果没有足够的 VRAM（默认传入），则采取其他措施，如使用 Xformers 的高效注意力，确保模型能够在指定的设备上运行。这样做是为了平衡性能与资源消耗，确保推理过程尽可能流畅。
+  - 关于https://github.com/JiejiangWu/FaceG2E/blob/main/models/sd.py#L89的解释：`unet_traced = torch.jit.load('./unet_traced.pt')`，大概就是通过加载一个经过 JIT 编译的 UNet 模型，创建一个新的 UNet 类，并将其集成到某个推理管道中，以实现更高效的模型推理，在总的项目中**暂时没用到**；
+  - schedular选择了DDIM；
+  - https://github.com/JiejiangWu/FaceG2E/blob/main/models/sd.py#L89：注意这里提前保存了一个`self.alphas = self.scheduler.alphas_cumprod.to(self.device)`，cumprod是累积连乘，这里指的应该是下面的$\bar{\alpha_t}$：![image-20241211103757286](./assets/image-20241211103757286.png)
+
+- 初始化SD（调用其init函数）后，判断https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#277，这里默认是false，也就是在几何阶段先不管attentionscore之类的内容。
+- https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L291，这个`opt.indices_to_alter`指的是编辑的时候对哪些indice比较关注，比如[add, a, mask, on, his, head]，就可以选择注意力机制更关注[5,6]，**几何生成阶段用不到。**
+
+接下来就是StageFitter的初始化，包括基本可训练/不可训练的参数配置、3DMM的加载与初始化、MeshRenderer的初始化等，见下一部分。
+
+
+
+### （1）StageFitter的介绍
+
+对应下述代码：
+
+```python
+fitter = StageFitter(SD_guidance = guidance,
+                            stage=opt.stage,diffuse_generation_type=opt.texture_generation,
+                            render_resolution=opt.render_resolution,
+                         saved_id_path=opt.load_id_path,saved_dp_path=opt.load_dp_path,saved_diffuse_path=opt.load_diffuse_path,
+                            latent_init=opt.latent_init,dp_map_scale=opt.dp_map_scale,edit_scope=opt.edit_scope)
+```
+
+这个类比较关键，依次介绍逻辑：
+
+- 该类的定位：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L16，传入的guidance是SD，stage是"coarse geometry generation"，diffuse_generation_type是direct，分辨率是224，latent_init是”zeros“（还可以选比如ones，rands，应该就是初始化成0还是随机值之类的），dp_map_scale是默认的0.0025，edit_scope是默认的tex（这是几何生成阶段，不做edit，所以这一项用不到）
+- 在该类中，会进行HIFIParametricFaceModel的初始化：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L41，来看一下HIFIParametricFaceModel的构造函数https://github.com/JiejiangWu/FaceG2E/blob/main/models/hifi3dmm.py#L192，大概就是根据配置和HIFI3D的文件路径读取基本的3DMM，并初始化变量；
+- 同时，该类还会初始化一个MeshRenderer：使用nvdiffrast，无非就是渲染器那套，https://github.com/JiejiangWu/FaceG2E/blob/main/util/nvdiffrast.py#L21，点进去一看有个ndc_proj就懂了；
+- 一些分辨率的配置：==texRes是512，dpRes是128。==
+- 接下来，是初始化变量：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L59，对应函数https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L78，==note：如果要加待训练的参数，这里要做添加。==有一些可训练的和一些不能训练的参数，后面forward的时候再做总结；
+- 接下来，是定义每个阶段要被优化的变量：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L102，比如当前阶段是course geometry generation，所以待优化的变量是`self.optim_param = [self.id_para, self.diffuse_texture, self.diffuse_latent]`。==note：如果要做新的优化参数，这里要做添加。==
+  - todo：几何生成阶段为什么还要优化diffuse_texture和diffuse_latent？反正应该也会强制不要diffuse贴图，放不放这应该都行才对。
+
+
+
+回到总的main函数，接下来是T_Schedular的初始化：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L301，见下一部分。
+
+
+
+### （2）T_Schedular的初始化
+
+```python
+# using SDS -- a normal decreasing schedule in denoise process
+ts = T_scheduler(opt.schedule_type,total_steps,max_t_step = guidance.scheduler.config.num_train_timesteps)
+```
+
+这里传入的schedule_type是默认的linear，total_steps是201（bash文件指定），max_t_step则是DDIMSchedular里面的值，应该不需要在意。T_Schedular的类定义在这里：https://github.com/JiejiangWu/FaceG2E/blob/main/util/T_scheduler.py#L6。这里其实没太多内容，就是根据schedular_type计算一下T_Schedular的minstep，maxstep之类的。
+
+> todo：需要补充：为什么前面在初始化guidance:SD的时候已经有一个schedular了，这里为什么还需要一个schedular，他们对于训练和inference阶段的作用分别是什么？
+
+------
+
+
+
+### （3）继续看main函数
+
+回到总的main函数，继续看https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L314，有一个变量叫做`fitter.random_view_with_choice`，在geometry阶段该变量设置为false即可。接下来是prompt和SDS_input的设置：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L328，在这个阶段prompt就是sh运行文件的输入prompt，negative prompt默认是空。
+
+sds_input如下：
+
+> --sds_input "norm grey-rendered"
+
+然后是text_z的设置：
+
+```python
+text_z = {
+    'default':guidance.get_text_embeds(text, negative_text),
+    'front view': guidance.get_text_embeds(text+', front view', negative_text),
+    'back view': guidance.get_text_embeds(text+', back view', negative_text),
+    'side view': guidance.get_text_embeds(text+', side view', negative_text)
+}
+static_text_z = guidance.get_text_embeds(opt.static_text, negative_text)
+```
+
+text_z容易理解，static_text_z embed的原始文本是默认的'a diffuse texture map of a human face in UV space'。
+
+在main函数中，接下来是整体训练的优化器的配置：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L425，在几何生成阶段中，使用Adan优化器。
+
+接着，开train！
+
+```python
+ for iter_step in tqdm(range(total_steps)):
+        optim.zero_grad()
+        loss = train_step(fitter,text , text_z,static_text_z, opt, sds_input=sds_input,employ_textureLDM=fitter.employ_textureLDM, iter_step=iter_step, total_steps=total_steps,
+                            attention_store=guidance.attentionStore,indices_to_alter=opt.indices_to_alter)  # 来看这句
+        scaler.scale(loss).backward()
+        scaler.step(optim)
+        scheduler.step()
+        scaler.update()
+```
+
+
+
+### （4）训练一个step的代码（SDS直接更新参数）
+
+刚才说了，train一个step的代码：
+
+```python
+loss = train_step(fitter,text , text_z,static_text_z, opt, sds_input=sds_input,employ_textureLDM=fitter.employ_textureLDM, iter_step=iter_step, total_steps=total_steps,
+                            attention_store=guidance.attentionStore,indices_to_alter=opt.indices_to_alter)
+```
+
+train_step函数在这里：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L23，喂给他的参数有：fitter里面什么都有，包括SD，T_Schedular等；text是用户输入的prompt，text_z和static_text_z上面就是，是embedding之后的内容；sds_input是norm grey-rendered，employ_textureLDM是False，attenion_score和indices_to_alter都是None，不用管。
+
+
+
+### （5）保存中间结果的代码
+
+
+
+
+
+# 五、其他补充知识
+
+## 1.几何生成阶段
+
+### （1）Stable Diffusion
+
+- （a）关于tokenizer：
+
+> ### Tokenization 过程
+>
+> 1. **分词 (Tokenization)**:
+>    - Tokenizer 将输入的句子或文本划分为更小的单位，称为**token**。这些 token 可以是单词、字符或 subword（子词）。
+>    - 例如，句子 "I love cats" 可能被分解为 ["I", "love", "cats"]。
+> 2. **编码 (Encoding)**:
+>    - 每个 token 被映射到一个唯一的整数 ID。这些 ID 是模型在训练过程中学习到的。
+>    - 对于上述例子，可能会得到 [101, 2034, 5000] 这样的 ID 列表。
+> 3. **处理特殊符号**:
+>    - Tokenizer 还会处理一些特殊符号，比如开始和结束标记、填充标记等，这有助于模型理解文本的结构。
+>    - 在某些情况下，还会对不常见的词汇使用替代规则，如将稀有词汇切分成多个 subword，以确保所有文本都能被有效编码。
+
+- （b）关于SD中schedular的介绍：https://medium.com/invokeai/schedulers-in-ai-image-generation-2ca6d7458f17，也可以参考这篇链接：https://blog.csdn.net/Lizhi_Tech/article/details/133928749
+- （c）
