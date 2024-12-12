@@ -110,7 +110,7 @@ FaceG2E是一种渐进的文本到3D方法，首先生成一个高保真度的3D
 
 理想的几何形体生成应该是高质量的（比如无Surface Distortion），并且要和输入文本保持对齐。使用的三维面部可变模型（3D Morphable model）提供了强大的先验信息，以确保生成的几何形状的质量。至于与输入文本的对齐，我们在Stable Diffusion[35]网络ϕsd上使用SDS，以指导几何生成。
 
-以前的研究[22、27、53]同时优化几何形状和纹理。我们注意到这可能会导致几何细节的丢失，因为某些几何信息可能被包含在纹理表示中。因此，我们的目标是增强SDS，在几何阶段提供更多以几何为中心的信息。为此，==我们用无纹理渲染˜I = R˜(g)来渲染几何形状g，例如，表面法线阴影或常亮灰色的漫反射阴影。无纹理的阴影将所有图像细节仅归因于几何形状，从而允许SDS专注于以几何为中心的信息。==以几何为中心的SDS损失定义为：
+以前的研究[22、27、53]同时优化几何形状和纹理。我们注意到这可能会导致几何细节的丢失，因为某些几何信息可能被包含在纹理表示中。因此，我们的目标是增强SDS，在几何阶段提供更多以几何为中心的信息。为此，==我们用无纹理渲染˜I = R˜(g)来渲染几何形状g，例如，表面正常的着色（normal shading）或常亮灰色的漫反射阴影。无纹理的阴影将所有图像细节仅归因于几何形状，从而允许SDS专注于以几何为中心的信息。==以几何为中心的SDS损失定义为：
 
 ![image-20240527103758369](./assets/image-20240527103758369.png)
 
@@ -451,6 +451,8 @@ source ~/.bashrc
 
 # 四、源码重要定位点
 
+> 这部分最好结合原论文中的描述来看，更好理解。论文的解读见前面部分。
+
 ## 1.几何生成阶段
 
 走的逻辑如下：
@@ -518,7 +520,7 @@ ts = T_scheduler(opt.schedule_type,total_steps,max_t_step = guidance.scheduler.c
 
 sds_input如下：
 
-> --sds_input "norm grey-rendered"
+> --sds_input [norm,grey-rendered]：之所以输入是“norm grey-rendered”，但真正的sds_input是两个字符串的数组，是因为这一句：https://github.com/JiejiangWu/FaceG2E/blob/main/util/parse_opt.py#L121
 
 然后是text_z的设置：
 
@@ -560,11 +562,107 @@ loss = train_step(fitter,text , text_z,static_text_z, opt, sds_input=sds_input,e
                             attention_store=guidance.attentionStore,indices_to_alter=opt.indices_to_alter)
 ```
 
-train_step函数在这里：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L23，喂给他的参数有：fitter里面什么都有，包括SD，T_Schedular等；text是用户输入的prompt，text_z和static_text_z上面就是，是embedding之后的内容；sds_input是norm grey-rendered，employ_textureLDM是False，attenion_score和indices_to_alter都是None，不用管。
+train_step函数在这里：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L23，喂给他的参数有：fitter里面什么都有，包括SD，T_Schedular等；text是用户输入的prompt，text_z和static_text_z上面就是，是embedding之后的内容；sds_input是 [norm,grey-rendered]，employ_textureLDM是False，attenion_score和indices_to_alter都是None，不用管。
+
+我们比较关心这里：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L32，也就是几何生成阶段。来逐一介绍这里面的每一句。
+
+#### （a）进行forward，得到渲染图
+
+```python
+rendered, grey_rendered, depth, norm, mask = fitter.forward()
+```
+
+这个forward函数看这里：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_forward.py#L51，由于没有传入参数，因此都是默认参数。
+
+接口为：
+
+```python
+def forward(self,random_sample_view=True,render_latent=False,random_sample_light=True,render_origin_diffuse=False):
+```
+
+- 第一句是`output_coeff = self.concat_coeff()`，对应函数体：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L145，作用就是把一些params连接在一起（`torch.cat([ID_para,EXP_para,TEX_para,ANGLES,GAMMAS,TRANSLATIONS],dim=1)`），对应的params见https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L78，concat_coeff的部分都是可训练的参数；沿着dim=1拼接后的size应该是[1，n]。
+
+- 接着是`self.update_shape()`，在这里：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_shape_util.py#L50。
+
+  - 这里首先调用` self.predict_dp()`，不过由于dp_tensor并没有在优化参数里，所以这句暂时没起到什么作用。==todo：如果要做displacement map，这里很可能要改。==
+  - 接着，由于stage是course geometry generation，所以会进else语句：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_shape_util.py#L58，对应到这个函数体（`self.facemodel.compute_for_render`）：https://github.com/JiejiangWu/FaceG2E/blob/main/models/hifi3dmm.py#L839。个人理解上这一步是HIFI3D要做渲染时需要的，相当于要解析传入的output_coeff，而对于output_coeff网络会对其优化。==所以如果加了displacement map/deformation map，compute_for_render应该也要加上displacement map/deformation map的相关逻辑==，或许可以用这个接口：`self.facemodel.compute_for_render_with_dp_map(output_coeff,self.dp_map,use_external_exp=False)`
+
+  主要这个函数就是对每个step优化的output_coeff，用3DMM原生支持的管线计算出pred vertex，diffuse texture，vertex norm，landmark参数，并保存pred vertex的结果到新的变量里`self.pred_vertex_no_pose`。
+
+- 接着是`self.generate_diffuse()`，https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_forward.py#L14，由于diffuse generation type是direct，所以只是简单调用一句`self.diffuse_texture = self.diffuse_texture`，不过在geometry阶段，diffuse_texture应该没东西。
+
+- 之后是随机做transformation和随机打光，这里应该不重要，先不看了。之后会进这个else语句：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_forward.py#L100；
+
+- 接着看这里：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_forward.py#L113，
+
+```python
+ _, _, grey_pix_tex, pix_norm = self.renderer.forward_with_texture_map(
+                self.pred_vertex, self.facemodel.face_buf, self.constant_diffuse_texture, self.facemodel.vt, self.facemodel.face_vt, self.pred_vertex_norm)
+```
+
+这里的self.pred_vertex，self.pred_vertex_norm都是在前面update_shape的步骤计算完的，返回的pix_norm看nvdiffrast的源码应该就是把法线处理了一下，（可能方便后面可视化吧）。然后会把pix_norm归一化处理。
+
+- https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_forward.py#L125，接着又计算了一遍有diffuse map情况下的值，跟上一步调用同样的函数，只不过传参不是constant_diffuse_texture，而是self.diffuse_texture；
+
+讲一下forward函数的返回值吧：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_forward.py#L141
+
+```python
+return self.pred_face, self.grey_pred_face, self.pred_depth, self.pix_norm, self.pred_mask
+```
+
+pred_face是包含diffuse map的渲染结果，grey_pred_face是无diffuse map的渲染结果（也就是diffuse map是纯白色），pred_depth，pix_norm,pred_mask则是比较常规的模型预测出来的结果，方便后面可视化。
+
+
+
+#### （b）回到train_step
+
+https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L32，在fitter.forward的时候接收到上面的五个返回值，然后对depth进行normalize处理（方便可视化），select_input_type是[norm,grey-rendered]中的随机一个，也就是我们不关心有贴图的结果。opt.use_view_adjust_prompt是true，所以text_z会被更新为：
+
+```python
+text_z = text_z[prompt_suffix(fitter.rotation)]
+```
+
+也就是加了一个front view/side view/back view的prompt说明，注意**这个阶段会对3DMM的生成结果进行随机的旋转和移动，光也是随机的，所以是依据fitter的rotation值来判断是正视/侧视等。**
+
+接着，**重点看这个**：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L82。
+
+```python
+loss = fitter.guidance.train_step(text_z, loss_input) # 1, 3, H, W
+```
+
+在geometry阶段中，loss仅有这一项组成，==这里面就是SDS loss的核心。==
+
+
+
+#### （c）loss的计算
+
+在这里：https://github.com/JiejiangWu/FaceG2E/blob/main/models/sd.py#L148。
+
+```python
+def train_step(self, text_embeddings, pred_rgb, guidance_scale=100,control_img=None):
+```
+
+也就是这里的text_embedding包含视角相关的prompt embedding的结果，而初始的pred_rgb正如DreamFusion这篇文章的思路，是nvdiffrast渲染得到的结果（随机视角，可能是norm或者是grey-rendered中的一个），这些作为SDS的输入。
+
+仔细看这个函数，发现跟SDS原仓库的代码基本一致，在`SDS总结.md`这篇笔记里面有类似的代码。这里没有使用controlnet，所以会调用这句：
+
+```python
+noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddings).sample
+```
+
+==回顾一下DreamFusion这篇文章，这里其实在用diffusion的能力预测噪声（使用unet去噪），然后使用了SpecifyGradient把梯度链连接起来。针对人脸细节生成这个任务可以尝试把这里的train_step中的SDS Loss计算方式更换为DreamFusion仓库中的最新版本，即用MSE Loss做trick。==
+
+> 其他比较重要的链接：https://zhuanlan.zhihu.com/p/687684435，比较有帮助。
 
 
 
 ### （5）保存中间结果的代码
+
+对应这里：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L443。暂时没有那么重要，等需要dump中间结果的时候用AutoDL边跑一下代码吧，应该能很快理解。
+
+
+
+## 2.Diffusion map贴图生成阶段
 
 
 
