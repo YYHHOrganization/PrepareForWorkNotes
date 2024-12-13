@@ -126,11 +126,13 @@ FaceG2E是一种渐进的文本到3D方法，首先生成一个高保真度的3D
 
 ![image-20240527110551174](./assets/image-20240527110551174.png)
 
+> 变量的解释：$z_t$是加了噪声的latent space的图片，$e$是把上一步的几何生成结果渲染到一张深度图$e$中，$y$是输入的prompt embedding之后的结果，$t$是时间戳，$\epsilon_{\phi_{dc}}$则是depth Controlnet，$w(t)$是一个与时间戳有关的权重函数，$I$是渲染得到的图像，$d$是：the facial texture map d is synthesized with a decoder: d = D(u). We take the decoder from VAE of Stable Diffusion [35] as D(·)， u denotes a image latent code for facial texture.也就是说我们其实优化$u$（$u$表示指导人脸texture生成的image latent code），即可通过SDS的公式最终优化到纹理的生成。
+
 几何纹理对齐的问题：
 
 ![image-20241024151319536](./assets/image-20241024151319536.png)
 
-我们提出的GaSDS解决了几何不对齐的问题，但是，在纹理中仍然存在诸如局部色彩失真或亮度不均的问题。==这是因为T2I模型缺乏纹理的先验知识，这阻碍了高质量纹理细节的合成。因此，我们提出了纹理先验SDS，以引入这样的纹理先验。受DreamFace[54]的启发，我们在纹理数据上训练扩散模型ϕtd1来估计纹理分布，从而提供先验。==我们的训练数据集包含500种纹理，包括经过处理的扫描数据和选定的合成数据[3]。与DreamFace不同，后者在训练中使用标记的文本，我们对所有纹理使用固定的文本关键字（例如，“面部纹理”）。由于ϕtd1的目标是作为先验来建模纹理分布，因此不需要纹理-文本对齐。我们还在YUV色彩空间上训练另一个ϕtd2以提升均匀亮度，如图3所示。我们在Stable Diffusion上对ϕtd1和ϕtd2进行微调。纹理先验SDS是用训练过的ϕtd1和ϕtd2进行公式化的：
+我们提出的GaSDS解决了几何不对齐的问题，但是，在纹理中仍然存在诸如局部色彩失真或亮度不均的问题。==这是因为T2I模型缺乏纹理的先验知识，这阻碍了高质量纹理细节的合成。因此，我们提出了纹理先验SDS（texture prior SDS），以引入这样的纹理先验。受DreamFace[54]的启发，我们在纹理数据上训练扩散模型ϕtd1来估计纹理分布，从而提供先验。==我们的训练数据集包含500种纹理，包括经过处理的扫描数据和选定的合成数据[3]。与DreamFace不同，后者在训练中使用标记的文本，我们对所有纹理使用固定的文本关键字（例如，“面部纹理”）。由于ϕtd1的目标是作为先验来建模纹理分布，因此不需要纹理-文本对齐。我们还在YUV色彩空间上训练另一个ϕtd2以提升均匀亮度，如图3所示。我们在Stable Diffusion上对ϕtd1和ϕtd2进行微调。纹理先验SDS是用训练过的ϕtd1和ϕtd2进行公式化的：
 
 ![image-20240527110831117](./assets/image-20240527110831117.png)
 
@@ -139,6 +141,8 @@ FaceG2E是一种渐进的文本到3D方法，首先生成一个高保真度的3D
 训练Texture生成的Diffusion网络是这样的：
 
 ![image-20241024151756848](./assets/image-20241024151756848.png)
+
+对应的代码分析见下面的“源码重要定位点”部分。由于代码未开源生成texture和生成YUV空间的texture的SD的训练代码，因此这里只有inference生成纹理的代码解读。
 
 
 
@@ -652,7 +656,11 @@ noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddi
 
 ==回顾一下DreamFusion这篇文章，这里其实在用diffusion的能力预测噪声（使用unet去噪），然后使用了SpecifyGradient把梯度链连接起来。针对人脸细节生成这个任务可以尝试把这里的train_step中的SDS Loss计算方式更换为DreamFusion仓库中的最新版本，即用MSE Loss做trick。==
 
-> 其他比较重要的链接：https://zhuanlan.zhihu.com/p/687684435，比较有帮助。
+> 其他比较重要的链接：https://zhuanlan.zhihu.com/p/687684435，比较有帮助。**还是没太看懂的话先这样吧，后面应该还会遇到。**
+>
+> 这篇文档也比较重要，可以阅读：https://pytorch.org/tutorials/beginner/basics/autogradqs_tutorial.html
+
+暂时可以理解为加噪声和UNet去噪的过程，不做梯度的更新和监测（因为不好做），只有图像到latent space的encoder$\partial{z}/\partial{I}$,以及图像相对于其参数的梯度$\partial{I}/\partial{\theta}$（因为图像是参数化渲染得到的，详见3DMM+nvdiffrast）需要被反向传播。
 
 
 
