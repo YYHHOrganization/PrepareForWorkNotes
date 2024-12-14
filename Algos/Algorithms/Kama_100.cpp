@@ -1,5 +1,6 @@
 #include<iostream>
 #include<vector>
+#include<queue>
 using namespace std;
 
 int dirs[4][2] = {0,1,0,-1,1,0,-1,0};
@@ -21,7 +22,25 @@ void dfs(const vector<vector<int>>& grid, vector<vector<int>>& visited, int x, i
 
 void bfs(const vector<vector<int>>& grid, vector<vector<int>>& visited, int x, int y, int& cnt)
 {
-    
+    queue<pair<int, int>> que;
+    que.push({x,y});
+    while(!que.empty())
+    {
+        pair<int, int> front = que.front();
+        que.pop();
+        for(int i=0;i<4;i++)
+        {
+            int xnew = front.first+dirs[i][0];
+            int ynew = front.second+dirs[i][1];
+            if(xnew<0 || xnew >= grid.size() || ynew<0 || ynew>=grid[0].size()) continue;
+            if(grid[xnew][ynew]==1 && !visited[xnew][ynew])
+            {
+                cnt++;
+                visited[xnew][ynew] = 1;
+                que.push({xnew, ynew});
+            }
+        }
+    }
 }
 
 int main()
@@ -44,7 +63,8 @@ int main()
             {
                 int cnt = 1; //先把自己算上
                 visited[i][j] = 1; //总是忘了写这句
-                dfs(grids, visited, i,j,cnt); 
+                //dfs(grids, visited, i,j,cnt); 
+                bfs(grids, visited, i,j,cnt);
                 if(cnt>res) res = cnt;
             }
         }

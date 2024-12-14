@@ -51,6 +51,7 @@
         "vector": "cpp",
         "complex": "cpp",
         "sstream": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "queue": "cpp"
     }
 }
