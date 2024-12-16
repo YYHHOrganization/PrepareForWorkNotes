@@ -23,7 +23,7 @@ int main()
     for(int i=1;i<v;i++) //一共v-1轮迭代，建立n-1条边
     {
         int tol = INT_MAX;
-        int index = -1;
+        int index = 1;
         //遍历minDist,找到最小的作为下一次的点
         for(int j=1;j<=v;j++)
         {

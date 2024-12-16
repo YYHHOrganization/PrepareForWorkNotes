@@ -52,6 +52,7 @@
         "complex": "cpp",
         "sstream": "cpp",
         "string": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "list": "cpp"
     }
 }
