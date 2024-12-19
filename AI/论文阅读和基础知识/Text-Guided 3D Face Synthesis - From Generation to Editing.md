@@ -584,7 +584,7 @@ rendered, grey_rendered, depth, norm, mask = fitter.forward()
 def forward(self,random_sample_view=True,render_latent=False,random_sample_light=True,render_origin_diffuse=False):
 ```
 
-- 第一句是`output_coeff = self.concat_coeff()`，对应函数体：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L145，作用就是把一些params连接在一起（`torch.cat([ID_para,EXP_para,TEX_para,ANGLES,GAMMAS,TRANSLATIONS],dim=1)`），对应的params见https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L78，concat_coeff的部分都是可训练的参数；沿着dim=1拼接后的size应该是[1，n]。
+- 第一句是`output_coeff = self.concat_coeff()`，对应函数体：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L145，作用就是把一些params连接在一起（`torch.cat([ID_para,EXP_para,TEX_para,ANGLES,GAMMAS,TRANSLATIONS],dim=1)`），对应的params见https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L78，concat_coeff的部分都是可训练的参数；沿着dim=1拼接后的size应该是[1，n]。==如果要做细节的话，可能这里要改。==
 
 - 接着是`self.update_shape()`，在这里：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_shape_util.py#L50。
 
@@ -671,6 +671,55 @@ noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddi
 
 
 ## 2.Diffusion map贴图生成阶段
+
+在看代码之前，先去回顾一下论文Methodology的贴图生成对应部分。读完回来看代码，从这里开始：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L240。对应此时的bash文件为：https://github.com/JiejiangWu/FaceG2E/blob/main/demo_texture_generation.sh。与Geometry部分类似的地方这里就不再重点说了，重点提一下新的内容。
+
+继续读main函数：
+
+- `employ_textureLDM `会被设置为`True`
+
+- `opt.guidance_type == 'stable-diffusion':`
+
+  - 会进这里：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L271。也就是这句：
+
+  ```python
+  guidance = StableDiffusion_w_texture(device, True, False, sd_version=opt.sd_version,
+                                                  textureLDM_path=opt.textureLDM_path,controlnet_name=opt.controlnet_name,textureLDM_yuv_path=opt.textureLDM_yuv_path)
+  ```
+
+  跟几何生成阶段不同之处在于使用了自己train的StableDiffusion_w_texture模型，该模型的init函数位置在：https://github.com/JiejiangWu/FaceG2E/blob/main/models/sd_textureLDM.py#L43。使用的sd_version是默认的2.1，`opt.textureLDM_path`放置了预训练好的权重参数（unet的权重），controlnet_name是depth，同时还有一个默认的textureLDM_yuv_path存放预训练好的YUV版本的diffusion的unet权重。
+
+  - 在StableDiffusion_w_texture的init函数中，首先从默认权重路径中加载普通texture模型的权重和YUV版本texture模型的权重，API可以参考Huggingface：https://huggingface.co/docs/diffusers/api/models/unet2d-cond
+  - 接着，会加载一个默认Huggingface上的controlnet-depth；
+  - 其他的与几何生成部分是一致的，schedular选择了DDIM，unet_traced并没有用上。
+
+- 回到main函数，vis_attn默认是false，所以在纹理生成阶段依然不会可视化出attention的结果。同时`opt.indices_to_alter = None`。
+- 进入到StageFitter的初始化逻辑，在**四、1.（1）**部分有对StageFitter进行介绍。纹理生成阶段的区别在于，diffuse_generation_type是latent，以及https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L64这里会把geometry阶段训练得到的shape加载出来（参考函数实现https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_io_util.py#L18，==如果要加入Deformation map的话这里很可能需要加入对应逻辑。==）。
+  - 在StageFitter初始化的时候，纹理生成阶段的优化参数只有：`self.optim_param = [self.diffuse_latent]`，这个tensor的shape是（1，4，64，64）
+- 回到main函数，会进入到这段逻辑：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L317，设置`fitter.random_view_with_choice = True`
+- 此时的prompt依旧类似于：a zoomed out DSLR photo of Emma Watson。**sds_input是rendered**；
+- 跟Geometry阶段一样，会把原始prompt+各个视角的版本分别embedding之后存起来。在https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L421，这一步中使用的优化器有些不同，炼丹需求。
+- 此时**重点又到了main函数的train_step里面，接下来会重点介绍。**
+
+
+
+### （1）训练一个step的代码
+
+```python
+loss = train_step(fitter,text , text_z,static_text_z, opt, sds_input=sds_input,employ_textureLDM=fitter.employ_textureLDM, iter_step=iter_step, total_steps=total_steps,
+                            attention_store=guidance.attentionStore,indices_to_alter=opt.indices_to_alter)
+```
+
+这里的sds_input是rendered，employ_texturerLDM是true，attention_store和indices_to_alter则都是None。
+
+- 接着逻辑进到这里：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L46，`latent_sds_steps` 是200，而总的step是401，意味着train_step为前一半的时候`latent_sds = True`，为后一半的时候`latent_sds=False`。
+- 接着，依旧是进入到fitter.forward函数（https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_forward.py#L51），得到一张渲染图。
+  - 具体地，在`update_shape`的时候，会利用dp_map中的内容：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_shape_util.py#L53，==在做细节的时候大概率要保证dp_map中有正确的内容。==，看这里（https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_shape_util.py#L46），也就是保证dp_tensor中有内容。但看这里：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L92，==dp_tensor会被初始化为随机值，如果是geometry->细节->texture的生成顺序的话，记得dp_tensor应该用前面生成出来的结果。==
+  - 
+
+
+
+
 
 
 
