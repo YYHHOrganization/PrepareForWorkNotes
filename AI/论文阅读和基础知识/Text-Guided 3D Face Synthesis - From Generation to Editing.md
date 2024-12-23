@@ -695,7 +695,7 @@ noise_pred = self.unet(latent_model_input, t, encoder_hidden_states=text_embeddi
 
 - 回到main函数，vis_attn默认是false，所以在纹理生成阶段依然不会可视化出attention的结果。同时`opt.indices_to_alter = None`。
 - 进入到StageFitter的初始化逻辑，在**四、1.（1）**部分有对StageFitter进行介绍。纹理生成阶段的区别在于，diffuse_generation_type是latent，以及https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L64这里会把geometry阶段训练得到的shape加载出来（参考函数实现https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_io_util.py#L18，==如果要加入Deformation map的话这里很可能需要加入对应逻辑。==）。
-  - 在StageFitter初始化的时候，纹理生成阶段的优化参数只有：`self.optim_param = [self.diffuse_latent]`，这个tensor的shape是（1，4，64，64）
+  - 在StageFitter初始化的时候，纹理生成阶段的优化参数只有：`self.optim_param = [self.diffuse_latent]`，这个tensor的shape是（1，4，64，64）（注：`self.diffuse_generation_type='latent'`）
 - 回到main函数，会进入到这段逻辑：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L317，设置`fitter.random_view_with_choice = True`
 - 此时的prompt依旧类似于：a zoomed out DSLR photo of Emma Watson。**sds_input是rendered**；
 - 跟Geometry阶段一样，会把原始prompt+各个视角的版本分别embedding之后存起来。在https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L421，这一步中使用的优化器有些不同，炼丹需求。
@@ -715,11 +715,7 @@ loss = train_step(fitter,text , text_z,static_text_z, opt, sds_input=sds_input,e
 - 接着逻辑进到这里：https://github.com/JiejiangWu/FaceG2E/blob/main/main.py#L46，`latent_sds_steps` 是200，而总的step是401，意味着train_step为前一半的时候`latent_sds = True`，为后一半的时候`latent_sds=False`。
 - 接着，依旧是进入到fitter.forward函数（https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_forward.py#L51），得到一张渲染图。
   - 具体地，在`update_shape`的时候，会利用dp_map中的内容：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_shape_util.py#L53，==在做细节的时候大概率要保证dp_map中有正确的内容。==，看这里（https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/_shape_util.py#L46），也就是保证dp_tensor中有内容。但看这里：https://github.com/JiejiangWu/FaceG2E/blob/main/models/stage_fitter/__init__.py#L92，==dp_tensor会被初始化为随机值，如果是geometry->细节->texture的生成顺序的话，记得dp_tensor应该用前面生成出来的结果。==
-  - 
-
-
-
-
+  - 在正常做diffusion map生成的时候，dp_tensor固定住不会作为优化参数，所以dp_tensor一直是0，渲染结果不会受到dp_tensor的影响。
 
 
 
@@ -747,3 +743,11 @@ loss = train_step(fitter,text , text_z,static_text_z, opt, sds_input=sds_input,e
 
 - （b）关于SD中schedular的介绍：https://medium.com/invokeai/schedulers-in-ai-image-generation-2ca6d7458f17，也可以参考这篇链接：https://blog.csdn.net/Lizhi_Tech/article/details/133928749
 - （c）
+
+
+
+# 六、实验阶段
+
+## 1.loss不收敛
+
+可以参考：【1】https://zhuanlan.zhihu.com/p/420053831
