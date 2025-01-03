@@ -1,0 +1,10 @@
+^D:\NOTES\ALGOS\BUILD\CMAKEFILES\59EF9E3DC91414EE5C59E1E90FB5EDBA\GENERATE.STAMP.RULE
+setlocal
+D:\OtherUsefulSoftwares\cmake\bin\cmake.exe -SD:/notes/Algos/Cpp_GI -BD:/notes/Algos/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/notes/Algos/build/PathTracingDemo.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

@@ -1,0 +1,10 @@
+^D:\NOTES\ALGOS\CPP_GI\CMAKELISTS.TXT
+setlocal
+D:\OtherUsefulSoftwares\cmake\bin\cmake.exe -SD:/notes/Algos/Cpp_GI -BD:/notes/Algos/build --check-stamp-file D:/notes/Algos/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

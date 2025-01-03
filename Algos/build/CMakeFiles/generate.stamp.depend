@@ -1,0 +1,25 @@
+# CMake generation dependency list for this directory.
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeCInformation.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeCXXInformation.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeCommonLanguageInclude.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeGenericSystem.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeInitializeConfigs.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeLanguageInformation.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeRCInformation.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeSystemSpecificInformation.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/CMakeSystemSpecificInitialize.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Compiler/CMakeCommonCompilerMacros.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Compiler/MSVC-C.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Compiler/MSVC-CXX.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Compiler/MSVC.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Platform/Windows-Initialize.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Platform/Windows-MSVC-C.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Platform/Windows-MSVC-CXX.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Platform/Windows-MSVC.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Platform/Windows.cmake
+D:/OtherUsefulSoftwares/cmake/share/cmake-3.30/Modules/Platform/WindowsPaths.cmake
+D:/notes/Algos/Cpp_GI/CMakeLists.txt
+D:/notes/Algos/build/CMakeFiles/3.30.1/CMakeCCompiler.cmake
+D:/notes/Algos/build/CMakeFiles/3.30.1/CMakeCXXCompiler.cmake
+D:/notes/Algos/build/CMakeFiles/3.30.1/CMakeRCCompiler.cmake
+D:/notes/Algos/build/CMakeFiles/3.30.1/CMakeSystem.cmake

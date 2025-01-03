@@ -53,6 +53,25 @@
         "sstream": "cpp",
         "string": "cpp",
         "queue": "cpp",
-        "list": "cpp"
-    }
+        "list": "cpp",
+        "algorithm": "cpp",
+        "array": "cpp",
+        "deque": "cpp",
+        "optional": "cpp",
+        "random": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "xhash": "cpp",
+        "chrono": "cpp",
+        "forward_list": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "mutex": "cpp",
+        "ratio": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
+    },
+    "cmake.sourceDirectory": "D:/notes/Algos/Cpp_GI"
 }

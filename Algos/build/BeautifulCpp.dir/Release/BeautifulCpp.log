@@ -1,0 +1,109 @@
+﻿  main.cpp
+D:\notes\Algos\Cpp_GI\Triangle.hpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Material.hpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\global.hpp(9,23): warning C4305: “初始化”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\global.hpp(29,46): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\global.hpp(31,17): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\global.hpp(46,13): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\OBJ_Loader.hpp(946,33): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Ray.hpp(12,68): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Ray.hpp(12,52): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Ray.hpp(12,36): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Ray.hpp(18,65): warning C4244: “参数”: 从“double”转换到“const float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(20,41): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(20,33): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(20,25): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(21,41): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(21,33): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(21,25): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(102,13): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(103,13): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Scene.hpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Light.hpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Scene.hpp(14,60): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Scene.hpp(14,51): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Scene.hpp(14,41): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Scene.hpp(16,29): warning C4305: “初始化”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Triangle.hpp(185,23): warning C4244: “初始化”: 从“int”转换到“float”，可能丢失数据
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Triangle.hpp(188,44): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Triangle.hpp(188,37): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Triangle.hpp(188,30): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Triangle.hpp(187,44): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Triangle.hpp(187,37): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Triangle.hpp(187,30): warning C4305: “参数”: 从“double”到“float”截断
+  (编译源文件“../Cpp_GI/main.cpp”)
+  
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(20): warning C4756: 常量算法中溢出
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(21): warning C4756: 常量算法中溢出
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(20): warning C4756: 常量算法中溢出
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(21): warning C4756: 常量算法中溢出
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(20): warning C4756: 常量算法中溢出
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(21): warning C4756: 常量算法中溢出
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(21): warning C4756: 常量算法中溢出
+D:\notes\Algos\Cpp_GI\Bounds3.hpp(20): warning C4756: 常量算法中溢出
+  BeautifulCpp.vcxproj -> D:\notes\Algos\build\Release\BeautifulCpp.exe
