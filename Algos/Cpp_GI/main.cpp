@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     scene.buildBVH();
 
     Renderer r;
-    int spp = 1024;
+    int spp = 32;
     if (argc > 1)
     {
         spp = std::atoi(argv[1]);
