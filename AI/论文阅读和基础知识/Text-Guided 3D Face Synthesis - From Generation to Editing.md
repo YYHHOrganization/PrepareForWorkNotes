@@ -1,6 +1,10 @@
 # Text-Guided 3D Face Synthesis - From Generation to Editing
 
-
+> 前置可以阅读的内容：
+>
+> 【1】https://zhuanlan.zhihu.com/p/161828142
+>
+> 
 
 # 一、大概内容
 

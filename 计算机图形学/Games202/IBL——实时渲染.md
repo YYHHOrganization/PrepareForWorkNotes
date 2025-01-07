@@ -356,10 +356,187 @@ void main()
 
 ```
 
-直接看上述代码的话，估计会有不少非常迷惑的内容，接下来则对比较重要的地方进行说明。
+在实时渲染的时候，需要用$R$方向来进行采样。我们要用直接看上述代码的话，估计会有不少非常迷惑的内容，接下来则对比较重要的地方进行说明。
 
 
 
 ## 2.一些额外扩展内容介绍
 
 这部分主要介绍一下上面的Pre-filter environment map过程中的一些细节。
+
+### （1）Hammersley序列
+
+在上面的代码中，有这样的一个函数：`Hammersley`。这里就牵扯到一个叫做**低差异序列**的内容。无论是离线渲染还是实时渲染，一个合理的采样序列都是有必要的。在做IBL的过程中，我们需要随机采样若干个随机的0~1之间的$\xi_1,\xi_2$作为半球采样的指导量，因此这个”随机选取0到1之间值“的质量就比较关键了。下面是一组采样点的结果：
+
+![image-20250107222249126](./assets/image-20250107222249126.png)
+
+直观来看，明显右侧的采样结果”更好“。如何用数学来衡量这件事呢？为了更好地衡量一个采样序列的质量，数学家创造了**Discrepancy/差异值** 的概念， 来确定一系列n维采样点的质量。我们的目标就是寻找合适的算法,，产生**低差异采样序列/Low Discrepancy Sequence**。
+
+> 更具体地关于差异的定义和低差异序列可以参考这篇文章：https://zhuanlan.zhihu.com/p/343666731
+
+回到IBL的话题，在工业界，Hammersley低差异序列是比较常用的一个采样序列，其作用就在于生成更好的采样结果，函数实现就是上面代码中的那个函数，更多的内容在本节里就不再展开了。
+
+
+
+## 3.Specular BRDF项的处理——BRDF LUT
+
+在上一节中，我们把镜面反射项待计算的积分变成了如下的形式：
+
+![image-20250107223140981](./assets/image-20250107223140981.png)
+
+这里面的$L_c^*(R)$就是pre-filter environment map步骤中计算出来的内容，于是剩下要计算的部分就是：
+$$
+\int_\Omega f_s(\omega_i, \omega_o)n · \omega_i d\omega_i
+$$
+可以想到，这个积分项包含$\omega_o$，$n$，$F_0$（由金属度和albedo来决定）和粗糙度$\alpha$这么多未知项。由于在Cook-Torrance的PBR模型中，我们使用的GGX是各向同性的，因此我们只需要知道$\omega_o$和$n$的夹角$\theta$即可。此时可以简化为三个变量：$\theta$，$F_0$（金属度和albedo决定），以及粗糙度$\alpha$。
+
+接下来，考虑近似处理，把$F_0$移出积分项：
+
+![image-20250107223802706](./assets/image-20250107223802706.png)
+
+我们将积分拆成了两部分 scale 和 bias，这两项中都消去了$F$项（回忆一下：$f_s$中有一个$F$项会被消去）。此时变量只剩下$\theta$和$\alpha$。不能再约分了，那我们就用这两项来求解。为了方便，使用$\cos\theta$来计算，这样两个变量的范围就都是[0，1]了。
+
+scale 和 bias 可以用根据法线分布函数进行重要性采样的蒙特卡洛积分来解决。NDF的GGX重要性采样在前面有进行介绍。推导如下（这里以scale项为例）：
+$$
+$\begin{aligned} \text { scale } & \approx \frac{1}{N} \sum_k^N \frac{\frac{D\left(\omega_h^{(k)}\right) G\left(\omega_o, \omega_i^{(k)}\right)}{4\left(\omega_o \cdot n\right)\left(\omega_i^{(k)} \cdot n\right)}\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)\left(\omega_i^{(k)} \cdot n\right)}{p\left(\omega_i^{(k)}\right)} \\ & =\frac{1}{N} \sum_k^N \frac{\frac{D\left(\omega_h^{(k)}\right) G\left(\omega_o, \omega_i^{(k)}\right)}{4\left(\omega_o \cdot n\right)\left(\omega_i^{(k)} \cdot n\right)}\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)\left(\omega_i^{(k)} \cdot n\right)}{\frac{D\left(\omega_h^{(k)}\right)\left(\omega_h^{(k)} \cdot n\right)}{4\left(\omega_o \cdot \omega_h^{(k)}\right)}} \\ & =\frac{1}{N} \sum_k^N \frac{G\left(\omega_o, \omega_i^{(k)}\right)\left(\omega_o \cdot \omega_h^{(k)}\right)\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)}{\left(\omega_o \cdot n\right)\left(\omega_h^{(k)} \cdot n\right)}\end{aligned}$
+$$
+
+
+bias 也是类似。回顾纹理的章节，其实我们可以把这两个值预计算好，以R通道的值和B通道的值存储在一张纹理当中。这里scale 放在红色通道， bias 放在绿色通道。这个纹理称为 BRDF LUT，有确定的BRDF我们就可以生成出来这一张BRDF LUT。实际上，在确定好BRDF的计算式之后，这张预计算结果可以直接以图片方式保存下来，当然也可以通过CPU或者GPU进行预计算，这张图如下：
+
+![image-20250107224433903](./assets/image-20250107224433903.png)
+
+在实时渲染的时候，就是用$F_0*scale+bias$即可。
+
+
+
+### （1）重要代码
+
+下面这段glsl的代码展示了如何生成上面的BRDF LUT：
+
+```glsl
+#version 330 core
+out vec2 FragColor;
+in vec2 TexCoords;
+
+const float PI = 3.14159265359;
+// ----------------------------------------------------------------------------
+// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+// efficient VanDerCorpus calculation.
+float RadicalInverse_VdC(uint bits) 
+{
+     bits = (bits << 16u) | (bits >> 16u);
+     bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+     bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+     bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+     bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+     return float(bits) * 2.3283064365386963e-10; // / 0x100000000
+}
+// ----------------------------------------------------------------------------
+vec2 Hammersley(uint i, uint N)
+{
+	return vec2(float(i)/float(N), RadicalInverse_VdC(i));
+}
+// ----------------------------------------------------------------------------
+vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
+{
+	float a = roughness*roughness;
+	
+	float phi = 2.0 * PI * Xi.x;
+	float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a*a - 1.0) * Xi.y));
+	float sinTheta = sqrt(1.0 - cosTheta*cosTheta);
+	
+	// from spherical coordinates to cartesian coordinates - halfway vector
+	vec3 H;
+	H.x = cos(phi) * sinTheta;
+	H.y = sin(phi) * sinTheta;
+	H.z = cosTheta;
+	
+	// from tangent-space H vector to world-space sample vector
+	vec3 up          = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+	vec3 tangent   = normalize(cross(up, N));
+	vec3 bitangent = cross(N, tangent);
+	
+	vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+	return normalize(sampleVec);
+}
+// ----------------------------------------------------------------------------
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    // note that we use a different k for IBL
+    float a = roughness;
+    float k = (a * a) / 2.0;
+
+    float nom   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return nom / denom;
+}
+// ----------------------------------------------------------------------------
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
+}
+// ----------------------------------------------------------------------------
+vec2 IntegrateBRDF(float NdotV, float roughness)
+{
+    vec3 V;
+    V.x = sqrt(1.0 - NdotV*NdotV);
+    V.y = 0.0;
+    V.z = NdotV;
+
+    float A = 0.0;
+    float B = 0.0; 
+
+    vec3 N = vec3(0.0, 0.0, 1.0);
+    
+    const uint SAMPLE_COUNT = 1024u;
+    for(uint i = 0u; i < SAMPLE_COUNT; ++i)
+    {
+        // generates a sample vector that's biased towards the
+        // preferred alignment direction (importance sampling).
+        vec2 Xi = Hammersley(i, SAMPLE_COUNT);
+        vec3 H = ImportanceSampleGGX(Xi, N, roughness);
+        vec3 L = normalize(2.0 * dot(V, H) * H - V);
+
+        float NdotL = max(L.z, 0.0);
+        float NdotH = max(H.z, 0.0);
+        float VdotH = max(dot(V, H), 0.0);
+
+        if(NdotL > 0.0)
+        {
+            float G = GeometrySmith(N, V, L, roughness);
+            float G_Vis = (G * VdotH) / (NdotH * NdotV);
+            float Fc = pow(1.0 - VdotH, 5.0);
+
+            A += (1.0 - Fc) * G_Vis;
+            B += Fc * G_Vis;
+        }
+    }
+    A /= float(SAMPLE_COUNT);
+    B /= float(SAMPLE_COUNT);
+    return vec2(A, B);
+}
+// ----------------------------------------------------------------------------
+void main() 
+{
+    vec2 integratedBRDF = IntegrateBRDF(TexCoords.x, TexCoords.y);
+    FragColor = integratedBRDF;
+}
+```
+
+针对上述的glsl代码，有如下几点说明：
+
+- （1）在生成这张LUT图的时候，我们的每个纹理坐标的(X,Y)分别表示($n · \omega_o, \alpha$)。
+
+读者可以校对一下，会发现推导过程和代码是完全对应的上的。
+
+
+
+# 三、总体流程说明
+
