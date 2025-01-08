@@ -250,7 +250,7 @@ $$
 out vec4 FragColor;
 in vec3 WorldPos;
 
-uniform samplerCube environmentMap;
+uniform samplerCube environmentMap;  //这里就是正常的场景Cubemap
 uniform float roughness;
 
 const float PI = 3.14159265359;
@@ -398,7 +398,7 @@ $$
 
 scale 和 bias 可以用根据法线分布函数进行重要性采样的蒙特卡洛积分来解决。NDF的GGX重要性采样在前面有进行介绍。推导如下（这里以scale项为例）：
 $$
-$\begin{aligned} \text { scale } & \approx \frac{1}{N} \sum_k^N \frac{\frac{D\left(\omega_h^{(k)}\right) G\left(\omega_o, \omega_i^{(k)}\right)}{4\left(\omega_o \cdot n\right)\left(\omega_i^{(k)} \cdot n\right)}\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)\left(\omega_i^{(k)} \cdot n\right)}{p\left(\omega_i^{(k)}\right)} \\ & =\frac{1}{N} \sum_k^N \frac{\frac{D\left(\omega_h^{(k)}\right) G\left(\omega_o, \omega_i^{(k)}\right)}{4\left(\omega_o \cdot n\right)\left(\omega_i^{(k)} \cdot n\right)}\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)\left(\omega_i^{(k)} \cdot n\right)}{\frac{D\left(\omega_h^{(k)}\right)\left(\omega_h^{(k)} \cdot n\right)}{4\left(\omega_o \cdot \omega_h^{(k)}\right)}} \\ & =\frac{1}{N} \sum_k^N \frac{G\left(\omega_o, \omega_i^{(k)}\right)\left(\omega_o \cdot \omega_h^{(k)}\right)\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)}{\left(\omega_o \cdot n\right)\left(\omega_h^{(k)} \cdot n\right)}\end{aligned}$
+\begin{aligned} \text { scale } & \approx \frac{1}{N} \sum_k^N \frac{\frac{D\left(\omega_h^{(k)}\right) G\left(\omega_o, \omega_i^{(k)}\right)}{4\left(\omega_o \cdot n\right)\left(\omega_i^{(k)} \cdot n\right)}\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)\left(\omega_i^{(k)} \cdot n\right)}{p\left(\omega_i^{(k)}\right)} \\ & =\frac{1}{N} \sum_k^N \frac{\frac{D\left(\omega_h^{(k)}\right) G\left(\omega_o, \omega_i^{(k)}\right)}{4\left(\omega_o \cdot n\right)\left(\omega_i^{(k)} \cdot n\right)}\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)\left(\omega_i^{(k)} \cdot n\right)}{\frac{D\left(\omega_h^{(k)}\right)\left(\omega_h^{(k)} \cdot n\right)}{4\left(\omega_o \cdot \omega_h^{(k)}\right)}} \\ & =\frac{1}{N} \sum_k^N \frac{G\left(\omega_o, \omega_i^{(k)}\right)\left(\omega_o \cdot \omega_h^{(k)}\right)\left(1-\left(1-\omega_o \cdot \omega_h^{(k)}\right)^5\right)}{\left(\omega_o \cdot n\right)\left(\omega_h^{(k)} \cdot n\right)}\end{aligned}
 $$
 
 
@@ -486,9 +486,9 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 vec2 IntegrateBRDF(float NdotV, float roughness)
 {
     vec3 V;
-    V.x = sqrt(1.0 - NdotV*NdotV);
+    V.x = sqrt(1.0 - NdotV*NdotV);  //sin
     V.y = 0.0;
-    V.z = NdotV;
+    V.z = NdotV;   	//cos
 
     float A = 0.0;
     float B = 0.0; 
@@ -539,4 +539,546 @@ void main()
 
 
 # 三、总体流程说明
+
+以下介绍在实现IBL的过程中需要注意的事项以及总体的算法流程。首先介绍的是Shader的部分，在实现IBL的时候，如果包含预计算，大概有6个shader需要实现：
+
+- （1）PBR shader：渲染PBR+IBL的效果所需要的，也就是使用预计算的结果进行实时渲染的关键shader；
+- （2）irradianceShader：用作IBL的漫反射项的预计算shader；
+- （3）prefilterShader：回顾IBL Specular项的Split Sum方法，这个shader对应第一项，也就是上面的pre-filter environment map的预计算过程；
+- （4）BRDF shader：依旧是Split Sum方法，这个shader用于计算BRDF LUT；
+- （5）equirectangularToCubemapShader：这个算是一个工具shader，由于我们导入的环境贴图是hdr的格式，我们使用的贴图使用**等距柱状投影**方式，需要依据前面的Cubemap章节的基础知识，将其转换为Cubemap，因此需要这样一个Shader；
+- （6）background shader：将天空盒Cubemap作为背景呈现在渲染结果上；
+
+以下分别介绍上面的shader，并介绍总体流程。
+
+
+
+## 1.EquirectangularToCubemap
+
+先来看一下我们使用的hdr贴图是什么样的：
+
+![image-20250108111749097](./assets/image-20250108111749097.png)
+
+在 PBR 渲染管线中考虑高动态范围(High Dynamic Range, HDR)的场景光照非常重要。由于 PBR 的大部分输入基于实际物理属性和测量，因此为入射光值找到其物理等效值是很重要的。如果不在HDR渲染环境下工作，就无法正确指定每个光的相对强度。
+
+因此，PBR 和 HDR 需要密切合作。回忆一下前面的Cubemap章节，我们的Cubemap的每个面的像素颜色并不是在线性空间下，这属于低动态范围(Low Dynamic Range, LDR)。在渲染的时候由于做了gamma校正，因此会比较适合于视觉的输出，但在PBR渲染管线下，我们需要**线性值**。
+
+
+
+### （1）hdr格式
+
+​	谈及辐射度的文件格式，辐射度文件的格式（扩展名为 .hdr）存储了一张完整的立方体贴图，所有六个面数据都是浮点数，允许指定 0.0 到 1.0 范围之外的颜色值，以使光线具有正确的颜色强度。这个文件格式使用了一个技巧来存储每个浮点值：它并非直接存储每个通道的 32 位数据，而是每个通道存储 8 位，再以 alpha 通道存放指数——虽然确实会导致精度损失，但是非常有效率，但也需要解析程序将每种颜色重新转换为它们的浮点数等效值。
+
+​	这时我们可能会有所疑惑，上面这张示意图明明不是立方体贴图？很多时候，我们会从球体投影到平面上，这样就可以将环境信息存储到一张等距柱状投影图(Equirectangular Map) 中。在Cubemap章节也有提到，这样投影会导致水平方向的分辨率比较高，但顶部和底部的分辨率则比较低。一般情况下，这是可以接受的，因为对于几乎所有渲染器来说，大部分有意义的光照和环境信息都在水平视角附近方向。
+
+​	加载hdr图像是一个比较麻烦的过程，可以考虑用类似于`stb_image.h`这样的头文件库函数帮助加载。`stb_image.h `自动将 HDR 值映射到一个浮点数列表：默认情况下，每个通道32位，每个颜色 3 个通道。
+
+
+
+### （2）转移到Cubemap
+
+要将等距柱状投影图转换为Cubemap，我们需要渲染一个（单位）立方体，并从内部将等距柱状图投影到立方体的每个面，并将立方体的六个面的图像构造成Cubemap。对于这个立方体而言，顶点着色器只是做最基本的空间变换，并将其模型坐标作为 3D 采样向量传递给片段着色器。
+
+顶点着色器如下：
+```glsl
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+out vec3 WorldPos;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+void main()
+{
+    WorldPos = aPos;  
+    gl_Position =  projection * view * vec4(WorldPos, 1.0);
+}
+```
+
+而在片元着色器当中，我们就需要渲染得到立方体Cube的每个面的颜色，方法类似于将等距柱状投影图整齐地折叠到立方体的每个面。这里暂时并不需要我们关注过多细节，涉及到一些数学知识：
+
+```glsl
+#version 330 core
+out vec4 FragColor;
+in vec3 WorldPos;
+
+uniform sampler2D equirectangularMap;
+
+const vec2 invAtan = vec2(0.1591, 0.3183);
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
+    uv *= invAtan;
+    uv += 0.5;
+    return uv;
+}
+
+void main()
+{		
+    vec2 uv = SampleSphericalMap(normalize(WorldPos));
+    vec3 color = texture(equirectangularMap, uv).rgb;
+    
+    FragColor = vec4(color, 1.0);
+}
+```
+
+假定我们用上述Shader渲染一个场景中心的立方体，会得到下面的结果（图片来自Learn OpenGL）：
+
+![image-20250108113308916](./assets/image-20250108113308916.png)
+
+这就说明了我们确实成功投影到了立方体上。但我们还需要将源HDR图像转换为立方体贴图纹理。为了实现这一点，我们必须对同一个立方体渲染六次，每次面对立方体的一个面，并用Framebuffer对象记录其结果：我们采用Framebuffer的颜色值并围绕立方体贴图的每个面切换纹理目标，直接将场景渲染到立方体贴图的一个面上。整个过程只需要做一次，不需要在渲染的loop来完成，此时我们就可以把原来hdr贴图所代表的环境存储到Cubemap的六个面当中，方便后面直接使用。
+
+这一部分的核心代码如下（以OpenGL为例）：
+
+```c++
+//step 1：生成对应的FBO和RBO
+unsigned int captureFBO, captureRBO;
+glGenFramebuffers(1, &captureFBO);
+glGenRenderbuffers(1, &captureRBO);
+
+glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);  
+
+//step 2：为Cubemap的六个面预先分配内存
+unsigned int envCubemap; 
+glGenTextures(1, &envCubemap);
+glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+for (unsigned int i = 0; i < 6; ++i)
+{
+    // note that we store each face with 16 bit floating point values
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 
+                 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+}
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+//step 3：
+//将等距柱状 2D 纹理捕捉到立方体贴图的面上
+//面向立方体六个面设置六个不同的视图矩阵，给定投影矩阵的 fov 为 90 度以捕捉整个面，并渲染立方体六次，将结果存储在浮点帧缓冲中
+glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+glm::mat4 captureViews[] = 
+{
+   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+   glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+};
+
+// convert HDR equirectangular environment map to cubemap equivalent
+equirectangularToCubemapShader.use();
+equirectangularToCubemapShader.setInt("equirectangularMap", 0);
+equirectangularToCubemapShader.setMat4("projection", captureProjection);
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, hdrTexture);
+
+glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
+glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+for (unsigned int i = 0; i < 6; ++i)
+{
+    equirectangularToCubemapShader.setMat4("view", captureViews[i]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
+                           GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    renderCube(); // renders a 1x1 cube
+}
+glBindFramebuffer(GL_FRAMEBUFFER, 0);  
+```
+
+完成了上面的部分之后，envCubemap 就应该是原 HDR 图的Cubemap版。接下来我们要做的就是将这个Cubemap作为背景板渲染在场景中。
+
+
+
+## 2.Background渲染
+
+这个是比较容易的，实际上就是正常Cubemap的渲染过程。这个需要在渲染的loop当中每帧调用，依旧是渲染一个普通的Cube就行。但在前面的Cubemap章节中我们有提到设置`GL_LEQUAL`以及在顶点着色器中使用`gl_Position = clipPos.xyww;`这样的渲染Cubemap技巧，以使得渲染的立方体片段的深度值总是 1.0，即最大深度。
+
+渲染Cubemap作为背景的顶点着色器如下：
+
+```glsl
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+out vec3 WorldPos;
+
+void main()
+{
+    WorldPos = aPos;
+
+	mat4 rotView = mat4(mat3(view));
+	vec4 clipPos = projection * rotView * vec4(WorldPos, 1.0);
+
+	gl_Position = clipPos.xyww; //注意这句，是渲染Cubemap作为背景的trick
+}
+```
+
+> 我们使用插值的立方体顶点坐标对环境贴图进行采样，这些坐标会直接对应于正确的采样方向向量。注意，相机的平移分量被忽略掉了，在立方体上渲染此着色器会得到非移动状态下的环境贴图。
+
+片元着色器也是正常的Cubemap采样即可：
+
+```glsl
+#version 330 core
+out vec4 FragColor;
+in vec3 WorldPos;
+uniform samplerCube environmentMap;
+
+void main()
+{		
+    vec3 envColor = textureLod(environmentMap, WorldPos, 0).rgb;
+    
+    // HDR tonemap and gamma correct
+    envColor = envColor / (envColor + vec3(1.0));
+    envColor = pow(envColor, vec3(1.0/2.2)); 
+    
+    FragColor = vec4(envColor, 1.0);
+}
+```
+
+> 说明：关于gamma校正和tonemapping：
+>
+> 由于环境贴图使用HDR色彩空间，而我们的Framebuffer使用的是LDR色彩空间，因此需要做一步tonemap的操作：`envColor = envColor / (envColor + vec3(1.0));`。同时，默认几乎所有 HDR 图都处于线性颜色空间中，因此在写入默认的framebuffer前还需要进行gamma校正：`envColor = pow(envColor, vec3(1.0/2.2))`，以获得在渲染的时候的比较好的视觉体验。
+
+在实时渲染中，这个作为背景板的Cubemap background渲染结果如下：
+
+![image-20250108115715301](./assets/image-20250108115715301.png)
+
+在转动视角的时候，也可以发现背景得到了很好地渲染。接下来的部分，我们会复习irradianceShader，prefilter shader和BRDF Shader的渲染流程（前面已经把核心的片元着色器介绍完了）。
+
+
+
+## 3.IBL预计算部分
+
+注意：预计算的部分都在渲染的loop之前完成，意味着我们只需要计算一次（除非需要显式更新）。
+
+### （1）irradiance map
+
+这一项预计算对应IBL的漫反射部分，OpenGL的代码如下：
+```c++
+// pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
+// -----------------------------------------------------------------------------
+irradianceShader.use();
+irradianceShader.setInt("environmentMap", 0);
+irradianceShader.setMat4("projection", captureProjection);
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+
+glViewport(0, 0, 32, 32); // don't forget to configure the viewport to the capture dimensions.
+glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+for (unsigned int i = 0; i < 6; ++i)
+{
+    irradianceShader.setMat4("view", captureViews[i]);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    renderCube_ibl();
+}
+glBindFramebuffer(GL_FRAMEBUFFER, 0);
+```
+
+对应shader的顶点着色器跟之前cubemap的是完全一致的，而片元着色器在前面已经进行了讲解。结果会被存储在irrandiance map的六个面中，而irrandiance map也是一个Cubemap。
+
+
+
+### （2）Pre-filter environment map
+
+与irradiance map的生成过程类似，也是生成一张cubemap，对六个面分别渲染。只不过这里我们需要对Cubemap开启mipmap（因为在前面的讲解中，我们提到了这一步骤要考虑粗糙度带来的影响）。在shader中，顶点着色器依旧是普通的Cubemap顶点着色器，而片元着色器则是前面有介绍过的计算pre-filter environment map的片元着色器。
+
+这部分OpenGL的代码如下：
+
+```c++
+//specular情况下新增：prefilter
+// pbr: create a pre-filter cubemap, and re-scale capture FBO to pre-filter scale.
+// --------------------------------------------------------------------------------
+unsigned int prefilterMap;
+glGenTextures(1, &prefilterMap);
+glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+for (unsigned int i = 0; i < 6; ++i)
+{
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
+}
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // be sure to set minification filter to mip_linear 
+glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+// generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
+glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+//走的是prefilter.fs这个shader,vs就是最简单的cube.vs
+prefilterShader.use();
+prefilterShader.setInt("environmentMap", 0);
+prefilterShader.setMat4("projection", captureProjection);
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+
+glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+unsigned int maxMipLevels = 5;
+for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
+{
+    // resize framebuffer according to mip-level size.
+    unsigned int mipWidth = static_cast<unsigned int>(128 * std::pow(0.5, mip));
+    unsigned int mipHeight = static_cast<unsigned int>(128 * std::pow(0.5, mip));
+    glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+    glViewport(0, 0, mipWidth, mipHeight);
+
+    float roughness = (float)mip / (float)(maxMipLevels - 1);
+    prefilterShader.setFloat("roughness", roughness);
+    for (unsigned int i = 0; i < 6; ++i)  //这里指的是cubeMap的六个面
+    {
+        prefilterShader.setMat4("view", captureViews[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMap, mip);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderCube_ibl();
+    }
+}
+glBindFramebuffer(GL_FRAMEBUFFER, 0);
+```
+
+
+
+### （3）BRDF LUT
+
+对于BRDF LUT项，我们在渲染的时候实际上会用固定的相机和镜头渲染一个quad，并将渲染结果存储在一张buffer中，作为BRDF LUT的预计算结果。如果这个渲染的quad是NDC空间下的1x1 XY quad，那么BRDF LUT shader对应的顶点着色器甚至可以这样写：
+```glsl
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+
+void main()
+{
+    TexCoords = aTexCoords;
+	gl_Position = vec4(aPos, 1.0);
+}
+```
+
+片元着色器在前面也有进行介绍。
+
+
+
+## 4.实时渲染——PBR
+
+完成了上面所有的预计算部分，以及实时渲染天空盒的部分后，接下来最后整合预计算结果的实时PBR渲染部分了。这里我们以渲染一个球体为例，PBR Shader的顶点着色器如下：
+
+```glsl
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoords;
+
+out vec2 TexCoords;
+out vec3 WorldPos;
+out vec3 Normal;
+
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+uniform mat3 normalMatrix;
+
+void main()
+{
+    TexCoords = aTexCoords;
+    WorldPos = vec3(model * vec4(aPos, 1.0));
+    Normal = normalMatrix * aNormal;   
+
+    gl_Position =  projection * view * vec4(WorldPos, 1.0);
+}
+```
+
+没有任何特殊之处，做了正常的空间变换。主要是看片元着色器，重要的地方用【】进行标注：
+
+```glsl
+#version 330 core
+out vec4 FragColor;
+in vec2 TexCoords;
+in vec3 WorldPos;
+in vec3 Normal;
+
+// material parameters
+uniform sampler2D albedoMap;
+uniform sampler2D normalMap;
+uniform sampler2D metallicMap;
+uniform sampler2D roughnessMap;
+uniform sampler2D aoMap;
+
+// IBL
+uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D brdfLUT;
+
+// lights
+uniform vec3 lightPositions[4];
+uniform vec3 lightColors[4];
+
+uniform vec3 camPos;
+
+const float PI = 3.14159265359;
+// ----------------------------------------------------------------------------
+// Easy trick to get tangent-normals to world-space to keep PBR code simplified.
+// Don't worry if you don't get what's going on; you generally want to do normal 
+// mapping the usual way for performance anyways; I do plan make a note of this 
+// technique somewhere later in the normal mapping tutorial.
+vec3 getNormalFromMap()
+{
+    vec3 tangentNormal = texture(normalMap, TexCoords).xyz * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(WorldPos);
+    vec3 Q2  = dFdy(WorldPos);
+    vec2 st1 = dFdx(TexCoords);
+    vec2 st2 = dFdy(TexCoords);
+
+    vec3 N   = normalize(Normal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
+// ----------------------------------------------------------------------------
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a = roughness*roughness;
+    float a2 = a*a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+
+    float nom   = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / denom;
+}
+// ----------------------------------------------------------------------------
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float nom   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return nom / denom;
+}
+// ----------------------------------------------------------------------------
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
+}
+// ----------------------------------------------------------------------------
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+// ----------------------------------------------------------------------------
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}   
+// ----------------------------------------------------------------------------
+void main()
+{		
+    // material properties
+    vec3 albedo = pow(texture(albedoMap, TexCoords).rgb, vec3(2.2));
+    float metallic = texture(metallicMap, TexCoords).r;
+    float roughness = texture(roughnessMap, TexCoords).r;
+    float ao = texture(aoMap, TexCoords).r;
+       
+    // input lighting data
+    vec3 N = getNormalFromMap();
+    vec3 V = normalize(camPos - WorldPos);
+    vec3 R = reflect(-V, N); 
+
+    // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
+    // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
+    vec3 F0 = vec3(0.04); 
+    F0 = mix(F0, albedo, metallic);
+
+    // reflectance equation
+    vec3 Lo = vec3(0.0);
+    for(int i = 0; i < 4; ++i) //【1】有四个固定的“点光源”，计算点光源直接光照带来的PBR着色结果
+    {
+        // calculate per-light radiance
+        vec3 L = normalize(lightPositions[i] - WorldPos);
+        vec3 H = normalize(V + L);
+        float distance = length(lightPositions[i] - WorldPos);
+        float attenuation = 1.0 / (distance * distance);
+        vec3 radiance = lightColors[i] * attenuation;
+
+        // Cook-Torrance BRDF
+        float NDF = DistributionGGX(N, H, roughness);   
+        float G   = GeometrySmith(N, V, L, roughness);    
+        vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);        
+        
+        vec3 numerator    = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+        vec3 specular = numerator / denominator;
+        
+         // kS is equal to Fresnel
+        vec3 kS = F;
+        // for energy conservation, the diffuse and specular light can't
+        // be above 1.0 (unless the surface emits light); to preserve this
+        // relationship the diffuse component (kD) should equal 1.0 - kS.
+        vec3 kD = vec3(1.0) - kS;
+        // multiply kD by the inverse metalness such that only non-metals 
+        // have diffuse lighting, or a linear blend if partly metal (pure metals
+        // have no diffuse light).
+        kD *= 1.0 - metallic;	                
+            
+        // scale light by NdotL
+        float NdotL = max(dot(N, L), 0.0);        
+
+        // add to outgoing radiance Lo
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL; // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+    }   
+    
+    // ambient lighting (we now use IBL as the ambient term) //【2】IBL部分
+    vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;	  
+    
+    vec3 irradiance = texture(irradianceMap, N).rgb;
+    vec3 diffuse      = irradiance * albedo;
+    
+    // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;    
+    vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+
+    vec3 ambient = (kD * diffuse + specular) * ao;
+    
+    vec3 color = ambient + Lo;
+
+    // HDR tonemapping
+    color = color / (color + vec3(1.0));
+    // gamma correct
+    color = pow(color, vec3(1.0/2.2)); 
+
+    FragColor = vec4(color , 1.0);
+}
+
+```
+
+注：这里也可以参考虚幻官方的实现：https://cdn2.unrealengine.com/Resources/files/2013SiggraphPresentationsNotes-26915738.pdf
 
