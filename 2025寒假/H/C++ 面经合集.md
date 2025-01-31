@@ -538,7 +538,132 @@ int main()
 
 
 
-## 7.其他杂项题目
+## 7.`vector`的扩容机制具体是怎样的?
+
+> 在C++中，`std::vector` 在扩容时，会尝试调用元素的**移动构造函数**（如果存在且不抛出异常），否则会调用**拷贝构造函数**。具体过程如下：
+>
+> ### 1. **扩容过程**
+> 当 `std::vector` 的容量不足以容纳新元素时，它会执行以下步骤：
+> 1. 分配一块更大的内存空间。
+> 2. 将现有元素从旧内存空间迁移到新内存空间。
+> 3. 释放旧内存空间。
+>
+> 在迁移元素时，`std::vector` 会优先使用移动语义（调用移动构造函数）来转移元素，因为移动语义通常比拷贝语义更高效。如果移动构造函数不可用或不安全（例如可能抛出异常），则会回退到拷贝构造函数。
+>
+> ---
+>
+> ### 2. **调用移动构造函数的条件**
+> `std::vector` 在扩容时会调用移动构造函数，前提是：
+>
+> - 元素的类型具有 **noexcept 移动构造函数**（即移动构造函数不会抛出异常）。
+> - 如果移动构造函数可能抛出异常，`std::vector` 会优先使用拷贝构造函数，以确保强异常安全性。
+>
+> ---
+>
+> ### 3. **调用拷贝构造函数的条件**
+> 如果以下条件之一满足，`std::vector` 会调用拷贝构造函数：
+> - 元素的类型没有移动构造函数。
+> - 移动构造函数可能抛出异常（即没有标记为 `noexcept`）。
+> - 元素的类型是普通旧数据类型（POD，如 `int`、`double` 等），这些类型没有移动语义。
+>
+> ---
+>
+> ### 4. **具体过程**
+> 以下是 `std::vector` 扩容的具体过程：
+> 1. **分配新内存**：
+>    - 分配一块比当前容量更大的内存空间（通常是当前容量的 2 倍）。
+> 2. **迁移元素**：
+>    - 如果元素类型支持 `noexcept` 移动构造函数，则调用移动构造函数将元素从旧内存移动到新内存。
+>    - 如果不支持移动语义或移动构造函数可能抛出异常，则调用拷贝构造函数将元素从旧内存复制到新内存。
+> 3. **销毁旧元素**：
+>    - 在旧内存空间中调用元素的析构函数。
+> 4. **释放旧内存**：
+>    - 释放旧内存空间。
+>
+> ---
+>
+> ### 5. **示例代码**
+> 以下是一个示例，展示了 `std::vector` 扩容时调用移动构造函数和拷贝构造函数的行为：
+>
+> ```cpp
+> #include <iostream>
+> #include <vector>
+> 
+> class MyClass {
+> public:
+>     MyClass() { std::cout << "Constructor\n"; }
+>     MyClass(const MyClass&) { std::cout << "Copy Constructor\n"; }
+>     MyClass(MyClass&&) noexcept { std::cout << "Move Constructor\n"; }
+>     ~MyClass() { std::cout << "Destructor\n"; }
+> };
+> 
+> int main() {
+>     std::vector<MyClass> vec;
+>     vec.reserve(1); // 预分配空间，避免初始扩容干扰
+> 
+>     std::cout << "Adding first element:\n";
+>     vec.push_back(MyClass()); // 添加第一个元素
+> 
+>     std::cout << "\nAdding second element (triggering resize):\n";
+>     vec.push_back(MyClass()); // 添加第二个元素，触发扩容
+> 
+>     return 0;
+> }
+> ```
+>
+> **输出**：
+> ```
+> Adding first element:
+> Constructor
+> Move Constructor
+> Destructor
+> 
+> Adding second element (triggering resize):
+> Constructor
+> Move Constructor
+> Move Constructor
+> Destructor
+> Destructor
+> Destructor
+> Destructor
+> ```
+>
+> **解释**：
+> 1. 第一次 `push_back` 时，`MyClass` 对象被构造，然后通过移动构造函数移动到 `vector` 中。
+> 2. 第二次 `push_back` 时，`vector` 扩容，调用移动构造函数将旧元素迁移到新内存空间，然后新元素也被移动到新内存空间。
+> 3. 最后，旧内存空间中的对象被销毁。
+>
+> ---
+>
+> ### 6. **如何控制行为**
+> - **确保移动构造函数是 `noexcept`**：
+>   如果你的类有移动构造函数，请确保它标记为 `noexcept`，以便 `std::vector` 优先使用移动语义。
+>   ```cpp
+>   MyClass(MyClass&&) noexcept { ... }
+>   ```
+>
+> - **禁用移动语义**：
+>   如果你不希望 `std::vector` 使用移动语义，可以删除移动构造函数：
+>   ```cpp
+>   MyClass(MyClass&&) = delete;
+>   ```
+>
+> - **禁用拷贝语义**：
+>   如果你不希望 `std::vector` 使用拷贝语义，可以删除拷贝构造函数：
+>   ```cpp
+>   MyClass(const MyClass&) = delete;
+>   ```
+>
+> ---
+>
+> ### 7. **总结**
+> - `std::vector` 在扩容时，优先调用移动构造函数（如果可用且不抛出异常）。
+> - 如果移动构造函数不可用或可能抛出异常，则调用拷贝构造函数。
+> - **通过确保移动构造函数是 `noexcept`，可以优化 `std::vector` 的性能。**
+
+
+
+## 其他杂项题目
 
 - （1）熟悉 STL 源码吗？
   - 有看过《STL源码剖析》的一部分，但时间有限还没有读完
