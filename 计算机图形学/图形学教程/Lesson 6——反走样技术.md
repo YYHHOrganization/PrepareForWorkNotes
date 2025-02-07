@@ -180,7 +180,7 @@ float3 historyColor = historyBuffer.Sample(linear, uvLast);
 
 ## 2.基于图像后处理的方法
 
-有一种反走样是**基于图像的**，先渲染出有锯齿的图然后通过图像处理的方法将锯齿给提取出来并替换成没有锯齿的图，这种方法叫image based anti-aliasing solution
+有一种反走样是**基于图像的**，先渲染出有锯齿的图然后通过图像处理的方法将锯齿给提取出来并替换成没有锯齿的图，这种方法叫image based anti-aliasing solution.
 
 ### （1）FXAA
 
@@ -325,7 +325,7 @@ Console 版本寻找当前像素点亮度变化的梯度值，作为锯齿线的
 
 ![img](assets/v2-c4b929efb0c0daa38aa57b7235c8eadc_1440w.jpg)
 
-FXAA Quality中，只需要进行五次采样
+FXAA Quality??中，只需要进行五次采样
 
 然后来计算当前亮度变化的梯度值，即亮度变化最快的方向，就是锯齿边界的法线方向。得到法线方向后，就可以进一步得到切线方向。
 
