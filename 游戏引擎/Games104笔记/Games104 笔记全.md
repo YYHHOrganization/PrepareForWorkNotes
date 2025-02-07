@@ -5059,5 +5059,280 @@ NTP的算法实际上非常简单，我们只需要从客户端发送请求然�
 
 
 
+# 二十二、 20 面向数据编程与任务系统
+
+DOP：Data-Oriented Programming：面向数据的编程
+
+## 1.并行编程
+
+并行化编程的基础：进程和线程的区别：[(99+ 封私信 / 69 条消息) 线程和进程的区别是什么？ - 知乎](https://www.zhihu.com/question/25532384/answer/411179772)。这是一个基本的概念，需要熟练掌握。
+
+### （1）多任务模型——抢占式与非抢占式
+
+![image-20250201193611410](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201193611410.png)
+
+在操作系统中，多任务模型允许多个任务或进程）并发执行。
+
+- preemptive：抢占式：操作系统可以随时中断当前运行的任务，并将CPU资源分配给其他任务。这种中断通常由时钟中断或更高优先级任务的到来触发。目前的操作系统一般都是抢占式的。（例如Windows）
+- non-preemptive：非抢占式：此时任务一旦获得CPU，就会一直运行直到完成或主动放弃CPU（如等待I/O或调用阻塞函数）。
+
+
+
+### （2）Thread Context Switch 线程上下文切换
+
+![image-20250201194346922](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201194346922.png)
+
+从上图可以看出，线程的切换需要中断，而中断需要相当多的CPU Cycle（2000个左右）。并且调进来的线程所需要的数据很可能并不在cache当中，因此还要从内存中再加载（又需要10000~1000000的CPU Cycle）。可见，**线程的切换是十分昂贵的。**这也就引出了后文Job System的设计。
+
+更为具体的，可以看这篇：[进程/线程上下文切换会用掉你多少CPU？ - 知乎](https://zhuanlan.zhihu.com/p/79772089)，可看看原理。
+
+
+
+### （3）并行化开发带来的问题
+
+![image-20250201201442822](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201201442822.png)
+
+上图里的Embarrassingly Parrallel常被翻译为“天然并行”或者“易并行”，是并行计算中的一个概念，用来描述一类可以轻松分解为**多个完全独立子任务**的问题。这类问题的特点是：子任务之间不需要通信或者同步，可以非常高效地并行执行，几乎不需要额外协调成本。**典型的例子是蒙特卡洛模拟、批处理、机器学习同时测试多个超参数组合、以及电影渲染中将不同帧分配给不同计算节点。**
+
+而非Embarrassingly Parrallel也很常见，此时任务间需要通信或同步（比如流体动力学模拟当中的迭代算法），此时并行复杂度较高，需要解决竞态条件、死锁等问题。
+
+可回顾：**死锁的必要条件**。
+
+> 可补充：C++并行化编程。这部分Games104的PPT上介绍的比较详细，就不再整理了。可以参考：[Job System](https://games-1312234642.cos.ap-guangzhou.myqcloud.com/course/GAMES104/GAMES104_Lecture20.pdf)
+
+并行化编程很可能会造成data race的问题，解决方案可以使用锁或者信号量（semaphore）。
+
+使用锁lock带来的局限性：
+
+- （1）会带来额外的性能开销；
+- （2）如果上锁的线程异常终止了，很可能会造成死锁问题；
+- （3）如果低优先级任务占有了锁，一个优先级更高的任务会拿不到锁；
+
+
+
+另一种解决并行化编程可能出现的data race的问题，可以使用**原子操作。**C++ 11中有提供对应的操作（未实际测试）。
+
+![image-20250201203057482](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201203057482.png)
+
+C++中提供了`volatile`（限制编译器重排序行为），`atomic`等关键词来对多线程编程做更好的控制，以下链接可以简单看看：[C/C++ 中 volatile 关键字详解 | 菜鸟教程](https://www.runoob.com/w3cnote/c-volatile-keyword.html)
+
+
+
+### （4）Compiler Reordering Optimizations
+
+直接看Games104的课程即可。核心问题可以用下图来概括：
+
+![image-20250201203300023](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201203300023.png)
+
+此时在多线程的编程模式下，很可能会出现debug和release模式执行顺序不一致的问题。
+
+> 编译器进行指令重排序的主要目的是提高程序的执行效率，包括利用指令集并行性、优化内存访问、减少依赖等待以及适应硬件特性。
+
+
+
+## 2.游戏引擎并行架构
+
+### （1）Fixed Multi-thread
+
+一个简单的多线程模型如下：
+
+![image-20250201204314039](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201204314039.png)
+
+这也是大部分现代游戏引擎的做法。此时每个线程会在每个frame开始的时候交换数据。这样的架构有以下问题：
+
+- （1）不能保证每个线程的workload是一致的。有的线程的比较大，有的比较小，不均匀。并且游戏场景是多变的，不同场景给每个线程会造成不同的workload。
+- （2）假设预先配置了4个thread，运行在2核的电脑会比较麻烦，运行在8核的电脑上又浪费了4个核。
+
+
+
+### （2）Thread Fork-Join
+
+![image-20250201205237706](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201205237706.png)
+
+也比较好理解，对于类似Animation的任务，其可以`Fork`出一些子线程，分别并行运算，并将结果`Join`到一起。这种方式也会造成一些问题：
+
+- （1）逻辑上不好写：work split怎么分？需要多少个work threads？
+- （2）太多的线程，在上下文切换的时候会带来额外性能开销；
+- （3）从上图也可以看出，多个核不平衡的workload问题依旧没有得到解决。
+
+
+
+**Unreal Parallel Framework**
+
+其实虚幻引擎就是类似于Thread Fork-Join的架构：
+
+![image-20250201205908182](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201205908182.png)
+
+- Named Thread：明确的指出每个thread是针对什么的，比如逻辑thread，渲染thread；
+- Worker Thread：把物理、动画、特效、粒子之类的可以扔进Worker thread做展开。
+
+如果对多线程的要求没有那么高的话，Thread Fork-Join也是一个不错的架构。
+
+
+
+### （3）Task graph
+
+每个节点存Task，每条边存Dependency.
+
+![image-20250201210515336](Games104%20%E7%AC%94%E8%AE%B0%E5%85%A8.assets/image-20250201210515336.png)
+
+Task Graph也有一些问题：
+
+- 实际上，游戏运行中往往依赖关系不是一成不变的，对于task graph来说动态的修改会比较麻烦；
+- 早期的版本无法实现”某个task执行到一半，需要等待其他task完成才能继续执行“这个需求。
+
+
+
+### （4）Job System
+
+现代游戏引擎中使用的比较多的概念。**比较重要。**
+
+#### （a）协程Coroutine
+
+`yield`的意思是”让路“。在`Go`和`C#`中协程是比较好实现的，但在C++中比较头疼。**这部分也是常考题目。**
+
+> 可以看[20.现代游戏引擎架构：面向数据编程与任务系统 (Part 1) | GAMES104-现代游戏引擎：从入门到实践_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1EP411V7jx/?spm_id_from=333.788.videopod.sections&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)这里的50min左右的地方，结合PPT来辅助复习。
+
+协程不需要操作系统内核态的切换。
+
+协程分为两种：
+
+- 有栈协程：切换时会恢复上下文，这是比较常用的协程；
+- 无栈协程：一般不推荐实现，但速度更快。除非是引擎非常底层且高度可控制的代码可以上无栈编程（甚至够猛直接上汇编也可以）。
+
+> C++这种底层语言不支持Coroutine，但`Boost`里面似乎有，通过插入汇编代码手动分配栈空间来实现。（目前不打算尝试 ）不过C++协程有一些开源项目有实现。
+
+其他可参考的链接：[【迭代器模式】深入理解协程 - 知乎](https://zhuanlan.zhihu.com/p/356632347)
+
+
+
+#### （b）Fiber-based Job System
+
+明天再做整理，先把视频看完。
+
+
+
+## 3.ECS
+
+大部分内容直接复习Games104的课和PPT就好，这里放一些不太好理解的。
+
+### （1）Archetype的概念
+
+> 在 **ECS（Entity-Component-System）** 架构中，**Archetype** 是一个核心概念，用于高效地组织和存储实体（Entity）及其组件（Component）。理解 Archetype 的概念对于掌握 ECS 的性能优势和设计思想至关重要。
+>
+> ---
+>
+> ### **1. 什么是 Archetype？**
+> **Archetype** 是 **实体组件组合的类型**。它定义了具有相同组件组合的实体的存储结构。换句话说：
+> - 每个 Archetype 对应一种 **唯一的组件组合**。
+> - 所有具有相同组件组合的实体会被存储在同一个 Archetype 中。
+>
+> 例如：
+> - 实体 A：`[Position, Velocity]`
+> - 实体 B：`[Position, Velocity, Health]`
+> - 实体 C：`[Position, Velocity]`
+>
+> 这里，实体 A 和 C 属于同一个 Archetype（`[Position, Velocity]`），而实体 B 属于另一个 Archetype（`[Position, Velocity, Health]`）。
+>
+> ---
+>
+> ### **2. Archetype 的存储结构**
+> Archetype 的核心设计目标是 **高效的内存访问** 和 **快速的组件查询**。为了实现这一点，Archetype 采用以下存储方式：
+>
+> #### **(1) 组件数组（Component Arrays）**
+> - 每个 Archetype 包含一组 **连续的数组**，每个数组存储一种组件的实例。
+> - 例如，Archetype `[Position, Velocity]` 包含：
+>   - 一个 `Position` 数组：`[Position1, Position2, ...]`
+>   - 一个 `Velocity` 数组：`[Velocity1, Velocity2, ...]`
+>
+> #### **(2) 实体与组件的映射**
+> - 每个 Archetype 维护一个 **实体列表**，记录属于该 Archetype 的所有实体。
+> - 实体在组件数组中的索引与其在实体列表中的索引一一对应。
+>
+> #### **(3) 内存连续性**
+> - 组件数组在内存中是 **连续存储** 的，这使得迭代和访问组件时具有极高的缓存命中率。
+>
+> ---
+>
+> ### **3. Archetype 的优势**
+> Archetype 的设计带来了以下性能优势：
+>
+> #### **(1) 高效的内存访问**
+> - 组件数据在内存中连续存储，适合 CPU 缓存机制，减少缓存未命中。
+> - 迭代时可以直接遍历组件数组，无需跳转内存。
+>
+> #### **(2) 快速的组件查询**
+> - 通过 Archetype 可以快速筛选出具有特定组件组合的实体。
+> - 例如，查询所有具有 `[Position, Velocity]` 的实体时，只需遍历对应的 Archetype。
+>
+> #### **(3) 动态组件管理**
+> - 当实体添加或删除组件时，ECS 会自动将其移动到新的 Archetype 中。
+> - 这种设计避免了传统 OOP 中频繁的内存分配和释放。
+>
+> ---
+>
+> ### **4. Archetype 的工作原理**
+>
+> #### **(1) 创建 Archetype**
+> - 当第一个具有某种组件组合的实体被创建时，ECS 会为该组合创建一个新的 Archetype。
+> - 例如，创建实体 `[Position, Velocity]` 时，ECS 会生成一个 Archetype 并存储该实体。
+>
+> #### **(2) 添加/删除组件**
+> - 当实体添加或删除组件时，ECS 会将其从当前 Archetype 移动到新的 Archetype。
+> - 例如：
+>   - 实体 A 原本属于 Archetype `[Position, Velocity]`。
+>   - 添加 `Health` 组件后，ECS 会将其移动到 Archetype `[Position, Velocity, Health]`。
+>
+> #### **(3) 查询实体**
+> - 查询时，ECS 会遍历所有 Archetype，筛选出符合查询条件的实体。
+> - 例如，查询所有具有 `Position` 组件的实体时，ECS 会遍历所有包含 `Position` 的 Archetype。
+>
+> ---
+>
+> ### **5. Archetype 的示例**
+>
+> #### **场景描述**
+> 假设有以下实体：
+> - 实体 1：`[Position, Velocity]`
+> - 实体 2：`[Position, Velocity, Health]`
+> - 实体 3：`[Position, Velocity]`
+>
+> #### **Archetype 存储结构**
+> - **Archetype A**：`[Position, Velocity]`
+>   - 实体列表：`[实体1, 实体3]`
+>   - 组件数组：
+>     - `Position` 数组：`[Position1, Position3]`
+>     - `Velocity` 数组：`[Velocity1, Velocity3]`
+> - **Archetype B**：`[Position, Velocity, Health]`
+>   - 实体列表：`[实体2]`
+>   - 组件数组：
+>     - `Position` 数组：`[Position2]`
+>     - `Velocity` 数组：`[Velocity2]`
+>     - `Health` 数组：`[Health2]`
+>
+> ---
+>
+> ### **6. Archetype 的挑战与优化**
+>
+> #### **(1) 内存碎片**
+> - 当实体频繁添加/删除组件时，Archetype 的拆分和合并可能导致内存碎片。
+> - **优化**：使用内存池或预分配策略减少动态内存分配。
+>
+> #### **(2) 查询性能**
+> - 当 Archetype 数量过多时，查询性能可能下降。
+> - **优化**：使用缓存或索引加速查询。
+>
+> #### **(3) 动态组件变化**
+> - 频繁的组件变化会导致实体在 Archetype 之间移动，增加开销。
+> - **优化**：尽量减少运行时组件的变化。
+>
+> ---
+>
+> ### **7. 总结**
+> **Archetype** 是 ECS 架构中的核心概念，用于高效组织和存储实体及其组件。它的设计通过 **连续内存存储** 和 **组件组合分类**，显著提升了内存访问和查询性能。理解 Archetype 的工作原理，有助于更好地设计和优化基于 ECS 的系统。
+
+
+
+
 # 附：《游戏引擎架构》阅读笔记
 
