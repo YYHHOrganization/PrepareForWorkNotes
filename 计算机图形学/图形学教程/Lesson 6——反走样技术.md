@@ -67,11 +67,19 @@
 
 后面有需要再补充吧，可以参考https://zhuanlan.zhihu.com/p/415087003
 
+前面提到，SSAA（Super Sampling Anti-Aliasing，超采样抗锯齿）将图像按照×N倍的分辨率进行渲染（如 x2、x4），即超采样。然后再通过平均像素值，将高分辨率图像缩小到目标分辨率。
+
+如下图所示，左边的像素点只有一个采样点，且未被覆盖，因此得到白色。右边的像素点上放置了四个次像素点，有两个次像素点被覆盖，因此得到的颜色是粉色的。
+
+![img](assets/v2-b8dabe5d7fd211d7ebe3e71e165523a7_1440w.jpg)
+
+​															SSAA的原理 图源https://zhuanlan.zhihu.com/p/415087003
+
 ### （2）MSAA
 
 > 后面优化一下其中的内容，基本上讲解这篇中包含的内容就够了：https://zhuanlan.zhihu.com/p/415087003
 
-​	MSAA（多重采样抗锯齿）是最早被应用的抗锯齿技术，主要依靠硬件来实现，曾经是一种非常流行的抗锯齿方法。在过去，当游戏画面的质量较低时，其额外的性能消耗并不显著。然而，随着游戏画面质量的提升，以及每帧需要渲染的物体数量增加，MSAA所需的额外性能开销也变得越来越高。
+​	MSAA（Multisample Anti-Aliasing，多重采样抗锯齿）是最早被应用的抗锯齿技术，主要依靠硬件来实现，曾经是一种非常流行的抗锯齿方法。在过去，当游戏画面的质量较低时，其额外的性能消耗并不显著。然而，随着游戏画面质量的提升，以及每帧需要渲染的物体数量增加，MSAA所需的额外性能开销也变得越来越高。
 
 ![多重取樣反鋸齒點陣化的範例](./assets/d3d10-rasterrulesmsaa.png)
 
@@ -101,13 +109,84 @@ MSAA就不看代码了，现在硬件直接支持了，不需要再写代码了�
 
 接下来我们通过核心的代码来介绍TAA算法的细节，这里用Unity作为开发环境（使用Unity是因为游戏引擎帮我们做好了很多底层的问题，比如渲染管线，我们可以聚焦于shader的编写，也就是算法的实现。如果读者没有安装Unity的话可以直接阅读代码以更好地掌握算法，如果有安装Unity 2020及以上的版本应该可以结合Github的程序来看）。这里参考的代码链接为：https://github.com/Raphael2048/AntiAliasing
 
+
+
+#### 静态场景
+
+TAA**(Temporal Anti-Aliasing)** 会随着时间在像素中多次采样，(SSAA是每帧都多次采样，但是TAA将这个采样过程分摊到多帧)，再与历史帧进行混合。
+
+![img](assets/v2-e1bd0301d05b10d53fbc40439d1cf3eb_1440w.jpg)
+
+##### **采样点偏移 (Jittering Samples)**
+
+一般的采样点分布可能是均匀的：
+
+![img](assets/v2-4680c77569f6e99100f6cb00dba77174_1440w.jpg)
+
+但是这种均匀分布有时并不好，所以需要一种 Low-discrepancy （低差异化）的点序列，如 Halton 或者 Sobol 分布。
+
+UE4 里面就使用了八个点的 Halton(2,3) 分布来作为采样点：
+
+![img](assets/v2-90278a5e6016bdc36dbeaf1246812244_1440w.jpg)
+
+而对采样点进行偏移的一个常用方法是：**对投影矩阵添加小的偏移量。**如在 UE4 里面：
+
+![img](assets/v2-cbaafe301c1769d4dfe2d46fa548a3c2_1440w.png)
+
+![img](assets/v2-143d0f5393f5c7b9d9b18eeba2ce66eb_1440w.jpg)
+
+只需要将偏移的XY分量分别写入到投影矩阵的[2, 0] 和 [2, 1]即可。这样，当左边的向量值乘以新的投影矩阵时，最终得到裁剪空间的坐标也会相应偏移。
+
+当场景静止时，因为每一帧的投影矩阵都被微小偏移，所以我们可以直接混合某一点前几帧的值来实现抗锯齿。
+
+![img](assets/v2-8b2a80c69aa975ac5ad08b048700e1af_1440w.jpg)
+
+但场景通常都是运动的，涉及到物体自身的运动和摄像机的运动，所以我们需要知道物体上的一点对应于上一帧的哪个位置。
+
+
+
+###### 重投影
+
+首先要考虑的是镜头的移动，镜头移动后，原来投射到某个像素上的物体，现在很可能不在原来的位置上了。假设物体是不动的，我们就可以使用当前帧的深度信息，反算出世界坐标，使用上一帧的投影矩阵，在混合计算时做一次重投影 **Reprojection/重投影**。
+
+![img](assets/v2-b68e86d6db5205544484fe1a6b910da0_1440w.jpg)
+
+重投影
+
+不过重投影只能适用于静态的物体，如果物体是移动的，我们就无法精确还原物体上一帧的投影位置了。
+
+#### 动态场景
+
+用 **Motion Vector** 贴图来记录物体在屏幕空间中的变化距离，表示当前帧和上一帧中，物体在屏幕空间投影坐标的变化值。
+
+在渲染物体时，我们需要用到上一帧的投影矩阵和上一帧该物体的位置信息，这样可以得到当前帧和上一帧的位置差，并写入到 Motion Vector。
+
+###### 使用 Motion Vector
+
+接下来就是使用 Motion Vector 进行混合计算了，我们需要使用 Motion Vector 算出上一帧物体在屏幕空间中投射的坐标。在计算之前，我们先要移除当前像素采样的抖动偏移值，然后减去采样 Motion Vector 得到的 Motion 值，就可以算出上一帧中投影坐标的位置。然后就可以根据位置对历史数据进行采样了，因为我们得到的坐标往往不是正好在像素中心位置，因此这里使用双线性模式进行采样。
+
+```c
+// 减去抖动坐标值，得到当前实际的像素中心UV值
+uv -= _Jitter;
+// 减去Motion值，算出上帧的投影坐标
+float2 uvLast = uv - motionVectorBuffer.Sample(point, uv);
+//使用双线性模式采样
+float3 historyColor = historyBuffer.Sample(linear, uvLast);
+```
+
+当镜头的移动时，可能会导致物体的遮挡关系发生变化，比如一个远处的物体原来被前面的物体遮挡住，现在因为镜头移动而忽然出现，这时采样 Motion 偏移得到的位置，上帧中其实是没有渲染的数据的。因此为了得到更加平滑的数据，可以在当前像素点周围判断深度，取距离镜头最近的点位置，来采样 Motion Vector 的值，这样可以减弱遮挡错误的影响。
+
+
+
 ## 2.基于图像后处理的方法
+
+有一种反走样是**基于图像的**，先渲染出有锯齿的图然后通过图像处理的方法将锯齿给提取出来并替换成没有锯齿的图，这种方法叫image based anti-aliasing solution
 
 ### （1）FXAA
 
 https://zhuanlan.zhihu.com/p/431384101
 
-​	FXAA可以理解为是基于屏幕后处理实现的，在Unity的Built-in管线中`OnRenderImage`函数作为程序入口，会将原始渲染图像的RenderTarget传入shader，经过shader后处理后呈现在屏幕上，因此下面的代码主要是依据shader来介绍的。NVIDIA为FXAA提供了两个版本，Quality和Console，可以用一个Enum字段传入shader：
+​	FXAA(**F**ast Appro**x**imate **A**nti-**A**liasing)可以理解为是基于屏幕后处理实现的，在Unity的Built-in管线中`OnRenderImage`函数作为程序入口，会将原始渲染图像的RenderTarget传入shader，经过shader后处理后呈现在屏幕上，因此下面的代码主要是依据shader来介绍的。NVIDIA为FXAA提供了两个版本，Quality和Console，可以用一个Enum字段传入shader：
 
 ```glsl
 public enum FXAAMode
@@ -226,12 +305,54 @@ float Negative = abs((IsHorizontal ? S : W) - M);
 
 
 
+![fxaa algorithm](assets/fxaa_algorithm.jpg)
+
+https://wingstone.github.io/posts/2021-03-01-fxaa/
+
+M总结：通过亮度来找到边缘，平滑边缘
+
+
+
 ### 写进课程里的内容（不需要太详细介绍算法，我们自己能理解就好）
 
 
+
+####  （b）Console
+
+Console 版本寻找当前像素点亮度变化的梯度值，作为锯齿线的法线方向。
+
+采样的位置是下图所示的点，分别得到中间点M和角上四个点NW、NE、SW、SE的颜色值，注意这里的偏移是只有半个像素的，而不是上面 Quality 版本 的一个像素。
+
+![img](assets/v2-c4b929efb0c0daa38aa57b7235c8eadc_1440w.jpg)
+
+FXAA Quality中，只需要进行五次采样
+
+然后来计算当前亮度变化的梯度值，即亮度变化最快的方向，就是锯齿边界的法线方向。得到法线方向后，就可以进一步得到切线方向。
+
+![img](assets/v2-ebaa61898f314c7e91c0627510ed4d1d_1440w.jpg)
+
+红色箭头是亮度变化最快的方向(梯度值方向)， 绿色箭头是我们要求的切线方向
 
 
 
 ### （2）SMAA
 
 https://zhuanlan.zhihu.com/p/342211163
+
+SMAA（Enhanced-Subpixel-Morphological-Antialiasing）
+
+SMAA是 **MLAA(Morphological Antialiasing)** 的一个加强版，
+
+#### MLAA
+
+![image-20250206121014343](assets/image-20250206121014343.png)
+
+（games202）
+
+图1可以知道，这是有锯齿的，其想要的结果应该是一条斜着的直线，图像方法会先去识别它然后通过各种匹配的方法找到它正确结果的样子，图2是MLAA的方法，从而得到它应该变成的样子，然后通过其边界在各个像素内占的百分比进行shading。
+
+
+
+#### 注意点：
+
+延迟渲染中，G-buffer是不可以反走样的。假如前景和背景物体的深度进行了混合，这个中间值是没有意义的，并不代表任何物体的深度。
