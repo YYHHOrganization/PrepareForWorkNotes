@@ -120,7 +120,7 @@ int main()
 
 每个函数都有地址（指针），不管是全局函数还是成员函数在编译之后几乎类似。
 
-在类不含有虚函数的情况下，编译器在编译期间就会把函数的地址确定下来，运行期间直接去调用这个地址的函数即可。**这种函数调用方式也就是所谓的『静态绑定』（static binding）。**
+==在类不含有虚函数的情况下，编译器在编译期间就会把函数的地址确定下来，运行期间直接去调用这个地址的函数即可。**这种函数调用方式也就是所谓的『静态绑定』（static binding）==。**
 
 > 补充知识：在C++中，普通函数和类成员函数通常会放在内存的代码段（text segment）区域。代码段是存放程序执行代码的区域，通常是只读的，以防止程序在运行时意外修改其指令。
 >
@@ -132,6 +132,75 @@ int main()
 > 总结来说，普通函数和类成员函数都位于内存的代码段区域。
 
 
+
+>:thinking: 可参考链接 **https://www.cnblogs.com/lizhenghn/p/3657717.html**
+>
+>>```C++
+>>#define virtualMT
+>>
+>>#define is_virtual
+>>#ifdef virtualMT
+>>
+>>#include <iostream>
+>>using namespace std;
+>>class A
+>>{
+>>public:
+>>#ifdef is_virtual
+>>    virtual void func() { std::cout << "A::func()\n"; }
+>>#else
+>>    /*virtual*/ void func() { std::cout << "A::func()\n"; }
+>>#endif // is_virtual
+>>    
+>>    
+>>};
+>>class B : public A
+>>{
+>>public:
+>>    void func() { std::cout << "B::func()\n"; }
+>>};
+>>class C : public A
+>>{
+>>public:
+>>    void func() { std::cout << "C::func()\n"; }
+>>};
+>>void test1()
+>>{
+>>   
+>>}
+>>void test2()
+>>{
+>>
+>>}
+>>int main() 
+>>{
+>>
+>>    C* pc = new C(); //pc的静态类型是它声明的类型C*，动态类型也是C*；
+>>    B* pb = new B(); //pb的静态类型和动态类型也都是B*；
+>>    A* pa = pc;      //pa的静态类型是它声明的类型A*，动态类型是pa所指向的对象pc的类型C*；
+>>    pa = pb;         //pa的动态类型可以更改，现在它的动态类型是B*，但其静态类型仍是声明时候的A*；
+>>    C* pnull = NULL; //pnull的静态类型是它声明的类型C*,没有动态类型，因为它指向了NULL；
+>>
+>>
+>>    pa->func();      //notVir :A::func() pa的静态类型永远都是A*，不管其指向的是哪个子类，都是直接调用A::func()；
+>>                     //isVir  :B::func() 因为有了virtual虚函数特性，pa的动态类型指向B*，因此先在B中查找，找到后直接调用；
+>>    pc->func();      //C::func() pc的动、静态类型都是C*，因此调用C::func()；
+>>    pnull->func();   //notVir :C::func() 不用奇怪为什么空指针也可以调用函数，因为这在编译期就确定了，和指针空不空没关系；
+>>                     //isVir  :空指针异常，因为是func是virtual函数，因此对func的调用只能等到运行期才能确定，然后才发现pnull是空指针；
+>>    return 0;
+>>}
+>>
+>>#endif
+>>```
+>>
+>>
+>>
+>>>- **`virtual` 关键字**：
+>>>  - 在基类中必须使用 `virtual` 声明虚函数。
+>>>  - 在子类中可以省略 `virtual`，但显式使用可以提高代码的可读性。
+>>>- **`override` 关键字**：
+>>>  - 在子类中可以省略 `override`，但建议使用以确保函数签名的正确性。
+>>>  - 虽然不写也是OK的
 
 # 二、虚函数的用法
 
@@ -196,8 +265,6 @@ m2.desc(); //调用子类的desc
 此时用父类指针指向子类对象，最终调用desc函数的时候调用的是子类的。这个现象称之为『**动态绑定**』（dynamic binding）或者『**延迟绑定**』（lazy binding）。**如果把父类中的virtual关键字去掉，则这个代码最终将调用父类的函数desc，而非子类的desc。**
 
 这是为什么呢？指针实际指向的还是子类对象的内存空间，可是为什么不能调用到子类的desc？这个就是前面提到的：**类的数据（成员变量）和操作（成员函数）其实是分离的**。仅从对象的内存布局来看，只能看到成员变量，看不到成员函数。因为调用哪个函数是编译期间就确定了的，编译期间只能识别父类的desc。**现在已经对多态有了一个基本的认知，那么多态在C++当中是如何实现的呢？**
-
-
 
 ## 1.虚表
 
@@ -514,7 +581,7 @@ int main()
 }
 ```
 
-通过`sizeof(Monster)=4`也可以发现，函数是不占有空间的。
+通过`sizeof(Monster)=4`也可以发现，**函数是不占有空间的**。
 
 
 
