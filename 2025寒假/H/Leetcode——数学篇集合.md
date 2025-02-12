@@ -257,6 +257,7 @@ bool isPrime(int n)
 ![image-20250121213033029](Leetcode%E2%80%94%E2%80%94%E6%95%B0%E5%AD%A6%E7%AF%87%E9%9B%86%E5%90%88.assets/image-20250121213033029.png)
 
 ```c++
+vector<int> primes;
 void init()
 {
     isPrime.resize(MAX+1,1);
