@@ -18,7 +18,29 @@ Q3:在Q1和Q2的基础上，把析构函数标记为虚函数，此时求解size
 
 > 以上三道题的测试代码在CppOffer_01.cpp文件中。
 
+**大概答案：具体看书**
 
+**Q1：定义一个空的类型，没有任何成员变量和成员函数，对该类型求sizeof，结果是多少？为什么？**
+
+是1
+
+**Q1_1 : 为什么不是0？**
+
+必须在内存中占用一定的空间，否则无法使用这些实例。至于占用多少内存，是由编译器决定的，比如VisualStudio中每个空类型的实例占用1字节的空间
+
+**Q2: 在Q1的基础上，如果在该类型中添加一个构造函数和析构函数，再对类对象求sizeof，结果是多少？**
+
+加构造函数还是1
+
+再加析构函数还是=1
+
+>- 成员函数（包括构造函数和析构函数）在内存中有自己的地址，但这些地址并不影响对象的大小。成员函数的地址通常是通过类的对象调用时隐式传递的 `this` 指针来访问的。
+
+**Q3:在Q1和Q2的基础上，把析构函数标记为虚函数，此时求解sizeof的结果是多少？**
+
+8（64位）
+
+需要虚函数表指针
 
 ### （2）问题2
 
@@ -51,6 +73,22 @@ int main()
 
 
 
+会导致编译错误
+
+**不允许在拷贝构造函数内传值**，否则就会导致拷贝构造函数内调用拷贝构造函数，**无穷无尽**递归调用，导致栈溢出。
+
+值传递需要改为**常量引用**，拷贝构造函数需要改为`A(const A& other) { value = other.value; }` 才对
+
+
+
+为什么错误代码` A(A other){value=other.value;}`会导致无穷无尽调用？
+
+https://blog.csdn.net/luke_sanjayzzzhong/article/details/100739797
+
+首先我们要知道，类似` void myTestFunc(CTest t){     }`随便一个这样的函数，调用的时候传入实参，都会复制一个副本，即会调用拷贝构造函数，那么如果拷贝构造函数是值传递，因此拷贝构造函数这个函数又再次复制一份，再调用拷贝构造函数，循环往复。。。
+
+
+
 ### （3）问题3：赋值运算符函数
 
 见p24~26。
@@ -70,6 +108,49 @@ private:
 ```
 
 > 添加后的代码在CppOffer_03.cpp文件中。有一些需要注意的细节已经写进代码注释里了。
+
+
+
+```C++
+//初级版
+CMyString& operator = (const CMyString& str)
+{
+    /*this->m_pData = str.m_pData;*/ // no
+
+     //this 指针 指向自己这个对象 this的值是对象的地址；
+     //str就是这个对象 &str 取这个对象的地址
+    if (this == &str)
+        return *this;
+
+    delete[]m_pData;
+    m_pData = NULL;
+
+    m_pData = new char[strlen(str.m_pData)+1];
+    strcpy_s(m_pData, strlen(str.m_pData) + 1, str.m_pData);//vs一定要有_s
+
+    return *this;
+}
+```
+
+
+
+```C++
+//高级版:考虑了异常安全性
+CMyString& CMyString::operator =(const CMyString& str)
+{
+    if(this!=&str)
+    {
+        CMyString strTemp(str);
+        //以下三句交换
+        char* tmp = strTemp.m_pData;
+        strTemp.m_pData = m_pData;
+        m_pData = tmp;
+    }
+    //这样离开上面if语句作用域的时候,strTemp会自动调用析构函数,从而把原来的m_pData对应的内存块删除
+    //并且如果new报bad alloc的错的时候（如因为内存不足）,m_pData还不会更新,不会出现异常错误,见剑指offer p26页
+    return *this;
+}
+```
 
 
 
@@ -220,7 +301,7 @@ public:
             if(index<n && i == spaces[index])
             {
                 res.push_back(' ');
-                index++;
+                index++; 
             }
             res.push_back(s[i]);
         }
@@ -271,7 +352,39 @@ public:
 };
 ```
 
+写法2：
+
+<img src="assets/image-20250217222144952.png" alt="image-20250217222144952" style="zoom:50%;" />
+
+```C++
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) 
+    {
+        ListNode* pl = nullptr;
+        ListNode* p =head;
+        if(p==nullptr)return head;
+        ListNode *pr = head->next;
+        if(pr==nullptr)return head;
+
+        while(pr!=nullptr)
+        {
+            p->next=pl;
+            pl=p;
+            p=pr;
+            pr=pr->next;
+        }
+        p->next=pl;
+        return p;
+    }
+};
+```
+
+
+
 #### （b）方法2：递归法
+
+![image-20250217221923226](assets/image-20250217221923226.png)
 
 这种做法比较巧妙，建议可以结合这个链接[206. 反转链表 - 力扣（LeetCode）](https://leetcode.cn/problems/reverse-linked-list/solutions/551596/fan-zhuan-lian-biao-by-leetcode-solution-d1k2/)里面的官方题解下的评论区一起来看。
 
@@ -291,6 +404,51 @@ public:
 ```
 
 > ==务必记住反转链表这道题目的递归做法，感觉会学到不少。==
+
+代码具体过程解释：
+
+```C++
+    /**
+     * 以链表1->2->3->4->5举例
+     * @param head
+     * @return
+     */
+    public ListNode reverseList(ListNode head) {
+        if (head == null || head.next == null) {
+            /*
+                直到当前节点的下一个节点为空时返回当前节点
+                由于5没有下一个节点了，所以此处返回节点5
+             */
+            return head;
+        }
+        //递归传入下一个节点，目的是为了到达最后一个节点
+        ListNode newHead = reverseList(head.next);
+                /*
+            第一轮出栈，head为5，head.next为空，返回5
+            第二轮出栈，head为4，head.next为5，执行head.next.next=head也就是5.next=4，
+                      把当前节点的子节点的子节点指向当前节点
+                      此时链表为1->2->3->4<->5，由于4与5互相指向，所以此处要断开4.next=null
+                      此时链表为1->2->3->4<-5
+                      返回节点5
+            第三轮出栈，head为3，head.next为4，执行head.next.next=head也就是4.next=3，
+                      此时链表为1->2->3<->4<-5，由于3与4互相指向，所以此处要断开3.next=null
+                      此时链表为1->2->3<-4<-5
+                      返回节点5
+            第四轮出栈，head为2，head.next为3，执行head.next.next=head也就是3.next=2，
+                      此时链表为1->2<->3<-4<-5，由于2与3互相指向，所以此处要断开2.next=null
+                      此时链表为1->2<-3<-4<-5
+                      返回节点5
+            第五轮出栈，head为1，head.next为2，执行head.next.next=head也就是2.next=1，
+                      此时链表为1<->2<-3<-4<-5，由于1与2互相指向，所以此处要断开1.next=null
+                      此时链表为1<-2<-3<-4<-5
+                      返回节点5
+            出栈完成，最终头节点5->4->3->2->1
+         */
+        head.next.next = head;
+        head.next = null;
+        return newHead;
+    }
+```
 
 
 
@@ -329,6 +487,11 @@ public:
 ```
 
 接着是迭代法（需要仔细理解，容易出错）：
+
+可以看这个动图
+
+https://leetcode.cn/problems/binary-tree-preorder-traversal/solutions/461821/er-cha-shu-de-qian-xu-bian-li-by-leetcode-solution/
+
 ```c++
 class Solution {
 public:
@@ -481,13 +644,13 @@ public:
         while(!que.empty())
         {
             vector<int> tmp;
-            int size = que.size();
+            int size = que.size();//!!
             while(size--)
             {
                 TreeNode* front = que.front();
                 que.pop();
                 tmp.push_back(front->val);
-                if(front->left) que.push(front->left);
+                if(front->left) que.push(front->left);//记得判断if
                 if(front->right) que.push(front->right);
             }
             res.push_back(tmp);
