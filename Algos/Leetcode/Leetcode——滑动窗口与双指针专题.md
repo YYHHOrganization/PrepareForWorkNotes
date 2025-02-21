@@ -918,6 +918,10 @@ public:
 
 ## 3.求子数组个数
 
+我的理解是考虑每次滑动完`l`之后，要的部分是左侧的部分（意味着现在不合法了，滑动到现在位置之前的是合法的，此时`cnt+=l`），还是要的是中间的部分（意味着之前不合法，现在合法了，窗口里的都是合法的，此时`cnt+=(r-l+1)`）。
+
+
+
 ### 越长越合法
 
 一般要写 `ans += left`。
@@ -950,4 +954,250 @@ public:
 
 
 
-#### （2）
+#### （2）[2962. 统计最大元素出现至少 K 次的子数组 - 力扣（LeetCode）](https://leetcode.cn/problems/count-subarrays-where-max-element-appears-at-least-k-times/description/)
+
+本题一个注意事项是C++中`max_element`的接口，`*max_element()`可以用来找到数组的最大值，而`max_element`则对应最大元素所在的迭代器，可以参考cpp官网：
+
+[std::max_element - cppreference.com](https://en.cppreference.com/w/cpp/algorithm/max_element)
+
+本题代码如下：
+
+```c++
+class Solution {
+public:
+    long long countSubarrays(vector<int>& nums, int k) {
+        //1.找到数组中的最大元素
+        int maxNum = *max_element(nums.begin(), nums.end());
+        int l=0;
+        long long cnt=0;
+        long long maxCnt=0; //最大值的个数
+        for(int r=0;r<nums.size();r++){
+            maxCnt += (nums[r]==maxNum);
+            while(maxCnt>=k){
+                maxCnt-=(nums[l]==maxNum);
+                l++;
+            }
+            cnt+=l; //直到不满足为止,左指针最终位置之前的都是满足要求的,因此每次cnt+=l
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+#### （3）[3325. 字符至少出现 K 次的子字符串 I - 力扣（LeetCode）](https://leetcode.cn/problems/count-substrings-with-k-frequency-characters-i/description/)
+
+```c++
+class Solution {
+public:
+    int numberOfSubstrings(string s, int k) {
+        //不满足的情况:没有任何一个字符出现次数达到k次,也就是所有字符出现次数均<k
+        unordered_map<char, int> umap;
+        int cnt = 0;
+        int l=0, n=s.size();
+        for(int r=0;r<n;r++){
+            umap[s[r]]++;
+            while(umap[s[r]]>=k){ //新加入的字符导致当前元素个数>=k
+                umap[s[l]]--;
+                l++;
+            }   
+            cnt+=l; //刷到不满足要求为止,此时左边的都是满足要求的
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+#### （4）[2799. 统计完全子数组的数目](https://leetcode.cn/problems/count-complete-subarrays-in-an-array/)
+
+补充：有一种快速统计数组中有多少个不重复元素的写法：`int m = unordered_set<int>(nums.begin(), nums.end()).size();`
+
+```c++
+class Solution {
+public:
+    int countCompleteSubarrays(vector<int>& nums) {
+        //先统计一下数组有多少不同元素
+        unordered_map<int, int> utotal;
+        unordered_map<int, int> umap;
+        for(int num:nums){
+            utotal[num]++;
+        }
+        int totalSize = utotal.size();
+        int l=0;
+        int cnt = 0;
+        for(int r=0;r<nums.size();r++){
+            umap[nums[r]]++;
+            while(umap.size()>=totalSize){
+                umap[nums[l]]--;
+                if(umap[nums[l]]==0) umap.erase(nums[l]);
+                l++;
+            }
+            cnt += l;
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+#### （5）[2537. 统计好子数组的数目](https://leetcode.cn/problems/count-the-number-of-good-subarrays/)（:no_entry:)
+
+这道题目有一些思维难度，自己想不太明白，看了题解。**要点是用哈希表维护窗口内的元素个数。**答案如下：
+
+```c++
+class Solution {
+public:
+    long long countGood(vector<int>& nums, int k) {
+        unordered_map<int, int> umap;
+        int l=0; 
+        long long pair = 0; //记录对数
+        long long cnt = 0; //记录好子数组的数目
+        for(int r=0;r<nums.size();r++){
+            pair += umap[nums[r]]; //增加现有的nums[r]这么多对 pair,因为此时跟左侧所有的相同数都构成arr[i] == arr[j]
+            umap[nums[r]]++;
+            while(pair>=k){
+                umap[nums[l]]--;
+                pair-=umap[nums[l]]; //本来假设5个值一样,去掉左边的1个值,相当于少了4个一样的数对
+                l++;
+            }
+            cnt+=l;
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### 越短越合法
+
+一般要写 `ans += right - left + 1`。
+
+滑动窗口的内层循环结束时，右端点**固定**在`right`，左端点在`left,left+1,...right`的所有子数组（子串）都是合法的，对应`right-left+1`个。
+
+#### （1）[713. 乘积小于 K 的子数组](https://leetcode.cn/problems/subarray-product-less-than-k/)
+
+**在写滑动窗口的时候，要注意有没有可能出现左边界`l`溢出的问题，即`while`循环针对特殊的测试用例会出现坏逻辑的情况。**
+
+```c++
+class Solution {
+public:
+    int numSubarrayProductLessThanK(vector<int>& nums, int k) {
+        int mul = 1;
+        int l=0, n=nums.size();
+        if(k<=1) return 0;  //需要特殊判断:不写这句nums[1,2,3],k=0测试用例过不去,会导致l溢出
+        int cnt = 0;
+        for(int r=0;r<n;r++){
+            mul *= nums[r];
+            while(mul>=k){
+                mul /= nums[l]; //数组中不会有0,不需要担心
+                l++;
+            }
+            //此时mul<k,统计数目
+            cnt+=(r-l+1);
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+#### （2）[3258. 统计满足 K 约束的子字符串数量 I](https://leetcode.cn/problems/count-substrings-that-satisfy-k-constraint-i/)
+
+```c++
+class Solution {
+public:
+    int countKConstraintSubstrings(string s, int k) {
+        //超过k则滑动左指针直到为k,并且记录此时所有r-l+1,即此时窗口内都符合
+        int cnt = 0;
+        int zeroCnt = 0;
+        int oneCnt = 0;
+        int l=0;
+        for(int r=0;r<s.size();r++){
+            zeroCnt+=(s[r]=='0');
+            oneCnt +=(s[r]=='1');
+            while(zeroCnt>k && oneCnt>k){ //满足任一条件即满足k约束,离开时要么zeroCnt==k,要么oneCnt==k,此时窗口里面的都是需要的
+                zeroCnt-=(s[l]=='0');
+                oneCnt-=(s[l]=='1');
+                l++;
+            }
+            cnt+=(r-l+1);
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+#### （3）[2302. 统计得分小于 K 的子数组数目](https://leetcode.cn/problems/count-subarrays-with-score-less-than-k/)
+
+先贴一下我写的，比较麻烦，但思路是可以的：
+
+```c++
+class Solution {
+public:
+    long long countSubarrays(vector<int>& nums, long long k) {
+        //记录窗口内的sum,会比较容易算
+        long long windowSum = 0;
+        long long cnt = 0; //记录总数
+        long long windowSize = 0; //记录窗口大小
+        long long totalScore = 0;
+        int l = 0;
+        for(int r=0;r<nums.size();r++){
+            windowSize = r-l+1;
+            totalScore += (windowSum + nums[r] * windowSize);
+            windowSum += nums[r];
+            while(totalScore>=k){
+                totalScore -= windowSum;
+                totalScore -= nums[l] * (windowSize-1); //单独减一下左侧剩下的值
+                windowSum -= nums[l];
+                l++;
+                windowSize--;
+            }
+            cnt+=(r-l+1);
+        }
+        return cnt;
+    }
+};
+```
+
+实际上，计算区间内数组的分数不需要这么麻烦，只要这么写即可：
+
+```c++
+class Solution {
+public:
+    long long countSubarrays(vector<int>& nums, long long k) {
+        long long sum = 0; //维护窗口内的和
+        int l=0;
+        long long cnt = 0;
+        for(int r=0;r<nums.size();r++){
+            sum += nums[r]; //求解区间和
+            while((sum*(r-l+1))>=k){
+                sum-=nums[l];
+                l++;
+            }
+            //离开while循环后,sum*(r-l+1)一定<k
+            cnt+=(r-l+1);
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### 恰好型滑动窗口
+
+例如，要计算有多少个元素和**恰好等于**`k`的子数组，可以把问题变成：
+
+- 计算有多少个元素和 ≥k 的子数组。
+- 计算有多少个元素和 >k，也就是 ≥k+1 的子数组。
+
+![image-20250221221544733](Leetcode%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E5%8F%8C%E6%8C%87%E9%92%88%E4%B8%93%E9%A2%98.assets/image-20250221221544733.png)
+
