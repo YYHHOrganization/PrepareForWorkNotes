@@ -6,7 +6,7 @@
 
 **定长滑动窗口**
 
-- [x] 定长子串中元音的最大数目 1263
+- [x] 定长子串中元音的最大数目 1263 
 - [x] 子数组最大平均数 I
 - [x] 大小为 K 且平均值大于等于阈值的子数组数目 1317
 - [x] 半径为 k 的子数组平均值 1358
@@ -136,7 +136,7 @@ public:
         int cnt = 0;
         for(int i=0;i<arr.size();i++){
             sum+=arr[i]; //1.inset
-            if(i<k-1) continue;
+            if(i<k-1) continue; //!!!<
             //2.update
             if(sum>=target){
                 cnt++;
@@ -148,6 +148,40 @@ public:
     }
 };
 ```
+
+
+
+## [2090. 半径为 k 的子数组平均值](https://leetcode.cn/problems/k-radius-subarray-averages/)
+
+![img](assets/eg1.png)
+
+```C++
+class Solution {
+public:
+    vector<int> getAverages(vector<int>& nums, int k)
+    {
+        int n=nums.size();
+        vector<int> res(n,-1);
+        if(n-2*k<0)return res;
+
+        long long avgS=0;
+
+        for(int r=0;r<n;r++)
+        {
+            avgS+=nums[r];
+            if(r<2*k)continue;
+            //update
+            res[r-k]=avgS/(2*k+1);
+            //out
+            avgS-=nums[r-2*k];
+        }
+        return res;
+       
+    }
+};
+```
+
+
 
 
 
@@ -175,6 +209,75 @@ public:
             newSatisfiedSum -= (grumpy[i-minutes+1]==1) * customers[i-minutes+1];
         }
         return maxSatisfied + sum;
+    }
+};
+```
+
+y
+
+```C++
+class Solution {
+public:
+    int maxSatisfied(vector<int>& customers, vector<int>& grumpy, int minutes) {
+        //记录minutes分钟内不生气带来的增量收益
+        int temp = 0;
+        int resMax = 0;
+        int normal=0;
+        for(int r=0;r<customers.size();r++)
+        {
+            //计算正常收益
+            if(grumpy[r]==0)
+            normal +=  customers[r];
+            else
+            //in
+            //if(grumpy[r]==1)
+                temp+=customers[r];
+            if(r<minutes-1)continue;
+            //update
+            resMax = max(resMax,temp);
+            //out
+            if(grumpy[r-minutes+1]==1)temp-=customers[r-minutes+1];
+        }
+        return normal+resMax;
+    }
+};
+```
+
+## [2841. 几乎唯一子数组的最大和](https://leetcode.cn/problems/maximum-sum-of-almost-unique-subarray/)
+
+```C++
+class Solution {
+public:
+    long long maxSum(vector<int>& nums, int m, int k) 
+    {
+        //unordered_map  存储每个元素个数
+        //tempM 存储几个不相同
+        //往右 map-  if(map[l]==0)M--;
+
+        unordered_map<int,int> umap;
+        int tempM=0;
+        long long tempSum=0;
+        long long maxSum=0;
+        for(int r=0;r<nums.size();r++)
+        {
+            //in
+            umap[nums[r]]++;
+            if(umap[nums[r]]==1)tempM++;
+            tempSum+=nums[r];
+            if(r<k-1)continue;
+            //update
+            // cout<<tempSum<<endl;
+            if(tempM>=m)
+            {
+                maxSum=max(maxSum,tempSum);
+            }
+            //out
+            if(umap[nums[r-k+1]]==1)tempM--;
+            umap[nums[r-k+1]]--;
+            tempSum -=nums[r-k+1];
+        }
+        return maxSum;
+
     }
 };
 ```
