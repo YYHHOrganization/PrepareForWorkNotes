@@ -48,15 +48,50 @@
 - [x] 无重复字符的最长子串
 - [x] 每个字符最多出现两次的最长子字符串 1329
 - [x] 删掉一个元素以后全为 1 的最长子数组 1423
-- [ ] 尽可能使字符串相等 1497
-- [ ] 找到最长的半重复子字符串 1502
-- [ ] 水果成篮 1516
-- [ ] 删除子数组的最大得分 1529
-- [ ] 最多 K 个重复元素的最长子数组 1535
-- [ ] 数组的最大美丽值 1638
-- [ ] 考试的最大困扰度 1643
-- [ ] 最大连续 1 的个数 III 1656
-- [ ] 
+- [x] 尽可能使字符串相等 1497
+- [x] 找到最长的半重复子字符串 1502
+- [x] 水果成篮 1516
+- [x] 删除子数组的最大得分 1529
+- [x] 最多 K 个重复元素的最长子数组 1535
+- [x] 数组的最大美丽值 1638
+- [x] 考试的最大困扰度 1643
+- [x] 最大连续 1 的个数 III 1656
+- [x] [1658. 将 x 减到 0 的最小操作数](https://leetcode.cn/problems/minimum-operations-to-reduce-x-to-zero/)
+- [x] [1838. 最高频元素的频数](https://leetcode.cn/problems/frequency-of-the-most-frequent-element/)
+- [ ] 每种字符至少取 K 个 1948
+
+以下还都没做：
+
+- 找出最长等值子数组 1976
+- 毯子覆盖的最多白色砖块数 2022
+- 摘水果 2062
+- 两个线段获得的最多奖品 2081
+- 使数组连续的最少操作数 2084
+- 可见点的最大数目 2147
+- 最长合法子字符串的长度 2204
+- 最长乘积等价子数组 ~2300 非暴力做法
+- 执行操作使频率分数最大 2444
+- 移动石子直到连续 II 2456
+- 收集连续 K 个袋子可以获得的最多硬币数量 ~2500
+- 至少有 K 个重复字符的最长子串
+- 最长的美好子字符串 非暴力做法
+- 最大连续 1 的个数 II（会员题）
+- 至多包含两个不同字符的最长子串（会员题）
+- 至多包含 K 个不同字符的最长子串（会员题）
+
+
+
+§2.2 求最短/最小
+一般题目都有「至少」的要求。
+
+- [x] 长度最小的子数组
+- [x] 最短且字典序最小的美丽子字符串 做到$O(n^2)$
+- [ ] 替换子串得到平衡字符串 1878
+- [ ] 无限数组的最短子数组 1914
+- [ ] 最小覆盖子串
+- [ ] 最小区间 做法不止一种
+
+
 
 # 一、定长滑动窗口
 
@@ -453,3 +488,466 @@ public:
 };
 ```
 
+------
+
+### ==2025.2.20==
+
+以下为2025.2.20晚
+
+### （4）[1208. 尽可能使字符串相等](https://leetcode.cn/problems/get-equal-substrings-within-budget/)
+
+```c++
+class Solution {
+public:
+    int equalSubstring(string s, string t, int maxCost) {
+        //思路:计算一下每个下标对应转换的差(数组),然后维护最长窗口长度
+        int n = s.size();
+        vector<int> vec(n);
+        for(int i=0;i<n;i++){
+            vec[i] = abs(t[i]-s[i]);
+        }
+        //维护窗口最大长度
+        int res = 0;
+        int cost = 0; //维护窗口内的cost
+        int j=0;
+        for(int i=0;i<n;i++){
+            cost += vec[i];
+            while(cost>maxCost){
+                cost-=vec[j];
+                j++;
+            }
+            res = max(res, i-j+1);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （5）[2730. 找到最长的半重复子字符串](https://leetcode.cn/problems/find-the-longest-semi-repetitive-substring/)
+
+这道题目可以不用传统的滑动窗口，而是记录上一次发生重复的位置，然后每次再次重复就把左指针移动到记录上次重复的位置。
+
+```c++
+class Solution {
+public:
+    int longestSemiRepetitiveSubstring(string s) {
+        //每次遇到重复现象,就记录索引,第二次重复了就把j跳转到上次记录的索引
+        int n = s.size();
+        int j = 0;
+        int recordLast = -1; //上次记录出现重复字符的位置
+        int res = 0;
+        if(n==1) return 1; //注意,做一下特判,不然for(int i=1;i<n;i++)进不去,注意记住这种模式
+        for(int i=1;i<n;i++){
+            if(s[i]==s[i-1]){ //第二次及以上出现重复子字符串了 
+                if(recordLast!=-1){ 
+                    j = recordLast;
+                    recordLast = i; //别忘了更新recordLast
+                } else { //第一次出现重复子字符串,问题不大
+                    recordLast = i; //第一次记录
+                }
+            }
+            //cout<<i-j+1<<endl;
+            res = max(res, i-j+1);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （6）[904. 水果成篮](https://leetcode.cn/problems/fruit-into-baskets/)
+
+**这题描述有点抽象**，题意应该是：**找一个最长连续子数组，满足子数组中至多有两种数字。返回子数组的长度。**
+
+要点是记得用哈希表。代码如下：
+
+```c++
+class Solution {
+public:
+    int totalFruit(vector<int>& fruits) {
+        unordered_map<int, int> umap; //key:水果的kind, value:出现的个数,哈希表中只能有两种元素
+        int j = 0;
+        int res = 0;
+        for(int i=0;i<fruits.size();i++){
+            umap[fruits[i]]++;
+            while(umap.size()>2){
+                umap[fruits[j]]--;
+                if(umap[fruits[j]]==0) umap.erase(fruits[j]);
+                j++;
+            }
+            res = max(res, i-j+1);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （7）[1695. 删除子数组的最大得分](https://leetcode.cn/problems/maximum-erasure-value/)
+
+```c++
+class Solution {
+public:
+    int maximumUniqueSubarray(vector<int>& nums) {
+        //其实就是求窗口里无重复元素的最长子串的和
+        int res = 0;
+        int sum = 0; //维护窗口内的和
+        unordered_map<int, int> umap;
+        int l=0;
+        for(int r=0;r<nums.size();r++){
+            umap[nums[r]]++;
+            sum+=nums[r];
+            while(umap[nums[r]]>1){
+                umap[nums[l]]--;
+                if(umap[nums[l]]==0) umap.erase(nums[l]);
+                sum-=nums[l];
+                l++;
+            }
+            res = max(res, sum);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （8）[2958. 最多 K 个重复元素的最长子数组](https://leetcode.cn/problems/length-of-longest-subarray-with-at-most-k-frequency/)
+
+```c++
+class Solution {
+public:
+    int maxSubarrayLength(vector<int>& nums, int k) {
+        //一样
+        unordered_map<int, int> umap;
+        int l=0;
+        int res=0;
+        for(int r=0;r<nums.size();r++){
+            umap[nums[r]]++;
+            while(umap[nums[r]]>k){
+                umap[nums[l]]--;
+                l++;
+            }
+            res=max(res, r-l+1);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （9）[2779. 数组的最大美丽值](https://leetcode.cn/problems/maximum-beauty-of-an-array-after-applying-operation/)
+
+这道题目会有一些思维上的难度。对于笔试题来说为了快速尝试能否通过这道题，可以大胆对数组进行预处理，比如排序（排序也就nlogn，别担心复杂度）。
+
+```c++
+class Solution {
+public:
+    int maximumBeauty(vector<int>& nums, int k) {
+        //排序后,维护窗口内元素差<=2*k的最大长度,此时才能保持这一部分都变成同一个值
+        sort(nums.begin(), nums.end());
+        int l=0;
+        int res=1; //最起码美丽值也得是1
+        int n = nums.size();;
+        for(int r=1;r<nums.size();r++){
+            while(nums[r]-nums[l]>2*k){
+                l++;
+            }
+            res = max(res, r-l+1);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （10）[2024. 考试的最大困扰度](https://leetcode.cn/problems/maximize-the-confusion-of-an-exam/)
+
+维护两个窗口（通过两个不同的`l`指针来实现），代码如下：
+
+```c++
+class Solution {
+public:
+    int maxConsecutiveAnswers(string answerKey, int k) {
+        //维护两个值,分别是最多k个F的情况下,窗口的最大长度;以及最多k个T的情况下,窗口的最大长度,两者取max即可
+        int maxF = 0;
+        int maxT = 0;
+        int lf = 0, lt = 0; //维护F和T相关的左指针
+        int cntF=0, cntT=0; //窗口内F和T的数量
+        for(int r=0;r<answerKey.size();r++){
+            cntF += (answerKey[r]=='F');
+            cntT += (answerKey[r]=='T');
+            while(cntF>k){
+                cntF-=(answerKey[lf]=='F');
+                lf++;
+            }
+            while(cntT>k){
+                cntT-=(answerKey[lt]=='T');
+                lt++;
+            }
+            maxF = max(maxF, r-lf+1);
+            maxT = max(maxT, r-lt+1);
+        }
+        return max(maxF, maxT);
+    }
+};
+```
+
+
+
+### （11）[1004. 最大连续1的个数 III - 力扣（LeetCode）](https://leetcode.cn/problems/max-consecutive-ones-iii/description/)
+
+这题比上一题还简单，代码如下：
+
+```c++
+class Solution {
+public:
+    int longestOnes(vector<int>& nums, int k) {
+        int cnt0 = 0;
+        int res = 0;
+        int j = 0;
+        for(int i=0;i<nums.size();i++){
+            cnt0 += (nums[i]==0);
+            while(cnt0>k){
+                cnt0 -= (nums[j]==0);
+                j++;
+            }
+            res = max(res, i-j+1);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （12）[1658. 将 x 减到 0 的最小操作数](https://leetcode.cn/problems/minimum-operations-to-reduce-x-to-zero/)
+
+这道题目要注意边界情况的考虑！否则有的测试用例是过不去的。**经验：在滑动窗口题目中，如果涉及到反着求解的思路，比如变为维护中间窗口，或者转为维护另一个值时，一定要注意可能产生的负数、数组下标溢出等问题。**
+
+```c++
+class Solution {
+public:
+    int minOperations(vector<int>& nums, int x) {
+        //相当于维护窗口内=数组总和-x的最大窗口长度,如果大于数组总和-x则收缩l,直到<=数组总和-x,此时窗口内的和=数组总和-x 则更新最大值,否则不更新最大值.
+        //若最大值始终没有更新,说明做不到,return -1即可
+        int sum=0;
+        int res=-1; //记录最大窗口长度
+        int l=0;
+        int target = accumulate(nums.begin(), nums.end(), 0);
+        //全减光了都到不了0,此时return -1,对应: 务必注意这种情况!!
+        if(x-target>0) return -1;
+        for(int r=0;r<nums.size();r++){
+            sum += nums[r];
+            while(sum>target-x){
+                sum -= nums[l];
+                l++;
+            }
+            if(sum==target-x){
+                res = max(res, r-l+1);
+            }
+        }
+        if(res==-1) return -1;
+        else return nums.size()-res;
+    }
+};
+```
+
+
+
+### （13）[1838. 最高频元素的频数](https://leetcode.cn/problems/frequency-of-the-most-frequent-element/)
+
+这道题目有可能会出现`int`溢出的问题，需要考虑进来。
+
+```c++
+class Solution {
+public:
+    int maxFrequency(vector<int>& nums, int k) {
+        sort(nums.begin(), nums.end());
+        long long cost = k;
+        int l=0;
+        int n=nums.size();
+        int res = 1; //记录最终的结果
+        int size = 1; //窗口里最开始有1个元素
+        for(int r=1;r<n;r++){
+            cost -= (long long)((long long)size * (nums[r]-nums[r-1]));
+            while(cost<0){
+                cost += (nums[r]-nums[l]);
+                l++;
+            }
+            size = r-l+1; //窗口里现在的元素数量
+            res = max(res, r-l+1);
+        }
+        return res;
+    }
+};
+```
+
+如果忘记了的话，本题思路如下：
+
+> 你的思路可以总结为以下步骤，便于日后回顾：
+>
+> 1. **排序数组**：首先将数组排序，这样可以确保相邻元素之间的调整操作次数最小，便于后续使用滑动窗口。
+> 2. **滑动窗口维护**：使用双指针 `l` 和 `r` 定义一个窗口，表示当前考虑将窗口内所有元素调整为 `nums[r]` 的情况。目标是找到满足总操作次数不超过 `k` 的最大窗口长度。
+> 3. **操作次数计算**：
+>    - **扩展右边界**：每次右移 `r` 时，计算将窗口内所有元素从之前的最大值 `nums[r-1]` 提升到当前 `nums[r]` 所需的额外操作次数。这部分操作为 `size * (nums[r] - nums[r-1])`，其中 `size` 是当前窗口元素数量。
+>    - **调整左边界**：若总操作次数超过 `k`，则逐步右移左指针 `l`，并恢复移出元素对应的操作次数（即 `nums[r] - nums[l]`），直到总操作次数合法。
+> 4. **更新最大频数**：每次窗口调整后，记录当前窗口长度作为候选结果，最终取最大值。
+>
+> **关键点**：
+>
+> - 排序后，最优目标值必定是窗口右端点的值，因为调整到更大的值需要更多操作次数。
+> - 维护窗口内的总操作数不超过 `k`，通过动态调整窗口大小确保高效性。
+>
+> 这种方法的复杂度为排序的 $O(n log n) $加上滑动窗口遍历的 $O(n)$，高效适用于大规模数据。
+
+
+
+## 2.求最短/最小
+
+一般题目都有「至少」的要求。
+
+### （1）[209. 长度最小的子数组 - 力扣（LeetCode）](https://leetcode.cn/problems/minimum-size-subarray-sum/description/)
+
+与之前的题目相比，本题的更新逻辑需要注意一下，可以参考这篇题解中的两种做法：
+
+[209. 长度最小的子数组 - 力扣（LeetCode）](https://leetcode.cn/problems/minimum-size-subarray-sum/solutions/1959532/biao-ti-xia-biao-zong-suan-cuo-qing-kan-k81nh/)
+
+个人比较习惯于写第二种写法，即在`while`内（也就是还满足条件）的时候做计算，代码如下：
+
+```c++
+class Solution {
+public:
+    int minSubArrayLen(int target, vector<int>& nums) {
+        int res = INT_MAX;
+        int sum = 0; //维护窗口内的和
+        int l=0;
+        for(int r=0;r<nums.size();r++){
+            sum+=nums[r];
+            while(sum>=target){
+                res = min(res, r-l+1); //注意,本题变为在while循环里面维护最小值
+                sum-=nums[l];
+                l++;
+            }     
+        }
+        if(res==INT_MAX) return 0;
+        else return res;
+    }
+};
+```
+
+
+
+有的时候可能也需要第一种写法，这里也放一下：
+```c++
+class Solution {
+public:
+    int minSubArrayLen(int target, vector<int>& nums) {
+        //试一下第一种做法
+        int res = INT_MAX;
+        int l=0;
+        int sum = 0;
+        for(int r=0;r<nums.size();r++){
+            sum+=nums[r];
+            while(sum-nums[l]>=target){
+                sum-=nums[l];
+                l++;
+            }
+            if(sum>=target){ //有可能上面的while循环进不去
+                res = min(res, r-l+1);
+            }
+        }
+        return res==INT_MAX? 0: res;
+    }
+};
+```
+
+
+
+
+
+### （2）[2904. 最短且字典序最小的美丽子字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/shortest-and-lexicographically-smallest-beautiful-string/description/) 
+
+**这道题目有点绕，而且也有一定的难度。**（注意字符串更新的时候，优先判断长度是否更小，长度一样的话还要判断字典序是否更小，这题一遍能做对的是这个:thumbsup:）务必记住求最小/最短滑动窗口时的两种套路（记住第一种写法在`while()`中尝试做某个操作，然后判断一下，此时`while`循环后面还要再写一个`if`语句，确保当`while`循环进不去的时候逻辑也是合理的）。本题代码如下：
+
+```c++
+class Solution {
+public:
+    string shortestBeautifulSubstring(string s, int k) {
+        int res = INT_MAX;
+        int startIndex = 0; //记录子字符串的初始位置,有startIndex和res就可以把子串拿出来
+        int l = 0;
+        int n=s.size();
+        int cntOne = 0; //窗口内1的个数
+        for(int r=0;r<n;r++){
+            cntOne+=(s[r]=='1');
+            while(cntOne-(s[l]=='1')>=k){ //务必记住最小窗口的套路写法
+                cntOne-=(s[l]=='1');
+                l++;
+            }
+            if(cntOne==k){
+                if((r-l+1)<res){
+                    res = r-l+1;
+                    startIndex = l;
+                } else if((r-l+1)==res){ //长度一样,看看会不会更小
+                    if(s.substr(startIndex, res)>s.substr(l, res)){ //现在这个字符串更小
+                        startIndex = l;
+                    }
+                }
+            } 
+        }
+        if(res==INT_MAX) return "";
+        else return s.substr(startIndex, res);
+    }
+};
+```
+
+
+
+### ==（3）[1234. 替换子串得到平衡字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/replace-the-substring-for-balanced-string/)==
+
+首先这题要理解清楚题意，不能随便替换，而是**只能替换一个连续的子串。**==这题暂时有点难，先不看了，等后面题刷的足够多了再回来看。==
+
+
+
+## 3.求子数组个数
+
+### 越长越合法
+
+一般要写 `ans += left`。
+
+滑动窗口的内层循环结束时，右端点**固定**在`right`，左端点在`0,1,....left-1`的所有子数组（子串）都是合法的，一共是`left`个。
+
+#### （1）[1358. 包含所有三种字符的子字符串数目](https://leetcode.cn/problems/number-of-substrings-containing-all-three-characters/)
+
+转换思维，每次让窗口内都正好只出现每个字符一次，每次移动完左指针直到达不成条件之后，左指针`l`之前的所有都符合题意。
+
+```c++
+class Solution {
+public:
+    int numberOfSubstrings(string s) {
+        int num[3]{}; //这题要求三个字符都至少出现一次,不能用"无重复元素"的套路了
+        int cnt = 0;
+        int l=0,n=s.size();
+        for(int r=0;r<s.size();r++){
+            num[s[r]-'a']++;
+            while(num[0] && num[1] && num[2]){
+                num[s[l]-'a']--;
+                l++;
+            }
+            cnt += l;
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+#### （2）
