@@ -9,3 +9,7 @@ NeRF的官方主页：https://www.matthewtancik.com/nerf，先过一下Demo。
 # 关于Volume Rendering的介绍
 
 https://www.youtube.com/watch?v=1PqvwOjnKJw
+
+公式的推导非常推荐看这篇：https://yconquesty.github.io/blog/ml/nerf/nerf_rendering.html#the-rendering-formula
+
+https://zhuanlan.zhihu.com/p/574351707
