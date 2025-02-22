@@ -251,30 +251,27 @@ public:
     long long maxSum(vector<int>& nums, int m, int k) 
     {
         //unordered_map  存储每个元素个数
-        //tempM 存储几个不相同
-        //往右 map-  if(map[l]==0)M--;
-
+        //往右 map- 
         unordered_map<int,int> umap;
-        int tempM=0;
         long long tempSum=0;
         long long maxSum=0;
         for(int r=0;r<nums.size();r++)
         {
             //in
             umap[nums[r]]++;
-            if(umap[nums[r]]==1)tempM++;
             tempSum+=nums[r];
             if(r<k-1)continue;
             //update
-            // cout<<tempSum<<endl;
-            if(tempM>=m)
+            if(umap.size()>=m)
             {
                 maxSum=max(maxSum,tempSum);
             }
             //out
-            if(umap[nums[r-k+1]]==1)tempM--;
-            umap[nums[r-k+1]]--;
-            tempSum -=nums[r-k+1];
+            int out = nums[r-k+1];
+            umap[out]--;
+            if(umap[out]==0)umap.erase(out);//umap语法 umap.erase(key)
+
+            tempSum -=out;
         }
         return maxSum;
 
@@ -342,6 +339,38 @@ public:
 
 
 
+板子做法
+
+```C++
+class Solution {
+public:
+    int maxScore(vector<int>& cardPoints, int k) 
+    {
+        int n=cardPoints.size();
+        int getCardNum = n-k;
+        int tempSum=0;
+        int minSum = INT_MAX;//!!
+
+        int totalSum=0;
+        for(int r=0;r<n;r++)
+        {
+            totalSum+=cardPoints[r];
+            //in
+            tempSum+=cardPoints[r];
+            if(r<getCardNum-1)continue;
+            //update
+            minSum = min(minSum,tempSum);
+            //out;
+            tempSum-=cardPoints[r-getCardNum+1];
+        }
+        if(n==k)return totalSum;//
+        return totalSum - minSum;
+    }
+};
+```
+
+
+
 ## 5.（简单题）[1652. 拆炸弹](https://leetcode.cn/problems/defuse-the-bomb/)
 
 利用定长滑动窗口的做法，考虑用$O(n)$的复杂度解决这道题目。这种算是模拟题，可以画一下图推导一下下标索引，**千万不要硬着头皮想。**本题的难点就在于索引值的判定，代码如下：
@@ -373,6 +402,51 @@ public:
             for(int i=n-2;i>=0;i--){
                 sum += (code[i+1]-code[(i+k+1)%n]);
                 res[i] = sum;
+            }
+        }
+        return res;
+    }
+};
+```
+
+y
+
+```C++
+
+class Solution {
+public:
+    vector<int> decrypt(vector<int>& code, int k) {
+        int n = code.size();
+        vector<int> res(n);
+        if (k > 0) 
+        {
+            int tempsum = 0;
+            for (int j = 0; j < k; j++) 
+            {
+                tempsum += code[j%n];
+            }
+            res[n - 1] = tempsum;
+            for(int i=0;i<n-1;i++)
+            {
+                res[i]=tempsum+code[(i+k)%n]-code[i];
+                tempsum = res[i];
+            }
+        }
+        else if(k<0)
+        {
+            k=-k;
+            int tempsum = 0;
+            // n=3,j =n-1=2,j>=2-1-1=0 k=1 
+            for (int j = n-1; j >= n-k; j--) 
+            {
+                tempsum += code[j%n];
+            }
+            res[0] = tempsum;
+            for(int i=1;i<n;i++)
+            {
+                //错误地方：这一步如果code[(i-k-1)%n]负数取余是不对的 一定要记得+n
+                res[i]=tempsum-code[(i-k-1+n)%n]+code[i-1];
+                tempsum = res[i];
             }
         }
         return res;
