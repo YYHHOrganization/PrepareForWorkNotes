@@ -496,7 +496,7 @@ public:
             int out = s[i-k+1]-'0';
             sum -= (out<<(k-1));
         }
-        return (us.size()==(1<<k));
+        return (us.size()==(1<<k)); //1<<2=0b100 = 4 / 1<<3 =0b1000 = 8 /1<<K=2^K
     }
 };
 ```
@@ -607,6 +607,34 @@ public:
 };
 ```
 
+y：
+
+```C++
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) 
+    {
+        unordered_map<char,int> umap;
+        int l=0;
+        int maxLen=0;
+        for(int r=0;r<s.size();r++)
+        {
+            //in
+            umap[s[r]]++;
+            //out
+            while(umap[s[r]]>1)
+            {
+                umap[s[l]]--;
+                l++;
+            }
+            //update
+            maxLen = max(maxLen,r-l+1);
+        }
+        return maxLen;
+    }
+};
+```
+
 
 
 ### （2）[3090. 每个字符最多出现两次的最长子字符串](https://leetcode.cn/problems/maximum-length-substring-with-two-occurrences/)
@@ -664,6 +692,39 @@ public:
     }
 };
 ```
+
+y
+
+```C++
+class Solution {
+public:
+    int longestSubarray(vector<int>& nums) 
+    {
+        //寻找最多只有一个0的子数组
+        //如果有0 长度-1 没有0  也是长度-1
+        int zeroCnt=0;
+        int l=0;
+        int n=nums.size();
+        int maxLen=0;
+        for(int r=0;r<n;r++)
+        {
+            //in
+            if(nums[r]==0)zeroCnt++;
+            //out
+            while(zeroCnt>1)
+            {
+                if(nums[l]==0)zeroCnt--;
+                l++;
+            }
+            //update
+            maxLen = max(maxLen,r-l+1);
+        }
+        return max(maxLen-1,0);
+    }
+};
+```
+
+
 
 ------
 
@@ -733,6 +794,46 @@ public:
 };
 ```
 
+y
+
+```C++
+class Solution {
+public:
+    int longestSemiRepetitiveSubstring(string s) 
+    {
+        //记录重复子串的位置，如果找到新的重复的，l就来到上次重复子串第二个数的位置
+
+        int l=0;
+        int n=s.size();
+        int lastRepetivePos = -1;
+        int maxLen=0;
+
+        int repeteNum=0;
+        for(int r=0;r<n;r++)
+        {
+            //in
+            if(r>0&&s[r]==s[r-1]) // 00 //000
+            {
+                repeteNum++; //1   2
+                if(lastRepetivePos==-1)lastRepetivePos=r;
+                // lastRepetivePos = r;//1   2error
+            }
+
+            //out
+            if(repeteNum>=2)//000
+            {
+                if(lastRepetivePos!=-1)l=lastRepetivePos;
+                lastRepetivePos = r;
+                repeteNum--;
+            }
+            //update
+            maxLen=max(maxLen,r-l+1);
+        }
+        return maxLen;
+    }
+};
+```
+
 
 
 ### （6）[904. 水果成篮](https://leetcode.cn/problems/fruit-into-baskets/)
@@ -787,6 +888,38 @@ public:
             res = max(res, sum);
         }
         return res;
+    }
+};
+```
+
+y
+
+```C++
+class Solution {
+public:
+    int maximumUniqueSubarray(vector<int>& nums) 
+    {
+        //子数组最大和
+        int l=0;
+        int maxSum=0;
+        int tempSum=0;
+        unordered_map<int,int> umap;
+        for(int r=0;r<nums.size();r++)
+        {
+            //in
+            tempSum+=nums[r];
+            umap[nums[r]]++;
+            //out
+            while(umap[nums[r]]>1)
+            {
+                umap[nums[l]]--;
+                tempSum-=nums[l];
+                l++;
+            }
+            //update
+            maxSum = max(maxSum,tempSum);
+        }
+        return maxSum;
     }
 };
 ```
@@ -936,6 +1069,41 @@ public:
 };
 ```
 
+Y
+
+```C++
+class Solution {
+public:
+    int minOperations(vector<int>& nums, int x) 
+    {
+        //转换为 和恰好为 totalSum-x 的最长子字符串
+        int target = reduce(nums.begin(),nums.end())-x;
+        if(target<0)return -1;
+        int l=0;
+        int n=nums.size();
+        int tempsum=0;
+        int maxLen=-1;
+        for(int r=0;r<n;r++)
+        {
+            //in
+            tempsum+=nums[r];
+            //out
+            while(tempsum>target)
+            {
+                tempsum-=nums[l];
+                l++;
+            }
+            //update
+            if(tempsum==target)
+            {
+                maxLen = max(maxLen,r-l+1);
+            }
+        }
+        return ( (maxLen==(-1))? (-1):(n-maxLen) );
+    }
+};
+```
+
 
 
 ### （13）[1838. 最高频元素的频数](https://leetcode.cn/problems/frequency-of-the-most-frequent-element/)
@@ -983,6 +1151,41 @@ public:
 > - 维护窗口内的总操作数不超过 `k`，通过动态调整窗口大小确保高效性。
 >
 > 这种方法的复杂度为排序的 $O(n log n) $加上滑动窗口遍历的 $O(n)$，高效适用于大规模数据。
+
+
+
+y
+
+```C++
+class Solution {
+public:
+    int maxFrequency(vector<int>& nums, int k) 
+    {
+        int l=0;
+        sort(nums.begin(),nums.end());
+        int size=0;
+        long long cost=0;
+        int maxFrequencyNum=0;
+        for(int r=0;r<nums.size();r++)
+        {
+            //in
+            if(r>0)cost+=(long long)(nums[r]-nums[r-1])*size;
+            size++;
+            //out
+            while(cost>k)
+            {
+                cost-=(nums[r]-nums[l]);
+                size--;
+                l++;
+            }
+            //update
+            maxFrequencyNum = max(maxFrequencyNum,size);
+        }
+        return maxFrequencyNum;
+
+    }
+};
+```
 
 
 
