@@ -1729,3 +1729,49 @@ public:
 
 ### （8）[167. 两数之和 II - 输入有序数组](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/)
 
+```c++
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& numbers, int target) {
+        //l和r指向最左和最右,如果相加之和小于target,则l++,否则r--
+        int left = 0, right = numbers.size()-1;
+        while(left<right){
+            int sum = numbers[left]+numbers[right];
+            if(sum<target) left++;
+            else if(sum>target) right--;
+            else break;
+        }
+        return {left+1, right+1};
+    }
+};
+```
+
+
+
+### （9）[633. 平方数之和](https://leetcode.cn/problems/sum-of-square-numbers/)
+
+```c++
+class Solution {
+public:
+    bool judgeSquareSum(int c) {
+        //a和b都有正负号两个版本,直接看正好即可,以sqrt(c)为右边界开始遍历,>c则b左移,<c则a右移,如果a,b错过去则不存在解
+        int left=0, right=sqrt(c)+1;
+        while(left<=right){
+            long long sum = (long long)left * left + (long long)right * right;
+            if(sum<c){
+                left++;
+            } else if(sum>c){
+                right--;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+```
+
+
+
+### （10）[2824. 统计和小于目标的下标对数目](https://leetcode.cn/problems/count-pairs-whose-sum-is-less-than-target/)
+
