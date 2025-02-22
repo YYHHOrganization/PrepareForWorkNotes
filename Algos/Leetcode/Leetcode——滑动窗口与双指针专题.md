@@ -577,6 +577,8 @@ public:
 
 # 二、不定长滑动窗口
 
+个人理解，做题目的时候需要考虑好数组中数的范围，比如是否有负数，有0，这种情况下单纯的`while(sum>=target)`可能会失效，有时需要加上`while(sum>=target && l<=r)`做进一步判断。
+
 ## 1.求最长/最大
 
 一般题目都有「至多」的要求。
@@ -1580,4 +1582,353 @@ public:
 - 计算有多少个元素和 >k，也就是 ≥k+1 的子数组。
 
 ![image-20250221221544733](Leetcode%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E5%8F%8C%E6%8C%87%E9%92%88%E4%B8%93%E9%A2%98.assets/image-20250221221544733.png)
+
+#### （1）[930. 和相同的二元子数组](https://leetcode.cn/problems/binary-subarrays-with-sum/)
+
+```c++
+class Solution {
+public:
+    int numSubarraysWithSum(vector<int>& nums, int goal) {
+        //>=goal的子数组数量,减去>=(goal+1)的子数组数量
+        int sum1=0, sum2=0; //两个维护的窗口值
+        int l1=0, l2=0; //1表示>=goal的,2表示>=goal+1的
+        int total1 = 0, total2 = 0;
+        for(int r=0;r<nums.size();r++){
+            sum1+=nums[r];
+            sum2+=nums[r];
+            while(l1<=r && sum1>=goal){ //因为本题数组中元素可以有0,因此只用sum1>=goal是不够的,还要加入左窗口不能超过右窗口的设定
+                sum1-=nums[l1];
+                l1++;
+            }
+            while(l2<=r && sum2>=goal+1){
+                sum2-=nums[l2];
+                l2++;
+            }
+            //此时左侧的都是合法的
+            total1 += l1;
+            total2 += l2;
+        }
+        return total1 - total2;
+    }
+};
+```
+
+
+
+#### （2）[1248. 统计「优美子数组」](https://leetcode.cn/problems/count-number-of-nice-subarrays/)
+
+依旧是“恰好型滑动窗口”的经典套路。
+
+```c++
+class Solution {
+public:
+    int numberOfSubarrays(vector<int>& nums, int k) {
+        //统计大于等于k个奇数数字,以及>=k+1个奇数数字的子数组数量,然后相减
+        int l1 = 0, l2 =0; //l1表示>=k,l2表示>=k+1
+        int cnt1 = 0, cnt2 = 0;
+        int total1 = 0, total2 = 0;
+        for(int r=0;r<nums.size();r++){
+            cnt1 += ((nums[r]%2)==1);
+            cnt2 += ((nums[r]%2)==1);
+            while(cnt1>=k){
+                cnt1-=((nums[l1]%2)==1);
+                l1++;
+            }
+            while(cnt2>=k+1){
+                cnt2-=((nums[l2]%2)==1);
+                l2++;
+            }
+            //cout<<l1<<" "<<l2<<endl;
+            total1+=l1;
+            total2+=l2;
+        }
+        return total1-total2;
+    }
+};
+```
+
+
+
+## 4.其他（选做，先只做了两道题，等后面有时间再回来补）
+
+### （1）[1438. 绝对差不超过限制的最长连续子数组](https://leetcode.cn/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit/)
+
+这道题会用到C++的STL 容器`multiset`，需要掌握并熟悉用法。代码如下（以下做法涉及对`set`的频繁增删，性能比较差，更好的做法可能是后面的**单调队列**，等学到了再去对应的专题整理其他做法吧）：
+
+```c++
+class Solution {
+public:
+    int longestSubarray(vector<int>& nums, int limit) {
+        //维护窗口内的最大,最小值
+        int windowMax = 0;
+        int windowMin = INT_MAX;
+        int l = 0;
+        int res = 0;
+        multiset<int> s; //用于存储最大值和最小值
+        for(int r=0;r<nums.size();r++){
+            s.insert(nums[r]);
+            while(*s.rbegin() - *s.begin()>limit){
+                s.erase(s.find(nums[l]));
+                l++;
+            }
+            res = max(res, r-l+1); //此时任意两个元素之间绝对差一定<=limit,更新答案
+        }
+        return res;
+    }
+};
+```
+
+补充：
+
+> 在C++的 `multiset` 容器中：
+>
+> 1. **`find` 方法的行为**：
+>    当存在多个重复值时，`find(val)` 会返回指向**第一个等于`val`的元素**的迭代器。这里的“第一个”指的是按容器内元素的**排序顺序**（默认升序）首次出现的值，而非插入顺序。例如，若 `multiset` 中有 `{1, 2, 2, 3}`，`find(2)` 会指向第一个 `2`。
+>
+> 2. **`erase` 方法的行为**：
+>
+>    - **删除单个元素**：若传入**迭代器**（如 `erase(it)`，其中 `it` 是 `find` 返回的迭代器），则仅删除该迭代器指向的**一个元素**。
+>    - **删除所有重复元素**：若直接传入**值**（如 `erase(val)`），则会删除所有等于 `val` 的元素。
+>
+>    **示例**：
+>
+>    ```
+>    cpp复制代码multiset<int> ms = {1, 2, 2, 3};
+>    auto it = ms.find(2);      // 指向第一个2
+>    ms.erase(it);              // 删除第一个2，ms变为{1, 2, 3}
+>    ms.erase(2);               // 删除所有2，ms变为{1, 3}
+>    ```
+>
+> **总结**：
+>
+> - `find` 返回第一个按排序规则匹配的元素的迭代器。
+> - `erase(it)` 删除一个元素，`erase(val)` 删除所有值为 `val` 的元素。
+>
+> 所以，本题不能直接`erase`这个元素，而是要`erase `find到的迭代器。
+
+
+
+### ==（2）[424. 替换后的最长重复字符](https://leetcode.cn/problems/longest-repeating-character-replacement/)==
+
+这道题目有一种比较精简的写法，是滑动窗口的变式应用。**后面有遇到滑动窗口题目的话，可以考虑用类似的做法。**
+
+
+
+### ==（3）[825. 适龄的朋友](https://leetcode.cn/problems/friends-of-appropriate-ages/)==
+
+
+
+# 三、单序列双指针
+
+## 1.相向双指针
+
+两个指针 `left=0, right=n−1`，从数组的两端开始，向中间移动，这叫相向双指针。上面的滑动窗口相当于同向双指针。
+
+### （1）[344. 反转字符串](https://leetcode.cn/problems/reverse-string/)
+
+```c++
+class Solution {
+public:
+    void reverseString(vector<char>& s) {
+        int l=0, r=s.size()-1;
+        while(l<r){
+            swap(s[l], s[r]);
+            l++, r--;
+        }      
+    }
+};
+```
+
+
+
+### （2）[125. 验证回文串](https://leetcode.cn/problems/valid-palindrome/)
+
+这题最难的是C++的接口，`isalnum(s[i])`表示是否是字母或数字，`tolower(s[i])`表示转换到小写的结果。有了以上的知识后，本题代码如下：
+
+> 一个启发是：对于相向双指针的题目，`while(l<r)`的内层可以是`if`语句，避免双层`while`导致索引溢出等问题（反正复杂度是一样的）
+
+```c++
+class Solution {
+public:
+    bool isPalindrome(string s) {
+        int l=0, r=s.size()-1;
+        while(l<r){
+            if(!isalnum(s[l])) l++; //每次左/右指针只走一格,写成if而不是里面再套while,不容易写错
+            else if(!isalnum(s[r])) r--;
+            else if(tolower(s[l])==tolower(s[r])){
+                l++, r--;
+            } 
+            else return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （3）[1750. 删除字符串两端相同字符后的最短长度](https://leetcode.cn/problems/minimum-length-of-string-after-deleting-similar-ends/)
+
+注意针对这种类型题目的下面的写法，遇到类似题可以拿来使用。
+
+```c++
+class Solution {
+public:
+    int minimumLength(string s) {
+        int l=0, r=s.size()-1;
+        while(l<r){
+            if(s[l]==s[r]){
+                //l移动到与当前相等的最后一个元素,r移动到与当前相等的最前一个元素,但仍需要保证移动后l<r
+                char cur = s[l];
+                while(l+1<r && s[l+1]==cur){
+                    l++;
+                }
+                while(r-1>l && s[r-1]==cur){
+                    r--;
+                }
+            }
+            else break; //不相等,无法再执行删除操作了
+            l++, r--;
+        }
+        return r-l+1;
+    }
+};
+```
+
+
+
+### （4）[2105. 给植物浇水 II](https://leetcode.cn/problems/watering-plants-ii/)
+
+直接给出题解：
+
+```c++
+class Solution {
+public:
+    int minimumRefill(vector<int>& plants, int capacityA, int capacityB) {
+        int l = 0, r=plants.size()-1;
+        int remainA = capacityA, remainB = capacityB;
+        int cntA=0, cntB=0; //Alice和Bob分别的添加水的次数
+        while(l<r){
+            if(remainA<plants[l]){
+                remainA = capacityA;
+                cntA++;
+            }
+            if(remainB<plants[r]){
+                remainB = capacityB;
+                cntB++;
+            }
+            remainA-=plants[l];
+            remainB-=plants[r];
+            l++, r--;
+        }
+        //现在Alice和Bob相遇了,如果数组元素是偶数个的话会是l>r,此时不做统计
+        if(l==r){
+            if(max(remainA, remainB)<plants[l]){ //说明更多的那个人也浇不了水,需要多浇一次水
+                cntA++; //随便加到cntA上,没什么问题,反正求解总和
+            }
+        }
+        return cntA + cntB;
+    }
+};
+```
+
+
+
+### （5）[977. 有序数组的平方](https://leetcode.cn/problems/squares-of-a-sorted-array/)
+
+```c++
+class Solution {
+public:
+    vector<int> sortedSquares(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> res(n);
+        int k = n-1;
+        int i=0, j=n-1;
+        while(i<=j){
+            if(abs(nums[i])<=abs(nums[j])){
+                res[k--] = nums[j] * nums[j];
+                j--;
+            }
+            else {
+                res[k--] = nums[i] * nums[i];
+                i++;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （6）[658. 找到 K 个最接近的元素](https://leetcode.cn/problems/find-k-closest-elements/)
+
+思路：可以反其道而性质，转为淘汰赛，淘汰掉从两侧往中间的最不可能的`n-k`个结果，剩下的就是最好的符合要求的`k`个结果。
+
+```c++
+class Solution {
+public:
+    vector<int> findClosestElements(vector<int>& arr, int k, int x) {
+        //左右指针一共踢掉n-k个数(意味着一共移动n-k次),剩下的就是符合要求的
+        int moveCnt = 0;
+        int l=0, r=arr.size()-1;
+        int n=arr.size();
+        if(k==arr.size()) return arr;
+        while(l<r && (moveCnt<n-k)){
+            //每轮必须淘汰一个,谁离x更远,淘汰谁,一样的话淘汰右边的
+            if(abs(arr[r]-x)>=abs(arr[l]-x)){
+                r--;
+                moveCnt+=1;
+            } else {
+                l++;
+                moveCnt+=1;
+            }
+        }
+        //此时l到r之间的都可以
+        vector<int> res(r-l+1);
+        for(int k=0,i=l;i<=r;i++,k++){
+            res[k]=arr[i];
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （7）[1471. 数组中的 k 个最强值](https://leetcode.cn/problems/the-k-strongest-values-in-an-array/)
+
+```c++
+class Solution {
+public:
+    vector<int> getStrongest(vector<int>& arr, int k) {
+        //先排序然后双指针找符合要求的值
+        sort(arr.begin(),arr.end());
+        int n=arr.size();
+        int mid = arr[(n-1)/2];
+        int l=0, r=arr.size()-1;
+        int cnt=0; //一共筛出这么多数
+        int index = 0;
+        vector<int> res(k);
+        while(l<=r && cnt<k){
+            if(abs(arr[l]-mid)>abs(arr[r]-mid)){
+                res[index++]=arr[l];
+                l++;
+            } else if (abs(arr[l]-mid)==abs(arr[r]-mid) && arr[l]>arr[r]){
+                res[index++]=arr[l];
+                l++;
+            } else{
+                res[index++]=arr[r];
+                r--;
+            }
+            cnt++;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （8）[167. 两数之和 II - 输入有序数组](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/)
 
