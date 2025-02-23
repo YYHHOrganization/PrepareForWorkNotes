@@ -1978,3 +1978,240 @@ public:
 
 ### （10）[2824. 统计和小于目标的下标对数目](https://leetcode.cn/problems/count-pairs-whose-sum-is-less-than-target/)
 
+本题的要点在于要意识到，对数组进行排序并不会改变最终要求解的内容。因此可以先做一次O（nlogn）的排序，然后再用相向双指针来做：
+
+```c++
+class Solution {
+public:
+    int countPairs(vector<int>& nums, int target) {
+        sort(nums.begin(), nums.end());
+        int left = 0, right = nums.size()-1;
+        int cnt = 0;
+        while(left<right){
+            if(nums[left]+nums[right]>=target){
+                right--;
+            } else{
+                cnt+=(right-left); //只有在left会发生移动前,记录好left固定在某一位置时的符合要求的下标对数目,只有左指针移动时更新cnt数，右指针收缩时是不需要更新的，避免重复
+                left++;
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### ==（11）[LCP 28. 采购方案](https://leetcode.cn/problems/4xy4Wx/)==（回顾的时候做一下，跟前面题一样）
+
+跟上一道题目一样，暂时就先不做了。
+
+
+
+### （12）[15. 三数之和](https://leetcode.cn/problems/3sum/)（:no_entry:这题其实挺难的，需要复习)
+
+**原始方法**：固定`i`从最左侧开始向右移动，这样`i`之后的元素就可以转换为求解两个元素和为`-nums[i]`的问题。
+
+- 注意，重复的情况来自于比如`[-1,0,1,2,-1,-4]`，排序之后的结果为`[-4,-1,-1,0,1,2]`此时以index=1作为`i`和以`index=2`作为`i`，得到的结果是相同的，因此一个解决方案是在遍历`i`的时候，如果`nums[i]==nums[i-1]`，则跳过即可。
+
+本题的原始方法代码如下（记得排序！！！！）：
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) {
+        //用最右边往左遍历,左侧的部分再双指针
+        sort(nums.begin(), nums.end());
+        vector<vector<int>> res;
+        for(int i=0;i<nums.size()-2;i++){ //留两个位置给剩下两个数
+            if(i>=1 && nums[i]==nums[i-1]) continue;
+            int target = -nums[i];
+            int left = i+1, right = nums.size()-1;
+            while(left<right){
+                if(nums[left]+nums[right]>target) right--;
+                else if(nums[left]+nums[right]<target) left++;
+                else{
+                    res.push_back({nums[i], nums[left], nums[right]});
+                    //因为此时已经相等了.只有左侧的数大一点,右侧的数小一点,才有可能再次相等，但依旧务必要处理可能重复的问题！！！
+                    left++;
+                    while(left<right && nums[left]==nums[left-1]) left++; //剩下两个数依旧涉及重复的问题,要避免
+                    right--;
+                    while(left<right && nums[right]==nums[right+1]) right--;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+> 有点麻烦，建议再做一次。
+
+**两个小优化（均可在后面双指针判断前做优化）**：
+
+- 如果当前值和后面两个值 三个数之和>0，则直接break就可以了，后面均不需要再判断了；
+- 如果当前值和最后两个值 三个数之和<0，则continue到下一个最左端的值，因为当前最左侧那个指针已经没希望了。
+
+
+
+### （13）[16. 最接近的三数之和](https://leetcode.cn/problems/3sum-closest/)
+
+其实还有一些优化空间，比如跟上题一样做一些剪枝处理，但这里就先写一个容易读的版本吧。
+
+```c++
+class Solution {
+public:
+    int threeSumClosest(vector<int>& nums, int target) {
+        int minLost = INT_MAX;
+        int sum = 0;
+        int res = 0;
+        sort(nums.begin(), nums.end());
+        for(int i=0;i<nums.size()-2;i++){
+            //双指针
+            if(i>0 && nums[i]==nums[i-1]) continue;
+            int left = i+1, right = nums.size()-1;
+            while(left<right){ //三个指针均不能相等
+                sum = nums[left] + nums[right] + nums[i];
+                if(sum<target){
+                    left++;
+                } else if(sum>target){
+                    right--;
+                } else return sum;
+                if(abs(sum-target)<minLost){
+                    minLost = abs(sum-target);
+                    res = sum;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### ==（14）[18. 四数之和](https://leetcode.cn/problems/4sum/)==
+
+与前面的题目一样，只不过变成前两根指针走循环，后两根指针走双指针的逻辑。==这题放后面回顾的时候再做吧，防止过拟合。==
+
+
+
+### （15）[611. 有效三角形的个数](https://leetcode.cn/problems/valid-triangle-number/)（:no_entry:）
+
+> 重点是依据题意**构造出单调性**出来。
+
+本题具有一定的难度，重点是如何将这道题目转换为已知的问题。已知三角形有一个性质：两边之和大于第三边，不妨假设`a<=b<=c`，那么一定有`a+c>b, b+c>a`，这两个不存在争议性，因此需要判断的就是`a+b>c`这一条（`c`为最大值）。
+
+因此，这道题可以在外层`for`循环从右到左遍历数组，`a`和`b`则是左侧的两个指针，如果`a+b<=c`说明a指针需要右移，否则此时`a+b>c`，则表示中间的都满足题意（a到b之间），并可以把`b`左移，看一下后续是否还有满足的。此时代码如下：
+
+```c++
+class Solution {
+public:
+    int triangleNumber(vector<int>& nums) {
+        //先排序
+        sort(nums.begin(), nums.end());
+        int cnt = 0;
+        for(int index = nums.size()-1;index>1;index--){
+            int x = nums[index];
+            int left = 0, right = index-1;
+            while(left<right){
+                if(nums[left]+nums[right]<=x){
+                    left++;
+                } else {
+                    cnt+=(right-left); //left固定,到right之间的都可以和right组成符合要求的边对
+                    right--;
+                }
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### （16）[11. 盛最多水的容器](https://leetcode.cn/problems/container-with-most-water/)
+
+具体的讲解可以看这个视频：[盛最多水的容器 接雨水【基础算法精讲 02】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Qg411q7ia/?spm_id_from=333.1387.collection.video_card.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)，这里就直接给出双指针的做法了：
+
+```c++
+class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        //对于left和right而言,比如示例1,height[right]<height[left], 此时中间所有的left和right构成的容器都不可能更大了,直接right--,反之也是同理.
+        //如果height[left]==height[right],可以移动任意一边/其实移动两边也可以
+        int res = 0;
+        int left = 0, right = height.size()-1;
+        while(left<right){ //不能撞上
+            int area = (right-left) * min(height[right], height[left]);
+            res = max(res, area);
+            if(height[left]>height[right]){
+                right--;
+            } else left++;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （17）[42. 接雨水](https://leetcode.cn/problems/trapping-rain-water/)(题目比较难,值得多复习一下)
+
+具体的讲解可以看这个视频：[盛最多水的容器 接雨水【基础算法精讲 02】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Qg411q7ia/?spm_id_from=333.1387.collection.video_card.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)，这里给出两种做法，分别是**前后缀分解**做法和**双指针做法。**
+
+#### （a）前后缀分解做法
+
+```c++
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        //维护前缀最大值和后缀最大值
+        int n = height.size();
+        vector<int> prefix(n);
+        vector<int> suffix(n); //后缀最大值
+        prefix[0]=height[0];
+        for(int i=1;i<n;i++){
+            prefix[i] = max(prefix[i-1], height[i]);
+        }
+        suffix[n-1] = height[n-1];
+        for(int i=n-2;i>=0;i--){
+            suffix[i] = max(suffix[i+1], height[i]);
+        }
+        int cnt = 0;
+        for(int i=0;i<n;i++){
+            cnt+=(min(suffix[i], prefix[i])-height[i]);
+        }
+        return cnt;
+        
+    }
+};
+```
+
+
+
+#### （b）双指针法
+
+```c++
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int preMax=0, sufMax=0; //记录前面和后面的最大值
+        int left=0, right=height.size()-1;
+        int cnt = 0;
+        while(left<=right){ //此时左右指针相遇的那格是可以计算的
+            preMax = max(preMax, height[left]);
+            sufMax = max(sufMax, height[right]);
+            if(preMax<sufMax){
+                cnt+=(preMax - height[left]); 
+                left++;
+            } else{
+                cnt+=(sufMax - height[right]);
+                right--;
+            }
+        }
+        return cnt;
+    }
+};
+```
+
