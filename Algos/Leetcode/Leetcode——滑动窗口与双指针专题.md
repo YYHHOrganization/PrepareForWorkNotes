@@ -1292,6 +1292,63 @@ public:
 
 
 
+Y
+
+```C++
+class Solution {
+public:
+    string shortestBeautifulSubstring(string s, int k) {
+        //
+        int l=0;
+        int n=s.size();
+        int OneCnt=0;
+        string res="";
+        for(int r=0;r<n;r++)
+        {
+            //in
+            if(s[r]=='1')OneCnt++;
+            //out
+            while(l<=r&&OneCnt-(s[l]=='1')>=k)
+            {
+                if(s[l]=='1')OneCnt--;
+                l++;
+            }
+            //update
+            if(OneCnt==k)
+            {
+                string curstr=s.substr(l,r-l+1);
+                
+                if(res=="")res = curstr;
+                else
+                {
+                    if(res.size()<curstr.size())continue;//如果res更小 不更新
+                    if(res.size()>curstr.size())res = curstr;//如果cur更小 更新
+                    else if(res.size()==curstr.size()&&(curstr<res))//如果一样 才比较 
+                    {
+                        res=curstr;
+                    }
+                }
+                // cout<<"CUR:"<<curstr <<"    RES:"<<res<<endl;
+            }
+        }
+        return res;
+    }
+};
+```
+
+> （不可以直接比较，因为字典序看来：'abc' < 'ac'， 但是这题要求先是最短，再是字典序。）
+>
+> 多个字符
+> 在计算机中，两个字符串比较大小，是按照从左到右的顺序进行比较，如果第1位相等，就比较第2位，直至有一位可以比较出大小来，则不再继续比较。
+>
+> 使用计算机属于来描述：
+>
+> 对于任意两个序列 (a,b) 和 (a’,b’)，字典序定义为： (a,b) ≤ (a′,b′) 当且仅当 a < a′ 或 (a = a′ 且 b ≤ b′).
+>
+> 比如在 python 中，'ab' < 'ac'、'abc' < 'ac'、'abc' < 'abcd' 都会返回 True。
+>
+> 原文链接：https://blog.csdn.net/HappyRocking/article/details/83619392
+
 ### ==（3）[1234. 替换子串得到平衡字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/replace-the-substring-for-balanced-string/)==
 
 首先这题要理解清楚题意，不能随便替换，而是**只能替换一个连续的子串。**==这题暂时有点难，先不看了，等后面题刷的足够多了再回来看。==
@@ -1328,6 +1385,35 @@ public:
                 l++;
             }
             cnt += l;
+        }
+        return cnt;
+    }
+};
+```
+
+Y
+
+```C++
+class Solution {  //【3.求子数组个数】
+public:
+    int numberOfSubstrings(string s) 
+    {
+        int nums[3]{0};
+        int l=0;
+        int n=s.size();
+        int cnt=0;
+        for(int r=0;r<n;r++)
+        {
+            //in
+            nums[s[r]-'a']++;
+            //out
+            while(nums[0]>0&&nums[1]>0&&nums[2]>0)
+            {
+                nums[s[l]-'a']--;
+                l++;
+            }
+            //update
+            cnt+=l;
         }
         return cnt;
     }
@@ -1424,6 +1510,39 @@ public:
 };
 ```
 
+Y
+
+```C++
+class Solution {
+public:
+    int countCompleteSubarrays(vector<int>& nums) 
+    {
+        unordered_set uset(nums.begin(),nums.end());
+        int nNotEqual = uset.size();
+
+        unordered_map<int,int> umap(nNotEqual);
+        int l=0;
+        int cnt=0;
+        for(int r=0;r<nums.size();r++)
+        {
+            //in
+            umap[nums[r]]++;
+            //out
+            while(umap.size()>=nNotEqual)
+            {
+                umap[nums[l]]--;
+                if(umap[nums[l]]==0)umap.erase(nums[l]);
+                l++;
+            }
+            //update
+            cnt+=l;
+        }
+        return cnt;
+        
+    }
+};
+```
+
 
 
 #### （5）[2537. 统计好子数组的数目](https://leetcode.cn/problems/count-the-number-of-good-subarrays/)（:no_entry:)
@@ -1515,7 +1634,12 @@ public:
 };
 ```
 
-
+>如果一个 **二进制字符串** 满足以下任一条件，则认为该字符串满足 **k 约束**：
+>
+>- 字符串中 `0` 的数量最多为 `k`。
+>- 字符串中 `1` 的数量最多为 `k`。
+>
+>这句话翻译一下就是 zeroCnt<=k || oneCnt<=k   。反义就是（zeroCnt>k && oneCnt>k），所以while里面就是这个 代表不满足的情况
 
 #### （3）[2302. 统计得分小于 K 的子数组数目](https://leetcode.cn/problems/count-subarrays-with-score-less-than-k/)
 
@@ -1573,6 +1697,8 @@ public:
 ```
 
 
+
+>注意点 不要随便排序，很多题目比如这题是不可以排序的。。。
 
 ### 恰好型滑动窗口
 
@@ -1668,7 +1794,7 @@ public:
         for(int r=0;r<nums.size();r++){
             s.insert(nums[r]);
             while(*s.rbegin() - *s.begin()>limit){
-                s.erase(s.find(nums[l]));
+                s.erase(s.find(nums[l]));////错误写法是：s.erase(nums[l]);//错误 会全部删除
                 l++;
             }
             res = max(res, r-l+1); //此时任意两个元素之间绝对差一定<=limit,更新答案
@@ -1772,7 +1898,7 @@ public:
 注意针对这种类型题目的下面的写法，遇到类似题可以拿来使用。
 
 ```c++
-class Solution {
+class Solution {//111111111
 public:
     int minimumLength(string s) {
         int l=0, r=s.size()-1;
@@ -1789,6 +1915,34 @@ public:
             }
             else break; //不相等,无法再执行删除操作了
             l++, r--;
+        }
+        return r-l+1;
+    }
+};
+```
+
+
+
+Y
+
+```C++
+class Solution {
+public:
+    int minimumLength(string s) 
+    {
+        int n=s.size();
+        int l=0,r=n-1;
+        while(l<r)
+        {
+            if(s[l]==s[r])
+            {
+                l++;
+                while(l<r&&s[l]==s[l-1])l++;
+                r--;
+                while(l<r&&s[r]==s[r+1])r--;
+            }
+            else
+                return r-l+1;
         }
         return r-l+1;
     }
@@ -1890,6 +2044,33 @@ public:
             res[k]=arr[i];
         }
         return res;
+    }
+};
+```
+
+Y
+
+```C++
+class Solution {
+public:
+    vector<int> findClosestElements(vector<int>& arr, int k, int x) 
+    {
+        int n=arr.size();
+        int l=0,r=n-1;
+        int deleteN = n-k;
+        while(l<r&&(r-l+1)>k)
+        {
+            if(abs(arr[l]-x)<abs(arr[r]-x))r--;
+            else if(abs(arr[l]-x)>abs(arr[r]-x))l++;
+            else if(abs(arr[l]-x)==abs(arr[r]-x))r--;//
+        }
+        vector<int> res;
+        for(int i=l;i<=r;i++)
+        {
+            res.push_back(arr[i]);
+        }
+        return res; 
+
     }
 };
 ```
@@ -2051,6 +2232,48 @@ public:
 
 - 如果当前值和后面两个值 三个数之和>0，则直接break就可以了，后面均不需要再判断了；
 - 如果当前值和最后两个值 三个数之和<0，则continue到下一个最左端的值，因为当前最左侧那个指针已经没希望了。
+
+Y+优化后
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) 
+    {
+        sort(nums.begin(),nums.end());
+        int n=nums.size();
+        int i=0,j=0,k=n-1;
+        vector<vector<int>> res;
+        for(i=0;i<n-2;i++)
+        {
+             //优化
+            if(nums[i]+nums[i+1]+nums[i+2]>0)break;
+            if(nums[i]+nums[n-1]+nums[n-2]<0)continue;
+            
+            while(i>0&&i<n-2&&nums[i]==nums[i-1])i++;
+           
+            j=i+1,k=n-1;
+            while(j<k)
+            {
+                int sum=(nums[i]+nums[j]+nums[k]);
+                if(sum<0)
+                    j++;
+                else if(sum>0)
+                    k--;
+                else
+                {
+                    res.push_back({nums[i],nums[j],nums[k]});
+                    j++;
+                    while(j<k&&nums[j]==nums[j-1])j++;
+                    k--;
+                    while(j<k&&nums[k]==nums[k+1])k--;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
 
 
 
