@@ -2048,6 +2048,33 @@ public:
 };
 ```
 
+Y
+
+```C++
+class Solution {
+public:
+    vector<int> findClosestElements(vector<int>& arr, int k, int x) 
+    {
+        int n=arr.size();
+        int l=0,r=n-1;
+        int deleteN = n-k;
+        while(l<r&&(r-l+1)>k)
+        {
+            if(abs(arr[l]-x)<abs(arr[r]-x))r--;
+            else if(abs(arr[l]-x)>abs(arr[r]-x))l++;
+            else if(abs(arr[l]-x)==abs(arr[r]-x))r--;//
+        }
+        vector<int> res;
+        for(int i=l;i<=r;i++)
+        {
+            res.push_back(arr[i]);
+        }
+        return res; 
+
+    }
+};
+```
+
 
 
 ### （7）[1471. 数组中的 k 个最强值](https://leetcode.cn/problems/the-k-strongest-values-in-an-array/)
@@ -2205,6 +2232,48 @@ public:
 
 - 如果当前值和后面两个值 三个数之和>0，则直接break就可以了，后面均不需要再判断了；
 - 如果当前值和最后两个值 三个数之和<0，则continue到下一个最左端的值，因为当前最左侧那个指针已经没希望了。
+
+Y+优化后
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) 
+    {
+        sort(nums.begin(),nums.end());
+        int n=nums.size();
+        int i=0,j=0,k=n-1;
+        vector<vector<int>> res;
+        for(i=0;i<n-2;i++)
+        {
+             //优化
+            if(nums[i]+nums[i+1]+nums[i+2]>0)break;
+            if(nums[i]+nums[n-1]+nums[n-2]<0)continue;
+            
+            while(i>0&&i<n-2&&nums[i]==nums[i-1])i++;
+           
+            j=i+1,k=n-1;
+            while(j<k)
+            {
+                int sum=(nums[i]+nums[j]+nums[k]);
+                if(sum<0)
+                    j++;
+                else if(sum>0)
+                    k--;
+                else
+                {
+                    res.push_back({nums[i],nums[j],nums[k]});
+                    j++;
+                    while(j<k&&nums[j]==nums[j-1])j++;
+                    k--;
+                    while(j<k&&nums[k]==nums[k+1])k--;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
 
 
 
