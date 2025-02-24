@@ -121,6 +121,31 @@ public:
 
 
 
+Y 感觉上面那个更好
+
+```C++
+class Solution {
+public:
+    int maxDistance(vector<vector<int>>& arrays) 
+    {
+        // int minNum= INT_MAX/2;
+        // int maxNum = -INT_MAX/2;
+        int minNum = arrays[0][0];
+        int maxNum = arrays[0].back();
+        int res=0;
+        for(int i=1;i<arrays.size();i++)
+        {
+            res = max({res,abs(arrays[i][0]-maxNum),abs(arrays[i].back()-minNum)});
+            minNum = min(minNum,arrays[i][0]);
+            maxNum = max(maxNum,arrays[i].back());
+        }
+        return res;
+    }
+};
+```
+
+
+
 ### （6）[2815. 数组中的最大数对和](https://leetcode.cn/problems/max-pair-sum-in-an-array/)
 
 ```c++
