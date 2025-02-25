@@ -272,6 +272,8 @@ public:
  */
 ```
 
+vector.resize 与 vector.reserve的区别  ： https://blog.csdn.net/JMW1407/article/details/108785448
+
 
 
 ### （1）[3427. 变长子数组求和](https://leetcode.cn/problems/sum-of-variable-length-subarrays/)
