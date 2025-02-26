@@ -930,6 +930,8 @@ public:
 
 ###  [437. 路径总和 III](https://leetcode.cn/problems/path-sum-iii/) :call_me_hand:
 
+> **注意，如果题目可能会有大数，可以考虑无脑用long long，不然可能会有一些测试用例卡掉，反正long long也就占一些额外的内存消耗，不太可能因为用long long导致超时或者超内存限制的。**
+
 ```C++
 /**
  * Definition for a binary tree node.

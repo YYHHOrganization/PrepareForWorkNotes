@@ -476,5 +476,97 @@ public:
 
 ## 2.求最大
 
-### （1）[2226. 每个小孩最多能分到多少糖果](https://leetcode.cn/problems/maximum-candies-allocated-to-k-children/)
+### （1）[2226. 每个小孩最多能分到多少糖果](https://leetcode.cn/problems/maximum-candies-allocated-to-k-children/)（看题解）
+
+难点在于二分的`check`函数条件不好想。
+
+```c++
+class Solution {
+public:
+    bool check(vector<int>& candies, long long c, long long k){ //c是糖果数目
+        long long sum = 0;
+        for(int i=0;i<candies.size();i++){
+            sum += (candies[i])/c; //注意,考虑一下c可能为0的情况
+        }
+        if(sum < k) return true;
+        else return false;
+    }
+    int maximumCandies(vector<int>& candies, long long k) {
+        //跟前面的题有类似指出,随着最大糖果数目的增加,能分配小孩的数目不会再上涨了.
+        //sum((向下取整)candies[i]/c)>=k的最后一个,即sum...<k的第一个-1
+        //本题要找false的最后一个
+        //如果candies的总和都比小孩数少,则一个小孩都拿不到,return 0
+        long long sum = accumulate(candies.begin(), candies.end(), 0LL); //啊?? accumulate算longlong,初始值要是0LL 如果是0就会报错(因为会溢出)
+        long long max = *max_element(candies.begin(), candies.end()); //最多可以拿走最多摞糖果数的糖果,认为是上界
+
+        if(k>sum) return 0; //特判相当于left=0的情况,不然上面一除可能分母为0导致错误
+        long long left = 1, right = max;
+        while(left<=right){
+            long long mid = left+((right-left)>>1);
+            if(check(candies, mid, k)){
+                right = mid - 1;
+            } else{
+                left = mid + 1;
+            }
+        }
+        return left-1;
+    }
+};
+```
+
+【美丽C++，爱护靠大家】：`long long sum = accumulate(candies.begin(), candies.end(), 0LL);`，如果计算的总和是一个`long long`的话，`accumulate`函数最后一个参数得显式地指明为`0LL`，不然运行时会越界报错。
+
+
+
+### ==（2）[2982. 找出出现至少三次的最长特殊子字符串 II](https://leetcode.cn/problems/find-longest-special-substring-that-occurs-thrice-ii/) （看题解，难度>1700，暂时超纲了，先不硬啃了）==
+
+
+
+### （3）[2576. 求出最多标记下标](https://leetcode.cn/problems/find-the-maximum-number-of-marked-indices/)（看答案）
+
+> 对于很多题目来说，想要找出二分的`check`函数，是具有一定难度的，需要多刷题来增加熟练度。比如说这道题目的`check`函数就是比较巧妙的。
+
+固定的思路（总结）：
+
+- 为了方便后续统一写法，可以把能够二分的问题尽量转换为`false false false.....true true`,这样我们找的无非就是第一个`true`或者是最后一个`false`，就全部转换为求第一个`true`。那么在二分的时候，如果`check`函数返回值为`false`，则`left=mid+1`；如果为`true`，则`right=mid-1`。而二分结束之后我们要找的第一个`true`的下标就是`left`，最后一个`false`的下标就是`left-1`。
+
+```c++
+class Solution {
+public:
+    bool check(vector<int>& nums, int k){ //看看k对是不是不能匹配,让序列变成false false false true true
+        int n = nums.size();
+        int left = 0, right = n-k;
+        for(int i=0;i<k;i++){
+            if(2*nums[left+i]>nums[right+i]) return true;
+        }
+        return false;
+    }
+    int maxNumOfMarkedIndices(vector<int>& nums) {
+        //假设可以匹配的数对为k个,则最终结果为2*k(不能选重复的),如果能够匹配k对,则一定可以匹配<k的对(只要去掉一些数对即可),同时一定不能匹配大于k对(如果可以的话,就不是k对了),我们要求的就是最大的一个k
+        //k越大,越无法选出k对相匹配的数,我们要选最后一个能匹配的k值(后面就不能匹配了),找第一个不能匹配的索引-1
+        //如果要匹配的话,一定是最小的k个数和最大的k个数相匹配,这种是最好的情况(可以反证),因此如果不能匹配,则right=mid-1,如果可以匹配,则left=mid+1
+        //**找最后一个k,使得能匹配k对**
+        sort(nums.begin(), nums.end());
+        int n = nums.size();
+        int left = 0, right = n / 2; //最多n/2对匹配的,因为数组就这么长
+        while(left<=right){
+            int mid = left+((right-left)>>1);
+            if(check(nums, mid)){ //做题的时候,不管是要找第一个true还是找最后一个false,我们都转换为找第一个true,true就right=mid-1,false就left=mid+1
+                right = mid - 1;
+            } else{
+                left = mid + 1;
+            }
+        }
+        return 2*(left-1); //k对,对应2*k个标记的数
+    }
+};
+```
+
+
+
+## 3.二分间接值
+
+二分的不是答案，而是一个和答案有关的值（间接值）。
+
+### （1）[3143. 正方形中的最多点数](https://leetcode.cn/problems/maximum-points-inside-the-square/)
 
