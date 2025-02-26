@@ -956,7 +956,7 @@ public:
         umap[sum]++;
         dfs(node->left,sum,targetSum);
         dfs(node->right,sum,targetSum);
-        umap[sum]--;
+        umap[sum]--;//在这里pop
     }
     int pathSum(TreeNode* root, int targetSum) 
     {
@@ -989,10 +989,284 @@ D:\PGPostgraduate\githubNotePrepareForWork\PrepareForWorkNotes\2025寒假\Y\学�
 
 
 
-###  2588. 统计美丽子数组数目 1697
+###  [2588. 统计美丽子数组数目](https://leetcode.cn/problems/count-the-number-of-beautiful-subarrays/)  :custard:
 
-###  525. 连续数组
 
-###  面试题 17.05. 字母与数字 同 525 题
 
-###  3026. 最大好子数组和 1817
+```C++
+class Solution {
+public:
+    long long beautifulSubarrays(vector<int>& nums) 
+    {
+        //0110
+        //0011
+        //0001
+        //都是1->0
+        //都是0->0
+        //1 0->1
+        //统计1的个数，如果每一位1的个数都是偶数就可以变成0=>亦或操作
+
+        // vector<int> pre  前面的数组所有数字总的在每一位是偶数还是奇数
+        //前缀和
+        //每次变化奇偶性就行
+        int n = nums.size();
+        vector<int> preOddEven(n+1);
+        long long res=0;
+        unordered_map<int,int> umap(n);//存储每个^之后的数字 这个数字表示的是每个位上有多少奇偶
+        umap[0]=1;
+        for(int i=0;i<n;i++)
+        {
+            //0011 计算与前缀1100的^ =>1111   0011^ 0101 =  0110
+            preOddEven[i+1]=preOddEven[i]^nums[i];//将第一个数字加入，并没有加0
+            if(umap.contains(preOddEven[i+1]))res+=umap[preOddEven[i+1]];
+            umap[preOddEven[i+1]]++;
+        }
+        return res;
+    }
+};
+```
+
+>https://leetcode.cn/problems/count-the-number-of-beautiful-subarrays/solutions/2163133/tao-lu-qian-zhui-he-ha-xi-biao-pythonjav-3fna/
+>
+>对于二进制中第 *i* 位，数组中所有元素第 *i* 位为 1 的数目为偶数，则此时满足数组中所有元素第 *i* 位的异或和一定为 0。
+>
+>```
+>		//presumi 1101
+>        //presumj 1101
+>        //每一位1的个数奇偶性一样
+>        //都是奇数 减完之后子数组一定是偶数个1
+>```
+>
+>
+
+优化”前缀和“数组位单个值
+
+```C++
+class Solution {
+public:
+    long long beautifulSubarrays(vector<int>& nums) 
+    {
+        int n = nums.size();
+        // vector<int> preOddEven(n+1);
+        int preOddEven=0;
+        long long res=0;
+        unordered_map<int,int> umap(n);
+        umap[0]=1;
+        for(int i=0;i<n;i++)
+        {
+            preOddEven=preOddEven^nums[i];//将第一个数字加入，并没有加0
+            if(umap.contains(preOddEven))res+=umap[preOddEven];
+            umap[preOddEven]++;
+        } 
+        return res;
+    }
+};
+```
+
+
+
+###  [525. 连续数组](https://leetcode.cn/problems/contiguous-array/) :call_me_hand:
+
+给定一个二进制数组 `nums` , 找到含有相同数量的 `0` 和 `1` 的最长连续子数组，并返回该子数组的长度。
+
+**示例 1:**
+
+```
+输入: nums = [0,1]
+输出: 2
+说明: [0, 1] 是具有相同数量 0 和 1 的最长连续子数组。
+```
+
+**示例 2:**
+
+```
+输入: nums = [0,1,0]
+输出: 2
+说明: [0, 1] (或 [1, 0]) 是具有相同数量0和1的最长连续子数组。
+```
+
+ 
+
+![5de8577a0b96cb4a525764aeb4e5657.png](assets/1622652955-LSHXCI-5de8577a0b96cb4a525764aeb4e5657.png)
+
+```C++
+class Solution {
+public:
+    int findMaxLength(vector<int>& nums) 
+    {
+        //相同数量
+        int n=nums.size();
+        unordered_map<int,int> umap(n);
+        umap[0]=-1;
+        int cur = 0;
+        int maxLen = 0;
+        // [0,1]
+        // [-1,0]
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==0)cur--;
+            else cur++;
+            if(umap.contains(cur))
+            {
+                maxLen = max(maxLen,i-umap[cur]);//-umap[cur]+1错误 因为其实是前缀和相减
+            }
+            else 
+            {
+                umap[cur] = i;
+            }
+        }
+        return maxLen;
+        
+    }
+};
+```
+
+是不是做过一个类似的题目 在滑动窗口那里？
+
+
+
+###  [面试题 17.05. 字母与数字](https://leetcode.cn/problems/find-longest-subarray-lcci/) 同 525 题
+
+同上题
+
+给定一个放有字母和数字的数组，找到最长的子数组，且包含的字母和数字的个数相同。
+
+返回该子数组，若存在多个最长子数组，返回左端点下标值最小的子数组。若不存在这样的数组，返回一个空数组。
+
+**示例 1：**
+
+```
+输入：["A","1","B","C","D","2","3","4","E","5","F","G","6","7","H","I","J","K","L","M"]
+
+输出：["A","1","B","C","D","2","3","4","E","5","F","G","6","7"]
+```
+
+**示例 2：**
+
+```
+输入：["A","A"]
+
+输出：[]
+```
+
+```C++
+class Solution {
+public:
+    vector<string> findLongestSubarray(vector<string>& array) 
+    {
+        int n=array.size();
+        unordered_map<int,int> umap(n);// <cur,idx>
+        umap[0] = -1;//到时会做 -(-1) 相当于+1  否则会缺一位
+        int cur=0;
+        int start=0;
+        int maxLen=0;
+        int maxLenStart=0;
+        //字母-- 数字++
+        for(int i=0;i<n;i++)
+        {
+            string str = array[i];
+            if(str[0]>='0'&&str[0]<='9')cur++;
+            else cur--;
+            if(umap.contains(cur))
+            {
+                start = umap[cur];
+                int len = i-start;
+                if(len>maxLen)
+                {
+                    maxLen=len;
+                    maxLenStart = start+1;//+1!!!!!! //因为其实是要从它的下一个开始
+                }
+            }
+            else
+                umap[cur]=i;
+        }
+        return vector<string>(array.begin()+maxLenStart,array.begin()+maxLenStart+maxLen);
+    }
+};
+```
+
+
+
+## 3.距离和
+
+### [2602. 使数组元素全部相等的最少操作次数](https://leetcode.cn/problems/minimum-operations-to-make-all-array-elements-equal/) :sparkles:
+
+
+
+最好使用以下这个presum补开头一个0的写法（加一位）
+
+```C++
+class Solution {
+public:
+    vector<long long> minOperations(vector<int>& nums, vector<int>& queries) 
+    {
+        int n=nums.size();
+        sort(nums.begin(),nums.end() );
+        vector<long long> preSum(n+1);
+        //partial_sum(nums.begin(),nums.end(),preSum.begin());//一个是ll 一个是int 赋值的时候还是会越界 还是自己写吧
+        for(int i=0;i<n;i++)preSum[i+1]=preSum[i]+nums[i];
+        int qn = queries.size();
+        vector<long long > res(qn);
+        for(int i=0;i<qn;i++)
+        {
+            //寻找第一个>=Qi的值
+            auto low = lower_bound(nums.begin(),nums.end(),queries[i]);//这个也可以
+            long long index = low-nums.begin();
+            long long ans = (long long)queries[i]*(index)-preSum[index];// 左边
+            ans+= preSum[n]-preSum[index]-queries[i]*(n-index);//右边
+            res[i]=ans;
+        }
+        return res;
+    }
+};
+```
+
+
+
+presum没增加一个
+
+```C++
+class Solution {
+public:
+    vector<long long> minOperations(vector<int>& nums, vector<int>& queries) 
+    {
+        // 3 1 6 8
+        // -3>0 -1>1  3-2 
+        int n=nums.size();
+        sort(nums.begin(),nums.end() );
+        vector<long long> preSum(n);
+        //partial_sum(nums.begin(),nums.end(),preSum.begin());//一个是ll 一个是int 赋值的时候还是会越界 还是自己写吧
+        preSum[0] = nums[0];
+        for(int i=1;i<n;i++)preSum[i]=preSum[i-1]+nums[i];
+        int qn = queries.size();
+        vector<long long > res(qn);
+        for(int i=0;i<qn;i++)
+        {
+            //寻找第一个>=Qi的值
+            auto low = lower_bound(nums.begin(),nums.end(),queries[i]);//这个也可以
+            long long index = low-nums.begin();
+            long long ans=0;
+            // 处理左边和：index为0时，leftSum=0
+            long long leftSum = (index > 0) ? preSum[index - 1] : 0;
+            ans = (long long)queries[i]*(index)-leftSum;
+            long long totalSum = preSum.empty()?0:preSum.back();
+            long long rightSum = totalSum - leftSum;
+            ans+=rightSum- (long long)queries[i]*(n-index);
+
+            res[i]=ans;
+        }
+        return res;
+    }
+};
+```
+
+
+
+
+
+
+
+
+
+
+
