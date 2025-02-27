@@ -1785,6 +1785,10 @@ public:
 
 要解决这个问题，我们需要处理大数指数运算时的溢出问题。直接使用位移操作会导致溢出，尤其是在处理非常大的指数时。正确的做法是使用快速幂算法，并在每一步计算中取模，以避免溢出并确保结果正确。
 
+关于快速幂请看https://leetcode.cn/problems/powx-n/solutions/2858114/tu-jie-yi-zhang-tu-miao-dong-kuai-su-mi-ykp3i/
+
+<img src="assets/1728623430-RNGDEK-lc50-3-c.png" alt="lc50-3-c.png" style="zoom: 25%;" />
+
 ```C++
 class Solution {
 public:
@@ -1837,4 +1841,10 @@ public:
     }
 };
 ```
+
+
+
+## §1.6 二维前缀和
+
+[【图解】一张图秒懂二维前缀和！](https://leetcode.cn/problems/range-sum-query-2d-immutable/solution/tu-jie-yi-zhang-tu-miao-dong-er-wei-qian-84qp/)
 
