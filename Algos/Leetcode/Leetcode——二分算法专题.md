@@ -568,5 +568,216 @@ public:
 
 二分的不是答案，而是一个和答案有关的值（间接值）。
 
-### （1）[3143. 正方形中的最多点数](https://leetcode.cn/problems/maximum-points-inside-the-square/)
+### ==（1）[3143. 正方形中的最多点数](https://leetcode.cn/problems/maximum-points-inside-the-square/)（看答案这题要位运算，先放着吧，但这题还挺重要）==
+
+
+
+## 4.最小化最大值
+
+本质是二分答案求最小。二分的`mid`表示上界。其实做起来应该就知道了。
+
+### ==（1）[410. 分割数组的最大值](https://leetcode.cn/problems/split-array-largest-sum/)（看答案）==
+
+看到「最大化最小值」或者「最小化最大值」就要想到**二分答案**，这是一个固定的套路。太难了，先放一放吧。
+
+
+
+# 四、其他
+
+## 1.[74. 搜索二维矩阵](https://leetcode.cn/problems/search-a-2d-matrix/)
+
+```c++
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        //从左下角开始搜索,这题之前有学过,但当时忘做了
+        int n = matrix.size(), m = matrix[0].size(); //n是行,m是列
+        int horizon = 0, vertical = n-1; //horizon是水平方向移动的指针,vertical是垂直方向移动的指针
+        while(horizon<m && vertical>=0){
+            if(matrix[vertical][horizon]<target){
+                horizon++;
+            } else if(matrix[vertical][horizon]>target){
+                vertical--;
+            }else return true;
+        }
+        return false;
+    }
+};
+```
+
+
+
+## 2.[278. 第一个错误的版本](https://leetcode.cn/problems/first-bad-version/)
+
+```c++
+// The API isBadVersion is defined for you.
+// bool isBadVersion(int version);
+
+class Solution {
+public:
+    int firstBadVersion(int n) {
+        int left = 1, right = n;
+        //false false ...true
+        while(left<=right){
+            int mid=left+((right-left)>>1);
+            if(isBadVersion(mid)){ 
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        return left;
+    }
+};
+```
+
+
+
+## 3.[162. 寻找峰值](https://leetcode.cn/problems/find-peak-element/)
+
+```c++
+class Solution {
+public:
+    bool check(vector<int>& nums, int index){ //index为当前索引
+        return nums[index+1]<nums[index]; //最后一个数单独判断
+    }
+    int findPeakElement(vector<int>& nums) {
+        //对于峰值来说,其右边数应当比它小,假设右边数比当前数小为true,则原来值是FFFF...TTT,找的是第一个T,只要求找一个所以问题不大
+        //题目有说明相邻的数不会相等
+        int n = nums.size();
+        int left = 0, right = n-2; //check函数可能越界,n-1的情况特殊判断(其实不判断也行,一直递增的话最右侧就是解)
+        while(left<=right){
+            int mid = left+((right-left)>>1);
+            if(check(nums,mid)){
+                right = mid - 1;
+            } else{
+                left = mid + 1;
+            }
+        } 
+        return left;
+    }
+};
+```
+
+
+
+## 4.[1901. 寻找峰值 II](https://leetcode.cn/problems/find-a-peak-element-ii/)（看题解）
+
+本题衍生出了一个注意事项，如果`check`函数实在是不好写，但知道明显的变动逻辑，比如本题，那么可以记住：
+
+- 如果当前实锤了不符合要求，那么`left=mid+1`
+- 如果当前符合要求，则`right=mid-1`，这样我们最后返回的`left`就会是第一个满足要求的
+
+```c++
+class Solution {
+public:
+    vector<int> findPeakGrid(vector<vector<int>>& mat) {
+        //如果当前行的最大值小于其下面的元素,则山峰一定在后面的行;
+        //如果当前行的最大值>=其下面的元素,则山峰在当前行或者之前的行;
+        //以此为依据二分,这题没有那么直观
+        int left = 0, right = mat.size()-2; //左闭右闭区间,最后一行单独考虑.跟上一题一样,如果都到最后一行了,那么其最大值一定是峰顶
+        while(left<=right){
+            int mid=left+((right-left)>>1);
+            //找到本行最大的元素
+            auto max_iter = max_element(mat[mid].begin(),mat[mid].end());
+            int max_index = max_iter - mat[mid].begin(); //在当前行的索引
+            if(mat[mid][max_index]<mat[mid+1][max_index]){
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        int index = max_element(mat[left].begin(), mat[left].end()) - mat[left].begin();
+        return {left, index};
+    }
+};
+```
+
+
+
+## 5.[852. 山脉数组的峰顶索引](https://leetcode.cn/problems/peak-index-in-a-mountain-array/)
+
+跟前面那个题一样，比前面那个题还简单。
+
+```c++
+class Solution {
+public:
+    bool check(vector<int>& arr, int index){
+        return (arr[index]>arr[index+1]); 
+    }
+    int peakIndexInMountainArray(vector<int>& arr) {
+        //如果一个index的值>index+1的值,则为true,否则为false,要找到第一个true
+        int n = arr.size();
+        int left = 0, right = n-2; //根据题意,最右侧的一定不是山峰
+        while(left<=right){
+            int mid = left+((right-left)>>1);
+            if(check(arr, mid)) right = mid - 1;
+            else left = mid + 1;
+        } 
+        return left;
+    }
+};
+```
+
+
+
+## 6.[1539. 第 k 个缺失的正整数](https://leetcode.cn/problems/kth-missing-positive-number/)（自己做，错误，O（n）前缀和还不如顺序查找呢）
+
+依旧是二分思路不好找的问题。
+
+```c++
+class Solution {
+public:
+    int findKthPositive(vector<int>& arr, int k) {
+        //本题的二分思路有点难度,截止到下标索引为i的时候,缺失的元素数量应该是arr[i]-i-1,可以验证一下
+        //同时可以发现,由于数组是严格升序的,因此arr[i]-i-1一定是非降序的
+        //找到最后一个arr[i]-i-1<k(即可以找第一个arr[i]-i-1>=k的)的,加上(k-(arr[i]-i-1))即为所求,要注意第一个之前的情况(因为此时下标可能是-1)
+        int left = 0, right = arr.size()-1;
+        while(left<=right){
+            int mid = left+((right-left)>>1);
+            if(arr[mid]-mid-1<k){
+                left = mid + 1;
+            } else{
+                right = mid - 1;
+            }
+        }
+        //left是第一个使得arr[i]-i-1>=k的
+        if(left==0) return k;
+        else{
+            int index = left - 1; //最后一个<k的
+            return arr[index]+(k-(arr[index]-index-1));
+        }
+    }
+};
+```
+
+
+
+## 7.[540. 有序数组中的单一元素](https://leetcode.cn/problems/single-element-in-a-sorted-array/)
+
+注意这道题可以化简一开始想的`k`为`2*k`，这样就不用特判了，因为`2*k`一定是偶数。同时右边界设置为`nums.size()/2-1;`可以防止对于越界的考虑。因为一旦`left`一直往右，最后就会走到`nums.size()/2`的位置，这也是符合条件的，因为数组一定有一个单一元素，前面都排除了那最后的索引就一定是结果。
+
+```c++
+class Solution {
+public:
+    bool check(vector<int>& nums, int k){
+        return nums[2*k]!=nums[2*k+1];
+    }
+    int singleNonDuplicate(vector<int>& nums) {
+        //看索引?在第一个唯一数的左侧,相同数索引一定是偶数开头,比如:01 23 45 6 78 910 1112 1314
+        //而"错误值"后面,相同数索引一定是奇数开头. 现在要找到第一次true的值,就是单独的那个数.
+        //换一种写法:if(nums[2k]==nums[2k+1],则为false, 否则为true,这样会比较简单),随着k的增大,呈现FFFF TTTT的趋势
+        int left = 0, right = nums.size()/2-1; //数组长度一定是奇数,比如5,那么right=1,2*k+1最多到2,如果一直是left在动最多是4,完全可以
+        while(left<=right){
+            int mid = left+((right-left)>>1);
+            if(check(nums, mid)){
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        return nums[2*left]; //错误的结果一定在偶数索引上,所以可以涵盖所有情况,有点绕
+    }
+};
+```
 
