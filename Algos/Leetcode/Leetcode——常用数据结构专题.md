@@ -1848,3 +1848,311 @@ public:
 
 [【图解】一张图秒懂二维前缀和！](https://leetcode.cn/problems/range-sum-query-2d-immutable/solution/tu-jie-yi-zhang-tu-miao-dong-er-wei-qian-84qp/)
 
+<img src="https://pic.leetcode.cn/1692152740-dSPisw-matrix-sum.png" alt="matrix-sum.png" style="zoom: 40%;" />‘
+
+
+
+
+
+### [304. 二维区域和检索 - 矩阵不可变](https://leetcode.cn/problems/range-sum-query-2d-immutable/) 【板子】
+
+给定一个二维矩阵 `matrix`，以下类型的多个请求：
+
+- 计算其子矩形范围内元素的总和，该子矩阵的 **左上角** 为 `(row1, col1)` ，**右下角** 为 `(row2, col2)` 。
+
+实现 `NumMatrix` 类：
+
+- `NumMatrix(int[][] matrix)` 给定整数矩阵 `matrix` 进行初始化
+- `int sumRegion(int row1, int col1, int row2, int col2)` 返回 **左上角** `(row1, col1)` 、**右下角** `(row2, col2)` 所描述的子矩阵的元素 **总和** 。
+
+**示例 1：**
+
+![img](assets/1626332422-wUpUHT-image.png)
+
+```
+输入: 
+["NumMatrix","sumRegion","sumRegion","sumRegion"]
+[[[[3,0,1,4,2],[5,6,3,2,1],[1,2,0,1,5],[4,1,0,1,7],[1,0,3,0,5]]],[2,1,4,3],[1,1,2,2],[1,2,2,4]]
+输出: 
+[null, 8, 11, 12]
+```
+
+解答
+原因看上上面那个图
+
+```C++
+class NumMatrix {
+public:
+    vector<vector<int>> sum;
+    NumMatrix(vector<vector<int>>& matrix) 
+    {
+        int m=matrix.size(),n=matrix[0].size();
+        sum.resize(m+1,vector<int>(n+1,0));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                sum[i+1][j+1] = sum[i][j+1]+sum[i+1][j]-sum[i][j]+matrix[i][j];
+            }
+        }
+    }
+    
+    int sumRegion(int row1, int col1, int row2, int col2) 
+    {
+        return sum[row2+1][col2+1]-sum[row2+1][col1]-sum[row1][col2+1]+sum[row1][col1];
+    }
+};
+
+/**
+ * Your NumMatrix object will be instantiated and called as such:
+ * NumMatrix* obj = new NumMatrix(matrix);
+ * int param_1 = obj->sumRegion(row1,col1,row2,col2);
+ */
+```
+
+
+
+### [1314. 矩阵区域和](https://leetcode.cn/problems/matrix-block-sum/)
+
+给你一个 `m x n` 的矩阵 `mat` 和一个整数 `k` ，请你返回一个矩阵 `answer` ，其中每个 `answer[i][j]` 是所有满足下述条件的元素 `mat[r][c]` 的和： 
+
+- `i - k <= r <= i + k, `
+- `j - k <= c <= j + k` 且
+- `(r, c)` 在矩阵内。
+
+**示例 1：**
+
+```
+输入：mat = [[1,2,3],[4,5,6],[7,8,9]], k = 1
+输出：[[12,21,16],[27,45,33],[24,39,28]]
+```
+ans
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> matrixBlockSum(vector<vector<int>>& mat, int k) 
+    {
+        //build presum
+        int m=mat.size(),n=mat[0].size();
+        vector<vector<int>> presum(m+1,vector<int>(n+1,0));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                presum[i+1][j+1] = presum[i][j+1]+presum[i+1][j]-presum[i][j]+mat[i][j];
+                //[1,2,3]
+                //[4,5,6]
+                //[7,8,9]
+                //cout<<"presum[i+1][j+1]:i+1:"<<i+1<<" j+1:"<<j+1<<" : **"<<presum[i+1][j+1]<<"  /";
+            }
+            //cout<<endl;
+        }
+        vector<vector<int>> ans(m,vector<int>(n,0));
+         for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                int xmin = max(0,i-k);
+                int ymin = max(0,j-k);
+                int xmax = min(i+k,m-1);//m！！！
+                int ymax = min(j+k,n-1);//n！！！
+
+                ans[i][j] =
+                 presum[xmax+1][ymax+1] - presum[xmax+1][ymin]-presum[xmin][ymax+1]+presum[xmin][ymin];
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+
+
+### [3070. 元素和小于等于 k 的子矩阵的数目](https://leetcode.cn/problems/count-submatrices-with-top-left-element-and-sum-less-than-k/)
+
+给你一个下标从 **0** 开始的整数矩阵 `grid` 和一个整数 `k`。
+
+返回包含 `grid` 左上角元素、元素和小于或等于 `k` 的 **子矩阵**的数目。
+
+**示例 1：**
+
+![img](assets/example1.png)
+
+```
+输入：grid = [[7,6,3],[6,6,1]], k = 18
+输出：4
+解释：如上图所示，只有 4 个子矩阵满足：包含 grid 的左上角元素，并且元素和小于或等于 18 。
+```
+
+ans:
+```c++
+class Solution {
+public:
+    int countSubmatrices(vector<vector<int>>& grid, int k) 
+    {
+        int m= grid.size(),n=grid[0].size();
+        vector<vector<int>> sum(m+1,vector<int>(n+1,0));
+        int res=0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                sum[i+1][j+1] = sum[i][j+1]+sum[i+1][j]-sum[i][j]+grid[i][j];
+                if(sum[i+1][j+1]<=k)res++;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+
+
+### [1738. 找出第 K 大的异或坐标值](https://leetcode.cn/problems/find-kth-largest-xor-coordinate-value/) :eyes:
+
+给你一个二维矩阵 `matrix` 和一个整数 `k` ，矩阵大小为 `m x n` 由非负整数组成。
+
+矩阵中坐标 `(a, b)` 的 **目标值** 可以通过对所有元素 `matrix[i][j]` 执行异或运算得到，其中 `i` 和 `j` 满足 `0 <= i <= a < m` 且 `0 <= j <= b < n`（**下标从 0 开始计数**）。
+
+请你找出 `matrix` 的所有坐标中第 `k` 大的目标值（**`k` 的值从 1 开始计数**）。
+
+**示例 1：**
+
+```
+输入：matrix = [[5,2],[1,6]], k = 1
+输出：7
+解释：坐标 (0,1) 的目标值是 5 XOR 2 = 7 ，为最大的目标值。
+```
+
+
+
+解析：
+
+下图给出了该二维前缀和递推式的可视化展示。
+
+<img src="assets/1-1740733863865-8.png" alt="fig1" style="zoom:40%;" />
+
+<img src="assets/image-20250228171135184.png" alt="image-20250228171135184" style="zoom: 80%;" />
+
+
+
+$\color{red}{\huge快速选择算法nth\_element}$
+
+在C++中，可以使用std::nth_element函数来实现快速选择算法。
+
+std::nth_element函数用于将第n个元素放置在已排序序列中的正确位置上，并将该位置左边的元素都小于该元素，右边的元素都大于该元素。
+
+https://www.acwing.com/blog/content/37043/
+
+https://leetcode.cn/circle/discuss/AL5nP8/
+
+函数原型如下：
+
+```C++
+template <class RandomAccessIterator>
+//注意 返回void！！  
+void nth_element(RandomAccessIterator first, RandomAccessIterator nth, RandomAccessIterator last);
+
+template <class RandomAccessIterator, class Compare>
+void nth_element(RandomAccessIterator first, RandomAccessIterator nth, RandomAccessIterator last, Compare comp);
+```
+
+参数说明：
+
+- first：指向要排序的序列的起始位置的迭代器。
+- nth：指向要选择的元素的位置的迭代器。
+- last：指向要排序的序列的末尾位置的迭代器。
+- comp：可选参数，用于指定比较函数的谓词。
+
+
+
+##### 代码
+
+```C++
+class Solution {
+public:
+    int kthLargestValue(vector<vector<int>>& matrix, int k) 
+    {
+        int m = matrix.size(),n=matrix[0].size();
+        vector<vector<int>> sum(m+1,vector<int>(n+1));
+        vector<int> res(n*m);
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                sum[i+1][j+1]= sum[i+1][j]^sum[i][j+1]^sum[i][j]^matrix[i][j];
+                res[i*n+j] = sum[i+1][j+1];
+            }
+        }
+        //----法2：【推荐】快速选择
+        nth_element(res.begin(),res.begin()+k-1,res.end(),greater<int>());//greater<int>() 注意这个写法！！
+        return res[k-1];//！！
+
+        //----法1：sort 排序
+        // sort(res.begin(),res.end());
+        // //01234    //3  //5  //5-3=2
+        // return res[n*m-k];
+
+        //----法1.2：sort 排序2
+        // sort(res.begin(),res.end(),greater<int>());
+        // return res[k-1];
+        
+        
+    }
+};
+```
+
+
+
+### [3212. 统计 X 和 Y 频数相等的子矩阵数量](https://leetcode.cn/problems/count-submatrices-with-equal-frequency-of-x-and-y/)
+
+给你一个二维字符矩阵 `grid`，其中 `grid[i][j]` 可能是 `'X'`、`'Y'` 或 `'.'`，返回满足以下条件的子矩阵数量：
+
+- 包含 `grid[0][0]`
+- `'X'` 和 `'Y'` 的频数相等。
+- 至少包含一个 `'X'`。
+
+**示例 1：**
+
+**输入：** grid = [["X","Y","."],["Y",".","."]]
+
+**输出：** 3
+
+**解释：**
+
+**<img src="assets/examplems.png" alt="img" style="zoom: 67%;" />**
+
+##### 代码
+```C++
+class Solution {
+public:
+    int numberOfSubmatrices(vector<vector<char>>& grid) 
+    {
+        //前缀和中 存储xy的个数
+        int m=grid.size(),n=grid[0].size();
+        vector<vector<pair<int,int>>> sum(m+1,vector<pair<int,int>>(n+1,{0,0}));
+        int res=0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                char gridc = (grid[i][j]);
+                sum[i+1][j+1].first = 
+                    sum[i+1][j].first + sum[i][j+1].first -sum[i][j].first + (gridc=='X');
+                sum[i+1][j+1].second = 
+                    sum[i+1][j].second + sum[i][j+1].second -sum[i][j].second + (gridc=='Y');
+                if(sum[i+1][j+1].first>=1 && sum[i+1][j+1].first == sum[i+1][j+1].second)
+                {
+                    res++;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
