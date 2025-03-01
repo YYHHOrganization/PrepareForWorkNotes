@@ -2248,3 +2248,146 @@ public:
 };
 ```
 
+
+
+### （3）[1893. 检查是否区域内所有整数都被覆盖](https://leetcode.cn/problems/check-if-all-the-integers-in-a-range-are-covered/)
+
+```c++
+class Solution {
+public:
+    bool isCovered(vector<vector<int>>& ranges, int left, int right) {
+        //正常覆盖即可
+        vector<int> diff(55);
+        for(auto& range: ranges){
+            int l = range[0], r = range[1];
+            diff[l]++;
+            diff[r+1]--;
+        }
+        int s = 0;
+        for(int i=0;i<51;i++){
+            s+=diff[i];
+            if(i>=left && i<=right){
+                if(s==0) return false;
+            }
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （4）[1854. 人口最多的年份](https://leetcode.cn/problems/maximum-population-year/)
+
+依旧是简单题：
+
+```c++
+class Solution {
+public:
+    int maximumPopulation(vector<vector<int>>& logs) {
+        //计算一下人口数,这个数据量可以用map来记录
+        map<int, int> diff;
+        for(auto& log: logs){
+            int left = log[0], right = log[1];
+            diff[left]++;
+            diff[right]--;
+        }
+        int s = 0;
+        int max_year = -1;
+        int max = -1;
+        for(auto [k,v]: diff){
+            s+=v;
+            if(s>max){
+                max = s;
+                max_year = k;
+            }
+        }
+        return max_year;
+    }
+};
+```
+
+
+
+### （5）[2960. 统计已测试设备](https://leetcode.cn/problems/count-tested-devices-after-test-operations/)
+
+本题的难点在于如何将其转换到差分的思想上去。注意思考问题的时候不要硬往什么板子上靠，可以从原理上来理解。
+
+- 记res为累计每个设备需要下降的电量数。x为每个设备输入的电量数。当`x-res>0`时，说明当前的设备是要被检测的，于是`res+=1`，最后返回`res`值即为要检测的设备数。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int countTestedDevices(vector<int>& batteryPercentages) {
+        int res = 0;
+        for(int i=0;i<batteryPercentages.size();i++){
+            if(batteryPercentages[i]-res>0) res++; //>0才会去测试该设备
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （6）[1109. 航班预订统计](https://leetcode.cn/problems/corporate-flight-bookings/)
+
+算是经典差分题目了，返回的也算是还原后的数组。代码如下：
+
+```c++
+class Solution {
+public:
+    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {
+        vector<int> diff(n+1);
+        for(auto& booking: bookings){
+            int left = booking[0]-1, right = booking[1]-1, num = booking[2]; //diff数组是从0开始编号的
+            diff[left]+=num;
+            diff[right+1]-=num;
+        }
+        vector<int> res(n);
+        int s = 0;
+        for(int i=0;i<n;i++){
+            s+=diff[i];
+            res[i] = s;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （7）[3355. 零数组变换 I](https://leetcode.cn/problems/zero-array-transformation-i/)
+
+依旧是最基础的差分数组做法：
+
+```c++
+class Solution {
+public:
+    bool isZeroArray(vector<int>& nums, vector<vector<int>>& queries) {
+        //可-1可不-1的情况下,-1,如果最后<=0即可
+        int n = nums.size();
+        vector<int> diff(n+1);  //最后一位其实并不重要,可以理解为只是为了防止越界
+        diff[0] = nums[0];
+        //差分数组要算出来
+        for(int i=1;i<n;i++){
+            diff[i] = nums[i]-nums[i-1];
+        }
+        for(auto& q: queries){
+            int left = q[0], right = q[1];
+            diff[left]--;
+            diff[right+1]++;
+        }
+        //还原回nums,同时看是否都能<=0
+        int s = 0;
+        for(int i=0;i<n;i++){
+            s+=diff[i];
+            if(s>0) return false;
+        }
+        return true;
+    }
+};
+```
+
