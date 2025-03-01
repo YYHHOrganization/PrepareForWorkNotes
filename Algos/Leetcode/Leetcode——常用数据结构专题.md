@@ -2156,3 +2156,95 @@ public:
     }
 };
 ```
+
+
+
+# 二、差分
+
+### §2.1 一维差分（扫描线）
+
+### （1）[1094. 拼车](https://leetcode.cn/problems/car-pooling/)
+
+一种最为基础的差分写法（自己看完原理写的）：
+
+> 创建一个长为 1001 的差分数组，这可以保证 *d* 数组不会下标越界。
+
+```c++
+class Solution {
+public:
+    bool carPooling(vector<vector<int>>& trips, int capacity) {
+        //差分数组,离米小游的题目又近了一些
+        //写法1:直接把长度定为1001,这样一定不会超
+        vector<int> d(1001);
+        //一开始都是0,意味着每一段都没有乘客
+        for(int i=0;i<trips.size();i++){
+            int start = trips[i][1];
+            int end = trips[i][2];
+            int p = trips[i][0]; //乘客数量
+            d[start]+=p;
+            d[end]-=p; //end对应的站不算,因为乘客下车了
+        }
+        int start = 0;
+        //可以靠差分数组还原原来的数组
+        for(int i=0;i<1001;i++){
+            start+=d[i];
+            if(start>capacity) return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+第二种写法是利用平衡树（C++ 中的 `map`，Java 中的 `TreeMap`）代替差分数组，因为我们只需要考虑在`from_i`到`to_i`这部分的乘客数，其余位置的乘客数是保持不变的，无需考虑。平衡树可以保证我们是从小到大遍历这些位置的。当然，如果你不想用平衡树的话，也可以用哈希表，把哈希表的 key 取出来排序，就可以从小到大遍历这些位置了。
+
+此时第二种写法的代码如下（可能是因为map的原因，这种写法会慢一些，感觉看数据量吧，比如这题`trip`的大小只有1000其实直接可以开一个定长vector来解决）：
+
+```c++
+class Solution {
+public:
+    bool carPooling(vector<vector<int>>& trips, int capacity) {
+        map<int, int> d; //差分数组,但只用存对应区间即可,中间不会发生变化
+        for(auto trip: trips){
+            int num = trip[0], start = trip[1], end=trip[2];
+            d[start]+=num;
+            d[end]-=num;
+        }
+        int s = 0;
+        for(auto [k, v]: d){
+            s+=v;
+            if(s>capacity) return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （2）[2848. 与车相交的点](https://leetcode.cn/problems/points-that-intersect-with-cars/)
+
+```c++
+class Solution {
+public:
+    int numberOfPoints(vector<vector<int>>& nums) {
+        //一开始都是0,用差分做,返回哪些不是0
+        vector<int> d(102);
+        int maxLength = 0; //统计到这里就可以了
+        int cnt = 0;
+        for(int i=0;i<nums.size();i++){
+            d[nums[i][0]]++;
+            d[nums[i][1]+1]--;
+            maxLength = max(maxLength, nums[i][1]);
+        }
+        int s = 0;
+        for(int i=0;i<maxLength+1;i++){
+            s+=d[i];
+            cnt += (s!=0);
+        }
+        return cnt;
+    }
+};
+```
+
