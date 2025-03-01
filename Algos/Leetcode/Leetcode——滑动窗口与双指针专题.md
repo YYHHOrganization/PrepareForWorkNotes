@@ -6,7 +6,7 @@
 
 **定长滑动窗口**
 
-- [x] 定长子串中元音的最大数目 1263
+- [x] 定长子串中元音的最大数目 1263 
 - [x] 子数组最大平均数 I
 - [x] 大小为 K 且平均值大于等于阈值的子数组数目 1317
 - [x] 半径为 k 的子数组平均值 1358
@@ -136,7 +136,7 @@ public:
         int cnt = 0;
         for(int i=0;i<arr.size();i++){
             sum+=arr[i]; //1.inset
-            if(i<k-1) continue;
+            if(i<k-1) continue; //!!!<
             //2.update
             if(sum>=target){
                 cnt++;
@@ -148,6 +148,40 @@ public:
     }
 };
 ```
+
+
+
+## [2090. 半径为 k 的子数组平均值](https://leetcode.cn/problems/k-radius-subarray-averages/)
+
+![img](assets/eg1.png)
+
+```C++
+class Solution {
+public:
+    vector<int> getAverages(vector<int>& nums, int k)
+    {
+        int n=nums.size();
+        vector<int> res(n,-1);
+        if(n-2*k<0)return res;
+
+        long long avgS=0;
+
+        for(int r=0;r<n;r++)
+        {
+            avgS+=nums[r];
+            if(r<2*k)continue;
+            //update
+            res[r-k]=avgS/(2*k+1);
+            //out
+            avgS-=nums[r-2*k];
+        }
+        return res;
+       
+    }
+};
+```
+
+
 
 
 
@@ -175,6 +209,72 @@ public:
             newSatisfiedSum -= (grumpy[i-minutes+1]==1) * customers[i-minutes+1];
         }
         return maxSatisfied + sum;
+    }
+};
+```
+
+y
+
+```C++
+class Solution {
+public:
+    int maxSatisfied(vector<int>& customers, vector<int>& grumpy, int minutes) {
+        //记录minutes分钟内不生气带来的增量收益
+        int temp = 0;
+        int resMax = 0;
+        int normal=0;
+        for(int r=0;r<customers.size();r++)
+        {
+            //计算正常收益
+            if(grumpy[r]==0)
+            normal +=  customers[r];
+            else
+            //in
+            //if(grumpy[r]==1)
+                temp+=customers[r];
+            if(r<minutes-1)continue;
+            //update
+            resMax = max(resMax,temp);
+            //out
+            if(grumpy[r-minutes+1]==1)temp-=customers[r-minutes+1];
+        }
+        return normal+resMax;
+    }
+};
+```
+
+## [2841. 几乎唯一子数组的最大和](https://leetcode.cn/problems/maximum-sum-of-almost-unique-subarray/)
+
+```C++
+class Solution {
+public:
+    long long maxSum(vector<int>& nums, int m, int k) 
+    {
+        //unordered_map  存储每个元素个数
+        //往右 map- 
+        unordered_map<int,int> umap;
+        long long tempSum=0;
+        long long maxSum=0;
+        for(int r=0;r<nums.size();r++)
+        {
+            //in
+            umap[nums[r]]++;
+            tempSum+=nums[r];
+            if(r<k-1)continue;
+            //update
+            if(umap.size()>=m)
+            {
+                maxSum=max(maxSum,tempSum);
+            }
+            //out
+            int out = nums[r-k+1];
+            umap[out]--;
+            if(umap[out]==0)umap.erase(out);//umap语法 umap.erase(key)
+
+            tempSum -=out;
+        }
+        return maxSum;
+
     }
 };
 ```
@@ -239,6 +339,38 @@ public:
 
 
 
+板子做法
+
+```C++
+class Solution {
+public:
+    int maxScore(vector<int>& cardPoints, int k) 
+    {
+        int n=cardPoints.size();
+        int getCardNum = n-k;
+        int tempSum=0;
+        int minSum = INT_MAX;//!!
+
+        int totalSum=0;
+        for(int r=0;r<n;r++)
+        {
+            totalSum+=cardPoints[r];
+            //in
+            tempSum+=cardPoints[r];
+            if(r<getCardNum-1)continue;
+            //update
+            minSum = min(minSum,tempSum);
+            //out;
+            tempSum-=cardPoints[r-getCardNum+1];
+        }
+        if(n==k)return totalSum;//
+        return totalSum - minSum;
+    }
+};
+```
+
+
+
 ## 5.（简单题）[1652. 拆炸弹](https://leetcode.cn/problems/defuse-the-bomb/)
 
 利用定长滑动窗口的做法，考虑用$O(n)$的复杂度解决这道题目。这种算是模拟题，可以画一下图推导一下下标索引，**千万不要硬着头皮想。**本题的难点就在于索引值的判定，代码如下：
@@ -270,6 +402,51 @@ public:
             for(int i=n-2;i>=0;i--){
                 sum += (code[i+1]-code[(i+k+1)%n]);
                 res[i] = sum;
+            }
+        }
+        return res;
+    }
+};
+```
+
+y
+
+```C++
+
+class Solution {
+public:
+    vector<int> decrypt(vector<int>& code, int k) {
+        int n = code.size();
+        vector<int> res(n);
+        if (k > 0) 
+        {
+            int tempsum = 0;
+            for (int j = 0; j < k; j++) 
+            {
+                tempsum += code[j%n];
+            }
+            res[n - 1] = tempsum;
+            for(int i=0;i<n-1;i++)
+            {
+                res[i]=tempsum+code[(i+k)%n]-code[i];
+                tempsum = res[i];
+            }
+        }
+        else if(k<0)
+        {
+            k=-k;
+            int tempsum = 0;
+            // n=3,j =n-1=2,j>=2-1-1=0 k=1 
+            for (int j = n-1; j >= n-k; j--) 
+            {
+                tempsum += code[j%n];
+            }
+            res[0] = tempsum;
+            for(int i=1;i<n;i++)
+            {
+                //错误地方：这一步如果code[(i-k-1)%n]负数取余是不对的 一定要记得+n
+                res[i]=tempsum-code[(i-k-1+n)%n]+code[i-1];
+                tempsum = res[i];
             }
         }
         return res;
@@ -319,7 +496,7 @@ public:
             int out = s[i-k+1]-'0';
             sum -= (out<<(k-1));
         }
-        return (us.size()==(1<<k));
+        return (us.size()==(1<<k)); //1<<2=0b100 = 4 / 1<<3 =0b1000 = 8 /1<<K=2^K
     }
 };
 ```
@@ -400,6 +577,8 @@ public:
 
 # 二、不定长滑动窗口
 
+个人理解，做题目的时候需要考虑好数组中数的范围，比如是否有负数，有0，这种情况下单纯的`while(sum>=target)`可能会失效，有时需要加上`while(sum>=target && l<=r)`做进一步判断。
+
 ## 1.求最长/最大
 
 一般题目都有「至多」的要求。
@@ -426,6 +605,34 @@ public:
             if(l<=r) res = max(res, r-l+1);
         }
         return res;
+    }
+};
+```
+
+y：
+
+```C++
+class Solution {
+public:
+    int lengthOfLongestSubstring(string s) 
+    {
+        unordered_map<char,int> umap;
+        int l=0;
+        int maxLen=0;
+        for(int r=0;r<s.size();r++)
+        {
+            //in
+            umap[s[r]]++;
+            //out
+            while(umap[s[r]]>1)
+            {
+                umap[s[l]]--;
+                l++;
+            }
+            //update
+            maxLen = max(maxLen,r-l+1);
+        }
+        return maxLen;
     }
 };
 ```
@@ -487,6 +694,39 @@ public:
     }
 };
 ```
+
+y
+
+```C++
+class Solution {
+public:
+    int longestSubarray(vector<int>& nums) 
+    {
+        //寻找最多只有一个0的子数组
+        //如果有0 长度-1 没有0  也是长度-1
+        int zeroCnt=0;
+        int l=0;
+        int n=nums.size();
+        int maxLen=0;
+        for(int r=0;r<n;r++)
+        {
+            //in
+            if(nums[r]==0)zeroCnt++;
+            //out
+            while(zeroCnt>1)
+            {
+                if(nums[l]==0)zeroCnt--;
+                l++;
+            }
+            //update
+            maxLen = max(maxLen,r-l+1);
+        }
+        return max(maxLen-1,0);
+    }
+};
+```
+
+
 
 ------
 
@@ -556,6 +796,46 @@ public:
 };
 ```
 
+y
+
+```C++
+class Solution {
+public:
+    int longestSemiRepetitiveSubstring(string s) 
+    {
+        //记录重复子串的位置，如果找到新的重复的，l就来到上次重复子串第二个数的位置
+
+        int l=0;
+        int n=s.size();
+        int lastRepetivePos = -1;
+        int maxLen=0;
+
+        int repeteNum=0;
+        for(int r=0;r<n;r++)
+        {
+            //in
+            if(r>0&&s[r]==s[r-1]) // 00 //000
+            {
+                repeteNum++; //1   2
+                if(lastRepetivePos==-1)lastRepetivePos=r;
+                // lastRepetivePos = r;//1   2error
+            }
+
+            //out
+            if(repeteNum>=2)//000
+            {
+                if(lastRepetivePos!=-1)l=lastRepetivePos;
+                lastRepetivePos = r;
+                repeteNum--;
+            }
+            //update
+            maxLen=max(maxLen,r-l+1);
+        }
+        return maxLen;
+    }
+};
+```
+
 
 
 ### （6）[904. 水果成篮](https://leetcode.cn/problems/fruit-into-baskets/)
@@ -610,6 +890,38 @@ public:
             res = max(res, sum);
         }
         return res;
+    }
+};
+```
+
+y
+
+```C++
+class Solution {
+public:
+    int maximumUniqueSubarray(vector<int>& nums) 
+    {
+        //子数组最大和
+        int l=0;
+        int maxSum=0;
+        int tempSum=0;
+        unordered_map<int,int> umap;
+        for(int r=0;r<nums.size();r++)
+        {
+            //in
+            tempSum+=nums[r];
+            umap[nums[r]]++;
+            //out
+            while(umap[nums[r]]>1)
+            {
+                umap[nums[l]]--;
+                tempSum-=nums[l];
+                l++;
+            }
+            //update
+            maxSum = max(maxSum,tempSum);
+        }
+        return maxSum;
     }
 };
 ```
@@ -759,6 +1071,41 @@ public:
 };
 ```
 
+Y
+
+```C++
+class Solution {
+public:
+    int minOperations(vector<int>& nums, int x) 
+    {
+        //转换为 和恰好为 totalSum-x 的最长子字符串
+        int target = reduce(nums.begin(),nums.end())-x;
+        if(target<0)return -1;
+        int l=0;
+        int n=nums.size();
+        int tempsum=0;
+        int maxLen=-1;
+        for(int r=0;r<n;r++)
+        {
+            //in
+            tempsum+=nums[r];
+            //out
+            while(tempsum>target)
+            {
+                tempsum-=nums[l];
+                l++;
+            }
+            //update
+            if(tempsum==target)
+            {
+                maxLen = max(maxLen,r-l+1);
+            }
+        }
+        return ( (maxLen==(-1))? (-1):(n-maxLen) );
+    }
+};
+```
+
 
 
 ### （13）[1838. 最高频元素的频数](https://leetcode.cn/problems/frequency-of-the-most-frequent-element/)
@@ -806,6 +1153,41 @@ public:
 > - 维护窗口内的总操作数不超过 `k`，通过动态调整窗口大小确保高效性。
 >
 > 这种方法的复杂度为排序的 $O(n log n) $加上滑动窗口遍历的 $O(n)$，高效适用于大规模数据。
+
+
+
+y
+
+```C++
+class Solution {
+public:
+    int maxFrequency(vector<int>& nums, int k) 
+    {
+        int l=0;
+        sort(nums.begin(),nums.end());
+        int size=0;
+        long long cost=0;
+        int maxFrequencyNum=0;
+        for(int r=0;r<nums.size();r++)
+        {
+            //in
+            if(r>0)cost+=(long long)(nums[r]-nums[r-1])*size;
+            size++;
+            //out
+            while(cost>k)
+            {
+                cost-=(nums[r]-nums[l]);
+                size--;
+                l++;
+            }
+            //update
+            maxFrequencyNum = max(maxFrequencyNum,size);
+        }
+        return maxFrequencyNum;
+
+    }
+};
+```
 
 
 
@@ -910,6 +1292,63 @@ public:
 
 
 
+Y
+
+```C++
+class Solution {
+public:
+    string shortestBeautifulSubstring(string s, int k) {
+        //
+        int l=0;
+        int n=s.size();
+        int OneCnt=0;
+        string res="";
+        for(int r=0;r<n;r++)
+        {
+            //in
+            if(s[r]=='1')OneCnt++;
+            //out
+            while(l<=r&&OneCnt-(s[l]=='1')>=k)
+            {
+                if(s[l]=='1')OneCnt--;
+                l++;
+            }
+            //update
+            if(OneCnt==k)
+            {
+                string curstr=s.substr(l,r-l+1);
+                
+                if(res=="")res = curstr;
+                else
+                {
+                    if(res.size()<curstr.size())continue;//如果res更小 不更新
+                    if(res.size()>curstr.size())res = curstr;//如果cur更小 更新
+                    else if(res.size()==curstr.size()&&(curstr<res))//如果一样 才比较 
+                    {
+                        res=curstr;
+                    }
+                }
+                // cout<<"CUR:"<<curstr <<"    RES:"<<res<<endl;
+            }
+        }
+        return res;
+    }
+};
+```
+
+> （不可以直接比较，因为字典序看来：'abc' < 'ac'， 但是这题要求先是最短，再是字典序。）
+>
+> 多个字符
+> 在计算机中，两个字符串比较大小，是按照从左到右的顺序进行比较，如果第1位相等，就比较第2位，直至有一位可以比较出大小来，则不再继续比较。
+>
+> 使用计算机属于来描述：
+>
+> 对于任意两个序列 (a,b) 和 (a’,b’)，字典序定义为： (a,b) ≤ (a′,b′) 当且仅当 a < a′ 或 (a = a′ 且 b ≤ b′).
+>
+> 比如在 python 中，'ab' < 'ac'、'abc' < 'ac'、'abc' < 'abcd' 都会返回 True。
+>
+> 原文链接：https://blog.csdn.net/HappyRocking/article/details/83619392
+
 ### ==（3）[1234. 替换子串得到平衡字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/replace-the-substring-for-balanced-string/)==
 
 首先这题要理解清楚题意，不能随便替换，而是**只能替换一个连续的子串。**==这题暂时有点难，先不看了，等后面题刷的足够多了再回来看。==
@@ -946,6 +1385,35 @@ public:
                 l++;
             }
             cnt += l;
+        }
+        return cnt;
+    }
+};
+```
+
+Y
+
+```C++
+class Solution {  //【3.求子数组个数】
+public:
+    int numberOfSubstrings(string s) 
+    {
+        int nums[3]{0};
+        int l=0;
+        int n=s.size();
+        int cnt=0;
+        for(int r=0;r<n;r++)
+        {
+            //in
+            nums[s[r]-'a']++;
+            //out
+            while(nums[0]>0&&nums[1]>0&&nums[2]>0)
+            {
+                nums[s[l]-'a']--;
+                l++;
+            }
+            //update
+            cnt+=l;
         }
         return cnt;
     }
@@ -1042,6 +1510,39 @@ public:
 };
 ```
 
+Y
+
+```C++
+class Solution {
+public:
+    int countCompleteSubarrays(vector<int>& nums) 
+    {
+        unordered_set uset(nums.begin(),nums.end());
+        int nNotEqual = uset.size();
+
+        unordered_map<int,int> umap(nNotEqual);
+        int l=0;
+        int cnt=0;
+        for(int r=0;r<nums.size();r++)
+        {
+            //in
+            umap[nums[r]]++;
+            //out
+            while(umap.size()>=nNotEqual)
+            {
+                umap[nums[l]]--;
+                if(umap[nums[l]]==0)umap.erase(nums[l]);
+                l++;
+            }
+            //update
+            cnt+=l;
+        }
+        return cnt;
+        
+    }
+};
+```
+
 
 
 #### （5）[2537. 统计好子数组的数目](https://leetcode.cn/problems/count-the-number-of-good-subarrays/)（:no_entry:)
@@ -1133,7 +1634,12 @@ public:
 };
 ```
 
-
+>如果一个 **二进制字符串** 满足以下任一条件，则认为该字符串满足 **k 约束**：
+>
+>- 字符串中 `0` 的数量最多为 `k`。
+>- 字符串中 `1` 的数量最多为 `k`。
+>
+>这句话翻译一下就是 zeroCnt<=k || oneCnt<=k   。反义就是（zeroCnt>k && oneCnt>k），所以while里面就是这个 代表不满足的情况
 
 #### （3）[2302. 统计得分小于 K 的子数组数目](https://leetcode.cn/problems/count-subarrays-with-score-less-than-k/)
 
@@ -1192,6 +1698,8 @@ public:
 
 
 
+>注意点 不要随便排序，很多题目比如这题是不可以排序的。。。
+
 ### 恰好型滑动窗口
 
 例如，要计算有多少个元素和**恰好等于**`k`的子数组，可以把问题变成：
@@ -1200,4 +1708,733 @@ public:
 - 计算有多少个元素和 >k，也就是 ≥k+1 的子数组。
 
 ![image-20250221221544733](Leetcode%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E5%8F%8C%E6%8C%87%E9%92%88%E4%B8%93%E9%A2%98.assets/image-20250221221544733.png)
+
+#### （1）[930. 和相同的二元子数组](https://leetcode.cn/problems/binary-subarrays-with-sum/)
+
+```c++
+class Solution {
+public:
+    int numSubarraysWithSum(vector<int>& nums, int goal) {
+        //>=goal的子数组数量,减去>=(goal+1)的子数组数量
+        int sum1=0, sum2=0; //两个维护的窗口值
+        int l1=0, l2=0; //1表示>=goal的,2表示>=goal+1的
+        int total1 = 0, total2 = 0;
+        for(int r=0;r<nums.size();r++){
+            sum1+=nums[r];
+            sum2+=nums[r];
+            while(l1<=r && sum1>=goal){ //因为本题数组中元素可以有0,因此只用sum1>=goal是不够的,还要加入左窗口不能超过右窗口的设定
+                sum1-=nums[l1];
+                l1++;
+            }
+            while(l2<=r && sum2>=goal+1){
+                sum2-=nums[l2];
+                l2++;
+            }
+            //此时左侧的都是合法的
+            total1 += l1;
+            total2 += l2;
+        }
+        return total1 - total2;
+    }
+};
+```
+
+
+
+#### （2）[1248. 统计「优美子数组」](https://leetcode.cn/problems/count-number-of-nice-subarrays/)
+
+依旧是“恰好型滑动窗口”的经典套路。
+
+```c++
+class Solution {
+public:
+    int numberOfSubarrays(vector<int>& nums, int k) {
+        //统计大于等于k个奇数数字,以及>=k+1个奇数数字的子数组数量,然后相减
+        int l1 = 0, l2 =0; //l1表示>=k,l2表示>=k+1
+        int cnt1 = 0, cnt2 = 0;
+        int total1 = 0, total2 = 0;
+        for(int r=0;r<nums.size();r++){
+            cnt1 += ((nums[r]%2)==1);
+            cnt2 += ((nums[r]%2)==1);
+            while(cnt1>=k){
+                cnt1-=((nums[l1]%2)==1);
+                l1++;
+            }
+            while(cnt2>=k+1){
+                cnt2-=((nums[l2]%2)==1);
+                l2++;
+            }
+            //cout<<l1<<" "<<l2<<endl;
+            total1+=l1;
+            total2+=l2;
+        }
+        return total1-total2;
+    }
+};
+```
+
+
+
+## 4.其他（选做，先只做了两道题，等后面有时间再回来补）
+
+### （1）[1438. 绝对差不超过限制的最长连续子数组](https://leetcode.cn/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit/)
+
+这道题会用到C++的STL 容器`multiset`，需要掌握并熟悉用法。代码如下（以下做法涉及对`set`的频繁增删，性能比较差，更好的做法可能是后面的**单调队列**，等学到了再去对应的专题整理其他做法吧）：
+
+```c++
+class Solution {
+public:
+    int longestSubarray(vector<int>& nums, int limit) {
+        //维护窗口内的最大,最小值
+        int windowMax = 0;
+        int windowMin = INT_MAX;
+        int l = 0;
+        int res = 0;
+        multiset<int> s; //用于存储最大值和最小值
+        for(int r=0;r<nums.size();r++){
+            s.insert(nums[r]);
+            while(*s.rbegin() - *s.begin()>limit){
+                s.erase(s.find(nums[l]));////错误写法是：s.erase(nums[l]);//错误 会全部删除
+                l++;
+            }
+            res = max(res, r-l+1); //此时任意两个元素之间绝对差一定<=limit,更新答案
+        }
+        return res;
+    }
+};
+```
+
+补充：
+
+> 在C++的 `multiset` 容器中：
+>
+> 1. **`find` 方法的行为**：
+>    当存在多个重复值时，`find(val)` 会返回指向**第一个等于`val`的元素**的迭代器。这里的“第一个”指的是按容器内元素的**排序顺序**（默认升序）首次出现的值，而非插入顺序。例如，若 `multiset` 中有 `{1, 2, 2, 3}`，`find(2)` 会指向第一个 `2`。
+>
+> 2. **`erase` 方法的行为**：
+>
+>    - **删除单个元素**：若传入**迭代器**（如 `erase(it)`，其中 `it` 是 `find` 返回的迭代器），则仅删除该迭代器指向的**一个元素**。
+>    - **删除所有重复元素**：若直接传入**值**（如 `erase(val)`），则会删除所有等于 `val` 的元素。
+>
+>    **示例**：
+>
+>    ```
+>    cpp复制代码multiset<int> ms = {1, 2, 2, 3};
+>    auto it = ms.find(2);      // 指向第一个2
+>    ms.erase(it);              // 删除第一个2，ms变为{1, 2, 3}
+>    ms.erase(2);               // 删除所有2，ms变为{1, 3}
+>    ```
+>
+> **总结**：
+>
+> - `find` 返回第一个按排序规则匹配的元素的迭代器。
+> - `erase(it)` 删除一个元素，`erase(val)` 删除所有值为 `val` 的元素。
+>
+> 所以，本题不能直接`erase`这个元素，而是要`erase `find到的迭代器。
+
+
+
+### ==（2）[424. 替换后的最长重复字符](https://leetcode.cn/problems/longest-repeating-character-replacement/)==
+
+这道题目有一种比较精简的写法，是滑动窗口的变式应用。**后面有遇到滑动窗口题目的话，可以考虑用类似的做法。**
+
+
+
+### ==（3）[825. 适龄的朋友](https://leetcode.cn/problems/friends-of-appropriate-ages/)==
+
+
+
+# 三、单序列双指针
+
+## 1.相向双指针
+
+两个指针 `left=0, right=n−1`，从数组的两端开始，向中间移动，这叫相向双指针。上面的滑动窗口相当于同向双指针。
+
+### （1）[344. 反转字符串](https://leetcode.cn/problems/reverse-string/)
+
+```c++
+class Solution {
+public:
+    void reverseString(vector<char>& s) {
+        int l=0, r=s.size()-1;
+        while(l<r){
+            swap(s[l], s[r]);
+            l++, r--;
+        }      
+    }
+};
+```
+
+
+
+### （2）[125. 验证回文串](https://leetcode.cn/problems/valid-palindrome/)
+
+这题最难的是C++的接口，`isalnum(s[i])`表示是否是字母或数字，`tolower(s[i])`表示转换到小写的结果。有了以上的知识后，本题代码如下：
+
+> 一个启发是：对于相向双指针的题目，`while(l<r)`的内层可以是`if`语句，避免双层`while`导致索引溢出等问题（反正复杂度是一样的）
+
+```c++
+class Solution {
+public:
+    bool isPalindrome(string s) {
+        int l=0, r=s.size()-1;
+        while(l<r){
+            if(!isalnum(s[l])) l++; //每次左/右指针只走一格,写成if而不是里面再套while,不容易写错
+            else if(!isalnum(s[r])) r--;
+            else if(tolower(s[l])==tolower(s[r])){
+                l++, r--;
+            } 
+            else return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （3）[1750. 删除字符串两端相同字符后的最短长度](https://leetcode.cn/problems/minimum-length-of-string-after-deleting-similar-ends/)
+
+注意针对这种类型题目的下面的写法，遇到类似题可以拿来使用。
+
+```c++
+class Solution {//111111111
+public:
+    int minimumLength(string s) {
+        int l=0, r=s.size()-1;
+        while(l<r){
+            if(s[l]==s[r]){
+                //l移动到与当前相等的最后一个元素,r移动到与当前相等的最前一个元素,但仍需要保证移动后l<r
+                char cur = s[l];
+                while(l+1<r && s[l+1]==cur){
+                    l++;
+                }
+                while(r-1>l && s[r-1]==cur){
+                    r--;
+                }
+            }
+            else break; //不相等,无法再执行删除操作了
+            l++, r--;
+        }
+        return r-l+1;
+    }
+};
+```
+
+
+
+Y
+
+```C++
+class Solution {
+public:
+    int minimumLength(string s) 
+    {
+        int n=s.size();
+        int l=0,r=n-1;
+        while(l<r)
+        {
+            if(s[l]==s[r])
+            {
+                l++;
+                while(l<r&&s[l]==s[l-1])l++;
+                r--;
+                while(l<r&&s[r]==s[r+1])r--;
+            }
+            else
+                return r-l+1;
+        }
+        return r-l+1;
+    }
+};
+```
+
+
+
+### （4）[2105. 给植物浇水 II](https://leetcode.cn/problems/watering-plants-ii/)
+
+直接给出题解：
+
+```c++
+class Solution {
+public:
+    int minimumRefill(vector<int>& plants, int capacityA, int capacityB) {
+        int l = 0, r=plants.size()-1;
+        int remainA = capacityA, remainB = capacityB;
+        int cntA=0, cntB=0; //Alice和Bob分别的添加水的次数
+        while(l<r){
+            if(remainA<plants[l]){
+                remainA = capacityA;
+                cntA++;
+            }
+            if(remainB<plants[r]){
+                remainB = capacityB;
+                cntB++;
+            }
+            remainA-=plants[l];
+            remainB-=plants[r];
+            l++, r--;
+        }
+        //现在Alice和Bob相遇了,如果数组元素是偶数个的话会是l>r,此时不做统计
+        if(l==r){
+            if(max(remainA, remainB)<plants[l]){ //说明更多的那个人也浇不了水,需要多浇一次水
+                cntA++; //随便加到cntA上,没什么问题,反正求解总和
+            }
+        }
+        return cntA + cntB;
+    }
+};
+```
+
+
+
+### （5）[977. 有序数组的平方](https://leetcode.cn/problems/squares-of-a-sorted-array/)
+
+```c++
+class Solution {
+public:
+    vector<int> sortedSquares(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> res(n);
+        int k = n-1;
+        int i=0, j=n-1;
+        while(i<=j){
+            if(abs(nums[i])<=abs(nums[j])){
+                res[k--] = nums[j] * nums[j];
+                j--;
+            }
+            else {
+                res[k--] = nums[i] * nums[i];
+                i++;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （6）[658. 找到 K 个最接近的元素](https://leetcode.cn/problems/find-k-closest-elements/)
+
+思路：可以反其道而性质，转为淘汰赛，淘汰掉从两侧往中间的最不可能的`n-k`个结果，剩下的就是最好的符合要求的`k`个结果。
+
+```c++
+class Solution {
+public:
+    vector<int> findClosestElements(vector<int>& arr, int k, int x) {
+        //左右指针一共踢掉n-k个数(意味着一共移动n-k次),剩下的就是符合要求的
+        int moveCnt = 0;
+        int l=0, r=arr.size()-1;
+        int n=arr.size();
+        if(k==arr.size()) return arr;
+        while(l<r && (moveCnt<n-k)){
+            //每轮必须淘汰一个,谁离x更远,淘汰谁,一样的话淘汰右边的
+            if(abs(arr[r]-x)>=abs(arr[l]-x)){
+                r--;
+                moveCnt+=1;
+            } else {
+                l++;
+                moveCnt+=1;
+            }
+        }
+        //此时l到r之间的都可以
+        vector<int> res(r-l+1);
+        for(int k=0,i=l;i<=r;i++,k++){
+            res[k]=arr[i];
+        }
+        return res;
+    }
+};
+```
+
+Y
+
+```C++
+class Solution {
+public:
+    vector<int> findClosestElements(vector<int>& arr, int k, int x) 
+    {
+        int n=arr.size();
+        int l=0,r=n-1;
+        int deleteN = n-k;
+        while(l<r&&(r-l+1)>k)
+        {
+            if(abs(arr[l]-x)<abs(arr[r]-x))r--;
+            else if(abs(arr[l]-x)>abs(arr[r]-x))l++;
+            else if(abs(arr[l]-x)==abs(arr[r]-x))r--;//
+        }
+        vector<int> res;
+        for(int i=l;i<=r;i++)
+        {
+            res.push_back(arr[i]);
+        }
+        return res; 
+
+    }
+};
+```
+
+
+
+### （7）[1471. 数组中的 k 个最强值](https://leetcode.cn/problems/the-k-strongest-values-in-an-array/)
+
+```c++
+class Solution {
+public:
+    vector<int> getStrongest(vector<int>& arr, int k) {
+        //先排序然后双指针找符合要求的值
+        sort(arr.begin(),arr.end());
+        int n=arr.size();
+        int mid = arr[(n-1)/2];
+        int l=0, r=arr.size()-1;
+        int cnt=0; //一共筛出这么多数
+        int index = 0;
+        vector<int> res(k);
+        while(l<=r && cnt<k){
+            if(abs(arr[l]-mid)>abs(arr[r]-mid)){
+                res[index++]=arr[l];
+                l++;
+            } else if (abs(arr[l]-mid)==abs(arr[r]-mid) && arr[l]>arr[r]){
+                res[index++]=arr[l];
+                l++;
+            } else{
+                res[index++]=arr[r];
+                r--;
+            }
+            cnt++;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （8）[167. 两数之和 II - 输入有序数组](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/)
+
+```c++
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& numbers, int target) {
+        //l和r指向最左和最右,如果相加之和小于target,则l++,否则r--
+        int left = 0, right = numbers.size()-1;
+        while(left<right){
+            int sum = numbers[left]+numbers[right];
+            if(sum<target) left++;
+            else if(sum>target) right--;
+            else break;
+        }
+        return {left+1, right+1};
+    }
+};
+```
+
+
+
+### （9）[633. 平方数之和](https://leetcode.cn/problems/sum-of-square-numbers/)
+
+```c++
+class Solution {
+public:
+    bool judgeSquareSum(int c) {
+        //a和b都有正负号两个版本,直接看正好即可,以sqrt(c)为右边界开始遍历,>c则b左移,<c则a右移,如果a,b错过去则不存在解
+        int left=0, right=sqrt(c)+1;
+        while(left<=right){
+            long long sum = (long long)left * left + (long long)right * right;
+            if(sum<c){
+                left++;
+            } else if(sum>c){
+                right--;
+            } else {
+                return true;
+            }
+        }
+        return false;
+    }
+};
+```
+
+
+
+### （10）[2824. 统计和小于目标的下标对数目](https://leetcode.cn/problems/count-pairs-whose-sum-is-less-than-target/)
+
+本题的要点在于要意识到，对数组进行排序并不会改变最终要求解的内容。因此可以先做一次O（nlogn）的排序，然后再用相向双指针来做：
+
+```c++
+class Solution {
+public:
+    int countPairs(vector<int>& nums, int target) {
+        sort(nums.begin(), nums.end());
+        int left = 0, right = nums.size()-1;
+        int cnt = 0;
+        while(left<right){
+            if(nums[left]+nums[right]>=target){
+                right--;
+            } else{
+                cnt+=(right-left); //只有在left会发生移动前,记录好left固定在某一位置时的符合要求的下标对数目,只有左指针移动时更新cnt数，右指针收缩时是不需要更新的，避免重复
+                left++;
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### ==（11）[LCP 28. 采购方案](https://leetcode.cn/problems/4xy4Wx/)==（回顾的时候做一下，跟前面题一样）
+
+跟上一道题目一样，暂时就先不做了。
+
+
+
+### （12）[15. 三数之和](https://leetcode.cn/problems/3sum/)（:no_entry:这题其实挺难的，需要复习)
+
+**原始方法**：固定`i`从最左侧开始向右移动，这样`i`之后的元素就可以转换为求解两个元素和为`-nums[i]`的问题。
+
+- 注意，重复的情况来自于比如`[-1,0,1,2,-1,-4]`，排序之后的结果为`[-4,-1,-1,0,1,2]`此时以index=1作为`i`和以`index=2`作为`i`，得到的结果是相同的，因此一个解决方案是在遍历`i`的时候，如果`nums[i]==nums[i-1]`，则跳过即可。
+
+本题的原始方法代码如下（记得排序！！！！）：
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) {
+        //用最右边往左遍历,左侧的部分再双指针
+        sort(nums.begin(), nums.end());
+        vector<vector<int>> res;
+        for(int i=0;i<nums.size()-2;i++){ //留两个位置给剩下两个数
+            if(i>=1 && nums[i]==nums[i-1]) continue;
+            int target = -nums[i];
+            int left = i+1, right = nums.size()-1;
+            while(left<right){
+                if(nums[left]+nums[right]>target) right--;
+                else if(nums[left]+nums[right]<target) left++;
+                else{
+                    res.push_back({nums[i], nums[left], nums[right]});
+                    //因为此时已经相等了.只有左侧的数大一点,右侧的数小一点,才有可能再次相等，但依旧务必要处理可能重复的问题！！！
+                    left++;
+                    while(left<right && nums[left]==nums[left-1]) left++; //剩下两个数依旧涉及重复的问题,要避免
+                    right--;
+                    while(left<right && nums[right]==nums[right+1]) right--;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+> 有点麻烦，建议再做一次。
+
+**两个小优化（均可在后面双指针判断前做优化）**：
+
+- 如果当前值和后面两个值 三个数之和>0，则直接break就可以了，后面均不需要再判断了；
+- 如果当前值和最后两个值 三个数之和<0，则continue到下一个最左端的值，因为当前最左侧那个指针已经没希望了。
+
+Y+优化后
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> threeSum(vector<int>& nums) 
+    {
+        sort(nums.begin(),nums.end());
+        int n=nums.size();
+        int i=0,j=0,k=n-1;
+        vector<vector<int>> res;
+        for(i=0;i<n-2;i++)
+        {
+             //优化
+            if(nums[i]+nums[i+1]+nums[i+2]>0)break;
+            if(nums[i]+nums[n-1]+nums[n-2]<0)continue;
+            
+            while(i>0&&i<n-2&&nums[i]==nums[i-1])i++;
+           
+            j=i+1,k=n-1;
+            while(j<k)
+            {
+                int sum=(nums[i]+nums[j]+nums[k]);
+                if(sum<0)
+                    j++;
+                else if(sum>0)
+                    k--;
+                else
+                {
+                    res.push_back({nums[i],nums[j],nums[k]});
+                    j++;
+                    while(j<k&&nums[j]==nums[j-1])j++;
+                    k--;
+                    while(j<k&&nums[k]==nums[k+1])k--;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （13）[16. 最接近的三数之和](https://leetcode.cn/problems/3sum-closest/)
+
+其实还有一些优化空间，比如跟上题一样做一些剪枝处理，但这里就先写一个容易读的版本吧。
+
+```c++
+class Solution {
+public:
+    int threeSumClosest(vector<int>& nums, int target) {
+        int minLost = INT_MAX;
+        int sum = 0;
+        int res = 0;
+        sort(nums.begin(), nums.end());
+        for(int i=0;i<nums.size()-2;i++){
+            //双指针
+            if(i>0 && nums[i]==nums[i-1]) continue;
+            int left = i+1, right = nums.size()-1;
+            while(left<right){ //三个指针均不能相等
+                sum = nums[left] + nums[right] + nums[i];
+                if(sum<target){
+                    left++;
+                } else if(sum>target){
+                    right--;
+                } else return sum;
+                if(abs(sum-target)<minLost){
+                    minLost = abs(sum-target);
+                    res = sum;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### ==（14）[18. 四数之和](https://leetcode.cn/problems/4sum/)==
+
+与前面的题目一样，只不过变成前两根指针走循环，后两根指针走双指针的逻辑。==这题放后面回顾的时候再做吧，防止过拟合。==
+
+
+
+### （15）[611. 有效三角形的个数](https://leetcode.cn/problems/valid-triangle-number/)（:no_entry:）
+
+> 重点是依据题意**构造出单调性**出来。
+
+本题具有一定的难度，重点是如何将这道题目转换为已知的问题。已知三角形有一个性质：两边之和大于第三边，不妨假设`a<=b<=c`，那么一定有`a+c>b, b+c>a`，这两个不存在争议性，因此需要判断的就是`a+b>c`这一条（`c`为最大值）。
+
+因此，这道题可以在外层`for`循环从右到左遍历数组，`a`和`b`则是左侧的两个指针，如果`a+b<=c`说明a指针需要右移，否则此时`a+b>c`，则表示中间的都满足题意（a到b之间），并可以把`b`左移，看一下后续是否还有满足的。此时代码如下：
+
+```c++
+class Solution {
+public:
+    int triangleNumber(vector<int>& nums) {
+        //先排序
+        sort(nums.begin(), nums.end());
+        int cnt = 0;
+        for(int index = nums.size()-1;index>1;index--){
+            int x = nums[index];
+            int left = 0, right = index-1;
+            while(left<right){
+                if(nums[left]+nums[right]<=x){
+                    left++;
+                } else {
+                    cnt+=(right-left); //left固定,到right之间的都可以和right组成符合要求的边对
+                    right--;
+                }
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### （16）[11. 盛最多水的容器](https://leetcode.cn/problems/container-with-most-water/)
+
+具体的讲解可以看这个视频：[盛最多水的容器 接雨水【基础算法精讲 02】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Qg411q7ia/?spm_id_from=333.1387.collection.video_card.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)，这里就直接给出双指针的做法了：
+
+```c++
+class Solution {
+public:
+    int maxArea(vector<int>& height) {
+        //对于left和right而言,比如示例1,height[right]<height[left], 此时中间所有的left和right构成的容器都不可能更大了,直接right--,反之也是同理.
+        //如果height[left]==height[right],可以移动任意一边/其实移动两边也可以
+        int res = 0;
+        int left = 0, right = height.size()-1;
+        while(left<right){ //不能撞上
+            int area = (right-left) * min(height[right], height[left]);
+            res = max(res, area);
+            if(height[left]>height[right]){
+                right--;
+            } else left++;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （17）[42. 接雨水](https://leetcode.cn/problems/trapping-rain-water/)(题目比较难,值得多复习一下)
+
+具体的讲解可以看这个视频：[盛最多水的容器 接雨水【基础算法精讲 02】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Qg411q7ia/?spm_id_from=333.1387.collection.video_card.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)，这里给出两种做法，分别是**前后缀分解**做法和**双指针做法。**
+
+#### （a）前后缀分解做法
+
+```c++
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        //维护前缀最大值和后缀最大值
+        int n = height.size();
+        vector<int> prefix(n);
+        vector<int> suffix(n); //后缀最大值
+        prefix[0]=height[0];
+        for(int i=1;i<n;i++){
+            prefix[i] = max(prefix[i-1], height[i]);
+        }
+        suffix[n-1] = height[n-1];
+        for(int i=n-2;i>=0;i--){
+            suffix[i] = max(suffix[i+1], height[i]);
+        }
+        int cnt = 0;
+        for(int i=0;i<n;i++){
+            cnt+=(min(suffix[i], prefix[i])-height[i]);
+        }
+        return cnt;
+        
+    }
+};
+```
+
+
+
+#### （b）双指针法
+
+```c++
+class Solution {
+public:
+    int trap(vector<int>& height) {
+        int preMax=0, sufMax=0; //记录前面和后面的最大值
+        int left=0, right=height.size()-1;
+        int cnt = 0;
+        while(left<=right){ //此时左右指针相遇的那格是可以计算的
+            preMax = max(preMax, height[left]);
+            sufMax = max(sufMax, height[right]);
+            if(preMax<sufMax){
+                cnt+=(preMax - height[left]); 
+                left++;
+            } else{
+                cnt+=(sufMax - height[right]);
+                right--;
+            }
+        }
+        return cnt;
+    }
+};
+```
 
