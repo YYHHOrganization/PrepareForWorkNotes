@@ -2156,3 +2156,238 @@ public:
     }
 };
 ```
+
+
+
+# 二、差分
+
+### §2.1 一维差分（扫描线）
+
+### （1）[1094. 拼车](https://leetcode.cn/problems/car-pooling/)
+
+一种最为基础的差分写法（自己看完原理写的）：
+
+> 创建一个长为 1001 的差分数组，这可以保证 *d* 数组不会下标越界。
+
+```c++
+class Solution {
+public:
+    bool carPooling(vector<vector<int>>& trips, int capacity) {
+        //差分数组,离米小游的题目又近了一些
+        //写法1:直接把长度定为1001,这样一定不会超
+        vector<int> d(1001);
+        //一开始都是0,意味着每一段都没有乘客
+        for(int i=0;i<trips.size();i++){
+            int start = trips[i][1];
+            int end = trips[i][2];
+            int p = trips[i][0]; //乘客数量
+            d[start]+=p;
+            d[end]-=p; //end对应的站不算,因为乘客下车了
+        }
+        int start = 0;
+        //可以靠差分数组还原原来的数组
+        for(int i=0;i<1001;i++){
+            start+=d[i];
+            if(start>capacity) return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+第二种写法是利用平衡树（C++ 中的 `map`，Java 中的 `TreeMap`）代替差分数组，因为我们只需要考虑在`from_i`到`to_i`这部分的乘客数，其余位置的乘客数是保持不变的，无需考虑。平衡树可以保证我们是从小到大遍历这些位置的。当然，如果你不想用平衡树的话，也可以用哈希表，把哈希表的 key 取出来排序，就可以从小到大遍历这些位置了。
+
+此时第二种写法的代码如下（可能是因为map的原因，这种写法会慢一些，感觉看数据量吧，比如这题`trip`的大小只有1000其实直接可以开一个定长vector来解决）：
+
+```c++
+class Solution {
+public:
+    bool carPooling(vector<vector<int>>& trips, int capacity) {
+        map<int, int> d; //差分数组,但只用存对应区间即可,中间不会发生变化
+        for(auto trip: trips){
+            int num = trip[0], start = trip[1], end=trip[2];
+            d[start]+=num;
+            d[end]-=num;
+        }
+        int s = 0;
+        for(auto [k, v]: d){
+            s+=v;
+            if(s>capacity) return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （2）[2848. 与车相交的点](https://leetcode.cn/problems/points-that-intersect-with-cars/)
+
+```c++
+class Solution {
+public:
+    int numberOfPoints(vector<vector<int>>& nums) {
+        //一开始都是0,用差分做,返回哪些不是0
+        vector<int> d(102);
+        int maxLength = 0; //统计到这里就可以了
+        int cnt = 0;
+        for(int i=0;i<nums.size();i++){
+            d[nums[i][0]]++;
+            d[nums[i][1]+1]--;
+            maxLength = max(maxLength, nums[i][1]);
+        }
+        int s = 0;
+        for(int i=0;i<maxLength+1;i++){
+            s+=d[i];
+            cnt += (s!=0);
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### （3）[1893. 检查是否区域内所有整数都被覆盖](https://leetcode.cn/problems/check-if-all-the-integers-in-a-range-are-covered/)
+
+```c++
+class Solution {
+public:
+    bool isCovered(vector<vector<int>>& ranges, int left, int right) {
+        //正常覆盖即可
+        vector<int> diff(55);
+        for(auto& range: ranges){
+            int l = range[0], r = range[1];
+            diff[l]++;
+            diff[r+1]--;
+        }
+        int s = 0;
+        for(int i=0;i<51;i++){
+            s+=diff[i];
+            if(i>=left && i<=right){
+                if(s==0) return false;
+            }
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （4）[1854. 人口最多的年份](https://leetcode.cn/problems/maximum-population-year/)
+
+依旧是简单题：
+
+```c++
+class Solution {
+public:
+    int maximumPopulation(vector<vector<int>>& logs) {
+        //计算一下人口数,这个数据量可以用map来记录
+        map<int, int> diff;
+        for(auto& log: logs){
+            int left = log[0], right = log[1];
+            diff[left]++;
+            diff[right]--;
+        }
+        int s = 0;
+        int max_year = -1;
+        int max = -1;
+        for(auto [k,v]: diff){
+            s+=v;
+            if(s>max){
+                max = s;
+                max_year = k;
+            }
+        }
+        return max_year;
+    }
+};
+```
+
+
+
+### （5）[2960. 统计已测试设备](https://leetcode.cn/problems/count-tested-devices-after-test-operations/)
+
+本题的难点在于如何将其转换到差分的思想上去。注意思考问题的时候不要硬往什么板子上靠，可以从原理上来理解。
+
+- 记res为累计每个设备需要下降的电量数。x为每个设备输入的电量数。当`x-res>0`时，说明当前的设备是要被检测的，于是`res+=1`，最后返回`res`值即为要检测的设备数。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int countTestedDevices(vector<int>& batteryPercentages) {
+        int res = 0;
+        for(int i=0;i<batteryPercentages.size();i++){
+            if(batteryPercentages[i]-res>0) res++; //>0才会去测试该设备
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （6）[1109. 航班预订统计](https://leetcode.cn/problems/corporate-flight-bookings/)
+
+算是经典差分题目了，返回的也算是还原后的数组。代码如下：
+
+```c++
+class Solution {
+public:
+    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {
+        vector<int> diff(n+1);
+        for(auto& booking: bookings){
+            int left = booking[0]-1, right = booking[1]-1, num = booking[2]; //diff数组是从0开始编号的
+            diff[left]+=num;
+            diff[right+1]-=num;
+        }
+        vector<int> res(n);
+        int s = 0;
+        for(int i=0;i<n;i++){
+            s+=diff[i];
+            res[i] = s;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （7）[3355. 零数组变换 I](https://leetcode.cn/problems/zero-array-transformation-i/)
+
+依旧是最基础的差分数组做法：
+
+```c++
+class Solution {
+public:
+    bool isZeroArray(vector<int>& nums, vector<vector<int>>& queries) {
+        //可-1可不-1的情况下,-1,如果最后<=0即可
+        int n = nums.size();
+        vector<int> diff(n+1);  //最后一位其实并不重要,可以理解为只是为了防止越界
+        diff[0] = nums[0];
+        //差分数组要算出来
+        for(int i=1;i<n;i++){
+            diff[i] = nums[i]-nums[i-1];
+        }
+        for(auto& q: queries){
+            int left = q[0], right = q[1];
+            diff[left]--;
+            diff[right+1]++;
+        }
+        //还原回nums,同时看是否都能<=0
+        int s = 0;
+        for(int i=0;i<n;i++){
+            s+=diff[i];
+            if(s>0) return false;
+        }
+        return true;
+    }
+};
+```
+
