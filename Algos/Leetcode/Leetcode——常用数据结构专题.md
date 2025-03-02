@@ -2212,7 +2212,7 @@ public:
             d[end]-=num;
         }
         int s = 0;
-        for(auto [k, v]: d){
+        for(auto [k, v]: d){ //只有在k所在的索引位置，才会产生值的变动，所以map的话这么遍历是没问题的
             s+=v;
             if(s>capacity) return false;
         }
@@ -2391,3 +2391,230 @@ public:
 };
 ```
 
+
+
+### （8）[56. 合并区间](https://leetcode.cn/problems/merge-intervals/)（值得再做一遍差分做法）
+
+这道题目的难点在于如何正确地写好要输出的内容，根据基础差分板子可以求出每个值是否被覆盖，而求解最后区间的时候，可以对差分数组求前缀和，以还原原数组，看区间覆盖情况（把连续 >0 的段当作合并后的区间）。
+
+- 技巧：考虑`[1,4],[5,6]`这个用例，如果只是按差分数组前缀和>0来判断的话，会得到`[1,6]`，不过按照题目的要求来答案应该是`[1,4],[5,6]`，解决方案是可以把索引全部*2，这样原来相邻的索引就不会被考虑进来了。代码如下：
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        //中间的不会变,可以考虑用map实现
+        map<int, int> diff;
+        for(auto& interval: intervals){
+            int left = interval[0], right = interval[1];
+            diff[left*2]++;
+            diff[right*2+1]--;
+        }
+        vector<vector<int>> res;
+        int s = 0; //>0说明有被覆盖
+        int start = -1;
+        for(auto [k,v]: diff){
+            s+=v;
+            if(s>0 && start==-1){
+                start = k;
+            } else if(s==0 && start!=-1){
+                res.push_back({start/2, k/2});
+                start = -1;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （9）[732. 我的日程安排表 III](https://leetcode.cn/problems/my-calendar-iii/)（差分数组法）
+
+不妨先用差分数组的想法来做这道题，可以做，但问题在于每次插入一个新的区间时，都要遍历一遍整个数组找覆盖最多的值，**而这大概就是后面线段树所要优化的地方。**
+
+先用差分数组来做一下这道题目：
+
+```c++
+class MyCalendarThree {
+public:
+    map<int, int> diff;
+    MyCalendarThree() {
+        
+    }
+    
+    int book(int startTime, int endTime) {
+        diff[startTime]++;
+        diff[endTime]--; //左闭右开区间,所以右边是endTime
+        int res = 0;
+        int s = 0;
+        for(auto& [k, v]: diff){ 
+            s += v;
+            res = max(res, s);
+        }
+        return res;
+    }
+};
+
+/**
+ * Your MyCalendarThree object will be instantiated and called as such:
+ * MyCalendarThree* obj = new MyCalendarThree();
+ * int param_1 = obj->book(startTime,endTime);
+ */
+```
+
+
+
+### （10）[2406. 将区间分为最少组数](https://leetcode.cn/problems/divide-intervals-into-minimum-number-of-groups/)
+
+这个思路一下子没想到，其实**最多被覆盖数就是需要的区间数**，如果按照上下车来理解的话，就是最多在车上的人的人数。**思路的转换还是比较巧的。**
+
+> 这个是会议室模型，只要任意时刻至多有 x 个会议室在同时使用，那么就至多需要 x 个会议室。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int minGroups(vector<vector<int>>& intervals) {
+        map<int, int> diff;
+        for(auto& interval:intervals){
+            int left = interval[0], right = interval[1];
+            diff[left]++;
+            diff[right+1]--;
+        }
+        int res = 0;
+        int s = 0;
+        for(auto& [k, v]: diff){
+            s += v;
+            res = max(res, s);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （11）[2381. 字母移位 II](https://leetcode.cn/problems/shifting-letters-ii/)
+
+> 补充：C++当中的对负数取模运算。
+>
+> 在C++中，取余运算符`%`的结果满足以下规则：
+> **余数的符号与被除数（左操作数）相同，且绝对值小于除数（右操作数）的绝对值**。
+>
+> ### **示例分析：`-2 % 3`**
+>
+> 1. **计算过程**：
+>    - 被除数为 `-2`，除数为 `3`。
+>    - 商向零取整：`-2 / 3 = 0`（整数除法）。
+>    - 余数公式：`余数 = 被除数 - 商 * 除数`
+>      `余数 = -2 - (0 * 3) = -2`。
+> 2. **结果验证**：
+>    - 余数符号与被除数 `-2` 一致（负）。
+>    - 余数绝对值 `2` 小于除数绝对值 `3`。
+>
+> ### **C++取余规则总结**
+>
+> | **表达式** | **余数符号**   | **余数值** | **验证公式**           |
+> | ---------- | -------------- | ---------- | ---------------------- |
+> | `-2 % 3`   | 同被除数（负） | `-2`       | `-2 = 0 * 3 + (-2)`    |
+> | `2 % -3`   | 同被除数（正） | `2`        | `2 = 0 * (-3) + 2`     |
+> | `-5 % 3`   | 负             | `-2`       | `-5 = (-1) * 3 + (-2)` |
+> | `5 % -3`   | 正             | `2`        | `5 = (-1) * (-3) + 2`  |
+>
+> ### **对比数学模运算**
+>
+> 数学中模运算余数通常非负，例如：
+>
+> - 数学上 `-2 mod 3 = 1`（因为 `-2 = (-1)*3 + 1`）。
+>   但在C++中，`%`运算符是取余（非数学模运算），结果符号由被除数决定。
+
+本题的代码如下：
+
+```c++
+class Solution {
+public:
+    string shiftingLetters(string s, vector<vector<int>>& shifts) {
+        //其实需要计算差分并还原字符串即可,
+        int n = s.size();
+        vector<int> diff(n+1);
+        diff[0] = s[0]-'a';
+        for(int i=1;i<n;i++){
+            diff[i] = s[i]-s[i-1];
+        }
+        for(auto& shift: shifts){
+            int left = shift[0], right =shift[1], num = ((shift[2]==1)?1:-1);
+            diff[left]+=num;
+            diff[right+1]-=num; //值可能会越界,但这个问题后面再考虑
+        }
+        string res;
+        int sum = 0;
+        for(int i=0;i<n;i++){
+            sum += diff[i];
+            //cout<<diff[i]<<" "<<sum<<" "<<(sum%26+26)%26<<endl;
+            res.push_back('a'+((sum%26+26)%26)); //根据经验，不管正的负的，写成这样都能够正确取余运算。
+        }
+        return res;
+    }
+};
+```
+
+
+
+### ==（12）[3453. 分割正方形 I](https://leetcode.cn/problems/separate-squares-i/)（这题只有两个赞，先不做了）==
+
+
+
+## §2.2 二维差分
+
+推荐先读一下这篇：[2132. 用邮票贴满网格图 - 力扣（LeetCode）](https://leetcode.cn/problems/stamping-the-grid/solutions/1199642/wu-nao-zuo-fa-er-wei-qian-zhui-he-er-wei-zwiu/)
+
+二维差分和二维前缀和有一些像，重点是能够画出下面这张图：
+
+![image-20250302134239576](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/image-20250302134239576.png)
+
+
+
+### （1）[2536. 子矩阵元素加 1](https://leetcode.cn/problems/increment-submatrices-by-one/)
+
+**算是板子题。**既涉及到了差分数组的更新，又涉及到了如何用二维差分数组还原出原来的数组（**计算原数组的时候使用二维前缀和来做**）。代码如下：
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> rangeAddQueries(int n, vector<vector<int>>& queries) {
+        vector<vector<int>> diff(n+2, vector<int>(n+2)); //差分外面多一圈,前缀和里面多一圈,不如直接把大小设置为n+2,计算完前缀和之后,取中间n*n即为最终结果
+        for(auto& q: queries){
+            int r1 = q[0]+1, c1 = q[1]+1, r2=q[2]+1, c2=q[3]+1;
+            diff[r1][c1]+=1;
+            diff[r2+1][c1]-=1;
+            diff[r1][c2+1]-=1;
+            diff[r2+1][c2+1]+=1;
+        }
+        //还原原来的数组
+        for(int i=1;i<=n;i++){
+            for(int j=1;j<=n;j++){
+                //二维前缀和，注意这里是+=，相当于diff[i][j] = diff[i][j-1]+diff[i-1][j]-diff[i-1][j-1]+diff[i][j];
+                diff[i][j] += diff[i][j-1]+diff[i-1][j]-diff[i-1][j-1];
+            }
+        }
+        //移除外面0那一圈,保留中间n*n的取余,即为答案
+        diff.pop_back();
+        diff.erase(diff.begin());
+        for(auto& row:diff){
+            row.pop_back();
+            row.erase(row.begin());
+        }
+        return diff;
+    }
+};
+```
+
+
+
+
+
+# 三、栈
+
+## 1.[1441. 用栈操作构建数组](https://leetcode.cn/problems/build-an-array-with-stack-operations/)
