@@ -976,6 +976,33 @@ public:
 };
 ```
 
+胖子题解（使用`1ll`的技巧）：
+
+```c++
+class Solution {
+public:
+    vector<int> findThePrefixCommonArray(vector<int>& A, vector<int>& B) {
+        //看到n=50,直接long long全程
+        //看前缀中有几个共同的1(&之后看看有几个1),即可求解前缀公共数组
+        long long left = 0;
+        long long right = 0;
+        int n = A.size();
+        vector<int> res(n);
+        for(int i=0;i<n;i++)
+        {
+            left |= (1ll<<A[i]); //注意C++做移位运算的时候，如果数据范围达到了long long级别，可以1ll<<n做移位运算
+            right |= (1ll<<B[i]);
+            long long tmp = left & right;
+            //看tmp中有几个1
+            res[i] = __builtin_popcountll(tmp);
+        }
+        return res;
+
+    }
+};
+```
+
+
 
 
 ### [231. 2 的幂](https://leetcode.cn/problems/power-of-two/)
@@ -1002,9 +1029,9 @@ public:
     bool isPowerOfTwo(int n) {
         //n1000 //(n-1)0111
         return n > 0 && (n & (n - 1)) == 0;
-    }
-};
+
 ```
+
 
 法2
 
@@ -1089,6 +1116,4 @@ public:
     }
 };
 ```
-
-
 

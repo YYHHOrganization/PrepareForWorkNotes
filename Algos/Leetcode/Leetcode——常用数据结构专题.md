@@ -2665,4 +2665,226 @@ public:
 
 # 三、栈
 
-## 1.[1441. 用栈操作构建数组](https://leetcode.cn/problems/build-an-array-with-stack-operations/)
+## ==1.[1441. 用栈操作构建数组](https://leetcode.cn/problems/build-an-array-with-stack-operations/)==
+
+这题先不做了，有点意义不明，且难度也比较低。
+
+
+
+## 2.[844. 比较含退格的字符串](https://leetcode.cn/problems/backspace-string-compare/)
+
+可以直接用两个栈作比较，如下：
+```c++
+class Solution {
+public:
+    bool backspaceCompare(string s, string t) {
+        //用两个栈来比较s和t中的内容
+        stack<char> stks;
+        stack<char> stkt;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='#')
+            {
+                if(!stks.empty()) stks.pop();
+            }
+            else stks.push(s[i]);
+        }
+
+        for(int i=0;i<t.size();i++)
+        {
+            if(t[i]=='#')
+            {
+                if(!stkt.empty()) stkt.pop();
+            }
+            else stkt.push(t[i]);
+        }
+
+        //从栈顶开始比较两个栈中的内容是否一致
+        if(stks.empty()&&stkt.empty()) return true;
+        while(!stks.empty() && !stkt.empty())
+        {
+            char c1 = stks.top(), c2 = stkt.top();
+            if(c1!=c2) return false;
+            stks.pop(); 
+            stkt.pop();
+        }
+        return (stks.empty()&&stkt.empty());
+    }
+};
+```
+
+不过这种做法比较麻烦，实际上可以直接在字符串上做操作，来模拟一个栈，这样还更好比较。代码如下：
+
+```c++
+class Solution {
+public:
+    string build(string s)
+    {
+        //返回做了#退格处理之后的结果
+        string res;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='#'&&!res.empty()) res.pop_back();
+            else if(s[i]!='#') res.push_back(s[i]);
+        }
+        return res;
+    }
+    bool backspaceCompare(string s, string t) {
+        return build(s)==build(t);
+    }
+};
+```
+
+
+
+## 3.[682. 棒球比赛](https://leetcode.cn/problems/baseball-game/)
+
+直接用栈模拟应该没问题，也可以用`vector`去计算操作，不过复杂度是一样的，就不额外尝试了。
+
+```c++
+class Solution {
+public:
+    int calPoints(vector<string>& operations) {
+        //"C,D,+"其实都不需要特意入栈,只要操作之后把结果入栈即可
+        stack<int> scores;
+        for(string& s: operations)
+        {
+            if(s=="C")
+            {
+                scores.pop();
+            }
+            else if(s=="D")
+            {
+                int num = scores.top();
+                scores.push(num*2);
+            }
+            else if(s=="+")
+            {
+                int num = scores.top();
+                scores.pop();
+                int num2 = scores.top();
+                scores.push(num);
+                scores.push(num+num2);
+            }
+            else
+            {
+                scores.push(stoi(s));
+            }
+        }
+        //把栈里的值加在一起
+        int sum = 0;
+        while(!scores.empty())
+        {
+            sum+=scores.top();
+            scores.pop();
+        }
+        return sum;
+    }
+};
+```
+
+
+
+## 4.[2390. 从字符串中移除星号](https://leetcode.cn/problems/removing-stars-from-a-string/)
+
+```c++
+class Solution {
+public:
+    string removeStars(string s) {
+        //*其实就是退格符
+        string res;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='*')
+            {
+                if(!res.empty()) res.pop_back();
+            } 
+            else
+            {
+                res.push_back(s[i]);
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+## 5.[1472. 设计浏览器历史记录](https://leetcode.cn/problems/design-browser-history/)
+
+**这道题目有一定的模拟题的性质，需要仔细考虑。**用数组模拟一个栈即可，每次push进来都放到数组后面，后退 `steps` 步或前进 `steps` 步都仅仅会修改当前的索引值，而`visit`操作则会一直删除数组后面的元素，直到`visit`指定的url。代码如下：
+
+> 写的时候，要注意在`back`和`forward`的时候，别忘了更新现在`cur`的值。
+
+```c++
+class BrowserHistory {
+public:
+    vector<string> histories;
+    int cur = 0; //当前浏览的网页是histories[cur]
+    BrowserHistory(string homepage) {
+        histories.push_back(homepage);
+    }
+    
+    void visit(string url) {
+        //当前为最新浏览网页,后面的都不要了
+        cur++;
+        histories.resize(cur);
+        histories.push_back(url);
+    }
+    
+    string back(int steps) {
+        int index = max(0, cur-steps);
+        //记得把cur移动过去,下面函数也是类似
+        cur = index;
+        return histories[cur];
+    }
+    
+    string forward(int steps) {
+        int n = histories.size();
+        int index = min(cur+steps, n-1);
+        cur = index;
+        return histories[cur];
+    }
+};
+
+/**
+ * Your BrowserHistory object will be instantiated and called as such:
+ * BrowserHistory* obj = new BrowserHistory(homepage);
+ * obj->visit(url);
+ * string param_2 = obj->back(steps);
+ * string param_3 = obj->forward(steps);
+ */
+```
+
+
+
+## 6.[946. 验证栈序列](https://leetcode.cn/problems/validate-stack-sequences/)
+
+这道题目也算是一道小模拟题，但可能会经常做错（H本人）。每次都先按照入栈序列push进来，再按照出栈序列看看能不能出栈，最后返回栈是否为空即可。
+
+```c++
+class Solution {
+public:
+    bool validateStackSequences(vector<int>& pushed, vector<int>& popped) {
+        //即便是popped和pushed对应,popped对应的索引也不会越界
+        stack<int> stk;
+        int n = pushed.size();
+        for(int i=0, j=0;i<n;i++)
+        {
+            stk.push(pushed[i]); //固定一定把pushed对应的值放入栈
+            while(!stk.empty()&&stk.top()==popped[j])
+            {
+                stk.pop();
+                j++; //j不会越界,因为题目说了popped.length==pushed.length
+            }
+        }
+        return stk.empty();
+    }
+};
+```
+
+
+
+## 7.[3412. 计算字符串的镜像分数](https://leetcode.cn/problems/find-mirror-score-of-a-string/)
+
