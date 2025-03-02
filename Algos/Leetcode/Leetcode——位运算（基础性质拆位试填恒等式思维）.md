@@ -571,8 +571,8 @@ public:
 class Solution {
 public:
     int bitwiseComplement(int n) {
-        if(n==0)return 1;
-        return ((1<<(int)(log2(n)+1))-1)^n; 
+        if(n==0)return 1;//
+        return ((1<<(int)(log2(n)+1))-1)^n; //log会报错
     }
 };
 ```
@@ -584,14 +584,12 @@ class Solution {
 public:
     int bitwiseComplement(int n) {
         if(n==0)return 1;
-        return ((1<<bit_width((unsigned)n))-1)^n;
+        return ((1<<bit_width((unsigned)n))-1)^n;//否则这里0 还是会return 0 所以需要特判
     }
 };
 ```
 
-
-
-
+`bit_width((unsigned)0); 是0`
 
 
 
@@ -639,7 +637,7 @@ public:
 };
 ```
 
-可能的优化：用`n & (n-1)`去除二进制中最小的1，然后找距离
+可能的优化：用`n & (n-1)`去除二进制中最小的1，然后找距离(JAVA)
 
 ```C++
 class Solution {
@@ -695,7 +693,7 @@ public:
     vector<string> validStrings(int n) 
     {
         vector<string> res;
-        string path (n,0);
+        string path (n,0);//字符串初始化要给初值，这个string path(n);错误！！
         auto dfs = [&](auto&& dfs,int i)->void //auto&& 是万能引用
             //lambda 表达式的类型是**编译器生成的匿名类型**（例如 `__lambda_123`），你无法显式写出这个类型名！必须用auto
         {
@@ -719,9 +717,7 @@ public:
 };
 ```
 
-
-
->关于lambda表达式以及这题  语法更深入的请看
+>关于lambda表达式以及这题  语法更深入的请看D:\PGPostgraduate\githubNotePrepareForWork\PrepareForWorkNotes\2025寒假\Y\note\知识点\万能引用 完美转发\万能引用 完美转发.md
 
 #### 法二：位运算
 
@@ -802,4 +798,181 @@ public:
 
 
 
+### [2917. 找出数组中的 K-or 值](https://leetcode.cn/problems/find-the-k-or-of-an-array/)
+
+给你一个整数数组 `nums` 和一个整数 `k` 。让我们通过扩展标准的按位或来介绍 **K-or** 操作。在 K-or 操作中，如果在 `nums` 中，至少存在 `k` 个元素的第 `i` 位值为 1 ，那么 K-or 中的第 `i` 位的值是 1 。
+
+返回 `nums` 的 **K-or** 值。
+
+**示例 1：**
+
+```
+输入：nums = [7,12,9,8,9,15], k = 4
+输出：9
+解释：
+用二进制表示 numbers：
+```
+
+| **Number**     | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
+| -------------- | ----- | ----- | ----- | ----- |
+| **7**          | 0     | 1     | 1     | 1     |
+| **12**         | 1     | 1     | 0     | 0     |
+| **9**          | 1     | 0     | 0     | 1     |
+| **8**          | 1     | 0     | 0     | 0     |
+| **9**          | 1     | 0     | 0     | 1     |
+| **15**         | 1     | 1     | 1     | 1     |
+| **Result = 9** | 1     | 0     | 0     | 1     |
+
+```
+位 0 在 7, 9, 9, 15 中为 1。位 3 在 12, 9, 8, 9, 15 中为 1。 只有位 0 和 3 满足。结果是 (1001)2 = 9。
+```
+
+A:
+```C++
+class Solution {
+public:
+    int findKOr(vector<int>& nums, int k) 
+    {
+        int n=nums.size();
+        //vector<int> v(32,0); 实际上只需要要一个数字即可,因为会同意算完全部字母
+        int res=0;
+        for(int i=0;i<31;i++)
+        {
+            int cnt=0;//
+            for(int j=0;j<n;j++)
+            {
+                cnt+=((nums[j]>>i)&1);//v0 
+                if(cnt>=k)
+                {
+                    res = res|(1<<(i));
+                }
+            }
+        }
+
+        return res;
+    }
+};
+```
+
+
+
+### [693. 交替位二进制数](https://leetcode.cn/problems/binary-number-with-alternating-bits/)
+
+给定一个正整数，检查它的二进制表示是否总是 0、1 交替出现：换句话说，就是二进制表示中相邻两位的数字永不相同。
+
+**示例 1：**
+
+```
+输入：n = 5
+输出：true
+解释：5 的二进制表示是：101
+```
+
+#### 法1:
+
+原数 **右移一位** 得到的新数，再与原数进行按位**异或**（^）操作，结果会是全 1 的二进制数。（如，n = 1010，n >> 1 = 0101，那么 n ^ (n >> 1) = 1111）
+接着判断是否是全 1 ，通过 x & (x + 1) 是否等于 0。“**全 1 的数加 1 后会变成仅有一个 1 的数**”（例如 111 + 1 = 1000），它们按位与的结果一定为 0。
+
+
+
+```C++
+class Solution {
+public:
+    bool hasAlternatingBits(int n) {
+        //   1010111
+        //>> 0101011 
+        //^  1111100
+        //+1 1111101 
+
+        //  11
+        //>>01 
+        //^ 10
+
+        //  10101010
+        //>>01010101
+        //^ 11111111
+        // 100000000
+
+        long a= n^(n>>1);
+        return ((a&(a+1))==0);      
+    }
+};
+```
+
+
+
+#### 法2 me：不用看 分别判00 或11 
+
+```C++
+class Solution {
+public:
+    bool hasAlternatingBits(int n) {
+        //1010111
+        //0101011 //直接右移  !=0 表示有连续的1
+
+        //11
+        //01 //直接右移  !=0 表示有连续的1
+
+        //1000010
+        //0111101  //取反后右移  !=0 表示有连续的1
+
+        int oneNei = n&(n>>1);
+        long long mask = (1<<(long long)bit_width((unsigned long long)n))-1ll;//1111
+        int nmask = n^mask;
+        int zeroNei = nmask&(nmask>>1);
+        if(oneNei||zeroNei)return false;
+        return true;
+    }
+};
+```
+
+
+
+### [2657. 找到两个数组的前缀公共数组](https://leetcode.cn/problems/find-the-prefix-common-array-of-two-arrays/)
+
+给你两个下标从 **0** 开始长度为 `n` 的整数排列 `A` 和 `B` 。
+
+`A` 和 `B` 的 **前缀公共数组** 定义为数组 `C` ，其中 `C[i]` 是数组 `A` 和 `B` 到下标为 `i` 之前公共元素的数目。
+
+请你返回 `A` 和 `B` 的 **前缀公共数组** 。
+
+如果一个长度为 `n` 的数组包含 `1` 到 `n` 的元素恰好一次，我们称这个数组是一个长度为 `n` 的 **排列** 。
+
+**示例 1：**
+
+```
+输入：A = [1,3,2,4], B = [3,1,2,4]
+输出：[0,2,3,4]
+解释：i = 0：没有公共元素，所以 C[0] = 0 。
+i = 1：1 和 3 是两个数组的前缀公共元素，所以 C[1] = 2 。
+i = 2：1，2 和 3 是两个数组的前缀公共元素，所以 C[2] = 3 。
+i = 3：1，2，3 和 4 是两个数组的前缀公共元素，所以 C[3] = 4 。
+```
+a:__builtin_popcount**ll**
+
+```C++
+class Solution {
+public:
+    vector<int> findThePrefixCommonArray(vector<int>& A, vector<int>& B) {
+        //0001   0100
+        //0101   0101
+        //0111   0111
+        //1111   1111
+
+        //& ->相同个数
+        int n =A.size();
+        vector<int> pre(n);
+        long long asum=0,bsum=0;
+        for(int i=0;i<n;i++)
+        {
+            long long bitA =(long long) 1<<(long long)A[i];
+            long long bitB =(long long) 1<<(long long)B[i];
+            asum|=bitA;
+            bsum|=bitB;
+            pre[i] = __builtin_popcountll(asum&bsum);
+        }
+        return pre;
+    }
+};
+```
 
