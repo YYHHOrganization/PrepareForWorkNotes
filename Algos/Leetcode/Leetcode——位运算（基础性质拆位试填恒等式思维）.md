@@ -976,3 +976,119 @@ public:
 };
 ```
 
+
+
+### [231. 2 的幂](https://leetcode.cn/problems/power-of-two/)
+
+给你一个整数 `n`，请你判断该整数是否是 2 的幂次方。如果是，返回 `true` ；否则，返回 `false` 。
+
+如果存在一个整数 `x` 使得 `n == 2x` ，则认为 `n` 是 2 的幂次方。
+
+
+
+**示例 1：**
+
+```
+输入：n = 1
+输出：true
+解释：20 = 1
+```
+
+法1
+
+```C++
+class Solution {
+public:
+    bool isPowerOfTwo(int n) {
+        //n1000 //(n-1)0111
+        return n > 0 && (n & (n - 1)) == 0;
+    }
+};
+```
+
+法2
+
+其中 −n 是 n 的相反数，是一个负数。该位运算技巧可以直接获取 n 二进制表示的最低位的 1。
+
+由于负数是按照补码规则在计算机中存储的，−n 的二进制表示为 n 的二进制表示的每一位取反再加上 1，因此它的原理如下：
+
+```C++
+class Solution {
+public:
+    bool isPowerOfTwo(int n) {
+        //n1000 //(-n)(1111 0111+1)=1111 1000 
+        return n > 0 && (n & -n) == n;
+    }
+};
+```
+
+
+
+>ME
+>
+>不推荐
+>
+>```C++
+>class Solution {
+>public:
+>    bool isPowerOfTwo(int n) {
+>        //0010  //1000
+>        if(n==0)return false;
+>        return ((long long)1<<((long long)bit_width((unsigned)n)-1)) == n;
+>    }
+>};
+>```
+
+
+
+### **[342. 4的幂](https://leetcode.cn/problems/power-of-four/)**
+
+给定一个整数，写一个函数来判断它是否是 4 的幂次方。如果是，返回 `true` ；否则，返回 `false` 。
+
+整数 `n` 是 4 的幂次方需满足：存在整数 `x` 使得 `n == 4x`
+
+**示例 1：**
+
+```
+输入：n = 16
+输出：true
+```
+
+
+
+#### 方法一：二进制表示中 1 的位置
+
+如果 *n* 是 4 的幂，那么 *n* 一定也是 2 的幂。因此我们可以首先判断 *n* 是否是 2 的幂
+
+//10000 = 16
+
+//00100 = 8 
+
+ // 2的幂 且位数是奇数
+
+![image-20250302214510005](assets/image-20250302214510005.png)
+
+```C++
+class Solution {
+public:
+    bool isPowerOfFour(int n) 
+    {
+        return n>0&& (n&(n-1))==0 && (n&0xaaaaaaaa)==0;//8个a 32位
+    }
+};
+```
+
+#### 方法二：取模性质
+
+```C++
+class Solution {
+public:
+    bool isPowerOfFour(int n) 
+    {
+        return n>0&& (n&(n-1))==0 && (n%3==1);
+    }
+};
+```
+
+
+
