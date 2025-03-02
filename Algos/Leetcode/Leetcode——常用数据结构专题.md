@@ -2235,7 +2235,7 @@ public:
         int cnt = 0;
         for(int i=0;i<nums.size();i++){
             d[nums[i][0]]++;
-            d[nums[i][1]+1]--;
+            d[nums[i][1]+1]--; //注意这个+1!! 因为最后一个是包含的
             maxLength = max(maxLength, nums[i][1]);
         }
         int s = 0;
