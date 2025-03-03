@@ -1,6 +1,6 @@
 # Leetcode——位运算（基础/性质/拆位/试填/恒等式/思维）
 
-- [位运算题单](https://leetcode.cn/circle/discuss/dHn9Vk/)
+- **[位运算题单](https://leetcode.cn/circle/discuss/dHn9Vk/)**
 
 ### 注意点
 
@@ -1005,7 +1005,7 @@ public:
 
 
 
-### [231. 2 的幂](https://leetcode.cn/problems/power-of-two/)
+### [231. 2 的幂](https://leetcode.cn/problems/power-of-two/)  :call_me_hand:
 
 给你一个整数 `n`，请你判断该整数是否是 2 的幂次方。如果是，返回 `true` ；否则，返回 `false` 。
 
@@ -1068,7 +1068,7 @@ public:
 
 
 
-### **[342. 4的幂](https://leetcode.cn/problems/power-of-four/)**
+### **[342. 4的幂 ](https://leetcode.cn/problems/power-of-four/)**:call_me_hand:
 
 给定一个整数，写一个函数来判断它是否是 4 的幂次方。如果是，返回 `true` ；否则，返回 `false` 。
 
@@ -1113,6 +1113,269 @@ public:
     bool isPowerOfFour(int n) 
     {
         return n>0&& (n&(n-1))==0 && (n%3==1);
+    }
+};
+```
+
+
+
+### [2595. 奇偶位数](https://leetcode.cn/problems/number-of-even-and-odd-bits/)
+
+给你一个 **正** 整数 `n` 。
+
+用 `even` 表示在 `n` 的二进制形式（下标从 **0** 开始）中值为 `1` 的偶数下标的个数。
+
+用 `odd` 表示在 `n` 的二进制形式（下标从 **0** 开始）中值为 `1` 的奇数下标的个数。
+
+请注意，在数字的二进制表示中，位下标的顺序 **从右到左**。
+
+返回整数数组 `answer` ，其中 `answer = [even, odd]` 。
+
+ 
+
+**示例 1：**
+
+**输入：**n = 50
+
+**输出：**[1,2]
+
+**解释：**
+
+50 的二进制表示是 `110010`。
+
+在下标 1，4，5 对应的值为 1。
+
+
+
+ANS
+
+```C++
+class Solution {
+public:
+    vector<int> evenOddBit(int n) 
+    {
+        //110010
+        //543210
+        //010101 &  0x5555
+        //010000 只看偶数位
+        int even = __builtin_popcount(n&0x5555) ;
+        int odd = __builtin_popcount(n) - even;
+        return {even,odd};
+    }
+};
+```
+
+
+
+### [338. 比特位计数](https://leetcode.cn/problems/counting-bits/)
+
+给你一个整数 `n` ，对于 `0 <= i <= n` 中的每个 `i` ，计算其二进制表示中 **`1` 的个数** ，返回一个长度为 `n + 1` 的数组 `ans` 作为答案。
+
+**示例 1：**
+
+```
+输入：n = 2
+输出：[0,1,1]
+解释：
+0 --> 0
+1 --> 1
+2 --> 10
+```
+
+```C++
+class Solution {
+public:
+    vector<int> countBits(int n) 
+    {
+        vector<int> res(n+1,0);
+        for(int i=0;i<=n;i++)
+        {
+            res[i] = __builtin_popcount(i);
+        }
+        return res;
+    }
+};
+```
+
+也可以用动规，或者`x&(x-1)`等。
+
+
+
+## 二、异或（XOR）的性质
+
+### [1486. 数组异或操作](https://leetcode.cn/problems/xor-operation-in-an-array/):call_me_hand:
+
+给你两个整数，`n` 和 `start` 。
+
+数组 `nums` 定义为：`nums[i] = start + 2*i`（下标从 0 开始）且 `n == nums.length` 。
+
+请返回 `nums` 中所有元素按位异或（**XOR**）后得到的结果。
+
+**示例 1：**
+
+```
+输入：n = 5, start = 0
+输出：8
+解释：数组 nums 为 [0, 2, 4, 6, 8]，其中 (0 ^ 2 ^ 4 ^ 6 ^ 8) = 8 。
+     "^" 为按位异或 XOR 运算符。
+```
+
+#### 题解：
+
+https://leetcode.cn/problems/xor-operation-in-an-array/solutions/2793723/o1-gong-shi-tui-dao-pythonjavaccgojsrust-le23/
+
+<img src="assets/image-20250302234545908.png" alt="image-20250302234545908" style="zoom: 80%;" />
+
+
+
+<img src="assets/image-20250302234939418.png" alt="image-20250302234939418" style="zoom:80%;" />
+
+上面的3 5 7 9 11是5个奇数个，所以最低位是1，+1
+
+
+##### 合二为一
+
+<img src="assets/image-20250302235308712.png" alt="image-20250302235308712" style="zoom:80%;" />
+
+由于异或运算满足交换律和结合律，所以以下的括号中的项都可以拆出来凑一起
+(0⊕0)⊕(1⊕1)⊕⋯⊕((a−1)⊕(a−1))⊕a⊕(a+1)⊕(a+2)⊕⋯⊕(a+n−1)
+=(0⊕1⊕2⊕⋯⊕a+n−1)⊕(0⊕1⊕2⊕⋯⊕a−1)
+
+
+
+##### 0 到 n 的异或和
+
+![image-20250302235544812](assets/image-20250302235544812.png)
+
+
+当n=4k+3时，共有(n+1)=4k+4个数字，按照前面说的四个一组消消乐，所以消完了是0
+当n=4k+2时，去掉前面四个一组消消乐，剩下三个元素：(n-2)⊕(n-1)⊕n，我们知道消消乐完成后，**开头第一个元素肯定是4的倍数是偶数，所以(n-2)⊕(n-1)=1**。而n也是偶数，所以1⊕n=n+1
+当n=4k+1时，同理，剩下两个元素(n-1)⊕n=1
+当n=4k时，同理，剩下一个元素n
+
+![image-20250302235552801](assets/image-20250302235552801.png)
+
+#### 代码：
+
+```C++
+class Solution {
+    int xor_n(int n) 
+    {
+        switch (n % 4) 
+        {
+            case 0: return n;
+            case 1: return 1;
+            case 2: return n + 1;
+            default: return 0;
+        }
+    }
+
+public:
+    int xorOperation(int n, int start) 
+    {
+        int a = start / 2;
+        int b = n & start & 1; // 都为奇数才是 1
+        return (xor_n(a + n - 1) ^ xor_n(a - 1)) * 2 + b;
+    }
+};
+```
+
+
+
+### [1720. 解码异或后的数组](https://leetcode.cn/problems/decode-xored-array/)
+
+**未知** 整数数组 `arr` 由 `n` 个非负整数组成。
+
+经编码后变为长度为 `n - 1` 的另一个整数数组 `encoded` ，其中 `encoded[i] = arr[i] XOR arr[i + 1]` 。例如，`arr = [1,0,2,1]` 经编码后得到 `encoded = [1,2,3]` 。
+
+给你编码后的数组 `encoded` 和原数组 `arr` 的第一个元素 `first`（`arr[0]`）。
+
+请解码返回原数组 `arr` 。可以证明答案存在并且是唯一的。
+
+**示例 1：**
+
+```
+输入：encoded = [1,2,3], first = 1
+输出：[1,0,2,1]
+解释：若 arr = [1,0,2,1] ，那么 first = 1 且 encoded = [1 XOR 0, 0 XOR 2, 2 XOR 1] = [1,2,3]
+```
+ANS
+```C++
+class Solution {
+public:
+    vector<int> decode(vector<int>& encoded, int first) {
+        //a^b= c---> a^c=b
+        //1011 a
+        //1100 b
+        //0111 c
+        int n=encoded.size();
+        vector<int> res(n+1);
+        res[0] = first;
+        for(int i=1;i<=n;i++)
+        {
+            res[i] = res[i-1]^encoded[i-1];
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [2433. 找出前缀异或的原始数组](https://leetcode.cn/problems/find-the-original-array-of-prefix-xor/)
+
+给你一个长度为 `n` 的 **整数** 数组 `pref` 。找出并返回满足下述条件且长度为 `n` 的数组 `arr` ：
+
+- `pref[i] = arr[0] ^ arr[1] ^ ... ^ arr[i]`.
+
+注意 `^` 表示 **按位异或**（bitwise-xor）运算。
+
+可以证明答案是 **唯一** 的。
+
+ 
+
+**示例 1：**
+
+```
+输入：pref = [5,2,0,3,1]
+输出：[5,7,2,3,2]
+解释：从数组 [5,7,2,3,2] 可以得到如下结果：
+- pref[0] = 5
+- pref[1] = 5 ^ 7 = 2
+- pref[2] = 5 ^ 7 ^ 2 = 0
+- pref[3] = 5 ^ 7 ^ 2 ^ 3 = 3
+- pref[4] = 5 ^ 7 ^ 2 ^ 3 ^ 2 = 1
+```
+
+
+
+按位异或的性质：`A xor B = C 则 A xor C = B`
+
+```C++
+class Solution {
+public:
+    vector<int> findArray(vector<int>& pref) 
+    {
+        //00101 5
+        //00010 2 
+        //00000 0
+        //00011 3
+        //00001 1
+
+        //101
+        //111
+        //10
+        //11
+        //10
+
+        int n=pref.size();
+        vector<int> res(n,0);
+        res[0] = pref[0];
+        for(int i=1;i<n;i++)
+        {
+            res[i] = pref[i-1]^pref[i];
+        }
+        return res;
     }
 };
 ```
