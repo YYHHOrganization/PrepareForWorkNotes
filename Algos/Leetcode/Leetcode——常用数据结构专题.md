@@ -2163,6 +2163,8 @@ public:
 
 ### §2.1 一维差分（扫描线）
 
+>差分即存储**变化值**。
+
 ### （1）[1094. 拼车](https://leetcode.cn/problems/car-pooling/)
 
 一种最为基础的差分写法（自己看完原理写的）：
@@ -2408,7 +2410,7 @@ public:
         for(auto& interval: intervals){
             int left = interval[0], right = interval[1];
             diff[left*2]++;
-            diff[right*2+1]--;
+            diff[right*2+1]--; // ！！！不可是diff[(right+1)*2]--;  见👇
         }
         vector<vector<int>> res;
         int s = 0; //>0说明有被覆盖
@@ -2426,6 +2428,18 @@ public:
     }
 };
 ```
+
+>👇
+>
+>`diff[right*2+1]--; // ！！！不可是diff[(right+1)*2]--;  `
+>
+>因为其实是把right存在夹缝之中 本来是
+>
+>| | | | | |
+>
+>|.|.|.|.|.|. *2之后
+>
+>而`right*2+1`会将right存储在夹缝 “.” 中，如果写成`(right+1)*2` 就还是存在 “|” 中，就实际上就变成重叠了
 
 
 
@@ -2445,7 +2459,7 @@ public:
     
     int book(int startTime, int endTime) {
         diff[startTime]++;
-        diff[endTime]--; //左闭右开区间,所以右边是endTime
+        diff[endTime]--; //左闭右开区间,所以右边是endTime   //注意这个时间指的是结束了
         int res = 0;
         int s = 0;
         for(auto& [k, v]: diff){ 
@@ -2562,6 +2576,42 @@ public:
 
 
 
+Y
+
+```C++
+class Solution {
+public:
+    string shiftingLetters(string s, vector<vector<int>>& shifts) 
+    {
+        // map<int,int> diff;
+        vector<int> diff(50010,0);
+        for(int i=0;i<shifts.size();i++)
+        {
+            int left = shifts[i][0],right = shifts[i][1],move = shifts[i][2];
+            if(move==1)
+            {
+                diff[left]++;
+                diff[right+1]--;//一定要注意+1的问题！！！！
+            }
+            else
+            {
+                diff[left]--;
+                diff[right+1]++;
+            }
+        }
+        int sSum=0;
+        for(int i=0;i<s.size();i++)
+        {
+            sSum+=diff[i];
+            s[i] = ((s[i]-'a'+sSum)%26+26)%26 +'a';
+        }
+        return s;
+    }
+};
+```
+
+
+
 ### ==（12）[3453. 分割正方形 I](https://leetcode.cn/problems/separate-squares-i/)（这题只有两个赞，先不做了）==
 
 
@@ -2610,8 +2660,6 @@ public:
     }
 };
 ```
-
-
 
 
 
