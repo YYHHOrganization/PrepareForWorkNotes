@@ -2865,8 +2865,8 @@ public:
     }
     
     string forward(int steps) {
-        int n = histories.size();
-        int index = min(cur+steps, n-1);
+        int n = histories.size(); 
+        int index = min(cur+steps, n-1); //直接min(cur+steps, histories.size()-1)是会报错的,因为histories.size()不是int类型,更多见https://cplusplus.com/reference/vector/vector/size/
         cur = index;
         return histories[cur];
     }
@@ -2911,4 +2911,145 @@ public:
 
 
 ## 7.[3412. 计算字符串的镜像分数](https://leetcode.cn/problems/find-mirror-score-of-a-string/)
+
+想了一下，直接看答案了hhh。需要体会一下栈的思想。本题对每个字母维护一个栈，还是非常巧妙的。
+
+```c++
+class Solution {
+public:
+    long long calculateScore(string s) {
+        //镜像表示字母表中索引相加为26
+        //暴力做的话复杂度是O(n^2),注意是距离最近的,考虑用栈
+        vector<stack<int>> alphaStk(26);
+        //1.如果镜像的栈为空,则放入当前字母栈;否则从镜像栈里弹出一个元素,计算分数并累加
+        long long score = 0;
+        for(int i=0;i<s.size();i++)
+        {
+            int index = s[i] - 'a';
+            int mirror = 25-index;
+            if(!alphaStk[mirror].empty())
+            {
+                int t = alphaStk[mirror].top();
+                alphaStk[mirror].pop();
+                score+=(long long)(i-t);
+            }
+            else
+            {
+                alphaStk[index].push(i); //把当前索引放入对应字母栈中
+            }
+        }
+        return score;
+    }
+};
+```
+
+
+
+## 8.[71. 简化路径](https://leetcode.cn/problems/simplify-path/)（难点：写出干净清晰的代码）
+
+感觉上应该能做，但自己写了一些感觉有点埋汰，就来看看优质代码怎么写。以下代码感觉还是比较优雅的：
+
+> 题意抽象为如下，就会简单很多：
+>
+> 给你一组由 `/` 隔开的字符串（忽略空串和 `.`），请你从左到右遍历这些字符串，依次删除每个 `..` 及其左侧的字符串（模拟返回上一级目录）。
+>
+> **解决思路：**
+>
+> 把 path 用 / 分割，得到一个字符串列表。
+>
+> 遍历字符串列表的同时，用栈维护遍历过的字符串：
+>
+> - 如果当前字符串是空串或者 `.`，什么也不做（跳过）。
+> - 如果当前字符串不是 `..`，那么把字符串入栈。
+> - 否则弹出栈顶字符串（前提是栈不为空），模拟返回上一级目录。
+>
+> 最后把栈中字符串用 / 拼接起来（最前面也要有个 /）。
+>
+> 补充知识：
+>
+> - C++中的`istringstream`：[C++ istringstream用法详解_天选打工仔 inurl:csdn-CSDN博客](https://blog.csdn.net/weixin_41028555/article/details/136907277)
+> - C++中的`getline`：[C++中getline()的用法-CSDN博客](https://blog.csdn.net/weixin_44480968/article/details/104282535#:~:text=getline是C++标准库函数；它有两种形式，一种是头文件< istream)
+
+优雅！
+
+```c++
+class Solution {
+public:
+    string simplifyPath(string path) {
+        vector<string> stk;
+        istringstream ss(path);
+        string s; //接收每个子字符串
+        while(getline(ss, s, '/')) //以/间隔
+        {
+            if(s.empty() || s==".") {continue;} //只有一个.,此时忽略掉即可
+            else if(s=="..")
+            {
+                if(!stk.empty()) stk.pop_back();
+            }
+            else
+            {
+                stk.push_back(s);
+            }
+        }
+        string result;
+        result+="/";
+        for(int i=0;i<stk.size();i++)
+        {
+            result+=stk[i];
+            if(i<stk.size()-1) result+="/";
+        }
+        return result;
+    }
+};
+```
+
+> ```cpp
+>  vector<string> names = split(path, '/');也可以
+> ```
+
+
+
+## 9.[3170. 删除星号以后字典序最小的字符串](https://leetcode.cn/problems/lexicographically-minimum-string-after-removing-stars/)
+
+> 要点在于贪心的思路：每次要删除的时候，我们总是**尽量删除索引大的下标**，这样可以让剩下的字符串的字典序尽可能小。
+
+```c++
+class Solution {
+public:
+    string clearStars(string s) {
+        vector<vector<int>> stk(26);
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='*')
+            {
+                for(int j=0;j<26;j++)
+                {
+                    if(!stk[j].empty())
+                    {
+                        stk[j].pop_back();
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                stk[s[i]-'a'].push_back(i);
+            }
+        }
+        vector<int> index;
+        for(int i=0;i<26;i++)
+        {
+            index.insert(index.end(), stk[i].begin(), stk[i].end());
+        }
+        sort(index.begin(), index.end());
+        string res;
+        for(int i=0;i<index.size();i++)
+        {
+            res.push_back(s[index[i]]);
+        }
+        return res;
+
+    }
+};
+```
 
