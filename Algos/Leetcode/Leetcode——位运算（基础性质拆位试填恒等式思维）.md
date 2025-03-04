@@ -1203,7 +1203,7 @@ public:
 
 ## 二、异或（XOR）的性质
 
-### [1486. 数组异或操作](https://leetcode.cn/problems/xor-operation-in-an-array/):call_me_hand:
+### [1486. 数组异或操作](https://leetcode.cn/problems/xor-operation-in-an-array/):call_me_hand:  (H:有板子可以找，0~n的异或值):no_entry:
 
 给你两个整数，`n` 和 `start` 。
 
@@ -1246,7 +1246,6 @@ https://leetcode.cn/problems/xor-operation-in-an-array/solutions/2793723/o1-gong
 ##### 0 到 n 的异或和
 
 ![image-20250302235544812](assets/image-20250302235544812.png)
-
 
 当n=4k+3时，共有(n+1)=4k+4个数字，按照前面说的四个一组消消乐，所以消完了是0
 当n=4k+2时，去掉前面四个一组消消乐，剩下三个元素：(n-2)⊕(n-1)⊕n，我们知道消消乐完成后，**开头第一个元素肯定是4的倍数是偶数，所以(n-2)⊕(n-1)=1**。而n也是偶数，所以1⊕n=n+1
