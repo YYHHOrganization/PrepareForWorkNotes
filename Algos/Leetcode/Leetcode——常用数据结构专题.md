@@ -2809,6 +2809,30 @@ public:
 };
 ```
 
+Y 
+
+```C++
+class Solution {
+public:
+    string removeStars(string s) 
+    {
+        vector<char> res;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='*'&&!res.empty())
+            {
+                res.pop_back();
+            }
+            else
+            {
+                res.push_back(s[i]);
+            }
+        }
+        return string(res.begin(),res.end());
+    }
+};
+```
+
 
 
 ## 5.[1472. 设计浏览器历史记录](https://leetcode.cn/problems/design-browser-history/)
@@ -2829,7 +2853,7 @@ public:
     void visit(string url) {
         //当前为最新浏览网页,后面的都不要了
         cur++;
-        histories.resize(cur);
+        histories.resize(cur);//！！！！！！！！！！！！！！！！！！
         histories.push_back(url);
     }
     
@@ -2873,7 +2897,7 @@ public:
         for(int i=0, j=0;i<n;i++)
         {
             stk.push(pushed[i]); //固定一定把pushed对应的值放入栈
-            while(!stk.empty()&&stk.top()==popped[j])
+            while(!stk.empty()&&stk.top()==popped[j]) //!!!!!记得判断!stk.empty()
             {
                 stk.pop();
                 j++; //j不会越界,因为题目说了popped.length==pushed.length
