@@ -928,7 +928,7 @@ public:
             do j--;while(nums[j]<flag);
             if(i<j)swap(nums[i],nums[j]);//！！！！
         }
-        if(k<=j) return quickSort(nums,k,l,j);//k j是下标
+        if(k<=j) return quickSort(nums,k,l,j);//k j是下标 //
         else return quickSort(nums,k,j+1,r);
     }
     int findKthLargest(vector<int>& nums, int k) 
@@ -1083,8 +1083,35 @@ public:
 
 # 图
 
+### [207. 课程表](https://leetcode.cn/problems/course-schedule/)
 
+你这个学期必须选修 `numCourses` 门课程，记为 `0` 到 `numCourses - 1` 。
 
+在选修某些课程之前需要一些先修课程。 先修课程按数组 `prerequisites` 给出，其中 `prerequisites[i] = [ai, bi]` ，表示如果要学习课程 `ai` 则 **必须** 先学习课程 `bi` 。
+
+- 例如，先修课程对 `[0, 1]` 表示：想要学习课程 `0` ，你需要先完成课程 `1` 。
+
+请你判断是否可能完成所有课程的学习？如果可以，返回 `true` ；否则，返回 `false` 。
+
+ 
+
+**示例 1：**
+
+```
+输入：numCourses = 2, prerequisites = [[1,0]]
+输出：true
+解释：总共有 2 门课程。学习课程 1 之前，你需要完成课程 0 。这是可能的。
+```
+
+**示例 2：**
+
+```
+输入：numCourses = 2, prerequisites = [[1,0],[0,1]]
+输出：false
+解释：总共有 2 门课程。学习课程 1 之前，你需要先完成课程 0 ；并且学习课程 0 之前，你还应先完成课程 1 。这是不可能的。
+```
+
+https://leetcode.cn/problems/course-schedule/solutions/250377/bao-mu-shi-ti-jie-shou-ba-shou-da-tong-tuo-bu-pai-/?envType=problem-list-v2&envId=2cktkvj
 ```C++
 class Solution {
 public:
@@ -1098,18 +1125,22 @@ public:
         }
         //定义一个队列，进行BFS广度优先遍历，遍历入度为0的课
         queue<int> que;
-        for (int i = 0; i < numCourses; ++i) {
+        for (int i = 0; i < numCourses; ++i) 
+        {
             if (inDegree[i] == 0) que.push(i); //将入度为0的课放入队列
         }
         int count = 0;//用于记录有多少门课已经上过了
         //遍历inDegree，更新入度，更新inDegree，直到inDegree的size为0，再确认count是否等于numCourses
-        while (que.size()) {
+        while (que.size()) 
+        {
             int selected = que.front();
             que.pop();
             count++;
             //更新所有关联课程的入度
-            for (int i = 0; i < map[selected].size(); ++i) {
-                if (inDegree[map[selected][i]] > 0) {
+            for (int i = 0; i < map[selected].size(); ++i) 
+            {
+                if (inDegree[map[selected][i]] > 0) 
+                {
                     inDegree[map[selected][i]]--;
                     if(inDegree[map[selected][i]] == 0) 
                         que.push(map[selected][i]);//将入度降至0的课程放入队列
@@ -1121,6 +1152,53 @@ public:
             return true;
         else
             return false;
+
+    }
+};
+```
+
+本题是一道经典的「拓扑排序」问题。
+
+以上代码用的层序遍历bfs，实际上 用dfs 也行
+
+Y：
+
+```C++
+class Solution {
+public:
+    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) 
+    {
+        vector<int> indegrees(numCourses,0);
+        // vector<int> indegrees;
+        unordered_map<int,vector<int>> adj(numCourses);
+        int nq = prerequisites.size();
+        for(int i=0;i<nq;i++)
+        {
+            //b->a ba=1
+            int a = prerequisites[i][0],b=prerequisites[i][1];
+            indegrees[a]++;
+            adj[b].push_back(a);
+        }
+        queue<int> que;
+        for(int i=0;i<numCourses;i++)
+        {
+            if(indegrees[i]==0)
+                que.push(i);
+        }
+        int couN=0;
+        while(!que.empty())
+        {
+            int course = que.front();
+            que.pop();
+            couN++;
+            for(int a :adj[course])
+            {
+                indegrees[a]--;
+                //如果是循环的 入度就不会是0 就不会进来
+                if(indegrees[a]==0)que.push(a);
+            }
+        }
+        return couN == numCourses;
 
     }
 };
