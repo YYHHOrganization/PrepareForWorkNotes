@@ -1,10 +1,12 @@
 #  LeetCode 热题 HOT 100
 
+:notebook: 表示记录在“大厂”那个笔记中
 
+:bookmark: 表示在 ” 面经合集——题目+答案版“中
 
 ## 二分 :red_circle:
 
-### [300. 最长递增子序列 ](https://leetcode-cn.com/problems/longest-increasing-subsequence/)  记录在“大厂”那个笔记中 :red_circle:
+### [300. 最长递增子序列 ](https://leetcode-cn.com/problems/longest-increasing-subsequence/)  :notebook: 记录在“大厂”那个笔记中 :red_circle:
 
 难度中等
 
@@ -218,7 +220,7 @@ public:
 ## 二叉树 :red_circle:
 
 
-### [剑指 Offer 68 - II. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/)   记录在“大厂”那个笔记中 :red_circle:
+### [剑指 Offer 68 - II. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/)   :notebook:  记录在“大厂”那个笔记中 :red_circle:
 
 难度简单393收藏分享切换为英文接收动态反馈
 
@@ -278,7 +280,7 @@ public:
 
 1、找到了 会进入【1】，返回最近公共祖先
 
-2、节点p/q是另一个q/p的祖先节点，返回【2】
+2、节点p/q是另一个q/p的祖先节点，返回【2】 // 或者找到了p / q 也会返回【2】
 
 
  ```C++
@@ -296,6 +298,351 @@ public:
     }
 };
  ```
+
+是否是 后序 左右根？
+
+
+
+方法二：存储父节点
+思路
+
+我们可以用哈希表存储所有节点的父节点，然后我们就可以利用节点的父节点信息从 p 结点开始不断往上跳，并记录已经访问过的节点，再从 q 节点开始不断往上跳，如果碰到已经访问过的节点，那么这个节点就是我们要找的最近公共祖先。
+
+作者：力扣官方题解
+链接：https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/solutions/238552/er-cha-shu-de-zui-jin-gong-gong-zu-xian-by-leetc-2/
+
+
+
+### 226. 翻转二叉树
+
+题目地址：https://leetcode-cn.com/problems/invert-binary-tree/
+
+翻转一棵二叉树。
+
+![226.翻转二叉树](assets/20210203192644329.png)
+
+可以发现想要翻转它，其实就把每一个节点的左右孩子交换一下就可以了。
+
+关键在于遍历顺序，前中后序应该选哪一种遍历顺序？ （一些同学这道题都过了，但是不知道自己用的是什么顺序）
+
+遍历的过程中去翻转每一个节点的左右孩子就可以达到整体翻转的效果。
+
+**注意只要把每一个节点的左右孩子翻转一下，就可以达到整体翻转的效果**
+
+**这道题目使用前序遍历和后序遍历都可以，唯独中序遍历不行，因为中序遍历会把某些节点的左右孩子翻转了两次！建议拿纸画一画，就理解了**
+
+那么层序遍历可以不可以呢？**依然可以的！只要把每一个节点的左右孩子翻转一下的遍历方式都是可以的！**
+
+#### 递归法
+
+基于这递归三步法，代码基本写完，C++代码如下：
+
+```C++
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        if (root == NULL) return root;
+        swap(root->left, root->right);  // 中
+        invertTree(root->left);         // 左
+        invertTree(root->right);        // 右
+        return root;
+    }
+};
+```
+
+m
+
+```C++
+
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        if(root==nullptr)return nullptr;
+        TreeNode *left = root->left;
+        TreeNode * right = root->right;
+        root->left = right;
+        root->right = left;
+        invertTree(left);
+        invertTree(right);
+        return root;
+    }
+};
+```
+
+
+
+#### 迭代法
+
+##### 深度优先遍历
+
+
+[二叉树：听说递归能做的，栈也能做！](https://mp.weixin.qq.com/s/OH7aCVJ5-Gi32PkNCoZk4A)中给出了前中后序迭代方式的写法，所以本地可以很轻松的切出如下迭代法的代码：
+
+C++代码迭代法（前序遍历）
+
+```C++
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        if (root == NULL) return root;
+        stack<TreeNode*> st;
+        st.push(root);
+        while(!st.empty()) {
+            TreeNode* node = st.top();              // 中
+            st.pop();
+            swap(node->left, node->right);
+            if(node->right) st.push(node->right);   // 右
+            if(node->left) st.push(node->left);     // 左
+        }
+        return root;
+    }
+};
+```
+
+
+
+##### 广度优先遍历
+
+也就是层序遍历，层数遍历也是可以翻转这棵树的，因为层序遍历也可以把每个节点的左右孩子都翻转一遍，代码如下：
+
+```C++
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        queue<TreeNode*> que;
+        if (root != NULL) que.push(root);
+        while (!que.empty()) {
+            int size = que.size();
+            for (int i = 0; i < size; i++) {
+                TreeNode* node = que.front();
+                que.pop();
+                swap(node->left, node->right); // 节点处理
+                if (node->left) que.push(node->left);
+                if (node->right) que.push(node->right);
+            }
+        }
+        return root;
+    }
+};
+```
+
+如果对以上代码不理解，或者不清楚二叉树的层序遍历，可以看这篇[二叉树：层序遍历登场！](https://mp.weixin.qq.com/s/4-bDKi7SdwfBGRm9FYduiA)
+
+#### 拓展 
+
+**文中我指的是递归的中序遍历是不行的，因为使用递归的中序遍历，某些节点的左右孩子会翻转两次。**
+
+如果非要使用递归中序的方式写，也可以，如下代码就可以避免节点左右孩子翻转两次的情况：
+
+```C++
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        if (root == NULL) return root;
+        invertTree(root->left);         // 左
+        swap(root->left, root->right);  // 中
+        invertTree(root->left);         // 注意 这里依然要遍历左孩子，因为中间节点已经翻转了
+        return root;
+    }
+};
+```
+
+代码虽然可以，但这毕竟不是真正的递归中序遍历了。
+
+但使用迭代方式统一写法的中序是可以的。
+
+代码如下：
+
+```C++
+class Solution {
+public:
+    TreeNode* invertTree(TreeNode* root) {
+        stack<TreeNode*> st;
+        if (root != NULL) st.push(root);
+        while (!st.empty()) {
+            TreeNode* node = st.top();
+            if (node != NULL) {
+                st.pop();
+                if (node->right) st.push(node->right);  // 右
+                st.push(node);                          // 中
+                st.push(NULL);
+                if (node->left) st.push(node->left);    // 左
+
+            } else {
+                st.pop();
+                node = st.top();
+                st.pop();
+                swap(node->left, node->right);          // 节点处理逻辑
+            }
+        }
+        return root;
+    }
+};
+
+```
+
+为什么这个中序就是可以的呢，因为这是用栈来遍历，而不是靠指针来遍历，避免了递归法中翻转了两次的情况，大家可以画图理解一下，这里有点意思的。
+
+#### 总结
+
+针对二叉树的问题，解题之前一定要想清楚究竟是前中后序遍历，还是层序遍历。
+
+**二叉树解题的大忌就是自己稀里糊涂的过了（因为这道题相对简单），但是也不知道自己是怎么遍历的。**
+
+这也是造成了二叉树的题目“一看就会，一写就废”的原因。
+
+**针对翻转二叉树，我给出了一种递归，三种迭代（两种模拟深度优先遍历，一种层序遍历）的写法，都是之前我们讲过的写法，融汇贯通一下而已。**
+
+大家一定也有自己的解法，但一定要成方法论，这样才能通用，才能举一反三
+
+
+
+## 字典树
+
+### [208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
+
+**[Trie](https://baike.baidu.com/item/字典树/9825209?fr=aladdin)**（发音类似 "try"）或者说 **前缀树** 是一种树形数据结构，用于高效地存储和检索字符串数据集中的键。这一数据结构有相当多的应用情景，例如自动补全和拼写检查。
+
+请你实现 Trie 类：
+
+- `Trie()` 初始化前缀树对象。
+- `void insert(String word)` 向前缀树中插入字符串 `word` 。
+- `boolean search(String word)` 如果字符串 `word` 在前缀树中，返回 `true`（即，在检索之前已经插入）；否则，返回 `false` 。
+- `boolean startsWith(String prefix)` 如果之前已经插入的字符串 `word` 的前缀之一为 `prefix` ，返回 `true` ；否则，返回 `false` 。
+
+ 
+
+#### 代码
+
+https://leetcode.cn/problems/implement-trie-prefix-tree/solutions/98390/trie-tree-de-shi-xian-gua-he-chu-xue-zhe-by-huwt/?envType=problem-list-v2&envId=2cktkvj
+
+Y
+
+```C++
+class Trie {
+public:
+    struct Node
+    {
+        bool isEnd;
+        Node* next[26];
+    };
+    Node* head;
+    Trie() 
+    {
+        head = new Node();
+    }
+    
+    void insert(string word) 
+    {
+        Node* p =head;
+        for(char c:word)
+        {
+            if(p->next[c-'a']==nullptr)
+            {
+                p->next[c-'a'] = new Node();
+            }
+            p=p->next[c-'a'] ;
+        }
+        p->isEnd = true;
+    }
+    
+    bool search(string word) 
+    {
+        Node* p =head;
+        for(char c:word)
+        {
+            if(p->next[c-'a']==nullptr)
+            {
+                return false;
+            }
+            p=p->next[c-'a'] ;
+        }
+        if(p->isEnd == true)
+        {
+            return true;
+        }
+
+        return false;
+    }
+    
+    bool startsWith(string prefix) 
+    {
+        Node* p =head;
+        for(char c:prefix)
+        {
+            if(p->next[c-'a']==nullptr)
+            {
+                return false;
+            }
+            p=p->next[c-'a'] ;
+        }
+        return true;
+    }
+};
+
+/**
+ * Your Trie object will be instantiated and called as such:
+ * Trie* obj = new Trie();
+ * obj->insert(word);
+ * bool param_2 = obj->search(word);
+ * bool param_3 = obj->startsWith(prefix);
+ */
+```
+
+或者让trie本身是一个node 
+
+```C++
+class Trie {
+private:
+    bool isEnd;
+    Trie* next[26];
+public:
+    //Trie* node = new node();错误！！这样写会编译错误 递归调用构造函数
+    Trie() {
+        isEnd = false;
+        memset(next, 0, sizeof(next));
+    }
+    
+    void insert(string word) {
+        Trie* node = this;
+        for (char c : word) {
+            if (node->next[c-'a'] == NULL) {
+                node->next[c-'a'] = new Trie();
+            }
+            node = node->next[c-'a'];
+        }
+        node->isEnd = true;
+    }
+    
+    bool search(string word) {
+        Trie* node = this;
+        for (char c : word) {
+            node = node->next[c - 'a'];
+            if (node == NULL) {
+                return false;
+            }
+        }
+        return node->isEnd;
+    }
+    
+    bool startsWith(string prefix) {
+        Trie* node = this;
+        for (char c : prefix) {
+            node = node->next[c-'a'];
+            if (node == NULL) {
+                return false;
+            }
+        }
+        return true;
+    }
+};
+
+
+作者：路漫漫我不畏
+链接：https://leetcode.cn/problems/implement-trie-prefix-tree/solutions/98390/trie-tree-de-shi-xian-gua-he-chu-xue-zhe-by-huwt/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+```
 
 
 
@@ -342,10 +689,6 @@ public:
     }
 };
 ```
-
-
-
-
 
 
 
@@ -428,4 +771,358 @@ O(1) 空间做法：寻找中间节点+反转链表
 有时间尝试一下
 
 
+
+## 单调栈  :red_circle:
+
+### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)  :notebook:   :red_circle: 
+
+给定一个整数数组 temperatures ，表示每天的温度，返回一个数组 answer ，其中 answer[i] 是指在第 i 天之后，才会有更高的温度。如果气温在这之后都不会升高，请在该位置用 0 来代替。
+
+ 
+
+示例 1:
+
+输入: temperatures = [73,74,75,71,69,72,76,73]
+输出: [1,1,4,2,1,1,0,0]
+示例 2:
+
+输入: temperatures = [30,40,50,60]
+输出: [1,1,1,0]
+示例 3:
+
+输入: temperatures = [30,60,90]
+输出: [1,1,0]
+
+
+提示：
+
+1 <= temperatures.length <= 105
+30 <= temperatures[i] <= 100
+
+
+
+**及时去掉无用数据，保证栈中元素有序**
+
+这个视频讲解很清晰https://www.bilibili.com/video/BV1VN411J7S7/?vd_source=f2def4aba42c7ed69fc648e1a2029c7b
+
+思路一：从右到左 保持栈中下降
+
+![image-20250304133835445](assets/image-20250304133835445.png)
+
+比栈顶小的就插入 否则弹出
+
+stack存储下标
+
+632 保持栈中下降
+
+```C++
+class Solution {
+public:
+    vector<int> dailyTemperatures(vector<int>& temperatures) {
+        int n=temperatures.size();
+        vector<int> res(n);
+        stack<int> s;
+        for(int i=n-1;i>=0;i--)
+        {
+            //如果栈不是空 且当前元素>=栈顶元素 pop出来 
+            while(!s.empty()&&temperatures[i]>=temperatures[s.top()])s.pop();//stk存储的是下标！！要取出
+            if(s.empty())res[i]=0;
+            else res[i]=s.top()-i;
+            s.push(i);
+        }
+        return res;
+    }
+};
+```
+
+>
+>
+>注意：
+>
+> `while(!s.empty()&&temperatures[i]>=temperatures[s.top()])s.pop();`//stk存储的是下标！！要取出来 temperatures[s.top()]
+
+思路二：从前往后的单调栈
+
+![image-20250304135517842](assets/image-20250304135517842.png)
+
+43 保持栈中下降
+
+```C++
+class Solution {
+public:
+    vector<int> dailyTemperatures(vector<int>& temperatures) {
+        int n=temperatures.size();
+        vector<int> res(n,0);
+        stack<int> s;
+        //1 4 3 2 1 5
+        for(int i=0;i<n;i++)
+        {
+            while(!s.empty()&&temperatures[i]>temperatures[s.top()])//不能取等号
+            //不能取等号/因为这个温度相等的不能让它弹出 因为不是比他大的
+            {
+                //记录完了 可以滚了  4 3 2 1 滚
+                res[s.top()]=i-s.top();
+                s.pop();
+            }
+            s.push(i);//5
+        }
+        return res;
+    }
+};
+```
+
+
+
+## 排序
+
+### [215. 数组中的第K个最大元素 ](https://leetcode.cn/problems/kth-largest-element-in-an-array/) :bookmark: 
+
+给定整数数组 `nums` 和整数 `k`，请返回数组中第 `**k**` 个最大的元素。
+
+请注意，你需要找的是数组排序后的第 `k` 个最大的元素，而不是第 `k` 个不同的元素。
+
+你必须设计并实现时间复杂度为 `O(n)` 的算法解决此问题。
+
+ 
+
+**示例 1:**
+
+```
+输入: [3,2,1,5,6,4], k = 2
+输出: 5
+```
+
+**示例 2:**
+
+```
+输入: [3,2,3,1,2,4,5,5,6], k = 4
+输出: 4
+```
+
+ #### M1 库函数
+
+```C++
+class Solution {
+public:
+    int findKthLargest(vector<int>& nums, int k) 
+    {
+        nth_element(nums.begin(),nums.begin()+k-1,nums.end(),greater<int>{});
+        return  nums[k-1];
+    }
+};
+```
+
+#### M2 快速选择
+
+```C++
+class Solution {
+public:
+    int quickSort(vector<int>& nums,int k,int l,int r)//实际上 我们要知道 这个k是下标 而不是个数
+    {
+        if(l>=r)return nums[k];
+        int i=l-1,j=r+1;
+        int flag = nums[(l+((r-l)>>1))];
+        while(i<j)//while(i<=j)错误
+        {
+            do i++;while(nums[i]>flag);
+            do j--;while(nums[j]<flag);
+            if(i<j)swap(nums[i],nums[j]);//！！！！
+        }
+        if(k<=j) return quickSort(nums,k,l,j);//k j是下标
+        else return quickSort(nums,k,j+1,r);
+    }
+    int findKthLargest(vector<int>& nums, int k) 
+    {
+        // nth_element(nums.begin(),nums.begin()+k-1,nums.end(),greater<int>{});
+        // return  nums[k-1];
+        int n=nums.size();
+        return quickSort(nums,k-1,0,n-1);//!!!k-1 实际上 我们要知道 这个k-1是下标  而不是个数
+    }
+};
+```
+
+更具体以及堆排做法 请看:bookmark: 
+
+
+
+# 动态规划
+
+### [221. 最大正方形](https://leetcode.cn/problems/maximal-square/)
+
+在一个由 `'0'` 和 `'1'` 组成的二维矩阵内，找到只包含 `'1'` 的最大正方形，并返回其面积。
+
+ 
+
+**示例 1：**
+
+![img](assets/max1grid.jpg)
+
+```
+输入：matrix = [["1","0","1","0","0"],["1","0","1","1","1"],["1","1","1","1","1"],["1","0","0","1","0"]]
+输出：4
+```
+
+
+
+#### 题解
+
+记录**边长**~！
+
+![image-20250304161829952](assets/image-20250304161829952.png)
+
+![fig1](assets/221_fig1.png)
+
+![image-20250304160720725](assets/image-20250304160720725.png)
+
+#### 代码：
+
+```C++
+class Solution {
+public:
+    int maximalSquare(vector<vector<char>>& matrix) {
+        //前缀和 = 个数
+        int m = matrix.size(),n=matrix[0].size();
+        vector<vector<int>> dp(m+1,vector<int>(n+1,0));
+        int maxNum=0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(matrix[i][j]=='1')dp[i+1][j+1] = min({dp[i][j],dp[i+1][j],dp[i][j+1]})+1;
+                maxNum = max(maxNum,dp[i+1][j+1]);
+            }
+        }
+        return maxNum*maxNum;//记住 我们记录的是边长 所以最后返回边长的平方！
+    }
+};
+```
+
+
+
+## **完全背包**
+
+
+
+### [279. 完全平方数](https://leetcode.cn/problems/perfect-squares/)  :red_circle: 
+
+给你一个整数 `n` ，返回 *和为 `n` 的完全平方数的最少数量* 。
+
+**完全平方数** 是一个整数，其值等于另一个整数的平方；换句话说，其值等于一个整数自乘的积。例如，`1`、`4`、`9` 和 `16` 都是完全平方数，而 `3` 和 `11` 不是。
+
+ 
+
+**示例 1：**
+
+```
+输入：n = 12
+输出：3 
+解释：12 = 4 + 4 + 4
+```
+
+**示例 2：**
+
+```
+输入：n = 13
+输出：2
+解释：13 = 4 + 9
+```
+
+
+
+
+
+#### 解法1：背包
+
+https://leetcode.cn/problems/perfect-squares/solutions/2830762/dong-tai-gui-hua-cong-ji-yi-hua-sou-suo-3kz1g/?envType=problem-list-v2&envId=2cktkvj
+
+把 1,4,9,16,⋯ 这些完全平方数视作物品体积，物品价值都是 1。由于每个数（物品）选的次数没有限制，所以本题是一道标准的**完全背包**问题。
+
+`f[i][j] `的表示从前 i 个完全平方数中选一些数（可以重复选），满足元素和恰好等于 j，最少要选的数字个数。
+
+一种是不选，一种是选
+
+![image-20250304151350030](assets/image-20250304151350030.png)
+
+
+
+----------
+
+
+
+#### 解法2： 空间优化
+
+观察上面的状态转移方程，在计算 *f*[*i*] 时，只会用到 *f*[*i*−1]，不会用到比 *i*−1 更早的状态。
+
+https://leetcode.cn/problems/perfect-squares/solutions/17639/hua-jie-suan-fa-279-wan-quan-ping-fang-shu-by-guan/?envType=problem-list-v2&envId=2cktkvj
+
+```c++
+// #include<bits/stdc++.h>
+// dp[i] 表示数字i最少可以由几个完全平方数相加构成
+// 位置i只依赖 i-j*j 的位置，如 i-1、i-4、i-9 等等位置，才能满足完全平方分割的条件。
+// 因此dp[i]可以取的最小值即为 1 + min(dp[i-1],dp[i-4],dp[i-9]...)
+class Solution {
+public:
+    int numSquares(int n) {
+        vector<int> dp(n + 1, 0);
+        for (int i = 1; i <= n; ++i) 
+        {
+            dp[i] = i;  // 最坏的情况: 所有被加起来的完全平方数都是1
+            for (int j = 1; i - j * j >= 0; ++j) //(i-j*j)>=0 要有等号 表示正好扣为0
+            {
+                dp[i] = std::min(dp[i], dp[i - j * j] + 1);  // dp[i] 表示数字i最少可以由几个完全平方数相加构成
+            }
+        }
+
+        return dp[n];
+        
+    }
+};
+```
+
+
+
+# 图
+
+
+
+```C++
+class Solution {
+public:
+    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+        
+        vector<int> inDegree(numCourses);//准备一个vector记录每个节点（课）的入度
+        unordered_map<int, vector<int>> map;//准备一个哈希表/二维邻接矩阵记录课与课（节点）之间的关系 int -> vector<int>
+        for (int i = 0; i < prerequisites.size(); ++i) {//遍历所有requistes，获取入度和所有关系
+            inDegree[prerequisites[i][0]]++; //记录入度
+            map[prerequisites[i][1]].push_back(prerequisites[i][0]);//记录所有关系
+        }
+        //定义一个队列，进行BFS广度优先遍历，遍历入度为0的课
+        queue<int> que;
+        for (int i = 0; i < numCourses; ++i) {
+            if (inDegree[i] == 0) que.push(i); //将入度为0的课放入队列
+        }
+        int count = 0;//用于记录有多少门课已经上过了
+        //遍历inDegree，更新入度，更新inDegree，直到inDegree的size为0，再确认count是否等于numCourses
+        while (que.size()) {
+            int selected = que.front();
+            que.pop();
+            count++;
+            //更新所有关联课程的入度
+            for (int i = 0; i < map[selected].size(); ++i) {
+                if (inDegree[map[selected][i]] > 0) {
+                    inDegree[map[selected][i]]--;
+                    if(inDegree[map[selected][i]] == 0) 
+                        que.push(map[selected][i]);//将入度降至0的课程放入队列
+                }
+            }
+
+        }
+        if (count == numCourses)
+            return true;
+        else
+            return false;
+
+    }
+};
+```
 
