@@ -266,19 +266,166 @@ public:
 
 
 
-解析版：
+
+
+具体见题解：https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/?envType=problem-list-v2&envId=2cktkvj
+
+ ![image-20250303213413576](assets/image-20250303213413576.png)
+
+会把状态一步步返回上去，
+
+如果没找到，返回的就是null
+
+1、找到了 会进入【1】，返回最近公共祖先
+
+2、节点p/q是另一个q/p的祖先节点，返回【2】
+
+
+ ```C++
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(root==NULL)return NULL;
+        if(root==p||root==q)return root;//【2】
+        TreeNode* left=lowestCommonAncestor(root->left,p,q); 
+        TreeNode* right=lowestCommonAncestor(root->right,p,q); 
+        if(left==NULL)return right;//保证其会取非空的，即有结果是祖先的那个
+        else if(right==NULL)return left;//保证其会取非空的
+        else return root;//【1】//左右子树都找到p和q了，那就说明p和q分别在左右两个子树上，所以此时的最近公共祖先就是root
+
+    }
+};
+ ```
+
+
+
+## 链表
+
+### 7.Leetcode 160 相交链表  大厂笔记 :notebook:
+
+//第二次看答案了
+
+编写一个程序，找到两个单链表相交的起始节点。
+
+**本题思路比较独特,需要仔细思考并记住这类题目的做法**
+
+[160. 相交链表（双指针，清晰图解） - 相交链表 - 力扣（LeetCode） (leetcode-cn.com)](https://leetcode-cn.com/problems/intersection-of-two-linked-lists/solution/intersection-of-two-linked-lists-shuang-zhi-zhen-l/)
+
+
+
+25/3/3
+
+如果是环形的 
+
+1、如果相遇之前个数不一样，第二轮遇到
+
+<img src="assets/image-20250303235254966.png" alt="image-20250303235254966" style="zoom: 80%;" />
+
+2、个数一样 第一轮会遇到 不会进 pa==nullptr?
+
+![image-20250303235418711](assets/image-20250303235418711.png)
+
+如果非环形，个数一样，一起遍历完一起为null  ； 个数不一样 第二轮一起为null
 
 ```C++
 class Solution {
-    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
-        if(root == null) return null; // 如果树为空，直接返回null
-        if(root == p || root == q) return root; // 如果 p和q中有等于 root的，那么它们的最近公共祖先即为root（一个节点也可以是它自己的祖先）
-        TreeNode left = lowestCommonAncestor(root.left, p, q); // 递归遍历左子树，只要在左子树中找到了p或q，则先找到谁就返回谁
-        TreeNode right = lowestCommonAncestor(root.right, p, q); // 递归遍历右子树，只要在右子树中找到了p或q，则先找到谁就返回谁
-        if(left == null) return right; // 如果在左子树中 p和 q都找不到，则 p和 q一定都在右子树中，右子树中先遍历到的那个就是最近公共祖先（一个节点也可以是它自己的祖先）
-        else if(right == null) return left; // 否则，如果 left不为空，在左子树中有找到节点（p或q），这时候要再判断一下右子树中的情况，如果在右子树中，p和q都找不到，则 p和q一定都在左子树中，左子树中先遍历到的那个就是最近公共祖先（一个节点也可以是它自己的祖先）
-        else return root; //否则，当 left和 right均不为空时，说明 p、q节点分别在 root异侧, 最近公共祖先即为 root
+public:
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {
+        ListNode *pa  =headA,*pb = headB;
+        //如果是环形的 1、如果相遇之前个数不一样，第二轮遇到 2、个数一样 第一轮会遇到
+        while(pa!=pb)
+        {
+            pa = pa==nullptr?headB:pa->next;
+            pb = pb==nullptr?headA:pb->next;
+        }
+        return pa;
     }
-}
+};
 ```
+
+
+
+
+
+
+
+### [234. 回文链表](https://leetcode.cn/problems/palindrome-linked-list/) 简单
+
+给你一个单链表的头节点 `head` ，请你判断该链表是否为回文链表。如果是，返回 `true` ；否则，返回 `false` 。
+
+ 
+
+**示例 1：**
+
+![img](assets/pal1linked-list.jpg)
+
+```
+输入：head = [1,2,2,1]
+输出：true
+```
+
+**示例 2：**
+
+![img](assets/pal2linked-list.jpg)
+
+```
+输入：head = [1,2]
+输出：false
+```
+
+ 
+
+**提示：**
+
+- 链表中节点数目在范围`[1, 105]` 内
+- `0 <= Node.val <= 9`
+
+
+
+```C++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution 
+{
+public:
+    bool isPalindrome(ListNode* head) 
+    {
+        vector<int> huiwen;
+        ListNode * p = head;
+        while(p!=nullptr)
+        {
+            huiwen.push_back(p->val);
+            p=p->next;
+        }
+        int n = huiwen.size();
+        for(int i=0;i<n/2;i++)
+        {
+            if(huiwen[i]!=huiwen[n-i-1])return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+M2
+
+O(1) 空间做法：寻找中间节点+反转链表
+
+使用**快慢指针**在一次遍历中找到中间：慢指针一次走一步，快指针一次走两步，快慢指针同时出发。当快指针移动到链表的末尾时，慢指针恰好到链表的中间。通过慢指针将链表分为两部分。
+
+
+
+有时间尝试一下
+
+
 
