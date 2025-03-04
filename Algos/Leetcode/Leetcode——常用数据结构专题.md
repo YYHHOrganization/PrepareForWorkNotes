@@ -3053,3 +3053,657 @@ public:
 };
 ```
 
+
+
+## 10.[155. 最小栈](https://leetcode.cn/problems/min-stack/)
+
+> 【题目】设计一个支持 `push` ，`pop` ，`top` 操作，并能在常数时间内检索到最小元素的栈。
+>
+> 实现 `MinStack` 类:
+>
+> - `MinStack()` 初始化堆栈对象。
+> - `void push(int val)` 将元素val推入堆栈。
+> - `void pop()` 删除堆栈顶部的元素。
+> - `int top()` 获取堆栈顶部的元素。
+> - `int getMin()` 获取堆栈中的最小元素。
+
+基于以下的认知：
+
+- （1）可以维护一个`min`栈，每次在正常栈中`push`进来一个元素的时候，都看一下和`min`栈栈顶元素的大小关系：如果相等或者更小，就`push`到`min`栈中；如果更大，则舍弃掉，不放入最小栈中（**有点单调栈那个意思**。这是基于，直到`min`栈此时栈顶的元素被`pop`出来之前，最小值一定是`min`栈栈顶的元素，而正常栈也是LIFO，所以不会出现问题）。
+- （2）在原栈`pop`元素的时候，如果和`min`栈栈顶元素一致，则同时`pop min`栈栈顶的元素。
+
+所以，初始代码如下：
+
+```c++
+class MinStack {
+public:
+    stack<int> minStack; //最小栈
+    stack<int> stk; //正常栈
+    MinStack() {
+        
+    }
+    
+    void push(int val) {
+        stk.push(val);
+        if(minStack.empty() || val<=minStack.top())
+        {
+            minStack.push(val);
+        }
+    }
+    
+    void pop() {
+        int v = stk.top();
+        stk.pop();
+        if(v==minStack.top())
+        {
+            minStack.pop();
+        }
+    }
+    
+    int top() {
+        return stk.top();
+    }
+    
+    int getMin() {
+        return minStack.top();
+    }
+};
+
+/**
+ * Your MinStack object will be instantiated and called as such:
+ * MinStack* obj = new MinStack();
+ * obj->push(val);
+ * obj->pop();
+ * int param_3 = obj->top();
+ * int param_4 = obj->getMin();
+ */
+```
+
+
+
+## 11.[1381. 设计一个支持增量操作的栈](https://leetcode.cn/problems/design-a-stack-with-increment-operation/)
+
+> 请你设计一个支持对其元素进行增量操作的栈。
+>
+> 实现自定义栈类 `CustomStack` ：
+>
+> - `CustomStack(int maxSize)`：用 `maxSize` 初始化对象，`maxSize` 是栈中最多能容纳的元素数量。
+> - `void push(int x)`：如果栈还未增长到 `maxSize` ，就将 `x` 添加到栈顶。
+> - `int pop()`：弹出栈顶元素，并返回栈顶的值，或栈为空时返回 **-1** 。
+> - `void inc(int k, int val)`：栈底的 `k` 个元素的值都增加 `val` 。如果栈中元素总数小于 `k` ，则栈中的所有元素都增加 `val` 。
+
+### （1）错误写法，C++的坑，特意记录，必须注意！！
+
+一种非常常规的思路是使用数组去模拟，代码如下（==错的！！复习时不要乱看==）（==请注意！！！，以下代码中隐含了一处错误，会导致结果不正确，能发现是哪里吗？==）：
+
+```c++
+class CustomStack {
+public:
+    vector<int> value;
+    int top = 0; //模拟栈顶指针,一开始确认好,top指向的是栈顶的**元素**本身
+    CustomStack(int maxSize) {
+        top = -1;
+        value.resize(maxSize);
+    }
+    
+    void push(int x) {
+        if(top<value.size()-1) 
+        {
+            value[top+1]=x;
+            top++;
+        }
+    }
+    
+    int pop() {
+        //不真的删掉元素,而是只改变top指针的位置
+        if(top==-1) return -1;
+        top--;
+        return value[top+1]; 
+    }
+    
+    void increment(int k, int val) {
+        for(int i=0;i<min(k, top+1);i++) //注意,这里的top+1表示当前栈中的元素个数
+        {
+            value[i] += val;
+        }
+    }
+};
+```
+
+这就是一个经典的C++的坑，不注意的话可能debug够喝一壶的。问题出在这里：
+
+```
+void push(int x) {
+    if(top<value.size()-1) 
+    {
+    	value[top+1]=x;
+    	top++;
+    }
+}
+```
+
+还没有意识到？要这么写！！！`top<(int)value.size()-1`，不然的话取出的`value.size()`的类型被认为是`unsigned int`类型，会导致结果出错。美丽C++是这样的。
+
+> 错误来自于`top=-1`，在`top<value.size()-1`比较的时候，`top`会被变成`unsigned int`，从而导致即使`top=-1`时，即使`value.size()>0`,也会判断为“`top<value.size()-1`是`false`。”
+>
+> 【思考】以后取`nums.size()`时，为了不出现这种逆天问题，还是拿`n=nums.size()`去接吧。
+
+
+
+### （2）正确写法
+
+```c++
+class CustomStack {
+public:
+    vector<int> value;
+    int top = 0; //模拟栈顶指针,一开始确认好,top指向的是栈顶的**元素**本身
+    CustomStack(int maxSize) {
+        top = -1;
+        value.resize(maxSize);
+    }
+    
+    void push(int x) {
+        if(top<(int)value.size()-1) 
+        {
+            value[top+1]=x;
+            top++;
+        }
+    }
+    
+    int pop() {
+        //不真的删掉元素,而是只改变top指针的位置
+        if(top==-1) return -1;
+        top--;
+        return value[top+1]; 
+    }
+    
+    void increment(int k, int val) {
+        for(int i=0;i<min(k, top+1);i++) //注意,这里的top+1表示当前栈中的元素个数
+        {
+            value[i] += val;
+        }
+    }
+};
+
+/**
+ * Your CustomStack object will be instantiated and called as such:
+ * CustomStack* obj = new CustomStack(maxSize);
+ * obj->push(x);
+ * int param_2 = obj->pop();
+ * obj->increment(k,val);
+ */
+```
+
+
+
+### ==（3）利用差分的思想==
+
+在方法一中，只剩下 inc 操作的时间复杂度不为 O(1)，因此可以尝试对该操作进行优化。
+
+我们用一个辅助数组 add 记录每次 inc 操作。具体地，如果 inc 操作是将栈底的 k 个元素（将 k 与栈中元素个数取较小值）增加 val，那么我们将 add[k - 1] 增加 val。这样做的目的在于，只有在 pop 操作时，我们才需要知道栈顶元素的具体值，在其余的情况下，我们只要存储每个元素的增量就行了。
+
+因此在遇到 pop 操作时，我们返回栈顶元素的初始值加上增量 add[top]。在这之后，我们将增量向栈底进行传递，累加至 add[top - 1] 处，这样 inc 操作的时间复杂度也减少至 O(1) 了。
+
+> 优先级相对没有那么高，先不写了。
+
+
+
+## 3.3 临项消除专题
+
+### （1）[2696. 删除子串后的字符串最小长度](https://leetcode.cn/problems/minimum-string-length-after-removing-substrings/)
+
+> 给你一个仅由 **大写** 英文字符组成的字符串 `s` 。
+>
+> 你可以对此字符串执行一些操作，在每一步操作中，你可以从 `s` 中删除 **任一个** `"AB"` 或 `"CD"` 子字符串。
+>
+> 通过执行操作，删除所有 `"AB"` 和 `"CD"` 子串，返回可获得的最终字符串的 **最小** 可能长度。
+>
+> **注意**，删除子串后，重新连接出的字符串可能会产生新的 `"AB"` 或 `"CD"` 子串。
+
+```c++
+class Solution {
+public:
+    int minLength(string s) {
+        //一个一个push进来,是B就看栈顶是不是A,是D就看栈顶是不是C,其他情况都可以正常push进来
+        vector<char> stk;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='B')
+            {
+                if(!stk.empty()&&stk.back()=='A') stk.pop_back();
+                else stk.push_back(s[i]);
+            }
+            else if(s[i]=='D')
+            {
+                if(!stk.empty()&&stk.back()=='C') stk.pop_back();
+                else stk.push_back(s[i]);
+            }
+            else stk.push_back(s[i]);
+        } 
+        return stk.size();
+    }
+};
+```
+
+注：这样做是可以照顾到删除一组`AB`之后，下一次进入的`s[i]='B'`会继续和栈顶剩下的`A`发生消除的情况的。
+
+
+
+### （2）[1047. 删除字符串中的所有相邻重复项](https://leetcode.cn/problems/remove-all-adjacent-duplicates-in-string/)
+
+跟上一题基本一样，思路是类似的。
+
+```c++
+class Solution {
+public:
+    string removeDuplicates(string s) {
+        //用栈,每次push进来一个就进行判断即可,不需要考虑while之类的问题
+        string res;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(!res.empty() && s[i]==res.back()) res.pop_back();
+            else res.push_back(s[i]);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （3）[1544. 整理字符串](https://leetcode.cn/problems/make-the-string-great/)
+
+```c++
+class Solution {
+public:
+    string makeGood(string s) {
+        //依旧是类似的题目,每次pop栈顶即可
+        string res;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(!res.empty())
+            {
+                bool flag1 = ((s[i]-'a')==(res.back()-'A'));
+                bool flag2 = ((s[i]-'A')==(res.back()-'a')); //flag1 || flag2 表示两个字母是否互为大小写关系
+                if(flag1||flag2)
+                {
+                    res.pop_back();
+                } 
+                else
+                {
+                    res.push_back(s[i]);
+                }
+            }
+            else res.push_back(s[i]);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （4）[1003. 检查替换后的词是否有效](https://leetcode.cn/problems/check-if-word-is-valid-after-substitutions/)
+
+> 给你一个字符串 `s` ，请你判断它是否 **有效** 。
+>
+> 字符串 `s` **有效** 需要满足：假设开始有一个空字符串 `t = ""` ，你可以执行 **任意次** 下述操作将 `t` **转换为** `s` ：
+>
+> - 将字符串 `"abc"` 插入到 `t` 中的任意位置。形式上，`t` 变为 `tleft + "abc" + tright`，其中 `t == tleft + tright` 。注意，`tleft` 和 `tright` 可能为 **空** 。
+>
+> 如果字符串 `s` 有效，则返回 `true`；否则，返回 `false`。
+
+这道题目应该可以正常实现，但也有更优雅一点的做法，这里记录一下：
+
+- 字符 a：类似左括号，直接入栈。
+- 字符 b：如果栈为空，或者栈顶不为 a，则返回 false，否则将栈顶修改为 b（或者出栈再入栈）。
+- 字符 c：如果栈为空，或者栈顶不为 b，则返回 false，否则弹出栈顶，相当于找到了一个 abc。
+
+代码实现时，b 和 c 的逻辑可以合并在一起，a 和 b 的入栈逻辑可以合并在一起。当然也可以不合并。以下是一份比较容易读的代码：
+
+```c++
+class Solution {
+public:
+    bool isValid(string s) {
+        stack<char> stk;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='a') //是'a'则直接入栈即可
+            {
+                stk.push(s[i]); 
+            }
+            else //是'b',则栈顶必须是'a',如果确实是的话,把栈顶的a pop出去,再把b push进来,其实c也是同理
+            {
+                if(stk.empty() || stk.top()!=s[i]-1) return false;
+                stk.pop();
+                if(s[i]=='b')
+                {
+                    stk.push(s[i]);
+                }
+            }
+        }
+        return stk.empty();
+        
+    }
+};
+```
+
+> 本题的启示是，如果要在空字符串中不断选择位置插入`abc`等字符串，可以用栈来解决，并且按照类似于本题的方式来做。
+
+
+
+### （5）[2216. 美化数组的最少删除数](https://leetcode.cn/problems/minimum-deletions-to-make-array-beautiful/)
+
+> 给你一个下标从 **0** 开始的整数数组 `nums` ，如果满足下述条件，则认为数组 `nums` 是一个 **美丽数组** ：
+>
+> - `nums.length` 为偶数
+> - 对所有满足 `i % 2 == 0` 的下标 `i` ，`nums[i] != nums[i + 1]` 均成立
+>
+> 注意，空数组同样认为是美丽数组。
+>
+> 你可以从 `nums` 中删除任意数量的元素。当你删除一个元素时，被删除元素右侧的所有元素将会向左移动一个单位以填补空缺，而左侧的元素将会保持 **不变** 。
+>
+> 返回使 `nums` 变为美丽数组所需删除的 **最少** 元素数目*。*
+
+这道题目可以有如下思路：（**套路**：==从前往后遍历 + 需要考虑相邻元素 + 有消除操作 = 栈。==）
+
+遍历数组，用栈来模拟这个过程（实际不需要栈，后面会说明）：
+
+- 如果栈大小为偶数，可以随意加入元素；
+- 如果栈大小为奇数，那么加入的元素不能和栈顶相同。
+
+遍历结束后，若栈大小为奇数，则移除栈顶。
+
+实际上不需要栈，用一个变量表示栈的奇偶性即可。不过这里为了学习知识，同时为了让代码可读性好一些，还是用栈来做。
+
+代码如下：
+```c++
+class Solution {
+public:
+    int minDeletion(vector<int>& nums) {
+        //在判断是否要pop元素的时候,额外加上此时的索引,如果栈顶在偶数索引,并且和当前元素一样,则需要出栈.否则不用出栈.
+        //记录出栈的元素数,即为所求
+        vector<int> tmp;
+        int cnt = 0;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            if(!tmp.empty() && (tmp.back()==nums[i]))
+            {
+                if(((int)tmp.size()%2)==1) //此时索引为奇数,需要pop
+                {
+                    tmp.pop_back();
+                    cnt++;
+                }
+                tmp.push_back(nums[i]);
+            }
+            else
+            {
+                tmp.push_back(nums[i]);
+            }
+        }
+        //nums.length还得是偶数,如果是奇数,cnt再+1（因为题目要求最后结果长度为偶数）
+        if(((int)tmp.size()%2)==1) cnt++;
+        return cnt;
+    }
+};
+```
+
+
+
+### （6）[1209. 删除字符串中的所有相邻重复项 II](https://leetcode.cn/problems/remove-all-adjacent-duplicates-in-string-ii/)
+
+> 给你一个字符串 `s`，「`k` 倍重复项删除操作」将会从 `s` 中选择 `k` 个相邻且相等的字母，并删除它们，使被删去的字符串的左侧和右侧连在一起。
+>
+> 你需要对 `s` 重复进行无限次这样的删除操作，直到无法继续为止。
+>
+> 在执行完所有删除操作后，返回最终得到的字符串。
+>
+> 本题答案保证唯一。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：s = "abcd", k = 2
+> 输出："abcd"
+> 解释：没有要删除的内容。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：s = "deeedbbcccbdaa", k = 3
+> 输出："aa"
+> 解释： 
+> 先删除 "eee" 和 "ccc"，得到 "ddbbbdaa"
+> 再删除 "bbb"，得到 "dddaa"
+> 最后删除 "ddd"，得到 "aa"
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：s = "pbbcggttciiippooaais", k = 2
+> 输出："ps"
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= s.length <= 10^5`
+> - `2 <= k <= 10^4`
+> - `s` 中只含有小写英文字母。
+
+根据前面的学习，这种题目应该**能够想到栈的套路。**但巧妙之处在于，我们可以这样维护：
+
+- 当前字符与前一个不同时，往栈中压入 `1`。否则栈顶元素加 `1`。
+- 如果栈顶元素等于 `k`，则从字符串中删除这 `k` 个字符，并将 `k` 从栈顶移除。
+
+可以原地修改字符串，但会有索引类的问题要考虑。因此可以考虑不原地修改，而是记录每个字符和对应字符出现的次数，这样可以在最后很方便地还原整个删除后的字符串。此时代码如下：
+
+```c++
+class Solution {
+public:
+    string removeDuplicates(string s, int k) {
+        //每次看新进来的字符和栈顶比较,如果相同,则栈顶cnt+1;否则加入新的项进来
+        //如果栈顶元素个数达到了k个,则直接删除
+        vector<pair<char, int>> stk;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(stk.empty() || s[i]!=stk.back().first)
+            {
+                stk.push_back({s[i], 1});
+            }
+            else if(s[i]==stk.back().first)
+            {
+                auto& t = stk.back();
+                t.second+=1;
+                if(t.second==k)
+                {
+                    stk.pop_back();
+                }
+            }
+        }
+        //重建字符串
+        string res;
+        for(int i=0;i<stk.size();i++)
+        {
+            int cnt = stk[i].second;
+            for(int j=0;j<cnt;j++) res+=stk[i].first;
+        }
+        return res;
+    }
+};
+```
+
+> 总之，这道题目的思路还是有不小的学习意义的，即遇到不重复元素时在栈顶加入新的元素，遇到重复元素时栈顶元素出现次数+1，达到k个则会pop出栈顶元素。
+
+
+
+### （7）[2211. 统计道路上的碰撞次数](https://leetcode.cn/problems/count-collisions-on-a-road/)
+
+> 在一条无限长的公路上有 `n` 辆汽车正在行驶。汽车按从左到右的顺序按从 `0` 到 `n - 1` 编号，每辆车都在一个 **独特的** 位置。
+>
+> 给你一个下标从 **0** 开始的字符串 `directions` ，长度为 `n` 。`directions[i]` 可以是 `'L'`、`'R'` 或 `'S'` 分别表示第 `i` 辆车是向 **左** 、向 **右** 或者 **停留** 在当前位置。每辆车移动时 **速度相同** 。
+>
+> 碰撞次数可以按下述方式计算：
+>
+> - 当两辆移动方向 **相反** 的车相撞时，碰撞次数加 `2` 。
+> - 当一辆移动的车和一辆静止的车相撞时，碰撞次数加 `1` 。
+>
+> 碰撞发生后，涉及的车辆将无法继续移动并停留在碰撞位置。除此之外，汽车不能改变它们的状态或移动方向。
+>
+> 返回在这条道路上发生的 **碰撞总次数** 。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：directions = "RLRSLL"
+> 输出：5
+> 解释：
+> 将会在道路上发生的碰撞列出如下：
+> - 车 0 和车 1 会互相碰撞。由于它们按相反方向移动，碰撞数量变为 0 + 2 = 2 。
+> - 车 2 和车 3 会互相碰撞。由于 3 是静止的，碰撞数量变为 2 + 1 = 3 。
+> - 车 3 和车 4 会互相碰撞。由于 3 是静止的，碰撞数量变为 3 + 1 = 4 。
+> - 车 4 和车 5 会互相碰撞。在车 4 和车 3 碰撞之后，车 4 会待在碰撞位置，接着和车 5 碰撞。碰撞数量变为 4 + 1 = 5 。
+> 因此，将会在道路上发生的碰撞总次数是 5 。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：directions = "LLRR"
+> 输出：0
+> 解释：
+> 不存在会发生碰撞的车辆。因此，将会在道路上发生的碰撞总次数是 0 。
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= directions.length <= 105`
+> - `directions[i]` 的值为 `'L'`、`'R'` 或 `'S'`
+
+这道题目有一点模拟性质在里面，我们可以分别考虑当前元素为“R,L,S”对应栈顶元素为“R,L,S”的情况，每次发生碰撞后，统计碰撞次数并pop出去，然后放一个`S`进入栈，直到最后。
+
+![image-20250304171241830](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/image-20250304171241830.png)
+
+类比上面的思路，代码如下（硬模拟，肯定有更好的写法，但这里直接硬写了，保证准确）：
+
+```c++
+class Solution {
+public:
+    int countCollisions(string directions) {
+        //看见R无脑放进来
+        //看见L，如果栈顶为R，碰撞+2，pop出去栈顶，放进来一个S；如果栈顶为S，碰撞+1，pop出去栈顶，放进来一个S
+        //看见S：如果栈顶为R，碰撞+1，pop出去栈顶，放进来一个S
+        stack<char> stk;
+        int n = directions.size();
+        int cnt = 0;
+        for(int i=0;i<n;i++)
+        {
+            //对当前情况进行解算，flag=0表示退出解算过程
+            int flag = 1;
+            char cur = directions[i];
+            while(flag) // 模拟中。。。
+            {
+                if(cur=='R')
+                {
+                    //放入栈：模拟结束
+                    stk.push(cur); break;
+                }
+                else if(cur=='L')
+                {
+                    if(stk.empty()) 
+                    {
+                        stk.push(cur); break;
+                    }
+                    if(stk.top()=='R')
+                    {
+                        cnt+=2; stk.pop();
+                        cur='S'; //撞完之后变成S了
+                    } 
+                    else if(stk.top()=='S')
+                    {
+                        cnt+=1; stk.pop();
+                        cur='S';
+                    }
+                    else 
+                    {
+                        //没什么大问题，放入栈就行(当前是L，栈顶为L)
+                        stk.push(cur); break;
+                    }
+                }
+                else if(cur=='S')
+                {
+                    if(stk.empty())
+                    {
+                        stk.push(cur); break;
+                    }
+                    if(stk.top()=='R')
+                    {
+                        cnt+=1; stk.pop();
+                        cur = 'S';
+                    }
+                    else //没什么大问题，放入栈即可 
+                    {
+                        stk.push(cur); break;
+                    }
+                }
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+#### （a）降维打击版本
+
+> 分析题意：
+>
+> - 当两辆移动方向 相反 的车相撞时，碰撞次数加 2 。--> 两辆车被撞停，答案 + 2。
+> - 当一辆移动的车和一辆静止的车相撞时，碰撞次数加 1 。--> 一辆车被撞停，答案 +1。
+>
+> 显然，左侧的 ’L’ 和右侧的 ’R’ 不会被撞停；而中间的车辆都会最终停止，因此统计中间的、一开始没有停止的车辆数（即不是 ’S’ 的车辆数）即可。
+
+此降维打击版本的代码如下：
+
+```c++
+class Solution {
+public:
+    int countCollisions(string directions) {
+        //左侧的L都没问题，右侧的R也都没问题，中间的不是S即为所求
+        int left = 0, right = directions.size()-1;
+        while(left<=right && directions[left]=='L') left++;
+        while(left<=right && directions[right]=='R') right--;
+        int res = 0;
+        //此时left不是L了，right也不是R了
+        for(int i=left;i<=right;i++)
+        {
+            res += (directions[i]!='S');
+        }
+        return res;
+    }
+};
+```
+
+> 啊！这灼热的真理！
+>
+> ![深渊咏者·渊火.png](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/kqywd4okieiaiwe01m59clo290h2jac.png)
+
+
+
+### （8）[735. 小行星碰撞](https://leetcode.cn/problems/asteroid-collision/)
