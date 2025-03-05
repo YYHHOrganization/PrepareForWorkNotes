@@ -1,0 +1,26 @@
+[
+    {
+        "id": 1,
+        "name": "米游徽章级别周边",
+        "image": "images/Paimon.png",
+        "cost": 100,
+        "stock": 5,
+        "redeemedCount": 0  
+    },
+    {
+        "id": 2,
+        "name": "20抽",
+        "image": "images/Paimon.png",
+        "cost": 1000,
+        "stock": 2,
+        "redeemedCount": 0  
+    },
+    {
+        "id": 3,
+        "name": "10抽",
+        "image": "images/Paimon.png",
+        "cost": 50,
+        "stock": 10,
+        "redeemedCount": 0  
+    }
+]
