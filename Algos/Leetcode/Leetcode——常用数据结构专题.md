@@ -3749,8 +3749,335 @@ public:
 > - `-1000 <= asteroids[i] <= 1000`
 > - `asteroids[i] != 0`
 
-这道题目用栈的做法跟上一道题目是类似的。一定程度上属于模拟题，**很容易写错或者是写的很麻烦。**自己尝试了挺久的，最终代码如下：
+这道题目用栈的做法跟上一道题目是类似的。一定程度上属于模拟题，**很容易写错或者是写的很麻烦。**自己尝试了挺久的，最终代码如下（==第一版写了一坨，还是要优化加强代码质量啊==）：
 
 ```c++
+class Solution {
+public:
+    vector<int> asteroidCollision(vector<int>& asteroids) {
+       vector<int> stk; //存放最终的小行星
+       for(auto& asteroid: asteroids)
+       {
+            if(asteroid>0) stk.push_back(asteroid);
+            else //当前小行星为负
+            {  
+                bool isAlive = true; //当前小行星是否存活
+                while(!stk.empty() && isAlive && stk.back()>0) //栈顶得是正数才有比较价值，不然可以退出了
+                {
+                    isAlive = (stk.back() < -asteroid); //当小行星质量>栈顶元素时，小行星存活
+                    //是否会pop出去栈中的元素。仔细思考一下，不会死循环的
+                    if(stk.back()<=-asteroid)
+                    {
+                        stk.pop_back();
+                    }
+                }
+                if(isAlive) stk.push_back(asteroid);
+            }
+       } 
+       return stk;
+    }
+};
 ```
+
+> 在`while`循环条件中做一些判断，可以减少`while`里面逻辑的冗余。总之优秀代码还是要多多练习。
+
+
+
+## 3.4 合法括号字符串
+
+### （1）[20. 有效的括号](https://leetcode.cn/problems/valid-parentheses/)
+
+```c++
+class Solution {
+public:
+    bool isValid(string s) {
+        //看见左括号入栈，右括号的话栈顶一定是正确的左括号
+        unordered_map<char, char> umap;
+        umap[')'] = '(';
+        umap[']'] = '[';
+        umap['}'] = '{';
+        stack<char> stk;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='(' || s[i]=='[' || s[i]=='{')
+            {
+                stk.push(s[i]);
+            }
+            else
+            {
+                if(stk.empty()) return false;
+                if(stk.top()!=umap[s[i]]) return false;
+                stk.pop();
+            }
+        }
+        return stk.empty();
+    }
+};
+```
+
+
+
+### （2）[921. 使括号有效的最少添加](https://leetcode.cn/problems/minimum-add-to-make-parentheses-valid/)
+
+```c++
+class Solution {
+public:
+    int minAddToMakeValid(string s) {
+        //跟刚才那道题目差不多，左括号入栈，右括号不匹配的话+1,最终+栈中剩余元素数即可
+        stack<char> stk;
+        int n = s.size();
+        int cnt = 0;
+        for(int i=0;i<n;i++)
+        {   
+            if(s[i]=='(') stk.push(s[i]);
+            else
+            {
+                if(!stk.empty() && stk.top()=='(')
+                {
+                    stk.pop();
+                    continue;
+                }
+                cnt+=1;
+            }
+        }
+        cnt+=stk.size();
+        return cnt;
+    }
+};
+```
+
+
+
+### （3）[1021. 删除最外层的括号](https://leetcode.cn/problems/remove-outermost-parentheses/)
+
+> 真·括号领域大神。这题自己写的有点埋汰，看的题解。
+
+其实开一个计数器就可以了，看见左括号cnt+1，看见右括号cnt-1。每一次cnt=0时是一次原语，cnt!=0的部分会是最后字符串的结果。代码如下：（==神奇的是调换一下语句的顺序，既可以达到要求，代码也很优雅==）
+
+```c++
+class Solution {
+public:
+    string removeOuterParentheses(string s) {
+        int cnt = 0;
+        string res;
+        int n = s.size();
+        //两次cnt=0之间的计数即算，看见左括号cnt+1，看见右括号cnt-1.神奇的是调换一下语句的顺序，既可以达到要求，代码也很优雅
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]==')') cnt--;
+            if(cnt) res+=s[i];
+            if(s[i]=='(') cnt++;
+        }
+        return res;
+    }
+};
+```
+
+> ### **原理解释**
+>
+> - **最外层左括号**：当遇到原语的第一个 `'('` 时，此时 `cnt=0`，条件 `if(cnt)` 不满足，不加入结果。之后 `cnt` 增到1，后续内部字符的 `cnt >=1` 会被保留。
+> - **最外层右括号**：当遇到原语的最后一个 `')'` 时，先减少 `cnt`（如从1→0），此时 `cnt=0` 导致该右括号不被保留。
+> - **内部字符**：在原语内部时，`cnt >=1`，所有字符均被保留。
+>
+> 通过调换语句执行的顺序，代码一下子就变得优雅起来了。
+
+
+
+### （4）[1614. 括号的最大嵌套深度](https://leetcode.cn/problems/maximum-nesting-depth-of-the-parentheses/)
+
+```c++
+class Solution {
+public:
+    int maxDepth(string s) {
+        int res = 0;
+        //记录左括号的最大个数，即可。
+        int n = s.size();
+        int cnt = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='(')
+            {
+                cnt++;
+                res = max(res, cnt);
+            }
+            else if(s[i]==')')
+            {
+                cnt--;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （5）[1190. 反转每对括号间的子串](https://leetcode.cn/problems/reverse-substrings-between-each-pair-of-parentheses/)
+
+> 给出一个字符串 `s`（仅含有小写英文字母和括号）。
+>
+> 请你按照从括号内到外的顺序，逐层反转每对匹配括号中的字符串，并返回最终的结果。
+>
+> 注意，您的结果中 **不应** 包含任何括号。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：s = "(abcd)"
+> 输出："dcba"
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：s = "(u(love)i)"
+> 输出："iloveu"
+> 解释：先反转子字符串 "love" ，然后反转整个字符串。
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：s = "(ed(et(oc))el)"
+> 输出："leetcode"
+> 解释：先反转子字符串 "oc" ，接着反转 "etco" ，然后反转整个字符串。
+> ```
+
+依旧没有那么好想。核心在于要思考好题目的意思，“反转”意味着要把当前记录的字符串反转，而距离最近的字符（截止到再之前的那个'()'）正好就位于栈顶，因此这部分就是更新之后的字符串。==总之吧还是多做题。==
+
+本题代码如下：
+
+```c++
+class Solution {
+public:
+    string reverseParentheses(string s) {
+        //看见左括号,当前str入栈,并清空;否则如果是正常字符,str直接加入正常字符就行;碰见右括号,则str变为栈顶+当前str字符翻转的结果.
+        stack<string> stk;
+        string res;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]!='(' && s[i]!=')')
+            {
+                res+=s[i];
+            }
+            else if(s[i]=='(')
+            {
+                stk.push(res);
+                res = ""; //清空,相当于这部分的字符已经存于栈中
+            }
+            else
+            {
+                reverse(res.begin(), res.end());
+                //此时栈中一定有(,没必要特地判空
+                res = stk.top() + res;
+                stk.pop();
+            }
+        }
+        return res;
+    }
+};
+```
+
+==这道题目还有解法2，不过还没有进行尝试。有需求的话可以去看Leetcode官方题解的方法2.==
+
+
+
+### （6）[856. 括号的分数](https://leetcode.cn/problems/score-of-parentheses/)
+
+> 给定一个平衡括号字符串 `S`，按下述规则计算该字符串的分数：
+>
+> - `()` 得 1 分。
+> - `AB` 得 `A + B` 分，其中 A 和 B 是平衡括号字符串。
+> - `(A)` 得 `2 * A` 分，其中 A 是平衡括号字符串。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入： "()"
+> 输出： 1
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入： "(())"
+> 输出： 2
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入： "()()"
+> 输出： 2
+> ```
+>
+> **示例 4：**
+>
+> ```
+> 输入： "(()(()))"
+> 输出： 6
+> ```
+>
+>  
+>
+> **提示：**
+>
+> 1. `S` 是平衡括号字符串，且只含有 `(` 和 `)` 。
+> 2. `2 <= S.length <= 50`
+
+依旧是括号题，这是每题都不会啊:cry:，直接看答案了，栈的方法还是很巧妙的（对应力扣官方题解中的方法2）：
+
+> 我们把平衡字符串 s 看作是一个空字符串加上 s 本身，并且定义空字符串的分数为 0。使用栈 st 记录平衡字符串的分数，在开始之前要压入分数 0，表示空字符串的分数。
+>
+> 在遍历字符串 s 的过程中：
+>
+> - 遇到左括号，那么我们需要计算该左括号内部的子平衡括号字符串 A 的分数，我们也要先压入分数 0，表示 A 前面的空字符串的分数。
+> - 遇到右括号，说明该右括号内部的子平衡括号字符串 A 的分数已经计算出来了，我们将它弹出栈，并保存到变量 v 中。如果 v=0，那么说明子平衡括号字符串 A 是空串，(A) 的分数为 1，否则 (A) 的分数为 2v，然后将 (A) 的分数加到栈顶元素上。
+>
+> 遍历结束后，栈顶元素保存的就是 s 的分数。
+>
+
+```c++
+class Solution {
+public:
+    int scoreOfParentheses(string s) {
+        stack<int> stk;
+        stk.push(0); //用作最后的计算
+        int n = s.size();
+        int value = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='(') stk.push(0);
+            else //右括号
+            {
+                value = stk.top();
+                stk.pop();
+                if(value==0) stk.top()+=1;
+                else stk.top() += 2*value;
+            }
+        }
+        return stk.top();
+    }
+};
+```
+
+示意图可以看这篇题解：[856. 括号的分数 - 力扣（LeetCode）](https://leetcode.cn/problems/score-of-parentheses/solutions/1878748/zhua-wa-mou-si-by-muse-77-hy72/)，这道题也有分治之类的解法。
+
+
+
+### ==（7）[1249. 移除无效的括号](https://leetcode.cn/problems/minimum-remove-to-make-valid-parentheses/)==（括号题后面不做了，先不管了）
+
+
+
+
+
+## 3.5 表达式解析专题
+
+
 

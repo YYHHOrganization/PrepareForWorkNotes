@@ -1,0 +1,72 @@
+/* 基础样式 */
+body {
+    background-color: #f8f9fa;
+}
+
+/* 题目表格样式 */
+.table-hover tbody tr:hover {
+    background-color: #f1f1f1 !important;
+}
+
+.color-select {
+    padding: 2px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    width: 80px;
+}
+
+/* 商城卡片样式 */
+.shop-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: transform 0.2s;
+    height: 100%;
+}
+
+.shop-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.shop-card img {
+    height: 180px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}
+
+.redeem-btn {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* 新增兑换信息样式 */
+.shop-card .d-flex {
+    margin: 0.5rem 0;
+    padding: 0.3rem 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .text-primary {
+    color: #0d6efd !important;
+  }
+
+  /* 新增样式 */
+.bi-star-fill {
+    transition: all 0.2s ease;
+}
+
+.color-select option[value="#ffcccc"] { background: #ffcccc; }
+.color-select option[value="#ccffcc"] { background: #ccffcc; }
+.color-select option[value="#cce6ff"] { background: #cce6ff; }
+
+/* 移动设备优化 */
+@media (max-width: 768px) {
+    .color-select {
+        width: 60px;
+        padding: 0 2px;
+    }
+}
+  
