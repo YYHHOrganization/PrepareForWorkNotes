@@ -133,68 +133,78 @@ int main()
 
 
 
+:cat: 看下面的注意点
+
+```C++
+func非虚
+C* pnull = NULL; // pnull的静态类型是它声明的类型C*,没有动态类型，因为它指向了NULL；
+pnull->func();//不会报错！
+```
+
+ // notVir : C::func() 不用奇怪为什么空指针也可以调用函数，因为这在编译期就确定了，和指针空不空没关系；！！！！！！【注意点】
+
+
+
 >:thinking: 可参考链接 **https://www.cnblogs.com/lizhenghn/p/3657717.html**
 >
->>```C++
->>#define virtualMT
->>
->>#define is_virtual
->>#ifdef virtualMT
->>
->>#include <iostream>
->>using namespace std;
->>class A
->>{
->>public:
->>#ifdef is_virtual
->>    virtual void func() { std::cout << "A::func()\n"; }
->>#else
->>    /*virtual*/ void func() { std::cout << "A::func()\n"; }
->>#endif // is_virtual
->>    
->>    
->>};
->>class B : public A
->>{
->>public:
->>    void func() { std::cout << "B::func()\n"; }
->>};
->>class C : public A
->>{
->>public:
->>    void func() { std::cout << "C::func()\n"; }
->>};
->>void test1()
->>{
->>   
->>}
->>void test2()
->>{
->>
->>}
->>int main() 
->>{
->>
->>    C* pc = new C(); //pc的静态类型是它声明的类型C*，动态类型也是C*；
->>    B* pb = new B(); //pb的静态类型和动态类型也都是B*；
->>    A* pa = pc;      //pa的静态类型是它声明的类型A*，动态类型是pa所指向的对象pc的类型C*；
->>    pa = pb;         //pa的动态类型可以更改，现在它的动态类型是B*，但其静态类型仍是声明时候的A*；
->>    C* pnull = NULL; //pnull的静态类型是它声明的类型C*,没有动态类型，因为它指向了NULL；
->>
->>
->>    pa->func();      //notVir :A::func() pa的静态类型永远都是A*，不管其指向的是哪个子类，都是直接调用A::func()；
->>                     //isVir  :B::func() 因为有了virtual虚函数特性，pa的动态类型指向B*，因此先在B中查找，找到后直接调用；
->>    pc->func();      //C::func() pc的动、静态类型都是C*，因此调用C::func()；
->>    pnull->func();   //notVir :C::func() 不用奇怪为什么空指针也可以调用函数，因为这在编译期就确定了，和指针空不空没关系；
->>                     //isVir  :空指针异常，因为是func是virtual函数，因此对func的调用只能等到运行期才能确定，然后才发现pnull是空指针；
->>    return 0;
->>}
->>
->>#endif
->>```
->>
->>
->>
+
+```C++
+#define virtualMT
+#define is_virtual
+
+#ifdef virtualMT
+
+#include <iostream>
+using namespace std;
+
+class A {
+public:
+#ifdef is_virtual
+    virtual void func() { std::cout << "A::func()\n"; }
+#else
+    /*virtual*/ void func() { std::cout << "A::func()\n"; }
+#endif // is_virtual
+};
+
+class B : public A {
+public:
+    void func() { std::cout << "B::func()\n"; }
+};
+
+class C : public A {
+public:
+    void func() { std::cout << "C::func()\n"; }
+};
+
+void test1() {
+    // Test function 1
+}
+
+void test2() {
+    // Test function 2
+}
+
+int main() {
+    C* pc = new C(); // pc的静态类型是它声明的类型C*，动态类型也是C*；
+    B* pb = new B(); // pb的静态类型和动态类型也都是B*；
+    A* pa = pc;      // pa的静态类型是它声明的类型A*，动态类型是pa所指向的对象pc的类型C*；
+    pa = pb;         // pa的动态类型可以更改，现在它的动态类型是B*，但其静态类型仍是声明时候的A*；
+    C* pnull = NULL; // pnull的静态类型是它声明的类型C*,没有动态类型，因为它指向了NULL；
+    
+	//notVir表示当上面那个func不是虚函数的情况
+    pa->func();      // notVir : A::func() pa的静态类型永远都是A*，不管其指向的是哪个子类，都是直接调用A::func()；
+                     // isVir  : B::func() 因为有了virtual虚函数特性，pa的动态类型指向B*，因此先在B中查找，找到后直接调用；
+    pc->func();      // C::func() pc的动、静态类型都是C*，因此调用C::func()；
+    pnull->func();   // notVir : C::func() 不用奇怪为什么空指针也可以调用函数，因为这在编译期就确定了，和指针空不空没关系；！！！！！！【注意点】
+                     // isVir  : 空指针异常，因为是func是virtual函数，因此对func的调用只能等到运行期才能确定，然后才发现pnull是空指针；
+    return 0;
+}
+
+#endif
+```
+
+
+
 >>>- **`virtual` 关键字**：
 >>>  - 在基类中必须使用 `virtual` 声明虚函数。
 >>>  - 在子类中可以省略 `virtual`，但显式使用可以提高代码的可读性。
@@ -814,6 +824,11 @@ int main()
 
 答：所谓多态，就是同一个函数名具有多种状态，或者说一个接口具有不同的行为；C++的多态分为编译时多态和运行时多态，编译时多态也称为为[静态联编](https://zhida.zhihu.com/search?content_id=180938976&content_type=Article&match_order=1&q=静态联编&zhida_source=entity)，通过重载和模板来实现，运行时多态称为动态联编，通过继承和虚函数来实现。
 
+C++ 中的多态是指在不同上下文中以不同方式表现的能力，主要分为两种类型：
+
+- **编译时多态（静态多态）**：在编译器即可确定调用哪个函数，包括运算符重载、函数**重载**和**模板**；
+- **运行时多态（动态多态）**：使用虚函数来实现。接下来回答就可以往虚函数上引了。（**重写**）
+
 
 
 ## 2.虚函数的实现机制是什么？
@@ -824,9 +839,7 @@ int main()
 
 
 
-
-
-## 3.虚函数调用是在编译时确定还是运行时确定的？如何确定调用哪个函数？
+## 3.虚函数调用是在编译时确定还是运行时确定的？如何确定调用哪个函数？ :cat:
 
 答：运行时确定，通过查找虚函数表中的函数地址确定。
 
@@ -850,7 +863,7 @@ int main()
 
 这里先给出结论，然后我们再代码实操一下。
 
-答：从语法上讲，调用没有问题，但是从效果上看，往往不能达到需要的目的（不能实现多态）；因为调用构造函数的时候，是先进行父类成分的构造，再进行子类的构造。**在父类构造期间，子类的特有成分还没有被初始化，此时下降到调用子类的虚函数，使用这些尚未初始化的数据一定会出错；**同理，调用析构函数的时候，先对子类的成分进行析构，当进入父类的析构函数的时候，子类的特有成分已经销毁，此时是无法再调用虚函数实现多态的。
+答：从语法上讲，调用没有问题，但是从效果上看，往往不能达到需要的目的（**不能实现多态**）；因为调用构造函数的时候，是先进行父类成分的构造，再进行子类的构造。**在父类构造期间，子类的特有成分还没有被初始化，此时下降到调用子类的虚函数，使用这些尚未初始化的数据一定会出错；**同理，调用析构函数的时候，先对子类的成分进行析构，当进入父类的析构函数的时候，子类的特有成分已经销毁，此时是无法再调用虚函数实现多态的。
 
 > 分析一下《Effective C++》的条款9：（以下来自：[一篇文章学完 Effective C++：条款 & 实践 | 缪之灵](https://www.illurin.com/articles/effective-cpp/)）
 >
@@ -903,6 +916,80 @@ int main()
 
 
 
+
+
+>在C++中，**基类的构造函数和析构函数中调用虚函数时，无法实现多态行为，实际调用的是当前类（基类）的虚函数版本**，而非派生类的重写版本。以下是具体分析和代码示例：
+>
+>---
+>
+>### 核心原理
+>1. **构造函数调用虚函数**  
+>   - 当构造基类时，派生类部分尚未初始化。此时虚函数表（vtable）指向基类的虚函数实现。因此，调用虚函数会直接执行基类的版本，而非派生类的重写版本。
+>
+>2. **析构函数调用虚函数**  
+>   - 当析构基类时，派生类部分已经被销毁。此时虚函数表已恢复为基类的版本。因此，调用虚函数同样会执行基类的实现。
+>
+>---
+>
+>### 代码示例
+>```cpp
+>#include <iostream>
+>using namespace std;
+>
+>class Base {
+>public:
+>    Base() {
+>        cout << "Base构造函数" << endl;
+>        callVirtual();  // 构造函数中调用虚函数
+>    }
+>    virtual ~Base() {
+>        cout << "Base析构函数" << endl;
+>        callVirtual();  // 析构函数中调用虚函数
+>    }
+>    virtual void callVirtual() {
+>        cout << "Base::callVirtual()" << endl;
+>    }
+>};
+>
+>class Derived : public Base {
+>public:
+>    Derived() { cout << "Derived构造函数" << endl; }
+>    ~Derived() override { cout << "Derived析构函数" << endl; }
+>    void callVirtual() override {
+>        cout << "Derived::callVirtual()" << endl;
+>    }
+>};
+>
+>int main() {
+>    Base* obj = new Derived();
+>    delete obj;
+>    return 0;
+>}
+>```
+>
+>**输出结果**：
+>```
+>Base构造函数
+>Base::callVirtual()    ← 构造函数调用基类虚函数
+>Derived构造函数
+>Derived析构函数       ← 派生类析构先执行
+>Base析构函数
+>Base::callVirtual()    ← 析构函数调用基类虚函数
+>```
+>
+>---
+>
+>### 关键结论
+>- **构造函数和析构函数中调用虚函数是合法的语法**，但**无法触发多态**，实际调用的是当前类的版本。
+>- **设计建议**：避免在构造/析构函数中调用虚函数。若需实现类似功能，可通过传递参数或使用模板方法模式替代。
+>
+>---
+>
+>### 参考资料
+> 虚函数表在构造函数阶段绑定到基类版本。  
+> 析构时虚表已恢复为基类状态。  
+> 构造/析构阶段不启用动态联编（多态）。
+
 ## 6.子类的构造函数中能调用虚函数么？
 
 - 在子类构造函数中调用虚函数是安全的，并且会调用子类的实现。
@@ -950,7 +1037,7 @@ int main() {
 
 
 
-## 8.析构函数可以是虚函数么？&虚析构函数
+## 8.析构函数可以是虚函数么？&虚析构函数 :cat:
 
 最好把基类的析构函数定义为虚函数。
 
@@ -987,6 +1074,117 @@ int main()
 
 
 
+### 基类析构函数如果不是虚函数，会怎样？为什么？
+
+>在 C++ 中，**基类析构函数如果不是虚函数，会导致通过基类指针删除派生类对象时，派生类的析构函数不会被调用**。这是由 C++ 的静态绑定机制和对象销毁规则决定的。以下是详细解释：
+>
+>---
+>
+>### 1. 静态绑定与动态绑定的区别
+>- **静态绑定**：根据指针/引用的**静态类型**（声明时的类型）决定调用哪个函数。
+>- **动态绑定**：根据指针/引用的**动态类型**（实际指向的对象类型）决定调用哪个函数，需通过 `virtual` 关键字启用。
+>
+>#### 示例代码行为：
+>```cpp
+>Base* p = new Derived();
+>delete p; // 若 ~Base() 非虚，静态绑定到 Base 的析构函数
+>```
+>
+>---
+>
+>### 2. 析构函数的调用规则
+>当通过基类指针删除派生类对象时：
+>1. **基类析构函数非虚**：
+>   - 编译器根据指针的**静态类型**（`Base*`）直接调用 `Base::~Base()`。
+>   - **派生类的析构函数不会被调用**，因为它不在虚函数表中。
+>   - 导致派生类独有的资源（如动态内存、文件句柄）泄漏。
+>
+>2. **基类析构函数为虚**：
+>   - 通过虚函数表找到派生类的析构函数 `Derived::~Derived()`。
+>   - 执行 `Derived::~Derived()`，然后**自动调用基类析构函数** `Base::~Base()`（析构顺序与构造相反）。
+>
+>---
+>
+>### 3. 底层原理：虚函数表（vtable）
+>- **虚析构函数的作用**：
+>  - 析构函数被声明为虚函数时，编译器会为类生成**虚函数表**（vtable）。
+>  - 虚函数表中会存储指向派生类析构函数的指针。
+>  - 对象销毁时，通过虚函数表找到实际应调用的析构函数。
+>
+>- **非虚析构函数的行为**：
+>  - 析构函数地址在编译期确定（静态绑定）。
+>  - 直接调用基类的析构函数，不查询虚函数表。
+>
+>---
+>
+>### 4. 示例验证
+>#### 基类析构函数**非虚**时的行为：
+>```cpp
+>#include <iostream>
+>using namespace std;
+>
+>class Base {
+>public:
+>    Base() { cout << "Base constructor" << endl; }
+>    ~Base() { cout << "Base destructor" << endl; } // 非虚析构函数！
+>};
+>
+>class Derived : public Base {
+>public:
+>    Derived() { cout << "Derived constructor" << endl; }
+>    ~Derived() { cout << "Derived destructor" << endl; } // 不会调用！
+>};
+>
+>int main() {
+>    Base* p = new Derived();
+>    delete p; // 仅调用 Base::~Base()
+>    return 0;
+>}
+>```
+>
+>**输出**：
+>```
+>Base constructor
+>Derived constructor
+>Base destructor    // Derived 的析构函数未被调用！ // ← 派生类析构未被调用！
+>```
+>
+>#### 基类析构函数**为虚**时的行为：
+>```cpp
+>class Base {
+>public:
+>    virtual ~Base() { cout << "Base destructor" << endl; } // 虚析构函数
+>};
+>
+>// Derived 类定义不变
+>
+>int main() {
+>    Base* p = new Derived();
+>    delete p; // 调用顺序：Derived::~Derived() → Base::~Base()
+>}
+>```
+>
+>**输出**：
+>
+>```
+>Base constructor
+>Derived constructor
+>Derived destructor  // 正确调用派生类析构函数！← 先调用派生类析构
+>Base destructor							 //← 再调用基类析构
+>```
+>
+>---
+>
+>### 5. 关键结论
+>- **必须为基类声明虚析构函数**：  
+>  如果类可能被继承（作为基类），必须将其析构函数声明为虚函数，否则通过基类指针删除派生类对象时，会导致派生类析构函数未调用，引发资源泄漏。
+>
+>- **析构顺序**：  
+>  派生类析构函数执行后，编译器**自动调用基类析构函数**，无需手动调用。
+>
+>- **虚析构函数与多态性**：  
+>  虚析构函数是 C++ 多态性的重要应用，确保对象销毁时能正确清理资源。
+
 ## 9.构造函数/静态函数可以是虚函数么？
 
 > 构造函数不能是虚函数。而且，在构造函数中调用虚函数，实际执行的是父类的对应函数，因为自己还没有构造好, 多态是体现不出来的。
@@ -1000,6 +1198,71 @@ int main()
 > 静态的对象是属于整个类的，不对某一个对象而言，同时其函数的指针存放也不同于一般的成员函数，其无法成为一个对象的虚函数的指针以实现由此带来的动态机制。
 
 
+
+>在 C++ 中，**静态成员函数（`static` 成员函数）不能是虚函数**。这是由 C++ 的语法规则和虚函数的设计机制共同决定的，以下是详细解释：
+>
+>---
+>
+>### 1. **静态函数与虚函数的根本区别**
+>- **静态函数**：
+>  - 属于**类本身**，而非类的对象。
+>  - 没有 `this` 指针，无法访问类的非静态成员变量或方法。
+>  - 调用方式为 `ClassName::StaticFunction()`，与对象无关。
+>
+>- **虚函数**：
+>  - 依赖对象的**动态类型**（实际指向的类型）。
+>  - 通过虚函数表（vtable）实现动态绑定，需要 `this` 指针来访问对象的虚函数表。
+>  - 必须通过对象实例调用（如 `obj->VirtualFunction()`）。
+>
+>---
+>
+>### 2. **为什么静态函数不能是虚函数？**
+>- **语义矛盾**：
+>  - 虚函数的多态性依赖于对象的动态类型，而静态函数与对象无关。如果将静态函数声明为虚函数，会导致语义矛盾。
+>
+>- **技术限制**：
+>  - 虚函数需要通过对象的虚函数表（vtable）查找实现，但静态函数没有 `this` 指针，无法访问对象的虚函数表。
+>  - 编译器直接报错。例如：
+>    ```cpp
+>    class MyClass {
+>    public:
+>        static virtual void func() {} // 错误：静态成员函数不能是虚函数
+>    };
+>    ```
+>
+>---
+>
+>### 3. **示例验证**
+>```cpp
+>#include <iostream>
+>using namespace std;
+>
+>class Base {
+>public:
+>    // 尝试声明静态虚函数（非法）
+>    static virtual void print() {  // 编译错误：static member cannot be 'virtual'
+>        cout << "Base::print" << endl;
+>    }
+>};
+>
+>int main() {
+>    Base::print();
+>    return 0;
+>}
+>```
+>
+>**编译器报错**：
+>```
+>error: member 'print' cannot be declared both 'virtual' and 'static'
+>rror C2216: “virtual”不能和“static”一起使用
+>```
+>
+>
+>
+>### 5. **总结**
+>- **静态函数不能是虚函数**：这是 C++ 的语法规则和虚函数机制的直接限制。
+>- **虚函数必须依赖对象实例**：虚函数的多态性通过对象的虚函数表实现，而静态函数与对象无关。
+>- **替代方案**：若需通过类名调用多态方法，需结合工厂模式或其他设计模式实现。
 
 # 四、知乎收藏夹中的与虚函数有关的内容
 

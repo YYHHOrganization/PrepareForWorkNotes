@@ -2945,7 +2945,7 @@ public:
 
 
 
-## 8.[71. 简化路径](https://leetcode.cn/problems/simplify-path/)（难点：写出干净清晰的代码）
+## 8.[71. 简化路径](https://leetcode.cn/problems/simplify-path/)（难点：写出干净清晰的代码） :octopus:
 
 感觉上应该能做，但自己写了一些感觉有点埋汰，就来看看优质代码怎么写。以下代码感觉还是比较优雅的：
 
@@ -3004,7 +3004,7 @@ public:
 ```
 
 > ```cpp
->  vector<string> names = split(path, '/');也可以
+>  vector<string> names = split(path, '/');C++不可以 不过类似C#的这种语法
 > ```
 
 
@@ -3037,15 +3037,16 @@ public:
             }
         }
         vector<int> index;
-        for(int i=0;i<26;i++)
+        for(int i=0;i<26;i++)//把index push进来 再排序 
         {
             index.insert(index.end(), stk[i].begin(), stk[i].end());
         }
         sort(index.begin(), index.end());
         string res;
+        //还原
         for(int i=0;i<index.size();i++)
         {
-            res.push_back(s[index[i]]);
+            res.push_back(s[index[i]]);//注意这里是s[index[i]]
         }
         return res;
 
@@ -3198,7 +3199,7 @@ public:
     vector<int> value;
     int top = 0; //模拟栈顶指针,一开始确认好,top指向的是栈顶的**元素**本身
     CustomStack(int maxSize) {
-        top = -1;
+        top = -1;//top初始时-1！！！！
         value.resize(maxSize);
     }
     
@@ -3213,7 +3214,7 @@ public:
     int pop() {
         //不真的删掉元素,而是只改变top指针的位置
         if(top==-1) return -1;
-        top--;
+        top--;//==0的时候时可以的 就是一个元素的情况 然后top回归-1
         return value[top+1]; 
     }
     
