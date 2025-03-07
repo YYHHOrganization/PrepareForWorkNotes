@@ -3547,6 +3547,40 @@ public:
 
 > 总之，这道题目的思路还是有不小的学习意义的，即遇到不重复元素时在栈顶加入新的元素，遇到重复元素时栈顶元素出现次数+1，达到k个则会pop出栈顶元素。
 
+Y 用pair是好的 不然容易乱
+
+```C++
+class Solution {
+public:
+    string removeDuplicates(string s, int k) {
+        vector<pair<char,int>> stk;
+        for(char& c:s)
+        {
+            if(!stk.empty()&&c==stk.back().first)
+            {
+                //stk.back().second++;  也可以
+                auto &t = stk.back();
+                t.second+=1;
+                if(stk.back().second == k)stk.pop_back() ;
+            }
+            else
+            {
+                stk.push_back({c,1});
+            }
+        }
+        string ans;
+        for(auto & [c,n] :stk)
+        {
+            for(int i=0;i<n;i++)
+            {
+                ans+=c;
+            }
+        }
+        return ans;
+    }
+};
+```
+
 
 
 ### （7）[2211. 统计道路上的碰撞次数](https://leetcode.cn/problems/count-collisions-on-a-road/)
@@ -3849,6 +3883,37 @@ public:
 
 
 
+Y
+
+```C++
+class Solution {
+public:
+    int minAddToMakeValid(string s) {
+        //())) 2
+        //((( 3
+        //(()()(
+        //)))(((
+        //右括号 且不匹配 直接+1 不push
+        //左括号push
+        //最后 栈大小+右cnt
+        stack<int> stk;
+        int cnt=0;
+        for(char &c:s)
+        {
+            if(c=='(')stk.push(c);
+            else
+            {
+                if(stk.empty())cnt++;
+                else stk.pop();
+            }
+        }
+        return cnt+stk.size();
+    }
+};
+```
+
+
+
 ### （3）[1021. 删除最外层的括号](https://leetcode.cn/problems/remove-outermost-parentheses/)
 
 > 真·括号领域大神。这题自己写的有点埋汰，看的题解。
@@ -3881,6 +3946,39 @@ public:
 > - **内部字符**：在原语内部时，`cnt >=1`，所有字符均被保留。
 >
 > 通过调换语句执行的顺序，代码一下子就变得优雅起来了。
+
+Y
+
+```C++
+class Solution {
+public:
+    string removeOuterParentheses(string s) {
+        //遇到左括号
+        //  判断0 非0push -> +1
+        //遇到右括号
+        //  -1  -> 判断0 非0push
+        //   0(1 ( 2 )1 (2 )1 )0 (1(2)1)0
+        //对于左括号 0要在其之前判断
+        //对于右括号 0要在其之后判断
+        string res;
+        int cnt=0;
+        for(char& c:s)
+        {
+            if(c=='(')
+            {
+                if(cnt!=0)res.push_back(c);
+                cnt++;
+            }
+            else//(c==')')
+            {
+                cnt--;
+                if(cnt!=0)res.push_back(c);
+            }
+        }
+        return res;
+    }
+};
+```
 
 
 
@@ -3974,7 +4072,7 @@ public:
                 reverse(res.begin(), res.end());
                 //此时栈中一定有(,没必要特地判空
                 res = stk.top() + res;
-                stk.pop();
+                stk.pop();//！！！
             }
         }
         return res;
@@ -3983,6 +4081,30 @@ public:
 ```
 
 ==这道题目还有解法2，不过还没有进行尝试。有需求的话可以去看Leetcode官方题解的方法2.==
+
+
+
+举个例子
+
+>```	C++
+>		//str abcd
+>        //stk 
+>        //  (入栈 str=""
+>        //  )反转str dcba + 栈顶
+>        
+>        //str 
+>        //( ""入栈      str"ed" 
+>        //( "ed"入栈    str"et"
+>        //( "et"入栈    str"oc"
+>        //)   +栈顶et + oc翻转co   =etco
+>        //)   +栈顶ed +etco翻转octe =edocte
+>        //edocte el
+>        //)   +栈顶"" +edocte el翻转=leetcode
+>```
+
+
+
+>注意错误写法 ❌ `// str = s_top+ reverse(str.begin(),str.end());` 是错误的❌  因为 `reverse(str.begin(),str.end())`*函数**无返回值***
 
 
 
