@@ -222,7 +222,7 @@ public:
 
 ### [剑指 Offer 68 - II. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/)   :notebook:  记录在“大厂”那个笔记中 :red_circle:
 
-难度简单393收藏分享切换为英文接收动态反馈
+难度简单
 
 给定一个二叉树, 找到该树中两个指定节点的最近公共祖先。
 
