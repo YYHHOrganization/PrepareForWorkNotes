@@ -174,13 +174,119 @@ public:
 > - `1 <= s.length <= 16`
 > - `s` 仅由小写英文字母组成
 
+
+
+### （1）答案的视角（枚举选哪个）
+
 可以用“枚举选哪个”的思路来做，对后面的字符串进行切割判断是否为回文串。代码如下：
+
 ```c++
+class Solution {
+public:
+    vector<vector<string>> res;
+    vector<string> path;
+    bool isValid(string& s)
+    {
+        int l = 0, r = (int)s.size()-1;
+        while(l<=r)
+        {
+            if(s[l]!=s[r]) return false;
+            l++, r--;
+        }
+        return true;
+    }
+    void dfs(string s, int idx) //从idx开始划分（可以理解为加分隔符），第一次传入的时候是dfs(s,0)
+    {
+        int n = s.size();
+        if(n==idx)
+        {
+            res.push_back(path);
+            return;
+        }
+        for(int i=idx;i<n;i++)
+        {
+            string t = s.substr(idx, i-idx+1);
+            if(isValid(t))
+            {
+                path.push_back(t);
+                dfs(s, i+1);
+                path.pop_back();
+            }
+        }
+    }
+    vector<vector<string>> partition(string s) {
+        dfs(s, 0);
+        return res;
+    }
+};
+```
+
+> 对于这道题目来说，下标索引还是有写错的可能的，需要注意。
+
+
+
+### （2）从「**选或不选**」的角度（精力有限先不看了）
+
+> 对于本题来说，从「**选或不选**」的角度没有那么直观，因此更多还是掌握上面的那种算法。
+>
+> 比如对于字符串"aba" ，我们在处理的时候，想象着在字符之间有可以选择是否“插入”逗号的位置。当i指向第一个a时，“不选逗号”就是想象a和b之间没有逗号，尝试看"ab" 能不能组成回文子串；“选逗号”就是想象a后面有个逗号，把第一个a单独作为一个回文子串拿出来。
+>
+> 而对于最后一个字符，因为后面没有其他字符了，所以也就不存在“不选逗号，让它和后面字符组成更长子串”这种情况了，这就是  (i < n - 1) 起作用的地方。
+
+假设每对相邻字符之间有个逗号，那么就看每个逗号是选还是不选。
+
+也可以理解成：是否要把 `s[i] `当成分割出的子串的最后一个字符。注意` s[n−1]` 一定是最后一个字符，一定要选。
+
+此时对应的代码如下：
+
+```c++
+class Solution {
+public:
+    vector<vector<string>> res;
+    vector<string> path;
+    bool isValid(string& s, int left, int right)
+    {
+        while(left<=right)
+        {
+            if(s[left]!=s[right]) return false;
+            left++, right--;
+        }
+        return true;
+    }
+    void dfs(string s, int i, int start) //i为下一个“逗号”的位置，start为当前字符的起始位置
+    {
+        int n = s.size();
+        if(i==n)
+        {
+            res.push_back(path);
+            return;
+        }
+        //在当前位置不加逗号，和后面组成字符串（但最后一个没办法和后面组成字符串）
+        if(i<n-1)
+        {
+            dfs(s, i+1, start);
+        }
+        if(isValid(s, start, i)) //可以构成回文串，继续往后访问
+        {
+            path.push_back(s.substr(start, i-start+1));
+            dfs(s, i+1, i+1); //往后继续访问
+            path.pop_back();
+        }
+
+    }
+    vector<vector<string>> partition(string s) {
+        dfs(s, 0, 0);
+        return res;
+    }
+};
 ```
 
 
 
+### （3）时间空间复杂度分析
 
+- 时间复杂度：$O(n2^n)$，答案长度最多为逗号子集的个数（模拟我们用逗号来分割字符串），与上一道题目是类似的；
+- 空间复杂度：$O(n)$
 
 
 
