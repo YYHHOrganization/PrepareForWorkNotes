@@ -10469,6 +10469,51 @@ public:
 
 
 
+
+
+#### 25/3/7 逆序 剪枝更方便
+
+https://leetcode.cn/problems/combinations/solutions/2071017/hui-su-bu-hui-xie-tao-lu-zai-ci-pythonja-65lh/
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> res;
+    vector<int> path;
+    // 4      3       2   1
+    //3 2 1  2 1      1   
+    void dfs(int n, int k)
+    {
+        int d = k - path.size();//【剪枝】还要选d个数字
+        //if(path.size()==k)
+        if(d==0)
+        {
+            res.push_back(path);
+            return ;
+        }
+
+        // for(int i=n;i>=1;i--) //【剪枝】
+        for(int i=n;i>=d;i--)//<d的话根本凑不齐剩下的d个数字
+        {
+            path.push_back(i);
+            dfs(i-1,k);
+            path.pop_back();
+        }
+    }
+    vector<vector<int>> combine(int n, int k) {
+        // 1-n 选
+        //n-1选
+        //n-k其实就可以了
+        dfs(n,k);
+        return res;
+    }
+};
+```
+
+
+
+## 
+
 ## 216.组合总和III
 
 链接：https://leetcode-cn.com/problems/combination-sum-iii/
@@ -10600,6 +10645,102 @@ public:
 
 
 
+>2025/3/7
+>
+>几乎没有剪枝的正向：
+>
+>```C++
+>class Solution {
+>public:
+>    
+>    vector<vector<int>> combinationSum3(int k, int n) 
+>    {
+>        // k=3
+>        //1          2    3     4    5
+>        //2 3 4..9
+>        //3 4 5.. 9 
+>        vector<vector<int>> res;
+>        vector<int> path;
+>        int sum=0;
+>        auto dfs=[&](this auto&& dfs,int i)
+>        {
+>            if(sum>n)return;//小剪枝
+>            if(path.size()==k)
+>            {
+>                if(sum == n)
+>                {
+>                    res.push_back(path);
+>                }
+>                return;
+>            }
+>            for(int j=i;j<=9;j++)
+>            {
+>                sum+=j;
+>                path.push_back(j);
+>                dfs(j+1);
+>                path.pop_back();
+>                sum-=j;
+>            }
+>        };
+>        dfs(1);
+>        return res;
+>    }
+>};
+>```
+>
+>剪枝
+>
+>https://www.bilibili.com/video/BV1xG4y1F7nC?spm_id_from=333.788.videopod.sections&vd_source=f2def4aba42c7ed69fc648e1a2029c7b
+>
+>![image-20250307224534984](assets/image-20250307224534984.png)
+>
+>```C++
+>class Solution {
+>public:
+>    
+>    vector<vector<int>> combinationSum3(int k, int n) 
+>    {
+>        // k=3
+>        //1          2    3     4    5
+>        //2 3 4..9
+>        //3 4 5.. 9 
+>        vector<vector<int>> res;
+>        vector<int> path;
+>        int sum=0;
+>        auto dfs=[&](this auto&& dfs,int i)
+>        {
+>            int d = k-path.size();
+>            int t=n-sum;
+>            if(t<0||t>((i*2-d+1)*d/2))return;
+>            if(d==0)
+>            {
+>                if(sum == n)
+>                {
+>                    res.push_back(path);
+>                }
+>                return;
+>            }
+>            for(int j=i;j>=d;j--)
+>            {
+>                sum+=j;
+>                path.push_back(j);
+>                dfs(j-1);//-
+>                path.pop_back();
+>                sum-=j;
+>            }
+>        };
+>        dfs(9);
+>        return res;
+>    }
+>};
+>```
+>
+>
+
+
+
+
+
 ## 22. [括号生成](https://leetcode-cn.com/problems/generate-parentheses/)
 
 难度中等2444收藏分享切换为英文接收动态反馈
@@ -10707,6 +10848,42 @@ public:
         }
     }
 
+};
+```
+
+25/3/7
+
+```C++
+class Solution {
+public:
+    
+    vector<string> generateParenthesis(int n) 
+    {
+        vector<string> res;
+        string path;
+        auto dfs = [&](this auto &&dfs,int left,int right)
+        {
+            if(left==n&&right==n)
+            {
+                res.push_back(path);
+                return;
+            }
+            if(left<n)
+            {
+                path.push_back('(');
+                dfs(left+1,right);
+                path.pop_back();
+            }
+            if(right<n&&left>right)
+            {
+                path.push_back(')');
+                dfs(left,right+1);
+                path.pop_back();
+            }
+        };
+        dfs(0,0);
+        return res;
+    }
 };
 ```
 
