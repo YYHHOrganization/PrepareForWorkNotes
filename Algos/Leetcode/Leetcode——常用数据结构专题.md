@@ -4084,6 +4084,10 @@ public:
 
 
 
+实际上，遇到左括号，之前的str入栈（后面与反转后的拿出来拼接），新的char+到str后，保留之后要反转的所有字符。
+
+遇到右括号 这个括号里的字符完整了，可以反转
+
 举个例子
 
 >```	C++
@@ -4189,9 +4193,79 @@ public:
 };
 ```
 
-示意图可以看这篇题解：[856. 括号的分数 - 力扣（LeetCode）](https://leetcode.cn/problems/score-of-parentheses/solutions/1878748/zhua-wa-mou-si-by-muse-77-hy72/)，这道题也有分治之类的解法。
+```
+        //((()))()
+        //stack +0 0 0 0 
+        //      (((
+        //stack 0 0 0 0=pop 0 0 0= 0 0 1
+        //      ((()
+        //stack 0 0 1  =pop 0 0  = 0  2
+        //      ((())
+        //stack 0 2    =pop 0    =  4
+        //      ((()))(
+        //stack 4 0    =push 4 0 
+        //      ((()))()
+        //stack 4 0    =pop 4 +1 =5  
+       
+```
 
 
+
+一个冗长但是比较简单理解的方法：
+
+>示意图可以看这篇题解：[856. 括号的分数 - 力扣（LeetCode）](https://leetcode.cn/problems/score-of-parentheses/solutions/1878748/zhua-wa-mou-si-by-muse-77-hy72/)，这道题也有分治之类的解法。
+>
+><img src="assets/1665287037-XCtbhA-image.png" alt="image.png" style="zoom: 33%;" />
+>
+><img src="assets/1665287046-XplBvJ-image.png" alt="image.png" style="zoom:33%;" />
+>
+><img src="assets/1665287052-OhodXC-image.png" alt="image.png" style="zoom:33%;" />
+>
+>```C++
+>class Solution {
+>public:
+>    int scoreOfParentheses(string s) {
+>        stack<string> stk;
+>        for(int i=0;i<s.size();i++)
+>        {
+>            if(s[i]=='(')
+>            {
+>                stk.emplace("(");
+>            }
+>            else
+>            {
+>                if(!stk.empty()&&stk.top()=="(")
+>                {
+>                    stk.pop();
+>                    stk.emplace("1");//emplace(1)是错的
+>                    continue;
+>                }
+>                int v=0;
+>                while(!stk.empty()&&stk.top()!="(")
+>                {
+>                    v+=stoi(stk.top());
+>                    stk.pop();
+>                }
+>                v*=2;
+>                if(!stk.empty())
+>                {
+>                    stk.pop();
+>                    stk.emplace(to_string(v));
+>                }
+>            }
+>        }
+>        int res=0;
+>        while(!stk.empty())
+>        {
+>            res+=stoi(stk.top());
+>            stk.pop();
+>        }
+>        return res;
+>    }
+>};
+>```
+>
+>
 
 ### ==（7）[1249. 移除无效的括号](https://leetcode.cn/problems/minimum-remove-to-make-valid-parentheses/)==（括号题后面不做了，先不管了）
 
