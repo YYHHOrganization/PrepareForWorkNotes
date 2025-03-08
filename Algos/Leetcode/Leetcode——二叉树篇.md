@@ -75,6 +75,24 @@ public:
 };
 ```
 
+Y
+
+```C++
+class Solution {
+public:
+    bool hasPathSum(TreeNode* root, int targetSum) 
+    {
+        if(root==nullptr)return false;
+        if(!root->left&&!root->right)
+        {
+            if(targetSum-root->val==0)return true;
+            return false;
+        }
+        return hasPathSum(root->left,targetSum-root->val)||hasPathSum(root->right,targetSum-root->val);
+    }
+};
+```
+
 
 
 ### （2）[129. 求根节点到叶节点数字之和](https://leetcode.cn/problems/sum-root-to-leaf-numbers/)
@@ -105,6 +123,33 @@ public:
     int sumNumbers(TreeNode* root) {
         //=从当前开始左分支的总和+右分支的总和
         return dfs(root, 0);
+    }
+};
+```
+
+Y
+
+```C++
+class Solution {
+public:
+    
+    int sumNumbers(TreeNode* root) {
+        // int path=0;
+        int res=0;
+        auto dfs = [&](this auto &&dfs,TreeNode* root,int path)
+        {
+            if(root==nullptr)return;
+            path=path*10+root->val;
+            if(!root->left&&!root->right)
+            {
+                res+=path;
+                return;
+            }
+            dfs(root->left,path);
+            dfs(root->right,path);
+        };
+        dfs(root,0);
+        return res;
     }
 };
 ```
@@ -153,7 +198,41 @@ public:
     }
 };
 ```
-
+Y
+```C++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int goodNodes(TreeNode* root) 
+    {
+        int maxNum=INT_MIN;
+        int num=0;
+        auto dfs = [&](this auto&& dfs,TreeNode* root, int maxNum)
+        {
+            if(root==nullptr)return;
+            if(root->val>=maxNum)
+            {
+                num++;
+                maxNum = root->val;
+            }
+            dfs(root->left,maxNum);
+            dfs(root->right,maxNum);
+        };
+        dfs(root,maxNum);
+        return num;
+    }
+};
+```
 
 
 ## 3.二叉树相同、对称、平衡等
@@ -176,6 +255,20 @@ public:
             return p==q; //只有都为空时return true
         }
         return (p->val == q->val) && isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
+    }
+};
+```
+
+Y
+
+```C++
+class Solution {
+public:
+    bool isSameTree(TreeNode* p, TreeNode* q) 
+    {
+        if(p==nullptr&&q==nullptr)return true;
+        if(p&&q)return (p->val==q->val)&&isSameTree(p->left,q->left)&&isSameTree(p->right,q->right);
+        return false;
     }
 };
 ```
@@ -232,9 +325,31 @@ public:
 };
 ```
 
+Y
 
+```C++
+class Solution {
+public:
+    int Balance(TreeNode* root)
+    {
+        if(root==nullptr)return 0;
+        int lh = Balance(root->left);
+        int rh = Balance(root->right);
+        if(lh==-1||rh==-1)return -1;
+        if(abs(lh-rh)>1)return -1;
+        return max(lh,rh)+1;
+    }
+    bool isBalanced(TreeNode* root) 
+    {
+        if(Balance(root)==-1)return false;
+        return true;
+    }
+};
+```
 
-### （4）[199. 二叉树的右视图](https://leetcode.cn/problems/binary-tree-right-side-view/)
+​	
+
+### （4）[199. 二叉树的右视图](https://leetcode.cn/problems/binary-tree-right-side-view/) :cat:
 
 > 给定一个二叉树的 **根节点** `root`，想象自己站在它的右侧，按照从顶部到底部的顺序，返回从右侧所能看到的节点值。
 
@@ -253,11 +368,11 @@ public:
     void dfs(TreeNode* root, int depth)
     {
         if(root==nullptr) return;
-        if(depth==res.size())
+        if(depth==res.size()) //！！
         {
             res.emplace_back(root->val);
         }
-        dfs(root->right, depth+1);
+        dfs(root->right, depth+1); //！！先右再左
         dfs(root->left, depth+1);
     }
     vector<int> rightSideView(TreeNode* root) {
@@ -270,6 +385,10 @@ public:
 > 每次优先遍历右节点而非左节点，实际上保证了“某一层第一次被访问的节点一定在这一层的最右边”，因此只需要能够判断某一层是不是被第一次访问就行，怎么判断？加一个depth参数就可以。拿着`depth`参数和答案`res`数组的`size`作比较，就知道是不是第一次被记录了。
 
 
+
+>深度是从上到下数的，而高度是从下往上数。不同题目适用不同的解法
+>
+><img src="assets/1523448-20190716212515612-1703079491.png" alt="img" style="zoom:50%;" />
 
 ## 4.对应作业题
 
