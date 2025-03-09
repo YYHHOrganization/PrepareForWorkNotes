@@ -4277,3 +4277,257 @@ public:
 
 
 
+# 四、字典树（Trie树）
+
+## 1.板子[208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
+
+> **[Trie](https://baike.baidu.com/item/字典树/9825209?fr=aladdin)**（发音类似 "try"）或者说 **前缀树** 是一种树形数据结构，用于高效地存储和检索字符串数据集中的键。这一数据结构有相当多的应用情景，例如自动补全和拼写检查。
+>
+> 请你实现 Trie 类：
+>
+> - `Trie()` 初始化前缀树对象。
+> - `void insert(String word)` 向前缀树中插入字符串 `word` 。
+> - `boolean search(String word)` 如果字符串 `word` 在前缀树中，返回 `true`（即，在检索之前已经插入）；否则，返回 `false` 。
+> - `boolean startsWith(String prefix)` 如果之前已经插入的字符串 `word` 的前缀之一为 `prefix` ，返回 `true` ；否则，返回 `false` 。
+
+字典树的学习可以看这篇文章：[208. 实现 Trie (前缀树) - 力扣（LeetCode）](https://leetcode.cn/problems/implement-trie-prefix-tree/solutions/2993894/cong-er-cha-shu-dao-er-shi-liu-cha-shu-p-xsj4/)
+
+这是一道板子题，需要整理一下：
+
+```c++
+struct Node
+{
+    Node* son[26]{};
+    bool isEnd = false;
+};
+class Trie {
+public:
+    Node* root;
+    Trie() {
+        root=new Node();
+    }
+
+    int find(string word) //0表示没有找到,1表示找到是结尾,2表示找到不是结尾(是前缀)
+    {
+        Node* cur = root;
+        for(char c: word)
+        {
+            c -= 'a';
+            if(cur->son[c]==nullptr) return 0;
+            cur = cur->son[c];
+        }
+        if(cur->isEnd) return 1;
+        else return 2;
+    }
+    
+    void insert(string word) {
+        Node* cur = root;
+        for(char c: word)
+        {
+            c -= 'a';
+            if(cur->son[c]==nullptr) //如果没有
+            {
+                cur->son[c] = new Node();
+            }
+            cur = cur->son[c];
+        }
+        cur->isEnd = true;
+    }
+
+    
+    bool search(string word) {
+        return find(word)==1; //需要是全字匹配
+    }
+    
+    bool startsWith(string prefix) {
+        return find(prefix)!=0; //不是匹配不上就行
+    }
+};
+
+/**
+ * Your Trie object will be instantiated and called as such:
+ * Trie* obj = new Trie();
+ * obj->insert(word);
+ * bool param_2 = obj->search(word);
+ * bool param_3 = obj->startsWith(prefix);
+ */
+```
+
+
+
+## ==2.[211. 添加与搜索单词 - 数据结构设计](https://leetcode.cn/problems/design-add-and-search-words-data-structure/)==
+
+> 请你设计一个数据结构，支持 添加新单词 和 查找字符串是否与任何先前添加的字符串匹配 。
+>
+> 实现词典类 `WordDictionary` ：
+>
+> - `WordDictionary()` 初始化词典对象
+> - `void addWord(word)` 将 `word` 添加到数据结构中，之后可以对它进行匹配
+> - `bool search(word)` 如果数据结构中存在字符串与 `word` 匹配，则返回 `true` ；否则，返回 `false` 。`word` 中可能包含一些 `'.'` ，每个 `.` 都可以表示任何一个字母。
+
+这道题算是上一题的进阶版本，针对word中的`.`，永远可以匹配一个字母，那么就可以写一个match函数，在遇到.的时候，递归调用子树来做字符串匹配。本题代码如下：
+```c++
+```
+
+
+
+# 八、树状数组和线段树
+
+## 1.树状数组原理讲解
+
+[307. 区域和检索 - 数组可修改 - 力扣（LeetCode）](https://leetcode.cn/problems/range-sum-query-mutable/solutions/2524481/dai-ni-fa-ming-shu-zhuang-shu-zu-fu-shu-lyfll/)
+
+比较推荐的是看这个视频：[五分钟丝滑动画讲解 | 树状数组_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ce411u7qP/?spm_id_from=333.337.search-card.all.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)
+
+初衷其实是，给一个数组，需要快速做两个操作：
+
+- （1）修改数组中某个元素的值；
+- （2）快速求出前n个元素的和；
+
+![image-20250309154211423](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/image-20250309154211423.png)
+
+首先，介绍一下`lowbit`函数，其可以用来求解一个二进制数字的最低位表示哪个数字：
+
+```c++
+inline int lowbit(int x)
+{
+    return x & (-x);
+}
+```
+
+比如说1000110，计算lowbit的结果为最后的二进制10，即为十进制的2。设上面这个树状数组为b，序号从1开始。看上图的最后一行，这些区间的长度为1，而对应序号的lowbit也都是1。倒数第二行对应的区间长度为2，对应序号的lowbit=2，其他几行也有类似的规律：
+
+![image-20250309155025322](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/image-20250309155025322.png)
+
+（左侧记录的值为对应的lowbit值）。比如`b[12]`这个元素对应的序列长度正好是lowbit(12)，而且对应的这个序列结尾的序号也是12，其他序列也有一样的性质。
+
+> 也就是说，序号为i的序列代表长度为lowbit(i)，且以i为结尾的序列。
+
+此时，计算前`p`个元素的和，用递归的形式写就是：
+
+```c++
+ll count(int p)
+{
+    if(p==0) return 0;
+    return count(p-lowbit(p)) + b[p];
+}
+```
+
+不用递归，而是用循环的方式来写：
+
+```c++
+ll count(int p)
+{
+    ll result = 0;
+    while(p)
+    {
+        result += b[p];
+        p -= lowbit(p);
+    }
+    return result;
+}
+```
+
+
+
+另一个性质如下：
+
+> 一个序列`b[i]`正上方的序列，正好就是`b[i+lowbit(i)]`。
+
+于是在修改某个值的时候，就可以不断加上lowbit[i]找到上方的所有序列，进行修改。所以add的函数如下：
+
+```c++
+void add(int p, int x)
+{
+    while(p<N)
+    {
+        b[p] += x;
+        p += lowbit(p);
+    }
+}
+```
+
+
+
+### (1)树状数组的优势
+
+假设我们要求解区间和，那么不用树状数组的话，有两种求解方式：
+
+- （a）直接暴力加起来求和，此时求解复杂度O（n），对某一个索引的位置单独加一个值的复杂度为O（1）；
+- （b）使用前缀和，此时求解复杂度为O（1），但假如我们修改了数组中的某个值，更新前缀和的复杂度又变成了O（n）；
+
+因此，树状数组（包括线段树也是）其实是对以上两种做法的综合考量，把查询与修改的时间都变为O(logn)，可以把整体复杂度从O(n)降到O(logn)，所以可以大大提升代码效率。
+
+
+
+## 2.树状数组题目
+
+### （1）[307. 区域和检索 - 数组可修改](https://leetcode.cn/problems/range-sum-query-mutable/)
+
+> 给你一个数组 `nums` ，请你完成两类查询。
+>
+> 1. 其中一类查询要求 **更新** 数组 `nums` 下标对应的值
+> 2. 另一类查询要求返回数组 `nums` 中索引 `left` 和索引 `right` 之间（ **包含** ）的nums元素的 **和** ，其中 `left <= right`
+>
+> 实现 `NumArray` 类：
+>
+> - `NumArray(int[] nums)` 用整数数组 `nums` 初始化对象
+> - `void update(int index, int val)` 将 `nums[index]` 的值 **更新** 为 `val`
+> - `int sumRange(int left, int right)` 返回数组 `nums` 中索引 `left` 和索引 `right` 之间（ **包含** ）的nums元素的 **和** （即，`nums[left] + nums[left + 1], ..., nums[right]`）
+
+这道题目算是线段树的板子题：
+
+```c++
+class NumArray {
+public:
+    vector<int>& nums;
+    vector<int> tree; //线段树
+    int lowbit(int x)
+    {
+        return x&-x;
+    }
+    void add(int index, int val) //线段树index位置+val,往上一路更新
+    {
+        while(index<tree.size())
+        {
+            tree[index] += val;
+            index+=lowbit(index);
+        }
+    }
+
+    int prefixSum(int index) //前缀和(截止到index)
+    {
+        int sum = 0;
+        while(index>0)
+        {
+            sum += tree[index];
+            index-=lowbit(index);
+        }
+        return sum;
+    }
+
+    NumArray(vector<int>& nums) :tree(nums.size()+1), nums(nums){
+        for(int i=0;i<nums.size();i++)
+        {
+            add(i+1, nums[i]);
+        }
+    }
+    
+    void update(int index, int val) {
+        add(index+1, val-nums[index]); //把add的值加到树状数组中
+        nums[index] = val; //更新原始数组
+    }
+    
+    int sumRange(int left, int right) {
+        return prefixSum(right+1) - prefixSum(left);
+    }
+};
+
+/**
+ * Your NumArray object will be instantiated and called as such:
+ * NumArray* obj = new NumArray(nums);
+ * obj->update(index,val);
+ * int param_2 = obj->sumRange(left,right);
+ */
+```
+
