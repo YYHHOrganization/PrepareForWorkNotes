@@ -12480,6 +12480,140 @@ public:
 
 
 
+25/3/7
+
+错误写法，erase导致unordered_set迭代器失效
+
+具体可看\PrepareForWorkNotes\Algos\Leetcode\LeetCode 热题 HOT 100\容器\set unordered_set集合 用法 小知识点.md
+
+以以下写法错误❌ 下面这个代码就算迭代器不失效 算法也是**错误**的 不要在意
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        //  1           2           3
+        //2  3         1 3         1 2
+        //3  2
+        unordered_set<int> ChooseSet(nums.begin(),nums.end());
+        vector<vector<int>> res;
+        vector<int> path;
+        int n=nums.size();
+        auto dfs = [&](this auto&& dfs)
+        {
+            if(path.size()==n)
+            {
+                res.push_back(path);
+                return;
+            }
+            //for(auto i:ChooseSet)错误 因为编译器会创建一个迭代器来遍历集合中的元素。这个迭代器在遍历过程中是有效的，前提是集合在遍历期间没有被修改。但是实际上修改了 所以错误
+            //下面就算迭代器不失效 算法也是错误的 不要在意
+            for(auto it = ChooseSet.begin();it!=ChooseSet.end();it++)
+            {
+                //遍历集合时修改了集合本身，导致迭代器失效。
+                ChooseSet.erase(*it);  //❌ 当前迭代器 `it` 失效 这个it已经失效了
+                dfs();
+                ChooseSet.insert(*it); //❌ 插入可能触发重哈希
+            }
+        };
+        dfs();
+        return res;
+    }
+};
+```
+
+因此，有两种修改方法，
+
+​	一种是复制一份uset内容；
+
+​	一种是遍历所有元素，看在不在uset中
+
+
+
+方法1：复制一份NoChooseSet内容 使用了就erase
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        //  1           2           3
+        //2  3         1 3         1 2
+        //3  2
+        unordered_set<int> NoChooseSet(nums.begin(),nums.end());//记录没被选择的
+        vector<vector<int>> res;
+        vector<int> path;
+        int n=nums.size();
+        auto dfs = [&](this auto&& dfs)
+        {
+            if(path.size()==n)
+            {
+                res.push_back(path);
+                return;
+            }
+            vector<int> vec(NoChooseSet.begin(),NoChooseSet.end());
+            for(int i=0;i<vec.size();i++)
+            {
+                path.push_back(vec[i]);
+                NoChooseSet.erase(vec[i]);
+                dfs();
+                path.pop_back();
+                NoChooseSet.insert(vec[i]);
+            }
+        };
+        dfs();
+        return res;
+    }
+};
+```
+
+
+
+方法2：遍历所有元素，
+
+1、一种是看在不在 ChooseSet中，不在 就插入path，插入Set。(下面用这个)
+
+2、一种是看在不在 NoChooseSet中，在就插入path，erase Set。
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        //  1           2           3
+        //2  3         1 3         1 2
+        //3  2
+        unordered_set<int> ChooseSet;
+        vector<vector<int>> res;
+        vector<int> path;
+        int n=nums.size();
+        auto dfs = [&](this auto&& dfs)
+        {
+            if(path.size()==n)
+            {
+                res.push_back(path);
+                return;
+            }
+            for(int i=0;i<n;i++)
+            {
+                if(ChooseSet.find(nums[i])==ChooseSet.end())//没找到
+                {
+                    path.push_back(nums[i]);
+                    ChooseSet.insert(nums[i]);
+                    dfs();
+                    path.pop_back();
+                    ChooseSet.erase(nums[i]);
+                }
+            }
+        };
+        dfs();
+        return res;
+    }
+};
+```
+
+
+
+
+
 ### 总结
 
 大家此时可以感受出**排列问题的不同**：
@@ -13234,6 +13368,57 @@ public:
 ```
 
 可以看出，除了验证棋盘合法性的代码，省下来部分就是按照回溯法模板来的。
+
+
+
+25/3/7
+
+```C++
+class Solution {
+public:
+    bool isValid(vector<int> &queens,int r,int c)
+    {
+        for(int i=0;i<r;i++)
+        {
+            if(queens[i]==c)return false;
+            if(abs(i-r)==abs(queens[i]-c))return false;
+        }
+        return true;
+    }
+    vector<vector<string>> solveNQueens(int n) {
+        vector<int> queens(n,0);
+        vector<vector<string>> res;
+        auto dfs = [&](this auto&& dfs,int idx)
+        {
+            if(idx==n)
+            {
+                vector<string> path;
+                for(int i=0;i<n;i++)
+                {
+                   
+                    string str = string(queens[i],'.')+'Q'+string(n-queens[i]-1,'.');
+                    path.push_back(str);
+                    
+                }
+                res.push_back(path);
+                return;
+            }
+            for(int j=0;j<n;j++)
+            {
+                if(isValid(queens,idx,j))
+                {
+                    queens[idx]=j;
+                    dfs(idx+1);
+                }
+            }
+        };
+        dfs(0);
+        return res;
+    }
+};
+```
+
+
 
 
 

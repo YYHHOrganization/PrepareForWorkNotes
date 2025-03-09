@@ -1,4 +1,4 @@
-# string 字符串 用法 小知识点
+# C++ string 字符串 用法 小知识点
 
 
 
@@ -37,3 +37,11 @@ substr函数的形式为s.substr(pos, n)，
 string a = s.substr(0,5);
 
 https://blog.csdn.net/liuweiyuxiang/article/details/83687868
+
+
+
+#### to_string(i) ： int 转为string
+
+
+
+#### stoi(s) ： string转为int

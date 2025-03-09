@@ -313,11 +313,11 @@ public:
                 res.push_back(path);
                 return;
             }
-            if(isalpha(s[i]))
+            if(isalpha(s[i])) // 注意这个库函数！！
             {
-                path[i] = tolower(s[i]);
+                path[i] = tolower(s[i]);//
                 dfs(i+1);
-                path[i] = toupper(s[i]);
+                path[i] = toupper(s[i]);//
                 dfs(i+1);
             } 
             else //不是字母,直接递归下一个即可
@@ -336,7 +336,7 @@ public:
 
 
 
-## 4.[LCP 51. 烹饪料理](https://leetcode.cn/problems/UEcfPD/)
+## 4.[LCP 51. 烹饪料理 ](https://leetcode.cn/problems/UEcfPD/):cat:
 
 > 欢迎各位勇者来到力扣城，城内设有烹饪锅供勇者制作料理，为自己恢复状态。
 >
@@ -393,7 +393,7 @@ public:
                 return;
             }
             //不选当前料理,继续遍历
-            dfs(i+1, value,curY);
+            dfs(i+1, value,curY);//！！！！
             //选当前料理,需要看当前料理能不能烹饪
             bool flag = true; //一开始认为能烹饪
             for(int idx=0;idx<materials.size();idx++) //食材不够了,不能烹饪
@@ -484,6 +484,140 @@ public:
         };
         dfs(0);
         return res;
+    }
+};
+```
+
+Y 下面这个没怎么剪枝不用看 看下下面的位运算
+
+```C++
+class Solution {
+public:
+    int maximumRows(vector<vector<int>>& matrix, int numSelect) {
+        //1不能出现在没被覆盖的列上，这行才算能被覆盖
+        //回溯
+        //选/不选
+        int maxRows=0;
+        //unordered_map<int,int> path;
+        unordered_set<int> path;
+        int m = matrix.size();
+        int n = matrix[0].size();
+        // vector<int> path(n,0);
+        
+        auto dfs = [&](this auto&& dfs,int start)
+        {
+            if(path.size()==numSelect)//**
+            {
+                int rows=m;
+                for(int i=0;i<m;i++)
+                {
+                    for(int j=0;j<n;j++)
+                    {
+                        if(path.find(j)==path.end()&&matrix[i][j]==1) 
+                        {
+                            rows--;
+                            break;
+                        }
+                    }
+                }
+                maxRows = max(maxRows,rows);
+                return;
+            }
+            if(start==n)return;
+            
+            //不选
+            dfs(start+1);
+            //选
+            // path[start]=1;
+            path.insert(start);
+            dfs(start+1);
+            // path[start]=0;
+            path.erase(start);
+        };
+        dfs(0);
+        return maxRows;
+    }
+};
+```
+
+#### 位运算优化
+##### 回溯
+
+```C++
+class Solution {
+public:
+    int maximumRows(vector<vector<int>>& matrix, int numSelect) {
+        //1不能出现在没被覆盖的列上，这行才算能被覆盖
+        //回溯
+        //选/不选
+        int maxRows=0;
+        int m = matrix.size();
+        int n = matrix[0].size();
+        vector<int> mask(m,0);
+        //注意 这里位的排列次序 从低到高是从右到左的！！！即011表示的是110
+        //不过没有关系 只要保证path计算也是这样就可
+         for (int i = 0; i < m; i++) 
+         {
+            for (int j = 0; j < n; j++) 
+                mask[i] |= matrix[i][j] << j;         
+        }
+        auto dfs = [&](this auto&& dfs,int start,int path)
+        {
+            if(__builtin_popcount(path)==numSelect)
+            {
+                int rows=0;
+                for(int i=0;i<m;i++)
+                {
+                    rows+=((path&mask[i])==mask[i]);//括号括括号！
+                }
+                maxRows = max(maxRows,rows);
+                return;
+            }
+            
+            if(start==n)return;
+            
+            //不选
+            dfs(start+1,path);
+            //选
+            path|=(1<<start);
+            dfs(start+1,path);
+            path&=(0<<start);
+        };
+        dfs(0,0);
+        return maxRows;
+    }
+};
+```
+
+##### 枚举
+
+当然了 ，这题实际上可以枚举做，枚举 {0,1,2,⋯,*n*−1} 的所有大小为 *numSelect* 的子集 *subset*，表示我们所选的列。
+
+```C++
+class Solution {
+public:
+    int maximumRows(vector<vector<int>> &mat, int numSelect) {
+        int m = mat.size(), n = mat[0].size();
+        vector<int> mask(m);
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                mask[i] |= mat[i][j] << j;
+            }
+        }
+
+        int ans = 0;
+        for (int subset = 0; subset < (1 << n); subset++) {
+            if (__builtin_popcount(subset) == numSelect) {
+                int covered_rows = 0;
+                for (int row : mask) {
+                    if ((row & subset) == row) {
+                        covered_rows++;
+                    }
+                }
+                ans = max(ans, covered_rows);
+            }
+        }
+        return ans;
     }
 };
 ```
@@ -610,9 +744,64 @@ public:
 };
 ```
 
+Y 还可以用位运算优化 后面再说吧
+
+```C++
+class Solution {
+public:
+    int maxLength(vector<string>& arr) {
+        //回溯 选/不选
+        //存储umap
+        int maxLen =0; 
+        int n=arr.size();
+        vector<array<int,26> > vec(n,array<int,26>{0});
+        vector<bool> isValid(n,false);
+
+        for(int i=0;i<n;i++)
+        {
+            bool flag=false;
+            for(int j=0;j<arr[i].size();j++)
+            {
+                int id = arr[i][j]-'a';
+                if( vec[i][id]>0) 
+                {
+                    flag = true;
+                }
+                vec[i][id]++;
+            }
+            if(flag==false)isValid[i]=true;
+
+        }
+        array<int,26> patharr;
+        auto dfs = [&](this auto &&dfs,int start,int len)
+        {
+            if(start==n)
+            {
+                maxLen = max(maxLen,len);
+                return;
+            }
+            //不选
+            dfs(start+1,len);
+            //选
+            if(!isValid[start])return;
+            for(int i=0;i<26;i++)
+            {
+                if(patharr[i]>0&&vec[start][i]>0)return;
+            }
+            //可选
+            for(int i=0;i<arr[start].size();i++)patharr[arr[start][i]-'a']++;
+            dfs(start+1,len+arr[start].size());
+            for(int i=0;i<arr[start].size();i++)patharr[arr[start][i]-'a']--;
+        };
+        dfs(0,0);
+        return maxLen;
+    }
+};
+```
 
 
-## 7.（特殊，可以重复选）[39. 组合总和](https://leetcode.cn/problems/combination-sum/)
+
+## 7.（特殊，可以重复选）[39. 组合总和](https://leetcode.cn/problems/combination-sum/) :eyes:
 
 > 给你一个 **无重复元素** 的整数数组 `candidates` 和一个目标整数 `target` ，找出 `candidates` 中可以使数字和为目标数 `target` 的 所有 **不同组合** ，并以列表形式返回。你可以按 **任意顺序** 返回这些组合。
 >
@@ -696,11 +885,50 @@ if(i==n || curTarget<candidates[i]) return;
 
 
 
+没看出排序剪枝快多少嘤嘤
+
+```C++
+class Solution {
+public:
+    vector<vector<int> > res;
+    vector<int> path;
+    
+    void dfs(vector<int>& candidates, int target,int start,int sum)
+    {
+        if(sum==target)
+        {
+            res.push_back(path);
+            return;
+        }
+        if(start==candidates.size())return;
+        if(sum>target||candidates[start]>target)return;//剪枝 //排序剪枝
+        //不选
+        dfs(candidates,target,start+1,sum);
+        //选 
+        //选自己
+        sum+=candidates[start];
+        path.push_back(candidates[start]);
+        dfs(candidates,target,start,sum);
+        //选下一个
+        //dfs(candidates,target,start+1,sum);//这个不要写！不然会重复 因为实际上已经包含在了选选选然后不选里面！！！
+        path.pop_back();
+
+    }
+    vector<vector<int>> combinationSum(vector<int>& candidates, int target) {
+        sort(candidates.begin(),candidates.end());
+        dfs(candidates,target,0,0);
+        return res;
+    }
+};
+```
+
+
+
 # 三、划分型回溯
 
 把分割线（逗号）看成是可以「选或不选」的东西，本质在一定程度上是子集型回溯。前面的题目「分割回文串」即可以理解为划分型回溯的题目。这部分整理一下其他题：
 
-## 1.[2698. 求一个整数的惩罚数](https://leetcode.cn/problems/find-the-punishment-number-of-an-integer/)（看题解）
+## 1.[2698. 求一个整数的惩罚数](https://leetcode.cn/problems/find-the-punishment-number-of-an-integer/)（看题解） :cat:
 
 > 给你一个正整数 `n` ，请你返回 `n` 的 **惩罚数** 。
 >
@@ -750,6 +978,111 @@ public:
 ```
 
 感觉划分型回溯掌握的并不是太好，还需要多做一些题目加深理解。
+
+
+
+Y：不好的用例👇以下这个写法较**慢** 应该是因为用的字符串 用数字会快，不过下面的错误值得记住不要再犯
+
+```C++
+class Solution {
+public:
+    bool isValid(int a)
+    {
+        //i * i 的十进制表示的字符串可以分割成若干连续子字符串，且这些子字符串对应的整数值之和等于 i
+        auto dfs = [&](this auto&& dfs,int target,string str,int start)->bool
+        {
+            if(target<0)return false;
+            if(start==str.size())
+            {
+                if(target==0)return true;
+                return false;
+            }
+            //1296   1 2/29/296
+            for(int i=start;i<str.size();i++)
+            {
+                //string subs = str.substr(i,i-start+1);//!错误❌ ！是从start开始不是i！！！！！
+                string subs = str.substr(start,i-start+1);
+                int newtarget = target-stoi(subs);
+                //target-=stoi(subs);//!错误❌ 因为target被剪掉了会影响后面的 要么new新的要么直接放进去
+                if(dfs(newtarget,str,i+1))return true;
+            }
+            return false;
+        };
+        return dfs(a,to_string(a*a),0);
+    }
+    int punishmentNumber(int n) 
+    {
+        //遍历1-n 寻找所有数字是不是 符合的数
+        //是就加起来
+        int res=0;
+        for(int i=1;i<=n;i++)
+        {
+            if(isValid(i))
+            {
+                res+=i*i;
+            }
+        }
+        return res;
+    }
+};
+```
+
+改为整数，会快一些
+
+```C++
+for(int i=start;i<str.size();i++)
+            {
+                //string subs = str.substr(start,i-start+1);
+                //int newtarget = target-stoi(subs);
+                x=x*10+(str[i]-'0');
+                if(dfs(target-x,str,i+1))return true;//找到一个即可
+            }
+            return false;
+```
+
+但是更快有可能要预存储  如果输入多个数字啥的 算前缀和 
+
+https://leetcode.cn/problems/find-the-punishment-number-of-an-integer/ 没看
+
+```C++
+int PRE_SUM[1001];
+
+int init = []() {
+    for (int i = 1; i <= 1000; i++) 
+    {
+        string s = to_string(i * i);
+        int n = s.length();
+        function<bool(int, int)> dfs = [&](int p, int sum) -> bool 
+        {
+            if (p == n) // 递归终点
+            { 
+                return sum == i; // i 符合要求
+            }
+            int x = 0;
+            for (int j = p; j < n; j++) // 枚举分割出从 s[p] 到 s[j] 的子串
+            { 
+                x = x * 10 + s[j] - '0'; // 子串对应的整数值
+                if (dfs(j + 1, sum + x)) 
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+        PRE_SUM[i] = PRE_SUM[i - 1] + (dfs(0, 0) ? i * i : 0);
+    }
+    return 0;
+}();
+
+class Solution {
+public:
+    int punishmentNumber(int n) 
+    {
+        return PRE_SUM[n];
+    }
+};
+
+```
 
 
 
@@ -816,7 +1149,7 @@ public:
                 if(!us.contains(t))
                 {
                     us.insert(t);
-                    dfs(i+1); //枚举下一位
+                    dfs(i+1); //枚举下一位【⚠】我们已经将start->i的字符串放进来了，接下来要从i+1开始而不是start+1！！
                     us.erase(t);
                 }
             }
