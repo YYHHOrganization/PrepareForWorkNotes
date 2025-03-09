@@ -844,13 +844,439 @@ public:
 
 这种划分型的题目不太好用”选或不选“的思路来做，因此可以直接遍历枚举划分位置来完成这道题。代码如下：
 
+> 不知道第一个是什么怎么办？其实只要对第一个字符串进行枚举就可以了。这样后面的就可以有一个对应的初值，代码就会变得很好写。`这道题的坑人点实在是太多，注意unsigned long long完全可以包住19位的数。`参考[数据类型范围 | Microsoft Learn](https://learn.microsoft.com/zh-cn/cpp/cpp/data-type-ranges?view=msvc-170)
+
 ```c++
+class Solution {
+public:
+    bool splitString(string s) {
+        //去除前导0
+        int i = 0;
+        int n = s.size();
+        for(i=0;i<n;i++)
+        {
+            if(s[i]!='0') break;
+        }
+
+        //lastNum是上次划分得到的值,start是当前开始划分的位置
+        auto dfs = [&](this auto&& dfs, int start, unsigned long long lastNum)->bool
+        {   
+            if(start==n) return true;
+            //可剪枝:如果lastNum是0,则看一下后面的是不是都是0,是的话return true(相当于后面的0都归到一起),不是的话return false
+            if(lastNum==0)
+            {
+                for(int idx=start;idx<n;idx++)
+                {
+                    if(s[idx]!='0') return false;
+                }
+                return true;
+            }
+            for(int idx=start;idx<n;idx++)
+            {
+                unsigned long long curNum = stoull(s.substr(start, idx-start+1));
+                if(curNum==lastNum-1)
+                {
+                    bool res = dfs(idx+1, curNum);
+                    if(res) return true;
+                }
+            }
+            return false;
+        };
+
+        for(int j=i; j<n-1;j++) //此时i指向第一个非0的字符,但还是有可能越界,比如999999999999这种数,unsigned long long的范围是0~18446744073709551615,是20位,因为在枚举的时候会至少划分两段,因此至多是19位,可以被unsigned long long 涵盖住,所以使用unsigned long long是可以的
+        {
+            unsigned long long first = stoull(s.substr(i, j-i+1));
+            bool res = dfs(j+1, first); //从j+1开始遍历
+            if(res) return true;
+        }
+        return false;
+    }
+};
 ```
 
 
 
 
 
-
-
 # 四、组合型回溯
+
+有个数上的约束。也算作子集型回溯。
+
+## 1.[77. 组合](https://leetcode.cn/problems/combinations/)
+
+> 给定两个整数 `n` 和 `k`，返回范围 `[1, n]` 中所有可能的 `k` 个数的组合。
+>
+> 你可以按 **任何顺序** 返回答案。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：n = 4, k = 2
+> 输出：
+> [
+>   [2,4],
+>   [3,4],
+>   [2,3],
+>   [1,2],
+>   [1,3],
+>   [1,4],
+> ]
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：n = 1, k = 1
+> 输出：[[1]]
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= n <= 20`
+> - `1 <= k <= n`
+
+这算是一道经典题目，在遍历枚举的时候，我们可以从后往前遍历，这样在剪枝的时候会更方便一些。
+
+![image-20250309124438299](Leetcode%E2%80%94%E2%80%94%E5%9B%9E%E6%BA%AF%E4%B8%93%E9%A2%98.assets/image-20250309124438299.png)
+
+举个例子，假设n=5，k=3，path.size()=1，那么还需要选择两个数(d=k-path.size())，此时如果当前的数i<d，则没办法再选择了，因此只有`i>=d`的才会继续走dfs的逻辑，这就是剪枝。
+
+回溯结束的条件是“path.size()==k”。
+
+本题代码如下（通过倒序的遍历，剪枝就变得很容易思考了，并且从代码角度也更容易写一些）：
+```c++
+class Solution {
+public:
+    vector<vector<int>> combine(int n, int k) {
+        vector<vector<int>> res;
+        vector<int> path;
+        //从后往前遍历
+        auto dfs = [&](this auto&& dfs, int start) 
+        {
+            int d=k-path.size();
+            if(d==0)
+            {
+                res.push_back(path);
+                return;
+            }
+            for(int i=start;i>=d;i--)
+            {
+                path.push_back(i);
+                dfs(i-1);
+                path.pop_back();
+            }
+        };
+        dfs(n);
+        return res;
+    }
+};
+```
+
+
+
+### （1）时间与空间复杂度分析
+
+- 时间复杂度：分析回溯问题的时间复杂度，有一个通用公式：**路径长度**×**搜索树的叶子数**。对于本题来说，路径长度为k，搜索树的叶子数为$C(n,k)$，因此总的时间复杂度为$O(k*C(n,k))$。
+- 空间复杂度：$O(k)$，返回值不计入。
+
+
+
+## 2.[216. 组合总和 III](https://leetcode.cn/problems/combination-sum-iii/)
+
+> 找出所有相加之和为 `n` 的 `k` 个数的组合，且满足下列条件：
+>
+> - 只使用数字1到9
+> - 每个数字 **最多使用一次** 
+>
+> 返回 *所有可能的有效组合的列表* 。该列表不能包含相同的组合两次，组合可以以任何顺序返回。
+>
+> 2 <= k <= 9
+> 1 <= n <= 60
+>
+> 
+>
+> **示例 1:**
+>
+> ```
+> 输入: k = 3, n = 7
+> 输出: [[1,2,4]]
+> 解释:
+> 1 + 2 + 4 = 7
+> 没有其他符合的组合了。
+> ```
+>
+> **示例 2:**
+>
+> ```
+> 输入: k = 3, n = 9
+> 输出: [[1,2,6], [1,3,5], [2,3,4]]
+> 解释:
+> 1 + 2 + 6 = 9
+> 1 + 3 + 5 = 9
+> 2 + 3 + 4 = 9
+> 没有其他符合的组合了。
+> ```
+>
+> **示例 3:**
+>
+> ```
+> 输入: k = 4, n = 1
+> 输出: []
+> 解释: 不存在有效的组合。
+> 在[1,9]范围内使用4个不同的数字，我们可以得到的最小和是1+2+3+4 = 10，因为10 > 1，没有有效的组合。
+> ```
+
+与上一题类似，依然是从9到1倒序遍历（每个数只能用一次），同时在dfs当中传入一个target参数。如果`path.size()==k&&target==0`时，认为找到了一组符合条件的数。以下分析剪枝条件：
+
+- （1）依旧是如果`i<(k-path.size())`，说明剩下的数凑不到k个了，此时return即可；
+- （2）由于每个数都只能用一次，所以如果剩下的数加在一起都不如target大，则直接return掉，剩下的数应该是1+2+...+i=(1+i)*i/2,用这个值还可以进行一波剪枝。
+
+最终代码如下：
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> combinationSum3(int k, int n) {
+        vector<vector<int>> res;
+        vector<int> path;
+        auto dfs = [&](this auto&& dfs, int start, int target)
+        {
+            int d = k - path.size();
+            if(d==0)
+            {
+                if(target==0)
+                {
+                    res.push_back(path);
+                }
+                return;
+            }
+            //用等差数列通项公式提前剪枝
+            if(((1+start)*start/2)<target) return;
+            for(int i=start;i>=d;i--)
+            {
+                path.push_back(i);
+                dfs(i-1, target-i);
+                path.pop_back();
+            }
+        };
+        dfs(9,n);
+        return res;
+    }
+};
+```
+
+
+
+## 3.[22. 括号生成](https://leetcode.cn/problems/generate-parentheses/)
+
+> 数字 `n` 代表生成括号的对数，请你设计一个函数，用于能够生成所有可能的并且 **有效的** 括号组合。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：n = 3
+> 输出：["((()))","(()())","(())()","()(())","()()()"]
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：n = 1
+> 输出：["()"]
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= n <= 8`
+
+本质上，这道题目相当于从2*n个位置当中，选择n个位置放左括号，选择n个位置放右括号，如果`path.size()==2*n`则认为找到了一组正确的解。但左右括号是有一定的限制的，dfs中传入起始左括号和右括号的个数，有如下情况（类似“选或不选”）：
+
+- 如果剩余左括号数>0，则可以放左括号
+- 如果剩余右括号数>0，且剩余左括号少于剩余右括号（说明现在序列里已经有的左括号更多），则可以放右括号；否则不能放右括号（不能是`(()))`这种）
+
+代码如下：
+```c++
+class Solution {
+public:
+    vector<string> generateParenthesis(int n) {
+        vector<string> res;
+        int m = n*2; //总的长度
+        string path(m,0);
+        auto dfs = [&](this auto&& dfs, int leftCount, int rightCount, int start)
+        {
+            if(start==m)
+            {
+                if(leftCount==0 && rightCount==0)
+                    res.push_back(path);
+                return;
+            }
+            //1.加入左括号
+            if(leftCount>0)
+            {
+                path[start] = '(';
+                dfs(leftCount-1, rightCount, start+1); //不用恢复现场,因为会被后面的情况覆盖掉
+            }
+            if(rightCount>0 && leftCount<rightCount)
+            {
+                path[start] = ')';
+                dfs(leftCount, rightCount-1, start+1);
+            }
+        };
+        dfs(n, n, 0);
+        return res;
+    }
+};
+```
+
+
+
+# 五、排列型回溯
+
+部分题目也可以用状压 DP 做。
+
+## 1.[46. 全排列](https://leetcode.cn/problems/permutations/)
+
+> 给定一个不含重复数字的数组 `nums` ，返回其 *所有可能的全排列* 。你可以 **按任意顺序** 返回答案。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [1,2,3]
+> 输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums = [0,1]
+> 输出：[[0,1],[1,0]]
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：nums = [1]
+> 输出：[[1]]
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= nums.length <= 6`
+> - `-10 <= nums[i] <= 10`
+> - `nums` 中的所有整数 **互不相同**
+
+对于排列的题目，我们需要记录哪些数被使用，并记得在dfs之后恢复现场。本题代码如下：
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        vector<vector<int>> res;
+        int n = nums.size();
+        vector<int> path(n); 
+        unordered_set<int> used_set; //使用过的数
+        auto dfs = [&](this auto&& dfs, int start)
+        {
+            if(start==n)
+            {
+                res.push_back(path);
+                return;
+            }
+            for(int i=0;i<nums.size();i++)
+            {
+                if(!used_set.contains(nums[i])) //没有被使用过,可以进行递归
+                {
+                    path[start] = nums[i];
+                    used_set.insert(nums[i]);
+                    dfs(start+1);
+                    used_set.erase(nums[i]);
+                }
+            }
+        };
+        dfs(0);
+        return res;
+    }
+};
+```
+
+其实也不一定要用unordered_set，对于本题而言开一个长度为n的visited数组也能够到达预期。
+
+
+
+### （1）时间空间复杂度分析
+
+![image-20250309135803287](Leetcode%E2%80%94%E2%80%94%E5%9B%9E%E6%BA%AF%E4%B8%93%E9%A2%98.assets/image-20250309135803287.png)
+
+
+
+## 2.[51. N 皇后](https://leetcode.cn/problems/n-queens/)
+
+- （1）可以用一个`col[n]`数组存储每一行对应选择的列，这样的话行本身就不用再额外判断了。
+- （2）在dfs的参数中加一个start，表示当前回溯到了第几行，当start==n的时候，利用col数组复原当前棋盘的样子，加入到res当中；
+- （3）判断不在同一行可以自动判断，不在同一列的话只要col[n]前面没有当前选择的列即可，重点是判断是否在斜对角线：
+
+
+
+对于某一个皇后(r,c)来说，其两条对角线中的元素满足(假设这些元素是(R,C))：`abs(r-R)==abs(c-C)`，用这条就可以判断N皇后的位置是否斜对角线合法。（务必记住这个结论，现场推导很可能不靠谱）
+
+总的代码如下：
+
+```c++
+class Solution {
+public:
+    bool isValid(vector<int>& cols, int curRow, int curCol)
+    {
+        int n = cols.size();
+        for(int r=0;r<curRow;r++) //判断之前的就行,后面的行不需要判断
+        {
+            //1.不能同列
+            if(cols[r]==curCol) return false;
+            //2.不能对角线
+            if(abs(r-curRow)==abs(cols[r]-curCol)) return false;
+        }
+        return true;
+    }
+    vector<vector<string>> solveNQueens(int n) {
+        vector<vector<string>> res;
+        vector<int> cols(n, -1); //一开始都没选择
+        auto dfs=[&](this auto&& dfs, int curRow)
+        {
+            if(curRow==n) //说明到了最后,还原出来一种可行解,放入最终结果中
+            {
+                vector<string> path(n);
+                for(int r=0;r<n;r++) //还原每一行
+                {
+                    path[r] = string(cols[r],'.') + 'Q' + string(n-cols[r]-1,'.');
+                }
+                res.push_back(path);
+                return;
+            }
+            //开始遍历八皇后问题,找哪一列可以作为新的一行选择的列
+            for(int curCol=0;curCol<n;curCol++)
+            {
+                if(isValid(cols, curRow, curCol)) //传入当前行和当前列
+                {
+                    cols[curRow] = curCol;
+                    dfs(curRow+1);
+                    //不用还原,因为后面会被覆盖掉.
+                }
+            }
+        };
+        dfs(0);
+        return res;
+    }
+};
+```
+
