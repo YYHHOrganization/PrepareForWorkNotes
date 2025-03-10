@@ -1379,3 +1379,118 @@ public:
 };
 ```
 
+
+
+## [137. 只出现一次的数字 II](https://leetcode.cn/problems/single-number-ii/)
+
+给你一个整数数组 `nums` ，除某个元素仅出现 **一次** 外，其余每个元素都恰出现 **三次 。**请你找出并返回那个只出现了一次的元素。
+
+你必须设计并实现线性时间复杂度的算法且使用常数级空间来解决此问题。
+
+**示例 1：**
+
+```
+输入：nums = [2,2,3,2]
+输出：3
+```
+
+**示例 2：**
+
+```
+输入：nums = [0,1,0,1,0,1,99]
+输出：99
+```
+
+
+
+#### ⭐⭐⭐⭐⭐ 位运算 有限状态自动机 时O(n) 空O(n) 
+
+题解：
+
+**[137. 只出现一次的数字 II - 力扣（LeetCode）](https://leetcode.cn/problems/single-number-ii/solutions/8944/single-number-ii-mo-ni-san-jin-zhi-fa-by-jin407891/)**
+
+看完题解脑子烧了。理解是 将出现3次的为0,即`00→01→10→00→⋯`
+
+```C++
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int ones=0,twos = 0;
+        for(auto &num:nums)
+        {
+            ones = (ones^num)&(~twos);
+            twos = (twos^num)&(~ones);
+        }
+        return ones;
+    }
+};
+```
+
+
+
+        // 11001 x
+        //^00001
+        //=11000 
+        //=00110+1 ~x 取反+1
+    
+        //00→01→10→00→⋯
+    
+        //twoOne=01 n=0  01
+        //twoOne=00 n=0  00
+        //twoOne=01 n=1  10
+        //twoOne=00 n=1  01
+
+
+
+#### ⭐⭐⭐ 位运算 遍历统计 时O(n) 空O(1) 
+
+```C++
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        vector<int> bitCount(32,0);
+        for(auto num:nums)
+        {
+            for(int i=0;i<32;i++)
+            {
+                bitCount[i] += num&1;
+                num>>=1;
+            }
+        }
+        int res=0;
+        for(int i=0;i<32;i++)
+        {
+            if(bitCount[i]%3!=0)
+            {
+                res|=1<<i;
+            }
+        }
+        return res;
+    }
+};
+```
+
+[137. 只出现一次的数字 II - 力扣（LeetCode）](https://leetcode.cn/problems/single-number-ii/solutions/8944/single-number-ii-mo-ni-san-jin-zhi-fa-by-jin407891/)
+
+ 
+
+#### ⭐ 哈希表 时O(n) 空O(n) 
+
+```C++
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) 
+    {
+        //unordered_map  出现3次 就erase
+        unordered_map<int,int> umap;
+        for(auto i:nums)
+        {
+            if(umap[i]==2)umap.erase(i);
+            else umap[i]++;
+        }
+        auto [k,v] = *umap.begin();
+        return k;
+    }
+};
+```
+
