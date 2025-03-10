@@ -4531,3 +4531,22 @@ public:
  */
 ```
 
+
+
+>注意！树状数组索引＋1了
+>
+>因此用到 树状数组 的时候，需要+1
+>
+>且需要注意：
+>
+>```C++
+>	void add(int idx,int val)
+>    {
+>        //while(idx<numsVec.size()) //❌ ＋1才是对的
+>        while(idx<tree.size())//最好直接用tree
+>        {
+>            tree[idx]+=val;
+>            idx+=lowbit(idx);
+>        }
+>    }
+>```

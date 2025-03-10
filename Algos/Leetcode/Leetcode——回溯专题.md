@@ -1227,7 +1227,59 @@ public:
 };
 ```
 
+Y 
 
+以下未剪枝 剪枝看上面
+
+>以下两种写法不等价
+>```C++
+>//return dfs(j+1,num);//❌不可以这么写！它和下面的不等价！这个是false也会返回 直接结束了不判断后面
+>if(dfs(j+1,num))return true;//这个是只有true才返回 
+>```
+
+```c++
+class Solution {
+public:
+    bool splitString(string s) {
+        //先拆第一个
+        //先把前导0去掉
+        int is=0;
+        int n=s.size();
+        for(is=0;is<n&&s[is]=='0';is++);
+        bool flag=false;
+
+        auto dfs = [&](this auto&& dfs,int i,unsigned long long lastNum)->bool
+        {
+            if(i==n)
+            {
+                return true;
+            }
+            // for(int j=0;j<n;j++)//错误
+             for(int j=i;j<n;j++)
+            {
+                string subs = s.substr(i,j-i+1);
+                unsigned long long num = stoull(subs);
+                if(num==lastNum-1)
+                {
+                    //return dfs(j+1,num);//❌不可以这么写！它和下面的不等价！这个是false也会返回 直接结束了不判断后面
+                    if(dfs(j+1,num))return true;//这个是只有true才返回 
+                }
+            }
+            return false;
+        };
+
+        for(int i=is;i<n-1;i++)//至少要留一个字母 因为要被拆至少2个
+        {
+            string str = s.substr(is,i-is+1);
+            unsigned long long num = stoull(str);
+            if(dfs(i+1,num))return true;
+        }
+        
+    
+        return false;
+    }
+};
+```
 
 
 
