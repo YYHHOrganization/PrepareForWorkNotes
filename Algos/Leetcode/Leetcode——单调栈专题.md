@@ -257,7 +257,7 @@ public:
         {
             nums.push_back(nums[i]);
         }
-        //
+        //有可能可以用insert
         stack<int> stk;
         vector<int> res(2*n,-1);
         for(int i=0;i<2*n;i++)
@@ -311,7 +311,7 @@ stockSpanner.next(85);  // 返回 6
 
 
 
-方法1：非最好 
+方法1：不是最好 
 
 ```C++
 class StockSpanner {
@@ -333,7 +333,7 @@ public:
             stk.pop();
         }
         int res =n;//(=n-1 -(-1))
-        if(!stk.empty())res= n-stk.top()-1;//最后栈顶遗留的一定是大于它的 差距多大 说明中间跨度多大
+        if(!stk.empty())res= n-1-stk.top();//最后栈顶遗留的一定是大于它的 差距多大 说明中间跨度多大
         stk.push(n-1);
         return res ;
     }
@@ -349,6 +349,8 @@ public:
 
 
 方法2：更优雅
+
+应该是对应每日温度的从右往左 看山
 
 https://leetcode.cn/problems/online-stock-span/solutions/2470527/shi-pin-yi-ge-shi-pin-jiang-tou-dan-diao-cuk7/
 
@@ -462,3 +464,170 @@ public:
 链接：https://leetcode.cn/problems/car-fleet/solutions/1/dan-diao-zhan-chao-guo-9961-by-mi-lu-yu-ba1o2/ 
 
 以上链接也有倒叙遍历解题过程，感兴趣或有时间的话可以看看
+
+
+
+# 进阶（选做）
+
+## [1019. 链表中的下一个更大节点](https://leetcode.cn/problems/next-greater-node-in-linked-list/)
+
+给定一个长度为 `n` 的链表 `head`
+
+对于列表中的每个节点，查找下一个 **更大节点** 的值。也就是说，对于每个节点，找到它旁边的第一个节点的值，这个节点的值 **严格大于** 它的值。
+
+返回一个整数数组 `answer` ，其中 `answer[i]` 是第 `i` 个节点( **从1开始** )的下一个更大的节点的值。如果第 `i` 个节点没有下一个更大的节点，设置 `answer[i] = 0` 。
+
+ 
+
+**示例 1：**
+
+![img](assets/linkedlistnext1.jpg)
+
+```
+输入：head = [2,1,5]
+输出：[5,5,0]
+```
+
+
+
+```C++
+class Solution {
+public:
+    vector<int> nextLargerNodes(ListNode* head) 
+    {
+        //单调栈 维护一个单调栈 遇到大于栈顶的 就pop 记录
+        vector<int> res;
+        stack<pair<int,int>> stk;//idx,val  //注意要用pair  因为1、入栈的时候需要比较 值val的大小 2、更新的时候需要idx
+        ListNode*p = head;
+        int curIdx=0;
+        while(p)
+        {
+            while(!stk.empty()&&p->val>stk.top().second)
+            {
+                res[stk.top().first] = p->val;
+                stk.pop();
+            }
+            stk.emplace(curIdx,p->val);//0 1 
+            res.push_back(0);//0 0 
+            curIdx++;//1 2
+            p=p->next;
+        }
+        return res;
+    }
+};
+```
+
+>注意要用pair  因为：
+>
+>1、入栈的时候需要比较 值val的大小 
+>
+>2、更新的时候需要idx
+
+
+
+
+
+## [962. 最大宽度坡 ](https://leetcode.cn/problems/maximum-width-ramp/)  :cat:
+
+给定一个整数数组 `A`，*坡*是元组 `(i, j)`，其中 `i < j` 且 `A[i] <= A[j]`。这样的坡的宽度为 `j - i`。
+
+找出 `A` 中的坡的最大宽度，如果不存在，返回 0 。
+
+ 
+
+**示例 1：**
+
+```
+输入：[6,0,8,2,1,5]
+输出：4
+解释：
+最大宽度的坡为 (i, j) = (1, 5): A[1] = 0 且 A[5] = 5.
+```
+
+
+
+
+
+M1不推荐：O(n log n) 不过二分的写法（如lambda表达式 写比较函数这个可以看看）
+
+```C++
+class Solution {
+public:
+    int maxWidthRamp(vector<int>& nums) 
+    {
+        //并不是 最长递增子序列，因为不用连着
+        //看看有没有比栈顶的小 没有的话就不用放了因为没用 保持递- 
+        vector<int> vstk;
+        int maxRamp=0;
+        int n = nums.size();
+        vstk.push_back(0);
+        for(int i=1;i<nums.size();i++)
+        {
+            if(nums[i]<nums[vstk.back()])vstk.push_back(i);
+            else
+            {
+                //计算栈中 第一个<=nums[i]的值//10 11 111 2 3455 66 77
+                int target = nums[i];
+                auto it = lower_bound(vstk.begin(),vstk.end(),target,[&](int a,int val)
+                {
+                    return nums[a]>val;
+                });                
+                if(it!=vstk.end())
+                    maxRamp = max(maxRamp,i-*it);
+            }
+        }
+        return maxRamp;
+    }
+};
+```
+
+
+
+M2推荐
+
+链接：https://leetcode.cn/problems/maximum-width-ramp/solutions/666604/zui-da-kuan-du-po-dan-diao-zhan-cun-de-s-myj9/
+
+![image-20250311224806752](assets/image-20250311224806752.png)
+
+```C++
+while (!stack.isEmpty() && A[stack.peek()] <= A[i]) {
+
+    int pos = stack.pop();
+    maxWidth = Math.max(maxWidth, i - pos);
+}
+```
+
+最后返回最大宽坡度即可。
+
+
+
+```C++
+class Solution {
+public:
+    int maxWidthRamp(vector<int>& nums) 
+    {
+        //看看有没有比栈顶的小 没有的话就不用放了因为没用 保持递- 
+        stack<int> stk;
+        int n=nums.size();
+        //递减序列 单调栈
+        for(int i=0;i<n;i++)
+        {
+            if(stk.empty()||nums[i]<nums[stk.top()])
+                stk.push(i);
+        }
+        int maxRamp = 0;
+        for(int i=n-1;i>=0;i--)
+        {
+            while(!stk.empty()&& nums[i]>=nums[stk.top()])
+            {
+                maxRamp = max(maxRamp,i-stk.top());
+                stk.pop();
+            }
+        }
+        return maxRamp;
+    }
+};
+```
+
+
+
