@@ -8,7 +8,7 @@
 
 适用于需要计算连通块个数、大小的题目。部分题目也可以用 BFS 或并查集解决。
 
-## 1.[200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/)
+## 1.[200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/)(板子题)
 
 这里就是常规的做法。另一种做法是在把遍历到的grid都改成2（相当于在遍历过的陆地上插一面旗），这样也不需要visited数组了。
 
@@ -74,16 +74,16 @@ public:
         int m = grid.size();
         int n = grid[0].size();
         int res = 0;
-        auto dfs = [&](this auto&& dfs, int x, int y, int cnt)->int
+        auto dfs = [&](this auto&& dfs, int x, int y)->int
         {
+            grid[x][y] = 2;
+            int cnt = 1;
             for(int d=0;d<4;d++)
             {
                 int curX = x + dirs[d][0];
                 int curY = y + dirs[d][1];
-                if(curX<0 || curY<0 || curX>=m || curY>=n || !(grid[curX][curY]==1)) continue;
-                grid[curX][curY] = 2;
-                cnt++;
-                cnt = dfs(curX, curY, cnt);
+                if(curX<0 || curY<0 || curX>=m || curY>=n || (grid[curX][curY]!=1)) continue;
+                cnt += dfs(curX, curY);
             }
             return cnt;
         };
@@ -93,8 +93,7 @@ public:
             {
                 if(grid[i][j]==1)
                 {
-                    grid[i][j] = 2; //入口处手动改一下值
-                    int cnt = dfs(i,j,1);
+                    int cnt = dfs(i,j);
                     if(cnt>res) res=cnt;
                 }
             }
