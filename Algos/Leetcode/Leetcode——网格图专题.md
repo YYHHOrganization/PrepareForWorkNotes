@@ -315,7 +315,64 @@ public:
     }
 };
 ```
+Y
 
+```C++
+class Solution {
+public:
+    int dirs[4][2] = {-1,0, 1,0,0,-1,0,1};
+    int largestArea(vector<string>& grid) {
+        int m = grid.size(),n = grid[0].size();
+        vector<vector<int>> visited(m,vector<int>(n,0));
+        
+        //所有节点，非0的，没遍历过的 遍历 visited。如果碰到边界/走廊 return-1 否则返回面积
+        auto dfs = [&](this auto &&dfs,int x,int y,int target)->int
+        {
+            visited[x][y] = 1;
+            int cnt=1;
+            int area[4]={0};
+            for(int i=0;i<4;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]=='0')
+                {
+                    area[i]=-1; //不可以直接return -1！！会导致后续节点未被访问和标记。
+                }
+                else 
+                {
+                    if(visited[curX][curY]==1||grid[curX][curY]!=target)continue;
+                    area[i] = dfs(curX,curY,target);  
+                }
+            }
+            for(int i=0;i<4;i++)
+            {
+                if(area[i]==-1)return -1;
+                else cnt+=area[i];
+            }
+            return cnt;
+        };
+
+        int maxArea = 0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]!='0'&&visited[i][j]==0)
+                {
+                    int area =  dfs(i,j,grid[i][j]);
+                    maxArea = max(maxArea,area);
+                }
+            }
+        }
+        return maxArea;
+    }
+};
+```
+
+>` area[i]=-1; //不可以直接return -1！！会导致后续节点未被访问和标记。` ❌原因：
+>
+>**DFS提前终止导致未完全标记访问**：当DFS遇到走廊或边界时立即返回-1，导致后续节点未被访问和标记。这些未被标记的节点可能在后续循环中被误判为新区域，从而错误计算面积
 
 
 ## 5.[463. 岛屿的周长](https://leetcode.cn/problems/island-perimeter/)
@@ -364,6 +421,7 @@ public:
     }
 };
 ```
+
 
 
 
@@ -511,6 +569,49 @@ public:
 ```
 
 也可以把找到的边界存在一个数组当中，对其进行统一的赋值，这种方式可能会更容易写一些，而且也更不容易出现问题。
+
+Y
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> colorBorder(vector<vector<int>>& grid, int row, int col, int color) 
+    {
+        int dirs[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
+        vector<pair<int,int>> shouldColor;
+        int m = grid.size();
+        int n = grid[0].size();
+        vector<vector<int>> visited(m,vector<int>(n,0));
+        auto dfs = [&](this auto&& dfs, int x,int y,int target)->void
+        { 
+            visited[x][y] = 1;
+            bool isBorder=false;
+            for(int i=0;i<4;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                
+                if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]!=target)
+                {
+                    isBorder = true;
+                    continue;
+                }
+                if(!visited[curX][curY])dfs(curX,curY,target);
+                
+            }
+            if(isBorder)shouldColor.emplace_back(x,y);//是xy而  不是❌col row
+        };
+        dfs(row,col,grid[row][col]);
+        for(auto &[f,s] : shouldColor)
+        {
+            grid[f][s] = color;
+        }
+        return grid;
+    }
+};
+```
+
+H
 
 ```c++
 class Solution {

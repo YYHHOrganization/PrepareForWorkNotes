@@ -95,7 +95,7 @@
 
 # 一、定长滑动窗口
 
-基础套路（[1343. 大小为 K 且平均值大于等于阈值的子数组数目 - 力扣（LeetCode）](https://leetcode.cn/problems/number-of-sub-arrays-of-size-k-and-average-greater-than-or-equal-to-threshold/description/)）：
+## 【模板】基础套路（[1343. 大小为 K 且平均值大于等于阈值的子数组数目 - 力扣（LeetCode）](https://leetcode.cn/problems/number-of-sub-arrays-of-size-k-and-average-greater-than-or-equal-to-threshold/description/)）：
 
 ```c++
 class Solution {
@@ -109,7 +109,7 @@ public:
         {
             //1、inset
             sum+=arr[i];//假设k是3个 inset步骤 从2加到3
-            if(i<k-1)continue;//判断下标是否小于2(是否小于3个元素)
+            if(i<k-1)continue;//判断下标是否小于2(是否小于3个元素) 是的话就continue
             //2、update
             if(sum>=thresholdSum)res+=1;//判断一下总的sum,因为现在是3个元素
             //3、delete
@@ -585,7 +585,7 @@ public:
 
 - 与定长滑动窗口套路是类似的，在外层`for`循环中维护r指针，如果不满足要求则移动`l`指针直到满足要求为止。
 
-### （1）[3. 无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/)
+### （1）【模板】[3. 无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/) 
 
 代码如下：
 
@@ -1195,7 +1195,7 @@ public:
 
 一般题目都有「至少」的要求。
 
-### （1）[209. 长度最小的子数组 - 力扣（LeetCode）](https://leetcode.cn/problems/minimum-size-subarray-sum/description/)
+### （1）【模板】[209. 长度最小的子数组 - 力扣（LeetCode）](https://leetcode.cn/problems/minimum-size-subarray-sum/description/)
 
 与之前的题目相比，本题的更新逻辑需要注意一下，可以参考这篇题解中的两种做法：
 
@@ -1236,12 +1236,12 @@ public:
         int l=0;
         int sum = 0;
         for(int r=0;r<nums.size();r++){
-            sum+=nums[r];
-            while(sum-nums[l]>=target){
+            sum+=nums[r];//in
+            while(sum-nums[l]>=target){ //out
                 sum-=nums[l];
                 l++;
             }
-            if(sum>=target){ //有可能上面的while循环进不去
+            if(sum>=target){ //有可能上面的while循环进不去 //update
                 res = min(res, r-l+1);
             }
         }
@@ -1367,7 +1367,7 @@ public:
 
 滑动窗口的内层循环结束时，右端点**固定**在`right`，左端点在`0,1,....left-1`的所有子数组（子串）都是合法的，一共是`left`个。
 
-#### （1）[1358. 包含所有三种字符的子字符串数目](https://leetcode.cn/problems/number-of-substrings-containing-all-three-characters/)
+#### （1）【模板】[1358. 包含所有三种字符的子字符串数目](https://leetcode.cn/problems/number-of-substrings-containing-all-three-characters/)
 
 转换思维，每次让窗口内都正好只出现每个字符一次，每次移动完左指针直到达不成条件之后，左指针`l`之前的所有都符合题意。
 
@@ -1580,7 +1580,7 @@ public:
 
 滑动窗口的内层循环结束时，右端点**固定**在`right`，左端点在`left,left+1,...right`的所有子数组（子串）都是合法的，对应`right-left+1`个。
 
-#### （1）[713. 乘积小于 K 的子数组](https://leetcode.cn/problems/subarray-product-less-than-k/)
+#### （1）【模板】[713. 乘积小于 K 的子数组](https://leetcode.cn/problems/subarray-product-less-than-k/)
 
 **在写滑动窗口的时候，要注意有没有可能出现左边界`l`溢出的问题，即`while`循环针对特殊的测试用例会出现坏逻辑的情况。**
 
@@ -1709,7 +1709,7 @@ public:
 
 ![image-20250221221544733](Leetcode%E2%80%94%E2%80%94%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E5%8F%8C%E6%8C%87%E9%92%88%E4%B8%93%E9%A2%98.assets/image-20250221221544733.png)
 
-#### （1）[930. 和相同的二元子数组](https://leetcode.cn/problems/binary-subarrays-with-sum/)
+#### （1）【模板】[930. 和相同的二元子数组](https://leetcode.cn/problems/binary-subarrays-with-sum/)
 
 ```c++
 class Solution {
@@ -1850,7 +1850,7 @@ public:
 
 两个指针 `left=0, right=n−1`，从数组的两端开始，向中间移动，这叫相向双指针。上面的滑动窗口相当于同向双指针。
 
-### （1）[344. 反转字符串](https://leetcode.cn/problems/reverse-string/)
+### （1）【模板】[344. 反转字符串](https://leetcode.cn/problems/reverse-string/)
 
 ```c++
 class Solution {
