@@ -381,6 +381,8 @@ public:
 
 ## [853. 车队 ](https://leetcode.cn/problems/car-fleet/) :call_me_hand: :cat:
 
+> 单调栈的想法是真的不好想。
+
 在一条单行道上，有 `n` 辆车开往同一目的地。目的地是几英里以外的 `target` 。
 
 给定两个整数数组 `position` 和 `speed` ，长度都是 `n` ，其中 `position[i]` 是第 `i` 辆车的位置， `speed[i]` 是第 `i` 辆车的速度(单位是英里/小时)。
@@ -463,7 +465,7 @@ public:
 
 链接：https://leetcode.cn/problems/car-fleet/solutions/1/dan-diao-zhan-chao-guo-9961-by-mi-lu-yu-ba1o2/ 
 
-以上链接也有倒叙遍历解题过程，感兴趣或有时间的话可以看看
+以上链接也有倒序遍历解题过程，感兴趣或有时间的话可以看看
 
 
 
@@ -630,4 +632,176 @@ public:
 ```
 
 
+
+
+
+# 矩形
+
+## 1.[84. 柱状图中最大的矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/)（板子题）
+
+对于这种类型题，应当可以往一维单调栈上想：单调栈的任务可以是找某个索引左/右第一个满足某个条件的值。本题就是类似的情况。
+
+> 给定 *n* 个非负整数，用来表示柱状图中各个柱子的高度。每个柱子彼此相邻，且宽度为 1 。
+>
+> 求在该柱状图中，能够勾勒出来的矩形的最大面积。
+>
+>  
+>
+> **示例 1:**
+>
+> ![img](assets/histogram.jpg)
+>
+> ```
+> 输入：heights = [2,1,5,6,2,3]
+> 输出：10
+> 解释：最大的矩形为图中红色区域，面积为 10
+> ```
+>
+> **示例 2：**
+>
+> ![img](assets/histogram-1.jpg)
+>
+> ```
+> 输入： heights = [2,4]
+> 输出： 4
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= heights.length <=105`
+> - `0 <= heights[i] <= 104`
+
+主要参考的题解：[84. 柱状图中最大的矩形 - 力扣（LeetCode）](https://leetcode.cn/problems/largest-rectangle-in-histogram/solutions/2695467/dan-diao-zhan-fu-ti-dan-pythonjavacgojsr-89s7/)。
+
+其实就是枚举每个位置，用单调栈算出对于每个位置来说，左侧第一个比它小的值和右侧第一个比它小的值，边界条件为：如果索引<0，则为0，如果索引>n-1，则为n-1。用两轮O(n)的复杂度计算左侧和右侧的单调栈，然后再在最后一轮循环中计算结果即可。代码如下：
+
+```c++
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        int n = heights.size();
+        vector<int> lefts(n, -1);
+        vector<int> rights(n, n); //注意这个初值的边界情况设置 
+
+        stack<int> stk;
+        //step 1:算一遍右侧第一个<height[i]的值
+        for(int i=0;i<n;i++)
+        {
+            while(!stk.empty() && heights[i]<heights[stk.top()])
+            {
+                int cur = stk.top();
+                rights[cur] = i;
+                stk.pop();
+            }
+            stk.push(i);
+        }
+        
+        //step 2: 算一遍左侧第一个<height[i]的值,其实只要遍历顺序反过来就行,逻辑基本不变
+        stack<int> stk2;
+        for(int i = n-1;i>=0;i--)
+        {
+            while(!stk2.empty() && heights[i]<heights[stk2.top()])
+            {
+                int cur = stk2.top();
+                lefts[cur] = i;
+                stk2.pop();
+            }
+            stk2.push(i);
+        }
+        
+        int result = 0;
+        //step3:遍历left和right数组,求解结果
+        for(int i=0;i<n;i++)
+        {
+            int area = heights[i] * (rights[i]-lefts[i]-1);
+            result = max(result, area);
+        }
+        return result;
+    }
+};
+```
+
+> 这题考的基础模型其实就是：在一维数组中对每一个数找到第一个比自己小的元素。这类“在一维数组中找第一个满足某种条件的数”的场景就是典型的单调栈应用场景。
+
+
+
+## 2.[1793. 好子数组的最大分数](https://leetcode.cn/problems/maximum-score-of-a-good-subarray/)
+
+> 给你一个整数数组 `nums` **（下标从 0 开始）**和一个整数 `k` 。
+>
+> 一个子数组 `(i, j)` 的 **分数** 定义为 `min(nums[i], nums[i+1], ..., nums[j]) * (j - i + 1)` 。一个 **好** 子数组的两个端点下标需要满足 `i <= k <= j` 。
+>
+> 请你返回 **好** 子数组的最大可能 **分数** 。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [1,4,3,7,4,5], k = 3
+> 输出：15
+> 解释：最优子数组的左右端点下标是 (1, 5) ，分数为 min(4,3,7,4,5) * (5-1+1) = 3 * 5 = 15 。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums = [5,5,4,5,4,1,1,1], k = 0
+> 输出：20
+> 解释：最优子数组的左右端点下标是 (0, 4) ，分数为 min(5,5,4,5,4) * (4-0+1) = 4 * 5 = 20 。
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= nums.length <= 105`
+> - `1 <= nums[i] <= 2 * 104`
+> - `0 <= k < nums.length`
+
+跟柱状图中的最大矩形这道题目有共通之处。对每个索引找其左右比它“矮”的第一个索引值，即可找到以当前索引为min值的最大分数。具体代码如下：
+```c++
+//暂时先不优化算法的空间复杂度了，要点是要理解这个算法。
+
+```
+
+
+
+# 贡献法
+
+## 1.[907. 子数组的最小值之和](https://leetcode.cn/problems/sum-of-subarray-minimums/)（板子题）
+
+> 给定一个整数数组 `arr`，找到 `min(b)` 的总和，其中 `b` 的范围为 `arr` 的每个（连续）子数组。
+>
+> 由于答案可能很大，因此 **返回答案模 `10^9 + 7`** 。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：arr = [3,1,2,4]
+> 输出：17
+> 解释：
+> 子数组为 [3]，[1]，[2]，[4]，[3,1]，[1,2]，[2,4]，[3,1,2]，[1,2,4]，[3,1,2,4]。 
+> 最小值为 3，1，2，4，1，1，2，1，1，1，和为 17。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：arr = [11,81,94,43,3]
+> 输出：444
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= arr.length <= 3 * 104`
+> - `1 <= arr[i] <= 3 * 104`
+
+暴力法应该可以过，但作为年轻人的第一道贡献法题目，直接看答案了。可以看这篇题解：[907. 子数组的最小值之和 - 力扣（LeetCode）](https://leetcode.cn/problems/sum-of-subarray-minimums/solutions/1930857/gong-xian-fa-dan-diao-zhan-san-chong-shi-gxa5/)。
 

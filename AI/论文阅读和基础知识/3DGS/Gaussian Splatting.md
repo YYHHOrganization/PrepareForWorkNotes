@@ -493,7 +493,95 @@ float my_radius = ceil(3.f * sqrt(max(lambda1, lambda2))); //注意这里有一�
 
 #### （ii）step 2：把投影完的圆覆盖的像素都计算出来+tiled based
 
-==看到1：11：54处，剩下的有时间继续看。==
+16*16的格子会被认定为一个tile，具体在函数`getRect(point_image, my_radius, rect_min, rect_max, grid);`中会计算出步骤（i）中计算得到的圆覆盖了哪些tile。这个函数在这里：[diff-gaussian-rasterization/cuda_rasterizer/auxiliary.h at 59f5f77e3ddbac3ed9db93ec2cfe99ed6c5d121d · graphdeco-inria/diff-gaussian-rasterization](https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/59f5f77e3ddbac3ed9db93ec2cfe99ed6c5d121d/cuda_rasterizer/auxiliary.h#L46)
+
+具体为：
+
+```c++
+__forceinline__ __device__ void getRect(const float2 p, int max_radius, uint2& rect_min, uint2& rect_max, dim3 grid)
+{
+	rect_min = {
+		min(grid.x, max((int)0, (int)((p.x - max_radius) / BLOCK_X))),
+		min(grid.y, max((int)0, (int)((p.y - max_radius) / BLOCK_Y)))
+	};
+	rect_max = {
+		min(grid.x, max((int)0, (int)((p.x + max_radius + BLOCK_X - 1) / BLOCK_X))), //向上取整的写法，在算法学习中有所记载
+		min(grid.y, max((int)0, (int)((p.y + max_radius + BLOCK_Y - 1) / BLOCK_Y)))
+	};
+}
+```
+
+即计算圆心-半径，圆心+半径分别在哪些范围中，从而得到覆盖了哪些tile，而主函数`preprocessCUDA`后面有一句：
+```c++
+tiles_touched[idx] = (rect_max.y - rect_min.y) * (rect_max.x - rect_min.x);
+```
+
+用于保存每个圆覆盖了几个tile。
+
+> 这里需要说明的一件事，就是上文的step 1，step 2的步骤是用圆去近似椭圆（实际上近似成圆会变得更鼓，引入一些额外覆盖判断，但不会漏判），但实际上还是有保存splatting后近似前的椭圆的。`此时在计算3D GS对像素的贡献的时候，还是以投影后的2D椭圆为依据的。`相对来说就不会太影响rendering的结果。
+
+
+
+### （2）rasterizer_impl.cu
+
+#### （i）step 3：计算Gaussian球的前后排列顺序
+
+复习一下这张图：
+
+<img src="assets/image-20250313105007338.png" alt="image-20250313105007338" style="zoom:67%;" />
+
+其中tile ID占据32位，而3D GS的深度也占据32位（总共64位），于是就可以进行排序了了。首先排序tileID，当排序之后，tile ID小的会排在前面。同一tile ID的情况下，排序深度，3D GS depth小的会排在前面。（注意，3D GS depth的值和编号是没关系的，所以可能会出现右上角的200排在12的前面，这是没有问题的）
+
+具体的函数实现在这里（关于排序的部分）：` CudaRasterizer::Rasterizer::forward`
+
+```c++
+// Compute prefix sum over full list of touched tile counts by Gaussians
+// E.g., [2, 3, 0, 2, 1] -> [2, 5, 5, 7, 8]
+CHECK_CUDA(cub::DeviceScan::InclusiveSum(geomState.scanning_space, geomState.scan_size, geomState.tiles_touched, geomState.point_offsets, P), debug)
+
+// Retrieve total number of Gaussian instances to launch and resize aux buffers
+int num_rendered;
+CHECK_CUDA(cudaMemcpy(&num_rendered, geomState.point_offsets + P - 1, sizeof(int), cudaMemcpyDeviceToHost), debug);
+
+size_t binning_chunk_size = required<BinningState>(num_rendered);
+char* binning_chunkptr = binningBuffer(binning_chunk_size);
+BinningState binningState = BinningState::fromChunk(binning_chunkptr, num_rendered);
+
+// For each instance to be rendered, produce adequate [ tile | depth ] key 
+// and corresponding dublicated Gaussian indices to be sorted
+duplicateWithKeys << <(P + 255) / 256, 256 >> > (
+    P,
+    geomState.means2D,
+    geomState.depths,
+    geomState.point_offsets,
+    binningState.point_list_keys_unsorted,
+    binningState.point_list_unsorted,
+    radii,
+    tile_grid)
+CHECK_CUDA(, debug)
+
+int bit = getHigherMsb(tile_grid.x * tile_grid.y);
+
+// Sort complete list of (duplicated) Gaussian indices by keys
+CHECK_CUDA(cub::DeviceRadixSort::SortPairs(
+    binningState.list_sorting_space,
+    binningState.sorting_size,
+    binningState.point_list_keys_unsorted, binningState.point_list_keys,
+    binningState.point_list_unsorted, binningState.point_list,
+    num_rendered, 0, 32 + bit), debug)
+
+CHECK_CUDA(cudaMemset(imgState.ranges, 0, tile_grid.x * tile_grid.y * sizeof(uint2)), debug);
+
+// Identify start and end of per-tile workloads in sorted list
+if (num_rendered > 0)
+    identifyTileRanges << <(num_rendered + 255) / 256, 256 >> > (
+        num_rendered,
+        binningState.point_list_keys,
+        imgState.ranges);
+CHECK_CUDA(, debug)
+```
+
+==CUDA代码不是很好阅读，现在看到1：39：55，感觉还得去专门学习一下CUDA，这可以从Compute Shader的熟练掌握开始。（CUDA的视频看到第1个的13:47秒位置）==
 
 
 
