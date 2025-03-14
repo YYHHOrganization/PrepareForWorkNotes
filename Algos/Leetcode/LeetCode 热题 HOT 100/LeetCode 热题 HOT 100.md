@@ -1588,145 +1588,6 @@ public:
 
 
 
-## 股票问题系列
-
-### [121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)
-
-> 给定一个数组 `prices` ，它的第 `i` 个元素 `prices[i]` 表示一支给定股票第 `i` 天的价格。
->
-> 你只能选择 **某一天** 买入这只股票，并选择在 **未来的某一个不同的日子** 卖出该股票。设计一个算法来计算你所能获取的最大利润。
->
-> 返回你可以从这笔交易中获取的最大利润。如果你不能获取任何利润，返回 `0` 。
->
->  
->
-> **示例 1：**
->
-> ```
-> 输入：[7,1,5,3,6,4]
-> 输出：5
-> 解释：在第 2 天（股票价格 = 1）的时候买入，在第 5 天（股票价格 = 6）的时候卖出，最大利润 = 6-1 = 5 。
->      注意利润不能是 7-1 = 6, 因为卖出价格需要大于买入价格；同时，你不能在买入前卖出股票。
-> ```
->
-> **示例 2：**
->
-> ```
-> 输入：prices = [7,6,4,3,1]
-> 输出：0
-> 解释：在这种情况下, 没有交易完成, 所以最大利润为 0。
-> ```
->
->  
->
-> **提示：**
->
-> - `1 <= prices.length <= 105`
-> - `0 <= prices[i] <= 104`
-
-这道题目可以用一些贪心的思路来做，维护左侧的最小值minValue，同时在遍历数组的时候更新res的值（比较`prices[i]-minValue`会不会更大）。
-
-代码如下：
-
-```c++
-class Solution {
-public:
-    int maxProfit(vector<int>& prices) {
-        //可以选择完全不买
-        int res = 0;
-        int minValue = INT_MAX;
-        for(int price:prices)
-        {
-            if(price < minValue) minValue = price;
-            res = max(res, price - minValue);
-        }
-        return res;
-    }
-};
-```
-
-
-
-### [309. 买卖股票的最佳时机含冷冻期](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-cooldown/)
-
-> 给定一个整数数组`prices`，其中第 `prices[i]` 表示第 `*i*` 天的股票价格 。
->
-> 设计一个算法计算出最大利润。在满足以下约束条件下，你可以尽可能地完成更多的交易（多次买卖一支股票）:
->
-> - 卖出股票后，你无法在第二天买入股票 (即冷冻期为 1 天)。
->
-> **注意：**你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
->
->  
->
-> **示例 1:**
->
-> ```
-> 输入: prices = [1,2,3,0,2]
-> 输出: 3 
-> 解释: 对应的交易状态为: [买入, 卖出, 冷冻期, 买入, 卖出]
-> ```
->
-> **示例 2:**
->
-> ```
-> 输入: prices = [1]
-> 输出: 0
-> ```
->
->  
->
-> **提示：**
->
-> - `1 <= prices.length <= 5000`
-> - `0 <= prices[i] <= 1000`
-
-> 推荐先完成：[122. 买卖股票的最佳时机 II](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)（状态机DP的经典题目，题解可以看[买卖股票的最佳时机【基础算法精讲 21】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ho4y1W7QK/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)）。该题的代码如下：
->
-> ```c++
-> class Solution {
-> public:
->     int maxProfit(vector<int>& prices) {
->         int n = prices.size();
->         //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
->         int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
->         //dp[0][1] = -INT_MAX;
->         for(int i=0;i<n;i++)
->         {
->             // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
->             // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
->             int f = f1;
->             f1 = max(f1, f2 + prices[i]);
->             f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
->         }
->         //return dp[n][0];
->         return f1;
->     }
-> };
-> ```
-
-做完上面的题目之后，接下来就可以来看这道带有冷冻期的题目了。这道题目与122唯一的区别就是冷冻期，即卖出股票的第二天是不能够买入股票的，这就很像`打家劫舍`这道题目，因此只要把未持有->持有的状态机变换（即购买了）的dp改成从i-2的地方转移过来的即可（买入的情况，不能是前一天直接过来），代码如下：
-
-```c++
-class Solution {
-public:
-    int maxProfit(vector<int>& prices) {
-        //f[-2,0]=0, 不持有股票的时候利润都是0
-        //f(i, 0) = max(f(i-1,0), f(i-1,1)+prices[i]);
-        //f(i, 1) = max(f(i-1, 1), f(i-2, 0)-prices[i]); 前一天不能有卖出操作,买入只能从i-2转移过来
-        int n = prices.size();
-        vector<vector<int>> dp(n+2, vector<int>(2));
-        dp[1][1] = -INT_MAX; //统一把dp[i]的下标索引+2, 这个相当于原来的dp[-1][1] 
-        for(int i=0;i<n;i++)
-        {
-            dp[i+2][0] = max(dp[i+1][0], dp[i+1][1] + prices[i]);
-            dp[i+2][1] = max(dp[i+1][1], dp[i][0] - prices[i]);
-        }
-        return dp[n+1][0]; //不持有赚的更多
-```
-
-
-
 ## 前后缀分解
 
 ### [238. 除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
@@ -1792,12 +1653,184 @@ public:
         return res;
     }
 };
-以下的这段解释感觉还是比较有用的：
 ```
 
+
+
+#### 优化：不使用额外空间
+
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        // 1 2  3  4
+        //   1  2  6  前缀乘积
+        //24 12 4	  后缀乘积
+        // 0  1 2 3 下标
+        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
+        vector<int> suffixProduct(n,1);//不用+1
+        for(int i=n-2;i>=0;i--)
+        {
+            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
+        }
+        int preProduct =1;
+        for(int i=0;i<n;i++)
+        {
+            // 此时 pre 为 nums[0] 到 nums[i-1] 的乘积，直接乘到 suf[i] 中
+            suffixProduct[i] = suffixProduct[i] * preProduct;
+            preProduct*=nums[i];
+        }
+        return suffixProduct;
+    }
+};
+```
+
+
+
+## 股票问题系列
+
+### [121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)
+
+> 给定一个数组 `prices` ，它的第 `i` 个元素 `prices[i]` 表示一支给定股票第 `i` 天的价格。
+>
+> 你只能选择 **某一天** 买入这只股票，并选择在 **未来的某一个不同的日子** 卖出该股票。设计一个算法来计算你所能获取的最大利润。
+>
+> 返回你可以从这笔交易中获取的最大利润。如果你不能获取任何利润，返回 `0` 。
+>
+> 
+>
+> **示例 1：**
+>
+> ```
+> 输入：[7,1,5,3,6,4]
+> 输出：5
+> 解释：在第 2 天（股票价格 = 1）的时候买入，在第 5 天（股票价格 = 6）的时候卖出，最大利润 = 6-1 = 5 。
+>   注意利润不能是 7-1 = 6, 因为卖出价格需要大于买入价格；同时，你不能在买入前卖出股票。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：prices = [7,6,4,3,1]
+> 输出：0
+> 解释：在这种情况下, 没有交易完成, 所以最大利润为 0。
+> ```
+>
+> 
+>
+> **提示：**
+>
+> - `1 <= prices.length <= 105`
+> - `0 <= prices[i] <= 104`
+
+这道题目可以用一些贪心的思路来做，维护左侧的最小值minValue，同时在遍历数组的时候更新res的值（比较`prices[i]-minValue`会不会更大）。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        //可以选择完全不买
+        int res = 0;
+        int minValue = INT_MAX;
+        for(int price:prices)
+        {
+            if(price < minValue) minValue = price;
+            res = max(res, price - minValue);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [309. 买卖股票的最佳时机含冷冻期](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-cooldown/)
+
+> 给定一个整数数组`prices`，其中第 `prices[i]` 表示第 `*i*` 天的股票价格 。
+>
+> 设计一个算法计算出最大利润。在满足以下约束条件下，你可以尽可能地完成更多的交易（多次买卖一支股票）:
+>
+> - 卖出股票后，你无法在第二天买入股票 (即冷冻期为 1 天)。
+>
+> **注意：**你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+>
+> 
+>
+> **示例 1:**
+>
+> ```
+> 输入: prices = [1,2,3,0,2]
+> 输出: 3 
+> 解释: 对应的交易状态为: [买入, 卖出, 冷冻期, 买入, 卖出]
+> ```
+>
+> **示例 2:**
+>
+> ```
+> 输入: prices = [1]
+> 输出: 0
+> ```
+>
+> 
+>
+> **提示：**
+>
+> - `1 <= prices.length <= 5000`
+> - `0 <= prices[i] <= 1000`
+
+> 推荐先完成：[122. 买卖股票的最佳时机 II](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)（状态机DP的经典题目，题解可以看[买卖股票的最佳时机【基础算法精讲 21】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ho4y1W7QK/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)）。该题的代码如下：
+>
+> ```c++
+> class Solution {
+> public:
+>  int maxProfit(vector<int>& prices) {
+>      int n = prices.size();
+>      //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
+>      int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
+>      //dp[0][1] = -INT_MAX;
+>      for(int i=0;i<n;i++)
+>      {
+>          // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
+>          // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
+>          int f = f1;
+>          f1 = max(f1, f2 + prices[i]);
+>          f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
+>      }
+>      //return dp[n][0];
+>      return f1;
+>  }
+> };
+> ```
+
+做完上面的题目之后，接下来就可以来看这道带有冷冻期的题目了。这道题目与122唯一的区别就是冷冻期，即卖出股票的第二天是不能够买入股票的，这就很像`打家劫舍`这道题目，因此只要把未持有->持有的状态机变换（即购买了）的dp改成从i-2的地方转移过来的即可（买入的情况，不能是前一天直接过来），代码如下：
+
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        //f[-2,0]=0, 不持有股票的时候利润都是0
+        //f(i, 0) = max(f(i-1,0), f(i-1,1)+prices[i]);
+        //f(i, 1) = max(f(i-1, 1), f(i-2, 0)-prices[i]); 前一天不能有卖出操作,买入只能从i-2转移过来
+        int n = prices.size();
+        vector<vector<int>> dp(n+2, vector<int>(2));
+        dp[1][1] = -INT_MAX; //统一把dp[i]的下标索引+2, 这个相当于原来的dp[-1][1] 
+        for(int i=0;i<n;i++)
+        {
+            dp[i+2][0] = max(dp[i+1][0], dp[i+1][1] + prices[i]);
+            dp[i+2][1] = max(dp[i+1][1], dp[i][0] - prices[i]);
+        }
+        return dp[n+1][0]; //不持有赚的更多
+```
+
+以下的这段解释感觉还是比较有用的：
+
+
 ![image-20250314164054742](assets/image-20250314164054742.png)
-
-
 
 ### 其他股票系列题目补充（状态机DP）
 
@@ -1921,37 +1954,6 @@ public:
         }
         return dp[k+1][0];
 
-```
-
-#### 优化：不使用额外空间
-
-```C++
-class Solution {
-public:
-    vector<int> productExceptSelf(vector<int>& nums) {
-        // 整个乘起来 除以 ni 题目不让用
-        //记录前缀乘积和后缀乘积，乘起来
-        int n=nums.size();
-        // 1 2  3  4
-        //   1  2  6  前缀乘积
-        //24 12 4	  后缀乘积
-        // 0  1 2 3 下标
-        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
-        vector<int> suffixProduct(n,1);//不用+1
-        for(int i=n-2;i>=0;i--)
-        {
-            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
-        }
-        int preProduct =1;
-        for(int i=0;i<n;i++)
-        {
-            // 此时 pre 为 nums[0] 到 nums[i-1] 的乘积，直接乘到 suf[i] 中
-            suffixProduct[i] = suffixProduct[i] * preProduct;
-            preProduct*=nums[i];
-        }
-        return suffixProduct;
-    }
-};
 ```
 
 
@@ -2600,6 +2602,14 @@ public:
 };
 ```
 
-
-### 
+> “同归于尽消杀法” ：
+>
+> 由于多数超过50%, 比如100个数，那么多数至少51个，剩下少数是49个。
+>
+> 1. 第一个到来的士兵，直接插上自己阵营的旗帜占领这块高地，此时领主 winner 就是这个阵营的人，现存兵力 count = 1。
+> 2. 如果新来的士兵和前一个士兵是同一阵营，则集合起来占领高地，领主不变，winner 依然是当前这个士兵所属阵营，现存兵力 count++；
+> 3. 如果新来到的士兵不是同一阵营，则前方阵营派一个士兵和它同归于尽。 此时前方阵营兵力count --。（即使双方都死光，这块高地的旗帜 winner 依然不变，因为已经没有活着的士兵可以去换上自己的新旗帜）
+> 4. 当下一个士兵到来，发现前方阵营已经没有兵力，新士兵就成了领主，winner 变成这个士兵所属阵营的旗帜，现存兵力 count ++。
+>
+> 就这样各路军阀一直以这种以一敌一同归于尽的方式厮杀下去，直到少数阵营都死光，那么最后剩下的几个必然属于多数阵营，winner 就是多数阵营。（多数阵营 51个，少数阵营只有49个，死剩下的2个就是多数阵营的人）
 
