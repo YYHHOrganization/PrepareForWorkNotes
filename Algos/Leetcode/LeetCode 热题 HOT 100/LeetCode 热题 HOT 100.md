@@ -870,9 +870,9 @@ public:
             {
                 // 如果超出容量，删除双向链表的尾部节点
                 DLinkedNode* removed = removeTail();
-                // 删除哈希表中对应的项
-                cache.erase(removed->key);
-                // 防止内存泄漏
+                // 删除哈希表中对应的项 //！！！不要忘了
+                cache.erase(removed->key); 
+                // 防止内存泄漏 //只有大于容量的时候 才能delete
                 delete removed;
                 --size;
             }
@@ -911,6 +911,331 @@ public:
         DLinkedNode* node = tail->prev;
         removeNode(node);
         return node;
+    }
+};
+```
+
+
+
+### [21. 合并两个有序链表](https://leetcode.cn/problems/merge-two-sorted-lists/)
+
+将两个升序链表合并为一个新的 **升序** 链表并返回。新链表是通过拼接给定的两个链表的所有节点组成的。 
+
+ 
+
+**示例 1：**
+
+![img](assets/merge_ex1.jpg)
+
+```
+输入：l1 = [1,2,4], l2 = [1,3,4]
+输出：[1,1,2,3,4,4]
+```
+#### M1: 迭代
+```C++
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+        ListNode* head =new ListNode();
+        ListNode* p = head;
+        while(list1&&list2)
+        {
+            if(list1->val<list2->val)
+            {
+                p->next = list1;
+                list1=list1->next;
+            }
+            else
+            {
+                p->next = list2;
+                list2=list2->next;
+            }
+            p=p->next;
+        }
+        p->next = list1==nullptr?list2:list1;
+        return head->next;
+    }
+};
+```
+
+#### M2:递归
+
+```C++
+class Solution {
+public:
+    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+        if(list1==nullptr)return list2;
+        else if(list2==nullptr)return list1;
+        else if(list1->val<list2->val)
+        {
+            list1->next = mergeTwoLists(list1->next,list2);
+            return list1;
+        }
+        else
+        {
+            list2->next = mergeTwoLists(list1,list2->next);
+            return list2;
+        }
+    }
+};
+```
+
+
+
+### 排序链表
+
+
+
+#### 排序链表前置题1 - [876. 链表的中间结点](https://leetcode.cn/problems/middle-of-the-linked-list/)
+
+给你单链表的头结点 `head` ，请你找出并返回链表的中间结点。
+
+如果有两个中间结点，则返回第二个中间结点。
+
+ 
+
+**示例 1：**
+
+![img](assets/lc-midlist1.jpg)
+
+```
+输入：head = [1,2,3,4,5]
+输出：[3,4,5]
+解释：链表只有一个中间结点，值为 3 。
+```
+
+
+
+```C++
+class Solution {
+public:
+    ListNode* middleNode(ListNode* head) 
+    {
+        ListNode* l=head;
+        ListNode* r=head;      
+        while(r&&r->next)
+        {
+            l=l->next;
+            r=r->next->next;
+        }
+        return l;
+    }
+};
+```
+
+```c++
+        //1 2 3 4 5
+        //lr
+        //  l r
+        //    l   r
+        //1 2 3 4 5 6
+        //lr
+        //  l r
+        //    l   r
+        //      l     r  
+```
+
+
+
+#### 排序链表前置题2 - [21. 合并两个有序链表](https://leetcode.cn/problems/merge-two-sorted-lists/) 
+
+上一题就是
+
+
+
+#### 排序链表
+
+给你链表的头结点 `head` ，请将其按 **升序** 排列并返回 **排序后的链表** 。
+
+**示例 1：**
+
+![img](assets/sort_list_1.jpg)
+
+```
+输入：head = [4,2,1,3]
+输出：[1,2,3,4]
+```
+
+
+
+```C++
+class Solution {
+public:
+    ListNode* midNode(ListNode* head)
+    {
+        ListNode *l = head,*r =head,*pre =head;
+        while(r&&r->next)
+        {
+            pre = l;
+            l=l->next;
+            r=r->next->next;
+        }
+        pre->next = nullptr;
+        return l;
+    }
+    ListNode* mergeList(ListNode* l1,ListNode* l2)
+    {
+        if(l1==nullptr)return l2;
+        else if(l2==nullptr) return l1;
+        else if(l1->val < l2->val)
+        {
+            l1->next = mergeList(l1->next,l2);
+            return l1;
+        }
+        else
+        {
+            l2->next = mergeList(l1,l2->next);
+            return l2;
+        }
+    }
+    ListNode* sortList(ListNode* head) 
+    {
+        //原地归并排序
+        //1、快慢指针分两边
+        //2、每边都合并有序链表
+        if(head==nullptr)return nullptr;
+        if(head->next==nullptr) return head;//!!如果只有1个节点就不用排序 不然会错
+        ListNode* p = midNode(head);
+        head=sortList(head);
+        p=sortList(p);
+        return mergeList(head,p);
+    }
+};
+```
+
+>只有一个节点的时候一定要return
+>
+>`if(head->next==nullptr) return head;//!!如果只有1个节点就不用排序 不然会错`
+>
+>在归并排序的递归过程中，终止条件必须正确处理链表只有一个节点的情况。若删除`if(head->next==nullptr) return head;`，当链表只剩一个节点时，会无限递归调用`midNode`并分割链表，导致栈溢出。具体原因如下：
+>
+>1. **终止条件缺失**：递归未在单个节点时终止，继续进入`midNode`函数。
+>2. **链表分割问题**：单个节点被分割为自身和空链表，再次递归处理自身。
+>3. **无限递归**：每次处理同一节点，触发无限递归调用，最终导致栈溢出。
+>
+>**示例**：链表仅含节点`A`。
+>- 调用`sortList(A)`，因终止条件缺失，进入`midNode`。
+>- `midNode`返回`A`，随后递归调用`sortList(A)`。
+>- 重复上述步骤，形成无限循环。
+>
+>**结论**：必须保留该条件以确保递归正确终止，避免栈溢出错误。
+
+
+
+
+
+### [141. 环形链表](https://leetcode.cn/problems/linked-list-cycle/)
+
+给你一个链表的头节点 `head` ，判断链表中是否有环。
+
+如果链表中有某个节点，可以通过连续跟踪 `next` 指针再次到达，则链表中存在环。 为了表示给定链表中的环，评测系统内部使用整数 `pos` 来表示链表尾连接到链表中的位置（索引从 0 开始）。**注意：`pos` 不作为参数进行传递** 。仅仅是为了标识链表的实际情况。
+
+*如果链表中存在环* ，则返回 `true` 。 否则，返回 `false` 。
+
+**示例 1：**
+
+![img](assets/circularlinkedlist.png)
+
+```
+输入：head = [3,2,0,-4], pos = 1
+输出：true
+解释：链表中有一个环，其尾部连接到第二个节点。
+```
+
+```C++
+class Solution {
+public:
+    bool hasCycle(ListNode* head) {
+        ListNode* slow = head;
+        ListNode* fast = head; // 乌龟和兔子同时从起点出发
+        while (fast && fast->next)
+        {
+            slow = slow->next; // 乌龟走一步
+            fast = fast->next->next; // 兔子走两步
+            if (fast == slow) // 兔子追上乌龟（套圈），说明有环
+            { 
+                return true;
+            }
+        }
+        return false; // 访问到了链表末尾，无环
+    }
+};
+```
+
+
+
+>**单节点有环的情况（自环）：**
+>
+>- 头节点的 `next` 指向自身。
+>- 第一次循环：
+>  - `slow` 移动到 `head->next`（即自身）。
+>  - `fast` 移动到 `fast->next->next`（即 `head->next->next`，由于自环，实际仍指向自身）。
+>  - `slow` 和 `fast` 相遇，返回 `true`，正确检测环。
+
+
+
+### [142. 环形链表 II](https://leetcode.cn/problems/linked-list-cycle-ii/)
+
+给定一个链表的头节点  `head` ，返回链表开始入环的第一个节点。 *如果链表无环，则返回 `null`。*
+
+如果链表中有某个节点，可以通过连续跟踪 `next` 指针再次到达，则链表中存在环。 为了表示给定链表中的环，评测系统内部使用整数 `pos` 来表示链表尾连接到链表中的位置（**索引从 0 开始**）。如果 `pos` 是 `-1`，则在该链表中没有环。**注意：`pos` 不作为参数进行传递**，仅仅是为了标识链表的实际情况。
+
+**不允许修改** 链表。
+
+**示例 1：**
+
+![img](assets/circularlinkedlist-1741944266833-9.png)
+
+```
+输入：head = [3,2,0,-4], pos = 1
+输出：返回索引为 1 的链表节点
+解释：链表中有一个环，其尾部连接到第二个节点。
+```
+
+
+
+**https://leetcode.cn/problems/linked-list-cycle-ii/solutions/12616/linked-list-cycle-ii-kuai-man-zhi-zhen-shuang-zhi-**
+
+**解题思路：**
+这类链表题目一般都是使用双指针法解决的，例如寻找距离尾部第 K 个节点、寻找环入口、寻找公共尾部入口等。
+
+在本题的求解过程中，双指针会产生两次“相遇”。
+
+
+
+fast 走的步数是 slow 步数的 2 倍，即` f=2s`；（解析： fast 每轮走 2 步）
+fast 比 slow 多走了 n 个环的长度，即` f=s+nb`；（ 解析： 双指针都走过 a 步，然后在环内绕圈直到重合，重合时 fast 比 slow 多走 **环的长度整数倍** ）。
+将以上两式相减得到 f=2nb，s=nb，即 **fast 和 slow 指针分别走了 2n，n 个环的周长**。
+
+
+
+如果让指针从链表头部一直向前走并统计步数`k`，那么所有 **走到链表入口节点时的步数** 是：`k=a+nb `:
+
+先走a步到交点，然后再走n圈，那么都会回到交点
+
+![image-20250314173144223](assets/image-20250314173144223.png)
+
+```C++
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+        ListNode* l= head ,*r =head;
+        while(r&&r->next)
+        {
+            l=l->next;
+            r=r->next->next;
+            if(l==r)
+            {
+                r=head;
+                while(l!=r)
+                {
+                    l=l->next;
+                    r=r->next;
+                }
+                return l;
+            }
+        }
+        return NULL;
     }
 };
 ```
@@ -1398,12 +1723,77 @@ public:
             dp[i+2][1] = max(dp[i+1][1], dp[i][0] - prices[i]);
         }
         return dp[n+1][0]; //不持有赚的更多
-
-    }
-};
 ```
 
+
+
+## 前后缀分解
+
+### [238. 除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
+
+给你一个整数数组 `nums`，返回 数组 `answer` ，其中 `answer[i]` 等于 `nums` 中除 `nums[i]` 之外其余各元素的乘积 。
+
+题目数据 **保证** 数组 `nums`之中任意元素的全部前缀元素和后缀的乘积都在 **32 位** 整数范围内。
+
+请 **不要使用除法，**且在 `O(n)` 时间复杂度内完成此题。
+
+**示例 1:**
+
+```
+输入: nums = [1,2,3,4]
+输出: [24,12,8,6]
+```
+
+**示例 2:**
+
+```
+输入: nums = [-1,1,0,-3,3]
+输出: [0,0,9,0,0]
+```
+
+
+
+灵茶山艾府放进动规里
+
+题解：
+
+**https://leetcode.cn/problems/product-of-array-except-self/solutions/2783788/qian-hou-zhui-fen-jie-fu-ti-dan-pythonja-86r1/?envType=problem-list-v2&envId=2cktkvj**
+
+
+
+#### 优化前 M 普通前后缀乘积
+
+不推荐
+
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        vector<int> prefixProduct(n+2,1);
+        vector<int> suffixProduct(n+2,1);
+        // 1 2  3  4
+        // 1 2  6 24
+        // 1 24 12 4
+        //01 2  3  4
+        for(int i=0,j=n+1;i<n;i++,j--)
+        {
+            prefixProduct[i+1] = prefixProduct[i]*nums[i];
+            suffixProduct[j-1] = suffixProduct[j]*nums[j-2];
+        }
+        vector<int> res(n,0);
+
+        for(int i=0;i<n;i++)
+        {
+            res[i] = prefixProduct[i]*suffixProduct[i+2];
+        }
+        return res;
+    }
+};
 以下的这段解释感觉还是比较有用的：
+```
 
 ![image-20250314164054742](assets/image-20250314164054742.png)
 
@@ -1456,6 +1846,39 @@ public:
             }
         }
         return dp[n][k+1][0];
+
+另一种写法
+
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        // 1 2  3  4
+        //   1  2  6  前缀乘积
+        //24 12 4	  后缀乘积
+        // 0  1 2 3 下标
+        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
+        //并没有做偏移 下标是对应的 没有+1
+        vector<int> prefixProduct(n,1);
+        for(int i=1;i<n;i++)
+        {
+            prefixProduct[i] = prefixProduct[i-1]*nums[i-1];
+        }
+        vector<int> suffixProduct(n,1);
+        for(int i=n-2;i>=0;i--)//-2
+        {
+            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
+        }
+        
+        vector<int> res(n,0);
+        for(int i=0;i<n;i++)
+        {
+            res[i] = prefixProduct[i]*suffixProduct[i];
+        }
+        return res;
     }
 };
 ```
@@ -1497,11 +1920,39 @@ public:
             }
         }
         return dp[k+1][0];
+
+```
+
+#### 优化：不使用额外空间
+
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        // 1 2  3  4
+        //   1  2  6  前缀乘积
+        //24 12 4	  后缀乘积
+        // 0  1 2 3 下标
+        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
+        vector<int> suffixProduct(n,1);//不用+1
+        for(int i=n-2;i>=0;i--)
+        {
+            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
+        }
+        int preProduct =1;
+        for(int i=0;i<n;i++)
+        {
+            // 此时 pre 为 nums[0] 到 nums[i-1] 的乘积，直接乘到 suf[i] 中
+            suffixProduct[i] = suffixProduct[i] * preProduct;
+            preProduct*=nums[i];
+        }
+        return suffixProduct;
     }
 };
 ```
-
-
 
 
 
@@ -2084,11 +2535,71 @@ public:
             }
         }
         return res;
+
+```
+
+==（2）递归做法：还没有尝试==
+
+
+
+# 数学
+
+## 摩尔投票
+
+###  [169. 多数元素](https://leetcode.cn/problems/majority-element/)
+
+给定一个大小为 `n` 的数组 `nums` ，返回其中的多数元素。多数元素是指在数组中出现次数 **大于** `⌊ n/2 ⌋` 的元素。
+
+你可以假设数组是非空的，并且给定的数组总是存在多数元素。
+
+**示例 1：**
+
+```
+输入：nums = [3,2,3]
+输出：3
+```
+
+**示例 2：**
+
+```
+输入：nums = [2,2,1,1,1,2,2]
+输出：2
+```
+
+
+
+题解： 一定要看这个题解
+
+**https://leetcode.cn/problems/majority-element/solutions/2362000/169-duo-shu-yuan-su-mo-er-tou-piao-qing-ledrh/?envType=problem-list-v2&envId=2cktkvj**
+
+补充：
+
+核心思想--抵消原则：
+在一个数组中，如果某个元素的出现次数超过了数组长度的一半，那么这个元素与其他所有元素一一配对，最后仍然会剩下至少一个该元素。
+
+非众数之间的抵消：
+
+通过“投票”和“抵消”的过程，可以逐步消除不同的元素，最终留下的候选人就是可能的主要元素。
+
+如果众数不在前两位，就会有非众数之间的抵消。但这并影响结论，因为非众数之间内耗，只会进一步使得众数更占优势。
+比如众数如果是2，且都在数组尾部，前面其他数字内耗完了，最后使得votes大于0的只可能是2
+
+```C++
+class Solution {
+public:
+    int majorityElement(vector<int>& nums) {
+        int x=0;
+        int votes=0;
+        for(auto &num:nums)
+        {
+            if(votes==0)x=num;
+            votes+= (num==x?1:-1);
+        }
+        return x;
     }
 };
 ```
 
 
-
-### ==（2）递归做法：还没有尝试==
+### 
 
