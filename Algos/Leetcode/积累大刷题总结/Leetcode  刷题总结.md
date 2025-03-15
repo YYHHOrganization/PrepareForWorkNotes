@@ -52,6 +52,14 @@ unordered_map::count()是C++中的内置方法，用于通过给定 key 对unord
 
 
 
+数组的总大小不得超过 0x7fffffff 字节	2的31次方-1
+
+**1061109567**，是10^9级别的
+
+
+
+
+
 #### string
 
 ##### string删除字符

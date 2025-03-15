@@ -825,3 +825,48 @@ public:
 
 暴力法应该可以过，但作为年轻人的第一道贡献法题目，直接看答案了。可以看这篇题解：[907. 子数组的最小值之和 - 力扣（LeetCode）](https://leetcode.cn/problems/sum-of-subarray-minimums/solutions/1930857/gong-xian-fa-dan-diao-zhan-san-chong-shi-gxa5/)。
 
+
+
+未优化：
+
+```C++
+class Solution {
+public:
+    int sumSubarrayMins(vector<int>& arr) {
+        //左边第一个<的 和右边第一个<的 的下标
+        //（i - left ）* (right-i)
+        const int MOD = 1e9+7;
+        stack<int> Lstk;
+        stack<int> Rstk;
+        int n= arr.size();
+        vector<int> Lmono(n,-1);
+        vector<int> Rmono(n,n);
+        for(int i=0;i<n;i++) //右和左要分清
+        {
+            while(!Rstk.empty()&&arr[i]<=arr[Rstk.top()])
+            {
+                Rmono[Rstk.top()] = i;
+                Rstk.pop();
+            }
+            Rstk.push(i);
+        }
+        for(int i=n-1;i>=0;i--)
+        {
+            while(!Lstk.empty()&&arr[i]<arr[Lstk.top()])
+            {
+                Lmono[Lstk.top()] = i;
+                Lstk.pop();
+            }
+            Lstk.push(i);
+        }
+        long long res=0;
+        for(int i=0;i<n;i++)
+        {
+            long long num = (Rmono[i]-i)*(i-Lmono[i]);
+            res = res+num*arr[i];
+        }
+        return res%MOD;
+    }
+};
+```
+

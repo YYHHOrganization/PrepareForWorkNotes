@@ -1,5 +1,7 @@
 #  LeetCode 热题 HOT 100
 
+https://leetcode.cn/problem-list/2cktkvj/
+
 :notebook: 表示记录在“大厂”那个笔记中
 
 :bookmark: 表示在 ” 面经合集——题目+答案版“中
@@ -501,6 +503,69 @@ public:
 
 
 
+
+
+### [124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/)
+
+二叉树中的 **路径** 被定义为一条节点序列，序列中每对相邻节点之间都存在一条边。同一个节点在一条路径序列中 **至多出现一次** 。该路径 **至少包含一个** 节点，且不一定经过根节点。
+
+**路径和** 是路径中各节点值的总和。
+
+给你一个二叉树的根节点 `root` ，返回其 **最大路径和** 。
+
+**示例 1：**
+
+![img](assets/exx1.jpg)
+
+```
+输入：root = [1,2,3]
+输出：6
+解释：最优路径是 2 -> 1 -> 3 ，路径和为 2 + 1 + 3 = 6
+```
+
+链接：https://leetcode.cn/problems/binary-tree-maximum-path-sum/solutions/297005/er-cha-shu-zhong-de-zui-da-lu-jing-he-by-leetcode-/
+
+![image-20250315210910816](assets/image-20250315210910816.png)
+
+![image-20250315211030363](assets/image-20250315211030363.png)
+
+```C++
+class Solution {
+private:
+    int maxSum = INT_MIN;
+
+public:
+    int maxGain(TreeNode* node) {
+        if (node == nullptr) {
+            return 0;
+        }
+        
+        // 递归计算左右子节点的最大贡献值
+        // 只有在最大贡献值大于 0 时，才会选取对应子节点
+        int leftGain = max(maxGain(node->left), 0);
+        int rightGain = max(maxGain(node->right), 0);
+
+        // 节点的最大路径和取决于该节点的值与该节点的左右子节点的最大贡献值
+        int priceNewpath = node->val + leftGain + rightGain;
+
+        // 更新答案
+        maxSum = max(maxSum, priceNewpath);
+
+        // 返回节点的最大贡献值  这里返回上去的不能够是选择左右的，只能是选择左 或者右的 不然不是变三岔路口了 就不对了
+        return node->val + max(leftGain, rightGain);
+    }
+
+    int maxPathSum(TreeNode* root) {
+        maxGain(root);
+        return maxSum;
+    }
+};
+```
+
+
+
+
+
 ## 字典树
 
 ### [208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
@@ -647,6 +712,171 @@ public:
 来源：力扣（LeetCode）
 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 ```
+
+
+
+### [139. 单词拆分](https://leetcode.cn/problems/word-break/)
+
+给你一个字符串 `s` 和一个字符串列表 `wordDict` 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 `s` 则返回 `true`。
+
+**注意：**不要求字典中出现的单词全部都使用，并且字典中的单词可以重复使用。
+
+ 
+
+**示例 1：**
+
+```
+输入: s = "leetcode", wordDict = ["leet", "code"]
+输出: true
+解释: 返回 true 因为 "leetcode" 可以由 "leet" 和 "code" 拼接成。
+```
+
+
+
+##### M1 字典树+回溯  结合记忆化
+
+```C++
+class Solution {
+public:
+    struct TrieNode
+    {
+        TrieNode* next[26];
+        bool isEnd;
+    };
+    TrieNode* head;
+    bool failed[310];//记忆化
+    void Init()
+    {
+        head = new TrieNode();
+    }
+    void insert(string s)
+    {
+        TrieNode* p =head;
+        for(char& c:s)
+        {
+            if(p->next[c-'a']==nullptr)
+            {
+                p->next[c-'a'] = new TrieNode();
+            }
+            p=p->next[c-'a'];
+        }
+        p->isEnd = true;
+    }
+    // bool search(string s)
+    // {
+    //     TrieNode* p =head;
+    //     for(char& c:s)
+    //     {
+    //         if(p->next[c-'a']==nullptr)return false;
+    //         p=p->next[c-'a'];
+    //     }
+    //     if(p->isEnd==true)return true;
+    //     return false;
+    // }
+    //逐步遍历字典树：在DFS中维护当前字典树节点，逐个字符移动，避免每次都从根节点开始搜索。
+    bool dfs(string s,int start)
+    {
+        if(failed[start])return false;
+        if(s.size()==start)
+        {
+            return true;
+        }
+        TrieNode* p=head;
+        for(int i=start;i<s.size();i++)
+        {
+            //代表我直接就不能续着这个字母继续下去
+            if(p->next[s[i]-'a']==nullptr)break;
+            p=p->next[s[i]-'a'];
+            if(p->isEnd==true&&dfs(s,i+1))
+            {
+                return true;
+            }            
+        }
+        failed[start] = true;
+        return false;
+    }
+    bool wordBreak(string s, vector<string>& wordDict) {
+        //字典树
+        //构建字典树，然后遍历这个s  看是否是一个单词，是的话递归，继续 直到字典树没有了 或者单词结束
+        //如果单词结束 且字典树是true  return true
+        Init();
+        for(auto& word:wordDict)
+        {
+            insert(word);
+        }
+        return dfs(s,0);
+    }
+};
+```
+
+如果不结合记忆化 会超时
+
+这题还是推荐直接dp
+
+以后想题目 就是先回溯 然后再看能不能dp
+
+
+
+##### M2 DP 推荐
+
+```C++
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        //dp[i] = dp[i-wsize]|dp[i]
+        //true  下一个 
+
+        int n = s.size();
+        vector<bool> dp(n+1);
+        dp[0]=true;
+        for(int i=1;i<=n;i++)
+        {
+            for(int j=0;j<wordDict.size();j++)
+            {
+                string word = wordDict[j];
+                int wn = word.size();//4
+                if(i-wn>=0&&s.substr(i-wn,wn)==word&&dp[i-wn])
+                {
+                    dp[i]=true;
+                    break;
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+用set
+
+```C++
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        //dp[i] = dp[i-wsize]|dp[i]
+        //true  下一个 
+
+        int n = s.size();
+        vector<bool> dp(n+1);
+        dp[0]=true;
+        unordered_set<string> uset(wordDict.begin(),wordDict.end());
+        for(int i=1;i<=n;i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                if(dp[j]&&uset.contains(s.substr(j,i-j)))
+                {
+                    dp[i]=true;
+                    break;
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+
 
 
 
@@ -1655,7 +1885,41 @@ public:
 };
 ```
 
+另一种写法
 
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        // 1 2  3  4
+        //   1  2  6  前缀乘积
+        //24 12 4	  后缀乘积
+        // 0  1 2 3 下标
+        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
+        //并没有做偏移 下标是对应的 没有+1
+        vector<int> prefixProduct(n,1);
+        for(int i=1;i<n;i++)
+        {
+            prefixProduct[i] = prefixProduct[i-1]*nums[i-1];
+        }
+        vector<int> suffixProduct(n,1);
+        for(int i=n-2;i>=0;i--)//-2
+        {
+            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
+        }
+        
+        vector<int> res(n,0);
+        for(int i=0;i<n;i++)
+        {
+            res[i] = prefixProduct[i]*suffixProduct[i];
+        }
+        return res;
+    }
+};
+```
 
 #### 优化：不使用额外空间
 
@@ -1879,41 +2143,8 @@ public:
             }
         }
         return dp[n][k+1][0];
-
-另一种写法
-
-```C++
-class Solution {
-public:
-    vector<int> productExceptSelf(vector<int>& nums) {
-        // 整个乘起来 除以 ni 题目不让用
-        //记录前缀乘积和后缀乘积，乘起来
-        int n=nums.size();
-        // 1 2  3  4
-        //   1  2  6  前缀乘积
-        //24 12 4	  后缀乘积
-        // 0  1 2 3 下标
-        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
-        //并没有做偏移 下标是对应的 没有+1
-        vector<int> prefixProduct(n,1);
-        for(int i=1;i<n;i++)
-        {
-            prefixProduct[i] = prefixProduct[i-1]*nums[i-1];
-        }
-        vector<int> suffixProduct(n,1);
-        for(int i=n-2;i>=0;i--)//-2
-        {
-            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
-        }
-        
-        vector<int> res(n,0);
-        for(int i=0;i<n;i++)
-        {
-            res[i] = prefixProduct[i]*suffixProduct[i];
-        }
-        return res;
     }
-};
+}
 ```
 
 能够发现，`dp[i+1]`永远依赖于`dp[i]`，那么能否降维呢？可以，但需要注意遍历的顺序，假设我们直接这样改：
@@ -1956,7 +2187,9 @@ public:
 
 ```
 
-
+>注意 ：这题目中，k共有0-k一共k+1个状态。
+>
+>例如k=3，则有0不买，买1，买2，买3，一种四种状态，但是我们要加1位防止越界，因此是k+2；
 
 # 图
 
@@ -2135,7 +2368,7 @@ public:
         for(auto& num:nums)
         {
             int x = (num - 1)%n; //数组下标从0开始,数字从1开始,原地充当哈希表
-            if(nums[x]<=n) //如果加超过一次,可能会越界,这是为了稳妥
+            if(nums[x]<=n) //如果加超过一次,可能会越界,这是为了稳妥  【注意】这里有等号，因为1-n的话n也是可能出现的
             {
                 nums[x] += n; //+=n,这样如果遍历结束后<=n的数就是要返回的数
             }
@@ -2143,12 +2376,80 @@ public:
         vector<int> res;
         for(int i=0;i<n;i++)
         {
-            if(nums[i]<=n)
+            if(nums[i]<=n) //【注意】这里有等号
             {
                 res.emplace_back(i+1); //注意push的是i+1,因为哈希映射是值->下标为值-1
             }
         }
         return res;
+    }
+};
+```
+
+
+
+### [128. 最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
+
+给定一个未排序的整数数组 `nums` ，找出数字连续的最长序列（不要求序列元素在原数组中连续）的长度。
+
+请你设计并实现时间复杂度为 `O(n)` 的算法解决此问题。
+
+**示例 1：**
+
+```
+输入：nums = [100,4,200,1,3,2]
+输出：4
+解释：最长数字连续序列是 [1, 2, 3, 4]。它的长度为 4。
+```
+
+
+
+https://leetcode.cn/problems/longest-consecutive-sequence/solutions/276931/zui-chang-lian-xu-xu-lie-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
+
+**简单来说就是每个数都判断一次这个数是不是连续序列的开头那个数**。
+
+- 怎么判断呢，就是用哈希表查找这个数前面一个数是否存在，即num-1在序列中是否存在。存在那这个数肯定不是开头，直接跳过。
+- 因此只需要对每个开头的数进行循环，直到这个序列不再连续，因此复杂度是O(n)。
+  以题解中的序列举例:
+  **[100，4，200，1，3，4，2]**
+  去重后的哈希序列为：
+  **[100，4，200，1，3，2]**
+  按照上面逻辑进行判断：
+
+1. 元素100是开头,因为没有99，且以100开头的序列长度为1
+2. 元素4不是开头，因为有3存在，过，
+3. 元素200是开头，因为没有199，且以200开头的序列长度为1    
+4. 元素1是开头，因为没有0，且以1开头的序列长度为4，因为依次累加，2，3，4都存在。
+5. 元素3不是开头，因为2存在，过，
+6. 元素2不是开头，因为1存在，过。
+
+```C++
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        unordered_set<int> uset;
+        for(auto &num:nums)
+        {
+            uset.insert(num);
+        }
+        int maxLen=0;
+        int tempLen=0;
+        for(auto &num:uset)//注意这里要遍历uset而不是原数组 否则会超时（uset有自动去重）
+        {
+            if(!uset.contains(num-1))
+            {
+                int tempNum = num+1;
+                tempLen = 1;
+                while(uset.contains(tempNum))
+                {
+                    tempNum++;
+                    tempLen++;
+                }
+                maxLen = max(maxLen,tempLen);
+            }
+
+        }
+        return maxLen;
     }
 };
 ```
@@ -2542,6 +2843,28 @@ public:
 
 ==（2）递归做法：还没有尝试==
 
+# 位运算
+
+### [136. 只出现一次的数字](https://leetcode.cn/problems/single-number/)
+
+给你一个 **非空** 整数数组 `nums` ，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
+
+你必须设计并实现线性时间复杂度的算法来解决此问题，且该算法只使用常量额外空间。
+
+```C++
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int res=0;
+        for(auto& num:nums)
+        {
+            res=res^num;
+        }
+        return res;
+    }
+};
+```
+
 
 
 # 数学
@@ -2612,4 +2935,242 @@ public:
 > 4. 当下一个士兵到来，发现前方阵营已经没有兵力，新士兵就成了领主，winner 变成这个士兵所属阵营的旗帜，现存兵力 count ++。
 >
 > 就这样各路军阀一直以这种以一敌一同归于尽的方式厮杀下去，直到少数阵营都死光，那么最后剩下的几个必然属于多数阵营，winner 就是多数阵营。（多数阵营 51个，少数阵营只有49个，死剩下的2个就是多数阵营的人）
+
+
+
+# 字符串
+
+
+
+### [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
+
+给你一个字符串 `s`，找到 `s` 中最长的 回文 子串。
+
+**示例 1：**
+
+```
+输入：s = "babad"
+输出："bab"
+解释："aba" 同样是符合题意的答案。
+```
+
+#### M1 中心拓展法
+
+```C++
+class Solution {
+public:
+    pair<int, int> expandAroundCneter(string s, int l, int r) 
+    {
+        while (l >= 0 && r < s.size() && s[l] == s[r]) 
+        {
+            l--;
+            r++;
+        }
+        return {l+1,r-1};
+    }
+    string longestPalindrome(string s) 
+    {
+        int n = s.size();
+        int start = 0, end = 0;
+        for (int i = 0; i < n; i++) 
+        {
+            int l = i - 1, r = i + 1;
+            auto [l1,r1] = expandAroundCneter(s,l,r);
+            if(r1-l1>end-start) 
+            {
+                end =r1,start = l1;
+            }
+            l = i - 1, r = i;
+            auto [l2,r2] = expandAroundCneter(s,l,r);
+            if(r2-l2>end-start) 
+            {
+                end =r2,start = l2;
+            }
+        }
+        return s.substr(start,end-start+1);
+    }
+};
+```
+
+
+
+#### Manacher  马拉车算法 :car: :horse_racing:  O（n）
+
+【马拉车算法 | Coding Club】 https://www.bilibili.com/video/BV1Sx4y1k7jG/?share_source=copy_web&vd_source=067de257d5f13e60e5b36da1a0ec151e
+
+<img src="assets/5_fig1-1742028156216-3.png" alt="fig1" style="zoom:67%;" />
+
+https://leetcode.cn/problems/longest-palindromic-substring/solutions/2958179/mo-ban-on-manacher-suan-fa-pythonjavacgo-t6cx/
+
+参考代码：
+
+**https://leetcode.cn/problems/longest-palindromic-substring/solutions/7600/5-zui-chang-hui-wen-zi-chuan-cc-by-bian-bian-xiong**
+
+![image-20250315174253247](assets/image-20250315174253247.png)
+
+```c++
+这时我们知道RL[i]至少不会小于RL[j]，并且已经知道了部分的以i为中心的回文串，于是可以令RL[i]=RL[j] 为起始半径。
+又因为(j + i) / 2 = pos ==> j = 2*pos - i 得到 RL[i]=RL[2*pos - i]。
+```
+
+
+
+![image-20250315174259607](assets/image-20250315174259607.png)
+
+```C++
+RL[i] = MaxRight - i
+```
+
+//a  半径是1
+
+//bab 半径是2 
+
+```C++
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        int len = s.size();
+        if(len<1)return "";
+        string s1;
+        for(char c:s)
+        {
+            s1+='#';
+            s1+=c;
+        }
+        s1+='#';
+        len = s1.size();
+        int MaxRight = 0;//最右边字母（右边最大蘑菇右边界）
+        int pos = 0;//center 目前右边最大蘑菇中心
+        int MaxRL = 0;//结果最大半径
+        int MaxPos = 0;//结果最大中心
+        vector<int> RL(len,0);
+        for(int i=0;i<len;i++)
+        {
+            if(i<MaxRight)
+            {
+                RL[i] = min(RL[2*pos-i],MaxRight-i);
+            }
+            else
+            {
+                RL[i] = 1;
+            }
+            //蘑菇不能穿透左边界和有右边界哦 && 蘑菇继续伸展
+            while(i-RL[i]>=0 && i+RL[i]<len && s1[i-RL[i]]==s1[i+RL[i]])
+            {
+                RL[i]++;//蘑菇继续伸展
+            }
+            //成为新的大蘑菇
+            if(RL[i]+i-1>MaxRight)
+            {
+                MaxRight = RL[i]+i-1;
+                pos = i; 
+            }
+            //更新结果
+            if(MaxRL<=RL[i])
+            {
+                MaxRL = RL[i];
+                MaxPos = i;
+            }
+        }
+        return s.substr((MaxPos-MaxRL+1)/2,MaxRL-1);//可以再看看如何还原
+    }
+};
+```
+
+
+
+
+
+### [647. 回文子串](https://leetcode.cn/problems/palindromic-substrings/)
+
+给你一个字符串 `s` ，请你统计并返回这个字符串中 **回文子串** 的数目。
+
+**回文字符串** 是正着读和倒过来读一样的字符串。
+
+**子字符串** 是字符串中的由连续字符组成的一个序列。
+
+**示例 1：**
+
+```
+输入：s = "abc"
+输出：3
+解释：三个回文子串: "a", "b", "c"
+```
+
+#### 中心拓展法
+
+```C++
+class Solution {
+public:
+    int countSubstrings(string s) {
+        int n=s.size();
+        int res=n;//自己可成为一个回文子串
+        int l=0,r=0;
+        for(int i=0;i<n;i++)
+        {
+            l=i-1,r=i+1;
+            while(l>=0&&r<n&&s[l]==s[r])
+            {
+                res++;
+                l--;r++;
+            }
+
+            l=i-1,r=i;
+            while(l>=0&&r<n&&s[l]==s[r])
+            {
+                res++;
+                l--;r++;
+            }
+        }
+        return res;
+    }
+};
+```
+
+#### Manacher  马拉车算法 O（n）
+
+```C++
+class Solution {
+public:
+    int countSubstrings(string s) {
+        string s1="#";
+        for(auto c:s)
+        {
+            s1+=c;
+            s1+='#';
+        }
+        int n = s1.size();
+        vector<int> RL(n,0);
+        int MaxRight = 0;
+        int pos = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(i<MaxRight)
+            {
+                RL[i] = min(RL[2*pos-i],MaxRight-i);
+            }
+            else
+                RL[i]=1;
+            while(i-RL[i]>=0&&i+RL[i]<n&&s1[i-RL[i]]==s1[i+RL[i]])
+            {
+                RL[i]++;
+            }
+            if(i+RL[i]-1>MaxRight)
+            {
+                MaxRight = i+RL[i]-1;
+                pos = i;
+            }
+            
+        }
+        int count = 0;
+        for (int rl : RL) 
+        {
+            count += rl / 2;
+        }
+        return count;
+    }
+};
+```
+
+
 
