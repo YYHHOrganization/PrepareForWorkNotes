@@ -1995,6 +1995,76 @@ public:
 
 
 
+## 十二、树形 DP
+
+### [337. 打家劫舍 III](https://leetcode.cn/problems/house-robber-iii/)
+
+讲解：[树形 DP：打家劫舍III](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1vu4y1f7dn%2F)
+
+小偷又发现了一个新的可行窃的地区。这个地区只有一个入口，我们称之为 `root` 。
+
+除了 `root` 之外，每栋房子有且只有一个“父“房子与之相连。一番侦察之后，聪明的小偷意识到“这个地方的所有房屋的排列类似于一棵二叉树”。 如果 **两个直接相连的房子在同一天晚上被打劫** ，房屋将自动报警。
+
+给定二叉树的 `root` 。返回 ***在不触动警报的情况下** ，小偷能够盗取的最高金额* 。
+
+**示例 1:**
+
+![img](assets/rob1-tree.jpg)
+
+```
+输入: root = [3,2,3,null,3,null,1]
+输出: 7 
+解释: 小偷一晚能够盗取的最高金额 3 + 3 + 1 = 7
+```
+
+```C++
+class Solution {
+    pair<int, int> dfs(TreeNode* node) {
+        if (node == nullptr) { // 递归边界
+            return {0, 0}; // 没有节点，怎么选都是 0
+        }
+        auto [l_rob, l_not_rob] = dfs(node->left); // 递归左子树
+        auto [r_rob, r_not_rob] = dfs(node->right); // 递归右子树
+        int rob = l_not_rob + r_not_rob + node->val; // 选
+        int not_rob = max(l_rob, l_not_rob) + max(r_rob, r_not_rob); // 不选
+        return {rob, not_rob};
+    }
+
+public:
+    int rob(TreeNode* root) {
+        auto [root_rob, root_not_rob] = dfs(root);
+        return max(root_rob, root_not_rob); // 根节点选或不选的最大值
+    }
+};
+```
+
+
+
+```C++
+class Solution {
+public:
+    pair<int, int> dfs(TreeNode* root)
+    {
+        if (root == nullptr) return { 0,0 };
+        pair<int, int> pl = dfs(root->left);
+        pair<int, int> pr = dfs(root->right);
+        
+        int choose = pl.second + pr.second + root->val;
+        int noChoose = max(pl.first, pl.second) + max(pr.first, pr.second);
+        
+        return { choose , noChoose };
+    }
+    int rob(TreeNode* root) {
+        pair<int,int> p =dfs(root);
+        return max(p.first, p.second);
+    }
+};
+```
+
+
+
+
+
 ## 前后缀分解
 
 ### [238. 除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
@@ -2857,7 +2927,7 @@ public:
 
 
 
-## ==除法求值（做法有带权并查集。。。有点哈人）==
+## 除法求值（做法有带权并查集。。。有点哈人）
 
 > 给你一个变量对数组 `equations` 和一个实数值数组 `values` 作为已知条件，其中 `equations[i] = [Ai, Bi]` 和 `values[i]` 共同表示等式 `Ai / Bi = values[i]` 。每个 `Ai` 或 `Bi` 是一个表示单个变量的字符串。
 >
@@ -2912,6 +2982,8 @@ public:
 > - `Ai, Bi, Cj, Dj` 由小写英文字母与数字组成
 
 看起来这道题目可以用图论的方法来做。
+
+**并查集有这道题**
 
 
 
@@ -3407,3 +3479,202 @@ public:
             mx = max(mx, i+nums[i]);
         }
         return true;
+
+```
+
+
+
+# 并查集
+
+## 带权并查集
+
+### [399. 除法求值](https://leetcode.cn/problems/evaluate-division/)
+
+给你一个变量对数组 `equations` 和一个实数值数组 `values` 作为已知条件，其中 `equations[i] = [Ai, Bi]` 和 `values[i]` 共同表示等式 `Ai / Bi = values[i]` 。每个 `Ai` 或 `Bi` 是一个表示单个变量的字符串。
+
+另有一些以数组 `queries` 表示的问题，其中 `queries[j] = [Cj, Dj]` 表示第 `j` 个问题，请你根据已知条件找出 `Cj / Dj = ?` 的结果作为答案。
+
+返回 **所有问题的答案** 。如果存在某个无法确定的答案，则用 `-1.0` 替代这个答案。如果问题中出现了给定的已知条件中没有出现的字符串，也需要用 `-1.0` 替代这个答案。
+
+**注意：**输入总是有效的。你可以假设除法运算中不会出现除数为 0 的情况，且不存在任何矛盾的结果。
+
+**注意：**未在等式列表中出现的变量是未定义的，因此无法确定它们的答案。
+
+**示例 1：**
+
+```C++
+输入：equations = [["a","b"],["b","c"]], values = [2.0,3.0], queries = [["a","c"],["b","a"],["a","e"],["a","a"],["x","x"]]
+输出：[6.00000,0.50000,-1.00000,1.00000,-1.00000]
+解释：
+条件：a / b = 2.0, b / c = 3.0
+问题：a / c = ?, b / a = ?, a / e = ?, a / a = ?, x / x = ?
+结果：[6.0, 0.5, -1.0, 1.0, -1.0 ]
+注意：x 是未定义的 => -1.0
+```
+
+
+
+题解：
+
+**https://leetcode.cn/problems/evaluate-division/solutions/548634/399-chu-fa-qiu-zhi-nan-du-zhong-deng-286-w45d/?envType=problem-list-v2&envId=2cktkvj**
+
+```C++
+class Solution {
+public:
+    vector<int> parent;
+    vector<double> weights;// 指向parent节点的权重
+    void init(int thesize)
+    {
+        parent.resize(thesize);
+        weights.resize(thesize,1.0);
+        for(int i=0;i<thesize;i++)
+        {
+            parent[i]=i;
+        }
+    }
+    //找最终的parent节点并压缩路径
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            int origin = parent[a];
+            parent[a]= find(parent[a]);
+            weights[a]*=weights[origin];
+        }
+        return parent[a];
+    }
+     // 将 x 所在的子树连接到 y 所在的子树
+    void buildConnect(int x,int y,double val) // union 记住是double!!!!!
+    {
+        int rootx = find(x);
+        int rooty = find(y);
+        if(rootx==rooty)return ;
+        parent[rootx] = rooty;
+        weights[rootx] = weights[y] * val / weights[x];
+    }
+    double isConnected(int x,int y)
+    {
+        int rootX = find(x);
+        int rootY = find(y);
+        if(rootX!=rootY)
+            return -1.0;
+        else
+            return weights[x]/weights[y];
+    }
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        // a0 b1 c2
+
+        // 第一步：预处理
+        unordered_map<string,int> umap;
+        int n = equations.size();
+        init(2*n);// 最坏情况下有2*size个变量
+        int id=0;
+        for(int i=0;i<n;i++)
+        {
+            string var1 = equations[i][0];
+            string var2 = equations[i][1];
+            //并查集中使用id 所以这里建立变量到ID的映射 每个变量分配一个id
+            if(!umap.count(var1))umap[var1] = id++;
+            if(!umap.count(var2))umap[var2] = id++;
+            buildConnect(umap[var1],umap[var2],values[i]);
+        }
+        // 第二步：查询
+        int m = queries.size();
+        vector<double> res(m,0.0);
+        for(int i=0;i<m;i++)
+        {
+            string var1 = queries[i][0];
+            string var2 = queries[i][1];
+            // 计算结果，若有未出现的变量则结果为-1
+            if(!umap.count(var1)||!umap.count(var2))res[i] =-1.0;
+            else res[i] = isConnected(umap[var1],umap[var2]);
+        }
+        return res;
+    }
+};
+
+```
+
+
+
+![image-20250317144053006](assets/image-20250317144053006.png)
+
+![image-20250317144022079](assets/image-20250317144022079.png)
+
+
+
+# 单调队列
+
+### [239. 滑动窗口最大值](https://leetcode.cn/problems/sliding-window-maximum/)
+
+给你一个整数数组 `nums`，有一个大小为 `k` 的滑动窗口从数组的最左侧移动到数组的最右侧。你只可以看到在滑动窗口内的 `k` 个数字。滑动窗口每次只向右移动一位。
+
+返回 *滑动窗口中的最大值* 。
+
+**示例 1：**
+
+```
+输入：nums = [1,3,-1,-3,5,3,6,7], k = 3
+输出：[3,3,5,5,6,7]
+解释：
+滑动窗口的位置                最大值
+---------------               -----
+[1  3  -1] -3  5  3  6  7       3
+ 1 [3  -1  -3] 5  3  6  7       3
+ 1  3 [-1  -3  5] 3  6  7       5
+ 1  3  -1 [-3  5  3] 6  7       5
+ 1  3  -1  -3 [5  3  6] 7       6
+ 1  3  -1  -3  5 [3  6  7]      7
+```
+
+
+
+**https://leetcode.cn/problems/sliding-window-maximum/solutions/2499715/shi-pin-yi-ge-shi-pin-miao-dong-dan-diao-ezj6/?envType=problem-list-v2&envId=2cktkvj**
+
+![image-20250317195154557](assets/image-20250317195154557.png)![image-20250317195211911](assets/image-20250317195211911.png)
+
+```C++
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+        int n = nums.size();
+        // vector<int> ans(n,0); // 错误！！ 后面push_back了 这里你干什么弄一堆0进去
+         vector<int> ans;
+        deque<int> deq;// 双端队列
+        for(int i=0;i<n;i++)
+        {
+            //in
+            while(!deq.empty()&&nums[i]>=nums[deq.back()])
+            {
+                deq.pop_back();// 维护 q 的单调性 降序
+            }
+            //
+            deq.push_back(i);// 入队
+            // 2. 出
+            if(i-deq.front()>=k)//===== // 队首已经离开窗口了 👇 下有解释
+            {
+                deq.pop_front();
+            }
+            // 3. 记录答案
+            if(i>=k-1)
+            {
+                // 由于队首到队尾单调递减，所以窗口最大值就是队首
+                ans.push_back(nums[deq.front()]);
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+>`if(i-deq.front()>=k)` 有等号的原因：
+>
+>```
+>[1  3  -1] -3  5  3  6  7      
+>0   1   2   3  4
+>```
+>我们可以看到 对于`[1  3  -1] -3`而言 ,3-0 = 3=k  这时候共有4个数字,  是超过k个的
+>
+>只有当 i - j = k-1的时候  他们的个数是 i- j +1 = k个

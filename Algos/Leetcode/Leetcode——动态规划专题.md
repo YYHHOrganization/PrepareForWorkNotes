@@ -1037,3 +1037,145 @@ public:
 
 
 
+# 十二、树形 DP
+
+注：可能有同学觉得树形 DP 没有重复访问同一个状态（重叠子问题），并不能算作 DP，而是算作普通的递归。这么说也有一定道理，不过考虑到思维方式和 DP 是一样的自底向上，所以仍然叫做树形 DP。此外，如果是自顶向下的递归做法，是存在重叠子问题的，一般要结合记忆化搜索实现。
+
+## §12.1 树的直径
+
+讲解：[树形 DP：树的直径](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV17o4y187h1%2F)
+
+### [543. 二叉树的直径](https://leetcode.cn/problems/diameter-of-binary-tree/)
+
+给你一棵二叉树的根节点，返回该树的 **直径** 。
+
+二叉树的 **直径** 是指树中任意两个节点之间最长路径的 **长度** 。这条路径可能经过也可能不经过根节点 `root` 。
+
+两节点之间路径的 **长度** 由它们之间边数表示。
+
+**示例 1：**
+
+![img](assets/diamtree.jpg)
+
+```
+输入：root = [1,2,3,4,5]
+输出：3
+解释：3 ，取路径 [4,2,1,3] 或 [5,2,1,3] 的长度。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int s=0;
+    int lenTree(TreeNode* root)
+    {
+        if(root == nullptr)return -1; //注意  这个必须是-1
+        int left = lenTree(root->left);
+        int right= lenTree(root->right);
+        int val = left+right+2;
+        s = max(s,val);
+        return max(left,right)+1;
+    }
+    int diameterOfBinaryTree(TreeNode* root) {
+        lenTree(root);
+        return s;
+    }
+};
+```
+
+或者
+
+```C++
+class Solution {
+public:
+    int diameterOfBinaryTree(TreeNode* root) {
+        int ans = 0;
+        auto dfs = [&](this auto&& dfs, TreeNode* node) -> int {
+            if (node == nullptr) {
+                return -1;
+            }
+            int l_len = dfs(node->left) + 1; // 左子树最大链长+1
+            int r_len = dfs(node->right) + 1; // 右子树最大链长+1
+            ans = max(ans, l_len + r_len); // 两条链拼成路径
+            return max(l_len, r_len); // 当前子树最大链长
+        };
+        dfs(root);
+        return ans;
+    }
+};
+```
+
+
+
+## §12.2 树上最大独立集
+
+讲解：[树形 DP：打家劫舍III](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1vu4y1f7dn%2F)
+
+
+
+### [337. 打家劫舍 III](https://leetcode.cn/problems/house-robber-iii/)
+
+小偷又发现了一个新的可行窃的地区。这个地区只有一个入口，我们称之为 `root` 。
+
+除了 `root` 之外，每栋房子有且只有一个“父“房子与之相连。一番侦察之后，聪明的小偷意识到“这个地方的所有房屋的排列类似于一棵二叉树”。 如果 **两个直接相连的房子在同一天晚上被打劫** ，房屋将自动报警。
+
+给定二叉树的 `root` 。返回 ***在不触动警报的情况下** ，小偷能够盗取的最高金额* 。
+
+**示例 1:**
+
+![img](assets/rob1-tree.jpg)
+
+```
+输入: root = [3,2,3,null,3,null,1]
+输出: 7 
+解释: 小偷一晚能够盗取的最高金额 3 + 3 + 1 = 7
+```
+
+```C++
+class Solution {
+    pair<int, int> dfs(TreeNode* node) {
+        if (node == nullptr) { // 递归边界
+            return {0, 0}; // 没有节点，怎么选都是 0
+        }
+        auto [l_rob, l_not_rob] = dfs(node->left); // 递归左子树
+        auto [r_rob, r_not_rob] = dfs(node->right); // 递归右子树
+        int rob = l_not_rob + r_not_rob + node->val; // 选
+        int not_rob = max(l_rob, l_not_rob) + max(r_rob, r_not_rob); // 不选
+        return {rob, not_rob};
+    }
+
+public:
+    int rob(TreeNode* root) {
+        auto [root_rob, root_not_rob] = dfs(root);
+        return max(root_rob, root_not_rob); // 根节点选或不选的最大值
+    }
+};
+```
+
+
+
+```C++
+class Solution {
+public:
+    pair<int, int> dfs(TreeNode* root)
+    {
+        if (root == nullptr) return { 0,0 };
+        pair<int, int> pl = dfs(root->left);
+        pair<int, int> pr = dfs(root->right);
+        
+        int choose = pl.second + pr.second + root->val;
+        int noChoose = max(pl.first, pl.second) + max(pr.first, pr.second);
+        
+        return { choose , noChoose };
+    }
+    int rob(TreeNode* root) {
+        pair<int,int> p =dfs(root);
+        return max(p.first, p.second);
+    }
+};
+```
+
+
+
