@@ -2261,12 +2261,15 @@ public:
         int left = 0; //左指针
         for(int right = 0;right<n;right++)
         {
+            //in
             sarray[s[right]-'a']++;
+            //out
             while(sarray[s[right]-'a']>parray[s[right]-'a']) //说明多了
             {
                 sarray[s[left]-'a']--;
                 left++;
             }
+            //update
             if((right-left+1) == k) //也可以用array相等来判断,但可能会慢一点(毕竟判断array相等还有一个O(26))
             {
                 res.emplace_back(left);
@@ -2376,6 +2379,8 @@ public:
     }
 };
 ```
+
+
 
 
 
@@ -2512,7 +2517,7 @@ public:
             if(s[i]>='0' && s[i]<='9') //是数字
             {
                 multi *= 10;
-                multi += (s[i] - '0');
+                multi += (s[i] - '0'); //注意 可能是"100[leetcode]" 不止一位的数字
             }
             else if(isalpha(s[i])) //是字母
             {
@@ -2533,7 +2538,7 @@ public:
                     tmp += res;
                 }
                 res = tmp;
-                stk.pop();
+                stk.pop();//！！！记得弹栈
             }
         }
         return res;
