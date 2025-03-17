@@ -739,6 +739,8 @@ CPU和GPU的差异可以描述在下面表格中：
 
 参考文章：[移动游戏性能优化通用技法 - 0向往0 - 博客园](https://www.cnblogs.com/timlly/p/10463467.html)
 
+移动端GPU架构：[IMR, TBR, TBDR 还有GPU架构方面的一些理解 - 知乎](https://zhuanlan.zhihu.com/p/259760974)
+
 ## 1.资料补充
 
 ### （1）九宫格
