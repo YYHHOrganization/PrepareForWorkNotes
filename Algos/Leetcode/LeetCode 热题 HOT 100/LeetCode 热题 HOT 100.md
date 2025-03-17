@@ -87,7 +87,7 @@ public:
         }
         // vector<int>::iterator it=dp.begin();
         // for(;it!=dp.end();it++)cout<<" "<<*it;
-        // return dp[nums.size()-1];//不对 可能是中间的比较多 因为dp[i]代表的是以i为结尾的最长的 不一定是他 记住了吗 记住了!
+        // return dp[nums.size()-1];//不对 可能是中间的比较多 因为dp[i]代表的是以i为结尾的最长的 不一定是他
         return resmax;
     }
 };
@@ -878,7 +878,33 @@ public:
 };
 ```
 
-
+> H补充：对上面做法的理解：
+>
+> ```c++
+> class Solution {
+> public:
+>     bool wordBreak(string s, vector<string>& wordDict) {
+>         //dp[i]表示以索引i严格之前的字符串是否可以满足要求,dp[0]=1;
+>         //dp[i] = dp[j] && s.substr(j, i-j)在wordDict当中,i从0开始遍历,j从0遍历到i(需要<i),有一个为true则dp[i]为true
+>         int n = s.size();
+>         unordered_set<string> uset(wordDict.begin(), wordDict.end());
+>         vector<int> dp(n+1);
+>         dp[0] = 1;
+>         for(int i=1;i<=n;i++)
+>         {
+>             for(int j=0;j<i;j++)
+>             {
+>                 if(dp[j]==1 && uset.contains(s.substr(j, i-j))) //字符串不用考虑i自身,因为dp[i]表示严格索引i之前的,所以严格按照定义来即可
+>                 {
+>                     dp[i] = 1;
+>                     break;
+>                 }
+>             }
+>         }
+>         return (bool)dp[n];
+>     }
+> };
+> ```
 
 
 
