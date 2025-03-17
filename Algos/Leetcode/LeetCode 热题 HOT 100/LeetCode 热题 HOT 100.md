@@ -1766,7 +1766,11 @@ public:
 
 ## **完全背包**
 
+请看D:\PGPostgraduate\githubNotePrepareForWork\PrepareForWorkNotes\Algos\Leetcode\Leetcode——动态规划专题.md
 
+中的背包专题
+
+有一些hot100在里面 就不整理过来了
 
 ### [279. 完全平方数](https://leetcode.cn/problems/perfect-squares/)  :red_circle: 
 
@@ -1840,6 +1844,116 @@ public:
 
         return dp[n];
         
+    }
+};
+```
+
+
+
+### [322. 零钱兑换](https://leetcode.cn/problems/coin-change/)
+
+给你一个整数数组 `coins` ，表示不同面额的硬币；以及一个整数 `amount` ，表示总金额。
+
+计算并返回可以凑成总金额所需的 **最少的硬币个数** 。如果没有任何一种硬币组合能组成总金额，返回 `-1` 。
+
+你可以认为每种硬币的数量是无限的。
+
+**示例 1：**
+
+```
+输入：coins = [1, 2, 5], amount = 11
+输出：3 
+解释：11 = 5 + 5 + 1
+```
+
+
+
+##### 背包：
+
+还是先开一个正常的二维dp来做一下这道题目。题解如下：
+
+```c++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        //先用正常二维dp看一下, dp[i][j]表示考虑到第i-1个硬币的时候,总和为j的最少硬币个数
+        int n = coins.size();
+        vector<vector<int>> dp(n+1, vector<int>(amount+1, INT_MAX/2)); //都是正数,初始化为INT_MAX,表示不合法情况，也可以是0x3f3f3f
+        dp[0][0] = 0; //不选硬币的时候,总和为0是合法情况,此时"最少的硬币个数"也是0
+        //dp[i][j] = min(dp[i-1][j], dp[i][j-nums[i]]+1); //不选,或者选
+        //dp[i+1][j] = min(dp[i][j], dp[i+1][j-nums[i]]+1);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<=amount;j++)
+            {
+                if(j<coins[i]) dp[i+1][j] = dp[i][j];
+                else dp[i+1][j] = min(dp[i][j], dp[i+1][j-coins[i]]+1);//注意这个是i+1
+            }
+        }
+        int res = 0;
+        if(dp[n][amount]==(INT_MAX/2)) res = -1;
+        else res = dp[n][amount];
+        return res;
+    }
+};
+```
+
+接下来，可以降维成一维的情况，注意到状态转移方程为：
+
+```c++
+if(j<coins[i]) dp[i+1][j] = dp[i][j];
+else dp[i+1][j] = min(dp[i][j], dp[i+1][j-coins[i]]+1);
+```
+
+可以发现从左到右遍历并不会出现错误的覆盖问题，因为`j-coins[i]`是第`i+1`行的，本来就是要更新后的结果，所以从左往右遍历是正确的，此时代码如下：
+
+```c++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        //先用正常二维dp看一下, dp[i][j]表示考虑到第i-1个硬币的时候,总和为j的最少硬币个数
+        int n = coins.size();
+        vector<int> dp(amount+1,INT_MAX/2); //都是正数,初始化为INT_MAX,表示不合法情况
+        dp[0] = 0; //不选硬币的时候,总和为0是合法情况,此时"最少的硬币个数"也是0
+        //dp[i][j] = min(dp[i-1][j], dp[i][j-nums[i]]+1); //不选,或者选
+        //dp[i+1][j] = min(dp[i][j], dp[i+1][j-nums[i]]+1);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<=amount;j++)
+            {
+                if(j>=coins[i]) dp[j] = min(dp[j], dp[j-coins[i]]+1);
+            }
+        }
+        int res = 0;
+        if(dp[amount]==(INT_MAX/2)) res = -1;
+        else res = dp[amount];
+        return res;
+    }
+};
+```
+
+#####  爬楼梯：
+
+以下这个是类似爬楼梯的思想和写法：
+
+```C++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        int n = coins.size();
+        vector<int> dp(amount+1,0x3f3f3f);
+        dp[0] = 0; //金额为0不能由硬币组成 !! =0
+        for(int i=0;i<=amount;i++)
+        {
+            for(int j=0;j<coins.size();j++)//挑选一个硬币
+            {
+                int cap = i-coins[j];
+                if(cap<0)continue;
+                dp[i] = min(dp[i],dp[cap]+1);
+            }
+        }
+        if(dp[amount] == 0x3f3f3f)return -1;
+        return dp[amount];
     }
 };
 ```
