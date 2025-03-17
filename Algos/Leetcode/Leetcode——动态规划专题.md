@@ -169,6 +169,407 @@ public:
 
 
 
+
+
+# 三、背包专题
+
+## 1.0-1背包
+
+### （1）纯板子
+
+先来看一道纯板子题：[P1048 [NOIP2005 普及组\] 采药 - 洛谷 | 计算机科学教育新生态](https://www.luogu.com.cn/problem/P1048)
+
+```C++
+#include<iostream>
+#include<vector>
+using namespace std;
+int main()
+{
+    int t,m;
+    cin>>t>>m;
+    vector<int> v(m,0);//花费时间 / 重量
+    vector<int> w(m,0); // 价值
+    for(int i=0;i<m;i++)
+    {
+        cin>>v[i]>>w[i];
+    }
+    vector<vector<int>> dp(m+1,vector<int>(t+1,0));
+    dp[0][0] = 0;
+    for(int i=0;i<m;i++)
+    {
+        for(int j=0;j<=t;j++)
+        {
+            if(j-v[i]>=0)
+                dp[i+1][j] =  max(dp[i][j],dp[i][j-v[i]]+w[i]);
+            else
+                dp[i+1][j] = dp[i][j];
+        }
+    }
+    cout<<dp[m][t]<<endl;
+    return 0;
+}
+```
+
+优化为一维
+
+```C++
+#include<iostream>
+#include<vector>
+using namespace std;
+int main()
+{
+    int t,m;
+    cin>>t>>m;
+    vector<int> v(m,0);//花费时间 / 重量
+    vector<int> w(m,0); // 价值
+    for(int i=0;i<m;i++)
+    {
+        cin>>v[i]>>w[i];
+    }
+    vector<int> dp(t+1,0);
+    dp[0] = 0;
+    for(int i=0;i<m;i++)
+    {
+        for(int j=t;j>=v[i];j--) //一维这里需要逆序
+        {
+            dp[j] =  max(dp[j],dp[j-v[i]]+w[i]);
+        }
+    }
+    cout<<dp[t]<<endl;
+    return 0;
+}
+```
+
+
+
+这次我们来试一下记忆化搜索怎么写（用dfs+lambda表达式），后面会改成动规，练习一下：
+
+> 注意，以下的写法需要C++ 20才能编译通过，C++ 11是不能编译通过的，感觉看看得了，也不能保证笔试的时候有C++ 20的环境。以防万一也可以把lambda表达式写成正常的dfs+数组存储，可读性也比较好，还不容易出问题。
+
+```c++
+#include<iostream>
+#include<vector>
+using namespace std;
+const int N = 105;
+
+int main()
+{
+    int t,m; //t:背包容量,m:总的物体数量
+    cin>>t>>m;
+    int v[N], w[N]; //v[N]存放所有物品的价值,w[N]存放所有物体的重量
+    for(int i=0;i<m;i++)
+    {
+        cin>>w[i]>>v[i]; //索引从0开始
+    }
+    vector<vector<int>> mem(m, vector<int>(t+1, -1)); //用于记忆化搜索,初始化为-1
+    auto dfs = [&](auto&& self, int i, int c)->int  // 返回值是当背包剩余最大容量为c时,截止到第i个物品的最大价值
+    {
+        if(i<0) return 0;
+        auto& res = mem[i][c]; //注意是引用传递
+        if(res!=-1) return res; //记忆化搜索
+
+        //剩余容量不够了,只能不装
+        if(c<w[i]) res = self(self, i-1, c);
+        else res = max(self(self, i-1,c), self(self, i-1, c-w[i])+v[i]);
+        return res;
+    };
+
+    int res = dfs(dfs, m-1, t);
+    cout<<res<<endl;
+
+    return 0;
+}
+```
+
+>做题步骤可以是：先自己注释里写出转移方程二维dp形式以及边界写完，正式代码上直接写一维的 ，记得j是从右到左遍历
+
+### （2）leetcode 494：目标和
+
+[494. 目标和 - 力扣（LeetCode）](https://leetcode.cn/problems/target-sum/)
+
+**普通做法，开一个二维数组**
+
+```c++
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        //1.假设所有选中的数组中要设置为正数的和为s,所有选中的数组中的要设置为负数部分的和为t
+        //有: s+t = sum 且 s - t = target
+        //∴ s = (sum+target)/2;
+        int sum = reduce(nums.begin(), nums.end()) + target; 
+        if(sum<0 || sum%2==1) return 0; //此时s不符合题意,一定找不到对应结果
+        int n = nums.size();
+        int s = sum / 2;
+        //问题转换为找到数组中的一些数,使得总和为s的方案数
+
+        //dp[i][j]表示考虑到索引为i-1时,和为j的总表达式的数目, return dp[n][s];
+        vector<vector<int>> dp(n+1, vector<int>(s+1, 0)); //默认方案数都是0
+        //初始化,dp[0][0]=1;
+        dp[0][0]=1; //跟之前的题目有共同之处
+
+        //dp[i][j] = dp[i-1][j] + dp[i-1][j-nums[i]] //没选当前这个数,或者选了当前这个数
+        //防止i-1越界,可以:
+        //dp[i+1][j] = dp[i][j] + dp[i][j-nums[i]];
+        for(int i=0;i<nums.size();i++)
+        {
+            for(int j=0;j<=s;j++)
+            {
+                if(j<nums[i]) dp[i+1][j] = dp[i][j];
+                else dp[i+1][j] = dp[i][j] + dp[i][j-nums[i]];
+            }
+        }
+        return dp[n][s];
+    }
+};
+```
+
+
+
+**优化空间：**
+
+观察可以看到，`dp[i+1][...]`是由`dp[i][...]`得到的，因此其实两个数组就够了，一种简单的写法是把所有的`dp[i][j]`换成`dp[i%2][j]`。一样可以通过本题。此时的状态转移方程代码可以写做：
+
+```c++
+for(int i=0;i<nums.size();i++)
+{
+    for(int j=0;j<=s;j++)
+    {
+        if(j<nums[i]) dp[(i+1)%2][j] = dp[i%2][j];
+        else dp[(i+1)%2][j] = dp[i%2][j] + dp[i%2][j-nums[i]];
+    }
+}
+return dp[n%2][s];
+```
+
+
+
+**再次优化，一维dp**
+
+那么，能否用一维数组继续降维？从前往后是不行的，因为很可能用到某个`dp[i][j-nums[i]]`在前面已经被更新了，而实际上我们要的是未更新的版本，所以不能从前往后遍历，但**可以从后往前遍历。**此时代码如下：
+
+```c++
+class Solution {
+public:
+    int findTargetSumWays(vector<int>& nums, int target) {
+        int sum = reduce(nums.begin(), nums.end()) + target; 
+        if(sum<0 || sum%2==1) return 0; //此时s不符合题意,一定找不到对应结果
+        int n = nums.size();
+        int s = sum / 2;
+        vector<int> dp(s+1, 0); //默认方案数都是0
+        dp[0]=1; //跟之前的题目有共同之处
+
+        for(int i=0;i<nums.size();i++)
+        {
+            for(int j=s;j>=0;j--)
+            {
+                if(j>=nums[i]) dp[j] += dp[j-nums[i]];
+            }
+        }
+        return dp[s];
+    }
+};
+```
+
+考虑数目 ，使用和+
+
+### （3）[2915. 和为目标值的最长子序列的长度](https://leetcode.cn/problems/length-of-the-longest-subsequence-that-sums-to-target/)
+
+```c++
+class Solution {
+public:
+    int lengthOfLongestSubsequence(vector<int>& nums, int target) {
+        //经典0-1背包
+        //dp[i][j] = max(dp[i-1][j], dp[i-1][j-nums[i]]+1);
+        vector<int> dp(target+1, INT_MIN);
+        dp[0] = 0;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            for(int j=target;j>=nums[i];j--)
+            {
+                dp[j] = max(dp[j], dp[j-nums[i]]+1); 
+            }
+        }
+        if(dp[target]<INT_MIN/2) return -1; //这里dp[target]有可能会被更新为INT_MIN+1这种,因此不能用==INT_MIN来判断,只要足够小就说明不存在
+        return dp[target];
+    }
+};
+```
+
+考虑最长， 使用max
+
+### （4）[416. 分割等和子集](https://leetcode.cn/problems/partition-equal-subset-sum/)
+
+```c++
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        //背包问题简单变种, 算sum/2为target
+        int sum = reduce(nums.begin(), nums.end());
+        if(sum%2==1) return false;
+        int target = sum/2;
+        vector<int> dp(target+1, 0); //一开始都是false
+        //看一下dp[i][j]表示考虑前i个数能否使得和=j
+        dp[0] = 1; 
+        int n=nums.size();
+        for(int i=0;i<n;i++)
+        {
+            //从右往左遍历
+            for(int j=target;j>=nums[i];j--)
+                dp[j] = (dp[j] || dp[j-nums[i]]); //背包变种,不选当前数,或者选当前数
+        }
+        return (bool) dp[target];
+    }
+};
+```
+
+Y
+
+```c++
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        //sum/2
+        int sum = reduce(nums.begin(),nums.end());
+        if(sum%2==1)return false;
+        sum =sum/2;
+        //dp[i][j] = dp[i-1][j]|dp[i-1][j-nums[i]]
+        //dp[-1][0] = true;
+        int n = nums.size();
+        vector<bool> dp(sum+1,false);
+        dp[0]=true;
+        for(int i=0;i<n;i++)
+        {
+            for(int j=sum;j>=nums[i];j--)
+            {
+                dp[j] = dp[j]|dp[j-nums[i]];
+            }
+        }
+        return dp[sum];
+    }
+};
+```
+
+考虑true/false  使用或|
+
+### （5）[2787. 将一个数字表示成幂的和的方案数](https://leetcode.cn/problems/ways-to-express-an-integer-as-sum-of-powers/)
+
+可以先用二维的做，再看看能否降维。
+
+```c++
+class Solution {
+public:
+    const int MOD = 1e9+7;
+    int numberOfWays(int n, int x) {
+        vector<int> dp(n+1, 0); //dp[i][j]表示考虑到正整数i时,且此时总和为j时的方案数,但可以把i省略掉
+        dp[0] = 1;
+        //dp[i][j] = dp[i-1][j] + dp[i-1][j-pow(i, x)]
+        //-> dp[i+1][j] = dp[i][j] + dp[i][j-pow(i, x)]
+        //能否降维?可以从后往前降维
+        for(int i=1;i<=n;i++) //注意这里的i指的是要选的数,从1开始
+        {
+            for(int j=n;j>=pow(i, x);j--)
+            {
+                dp[j] = (dp[j]%MOD + dp[j-pow(i, x)]%MOD)%MOD; 
+            }
+        }
+        return dp[n]%MOD;
+    }
+};
+```
+
+考虑数目，使用和+
+
+### （6）[3180. 执行操作可获得的最大总奖励 I](https://leetcode.cn/problems/maximum-total-reward-using-operations-i/)
+
+
+
+
+
+## 2.完全背包
+
+完全背包和0-1背包的区别在于，不再是n个物品，而是n种物品（每种物品可以无限制选择），那么此时的状态转移方程就变为：
+
+```c++
+dfs(i,c) = max(dfs(i-1,c), dfs(i, c-w[i])+v[i]); //可以继续考虑当前第i个物品
+```
+
+与0-1背包唯一的不同就是是`dfs(i, c-w[i])+v[i])`而不是`dfs(i-1, c-w[i])+v[i])`
+
+以下是例题。
+
+（完全背包似乎是j从左到右）
+
+### （1）[322. 零钱兑换](https://leetcode.cn/problems/coin-change/)
+
+还是先开一个正常的二维dp来做一下这道题目。题解如下：
+
+```c++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        //先用正常二维dp看一下, dp[i][j]表示考虑到第i-1个硬币的时候,总和为j的最少硬币个数
+        int n = coins.size();
+        vector<vector<int>> dp(n+1, vector<int>(amount+1, INT_MAX/2)); //都是正数,初始化为INT_MAX,表示不合法情况，也可以是0x3f3f3f
+        dp[0][0] = 0; //不选硬币的时候,总和为0是合法情况,此时"最少的硬币个数"也是0
+        //dp[i][j] = min(dp[i-1][j], dp[i][j-nums[i]]+1); //不选,或者选
+        //dp[i+1][j] = min(dp[i][j], dp[i+1][j-nums[i]]+1);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<=amount;j++)
+            {
+                if(j<coins[i]) dp[i+1][j] = dp[i][j];
+                else dp[i+1][j] = min(dp[i][j], dp[i+1][j-coins[i]]+1);//注意这个是i+1
+            }
+        }
+        int res = 0;
+        if(dp[n][amount]==(INT_MAX/2)) res = -1;
+        else res = dp[n][amount];
+        return res;
+    }
+};
+```
+
+接下来，可以降维成一维的情况，注意到状态转移方程为：
+
+```c++
+if(j<coins[i]) dp[i+1][j] = dp[i][j];
+else dp[i+1][j] = min(dp[i][j], dp[i+1][j-coins[i]]+1);
+```
+
+可以发现从左到右遍历并不会出现错误的覆盖问题，因为`j-coins[i]`是第`i+1`行的，本来就是要更新后的结果，所以从左往右遍历是正确的，此时代码如下：
+
+```c++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        //先用正常二维dp看一下, dp[i][j]表示考虑到第i-1个硬币的时候,总和为j的最少硬币个数
+        int n = coins.size();
+        vector<int> dp(amount+1,INT_MAX/2); //都是正数,初始化为INT_MAX,表示不合法情况
+        dp[0] = 0; //不选硬币的时候,总和为0是合法情况,此时"最少的硬币个数"也是0
+        //dp[i][j] = min(dp[i-1][j], dp[i][j-nums[i]]+1); //不选,或者选
+        //dp[i+1][j] = min(dp[i][j], dp[i+1][j-nums[i]]+1);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<=amount;j++)
+            {
+                if(j>=coins[i]) dp[j] = min(dp[j], dp[j-coins[i]]+1);
+            }
+        }
+        int res = 0;
+        if(dp[amount]==(INT_MAX/2)) res = -1;
+        else res = dp[amount];
+        return res;
+    }
+};
+```
+
+
+
+
+
+
+
 #　四、经典线性 DP
 
 ## 1.最长公共子序列（LCS）
@@ -631,3 +1032,150 @@ public:
 ```
 
 > 个人理解，掌握滚动数组的方法应该是够了，基本上不可能被卡空间，而优化为一维并不简单，可能改坏掉，因此最多用滚动数组优化即可。
+
+
+
+
+
+# 十二、树形 DP
+
+注：可能有同学觉得树形 DP 没有重复访问同一个状态（重叠子问题），并不能算作 DP，而是算作普通的递归。这么说也有一定道理，不过考虑到思维方式和 DP 是一样的自底向上，所以仍然叫做树形 DP。此外，如果是自顶向下的递归做法，是存在重叠子问题的，一般要结合记忆化搜索实现。
+
+## §12.1 树的直径
+
+讲解：[树形 DP：树的直径](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV17o4y187h1%2F)
+
+### [543. 二叉树的直径](https://leetcode.cn/problems/diameter-of-binary-tree/)
+
+给你一棵二叉树的根节点，返回该树的 **直径** 。
+
+二叉树的 **直径** 是指树中任意两个节点之间最长路径的 **长度** 。这条路径可能经过也可能不经过根节点 `root` 。
+
+两节点之间路径的 **长度** 由它们之间边数表示。
+
+**示例 1：**
+
+![img](assets/diamtree.jpg)
+
+```
+输入：root = [1,2,3,4,5]
+输出：3
+解释：3 ，取路径 [4,2,1,3] 或 [5,2,1,3] 的长度。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int s=0;
+    int lenTree(TreeNode* root)
+    {
+        if(root == nullptr)return -1; //注意  这个必须是-1
+        int left = lenTree(root->left);
+        int right= lenTree(root->right);
+        int val = left+right+2;
+        s = max(s,val);
+        return max(left,right)+1;
+    }
+    int diameterOfBinaryTree(TreeNode* root) {
+        lenTree(root);
+        return s;
+    }
+};
+```
+
+或者
+
+```C++
+class Solution {
+public:
+    int diameterOfBinaryTree(TreeNode* root) {
+        int ans = 0;
+        auto dfs = [&](this auto&& dfs, TreeNode* node) -> int {
+            if (node == nullptr) {
+                return -1;
+            }
+            int l_len = dfs(node->left) + 1; // 左子树最大链长+1
+            int r_len = dfs(node->right) + 1; // 右子树最大链长+1
+            ans = max(ans, l_len + r_len); // 两条链拼成路径
+            return max(l_len, r_len); // 当前子树最大链长
+        };
+        dfs(root);
+        return ans;
+    }
+};
+```
+
+
+
+## §12.2 树上最大独立集
+
+讲解：[树形 DP：打家劫舍III](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1vu4y1f7dn%2F)
+
+
+
+### [337. 打家劫舍 III](https://leetcode.cn/problems/house-robber-iii/)
+
+小偷又发现了一个新的可行窃的地区。这个地区只有一个入口，我们称之为 `root` 。
+
+除了 `root` 之外，每栋房子有且只有一个“父“房子与之相连。一番侦察之后，聪明的小偷意识到“这个地方的所有房屋的排列类似于一棵二叉树”。 如果 **两个直接相连的房子在同一天晚上被打劫** ，房屋将自动报警。
+
+给定二叉树的 `root` 。返回 ***在不触动警报的情况下** ，小偷能够盗取的最高金额* 。
+
+**示例 1:**
+
+![img](assets/rob1-tree.jpg)
+
+```
+输入: root = [3,2,3,null,3,null,1]
+输出: 7 
+解释: 小偷一晚能够盗取的最高金额 3 + 3 + 1 = 7
+```
+
+```C++
+class Solution {
+    pair<int, int> dfs(TreeNode* node) {
+        if (node == nullptr) { // 递归边界
+            return {0, 0}; // 没有节点，怎么选都是 0
+        }
+        auto [l_rob, l_not_rob] = dfs(node->left); // 递归左子树
+        auto [r_rob, r_not_rob] = dfs(node->right); // 递归右子树
+        int rob = l_not_rob + r_not_rob + node->val; // 选
+        int not_rob = max(l_rob, l_not_rob) + max(r_rob, r_not_rob); // 不选
+        return {rob, not_rob};
+    }
+
+public:
+    int rob(TreeNode* root) {
+        auto [root_rob, root_not_rob] = dfs(root);
+        return max(root_rob, root_not_rob); // 根节点选或不选的最大值
+    }
+};
+```
+
+
+
+```C++
+class Solution {
+public:
+    pair<int, int> dfs(TreeNode* root)
+    {
+        if (root == nullptr) return { 0,0 };
+        pair<int, int> pl = dfs(root->left);
+        pair<int, int> pr = dfs(root->right);
+        
+        int choose = pl.second + pr.second + root->val;
+        int noChoose = max(pl.first, pl.second) + max(pr.first, pr.second);
+        
+        return { choose , noChoose };
+    }
+    int rob(TreeNode* root) {
+        pair<int,int> p =dfs(root);
+        return max(p.first, p.second);
+    }
+};
+```
+
+
+

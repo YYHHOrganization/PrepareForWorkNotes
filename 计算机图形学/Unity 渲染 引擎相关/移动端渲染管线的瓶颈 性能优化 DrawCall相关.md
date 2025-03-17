@@ -4,6 +4,8 @@ https://juejin.cn/post/7082168044088197150
 
 这篇可以配合D:\PGPostgraduate\githubNotePrepareForWork\PrepareForWorkNotes\八股文\附录\GPU相关知识.md 来看
 
+可以看rtr4 GPU那个章节 以及后面的渲染优化章节
+
 ------
 
 ### 移动端渲染瓶颈
