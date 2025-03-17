@@ -682,8 +682,8 @@ class Solution {
 public:
     int largestRectangleArea(vector<int>& heights) {
         int n = heights.size();
-        vector<int> lefts(n, -1);
-        vector<int> rights(n, n); //注意这个初值的边界情况设置 
+        vector<int> lefts(n, -1);//注意这个初值的边界情况设置 ！！
+        vector<int> rights(n, n); //注意这个初值的边界情况设置 ！！
 
         stack<int> stk;
         //step 1:算一遍右侧第一个<height[i]的值
@@ -724,6 +724,26 @@ public:
 ```
 
 > 这题考的基础模型其实就是：在一维数组中对每一个数找到第一个比自己小的元素。这类“在一维数组中找第一个满足某种条件的数”的场景就是典型的单调栈应用场景。
+
+注意初始化的边界情况
+
+> ```C++
+> vector<int> lefts(n, -1);//注意这个初值的边界情况设置 ！！
+> vector<int> rights(n, n); //注意这个初值的边界情况设置 ！！
+> ```
+>
+> 对于：
+>
+> <img src="assets/image-20250314215327009.png" alt="image-20250314215327009" style="zoom:50%;" />
+>
+> ```C++
+> L:-1 R:1 左边到-1 
+> L:-1 R:6
+> L:1 R:4
+> L:2 R:4
+> L:1 R:6
+> L:4 R:6 相当于到n了
+> ```
 
 
 
@@ -804,4 +824,49 @@ public:
 > - `1 <= arr[i] <= 3 * 104`
 
 暴力法应该可以过，但作为年轻人的第一道贡献法题目，直接看答案了。可以看这篇题解：[907. 子数组的最小值之和 - 力扣（LeetCode）](https://leetcode.cn/problems/sum-of-subarray-minimums/solutions/1930857/gong-xian-fa-dan-diao-zhan-san-chong-shi-gxa5/)。
+
+
+
+未优化：
+
+```C++
+class Solution {
+public:
+    int sumSubarrayMins(vector<int>& arr) {
+        //左边第一个<的 和右边第一个<的 的下标
+        //（i - left ）* (right-i)
+        const int MOD = 1e9+7;
+        stack<int> Lstk;
+        stack<int> Rstk;
+        int n= arr.size();
+        vector<int> Lmono(n,-1);
+        vector<int> Rmono(n,n);
+        for(int i=0;i<n;i++) //右和左要分清
+        {
+            while(!Rstk.empty()&&arr[i]<=arr[Rstk.top()])
+            {
+                Rmono[Rstk.top()] = i;
+                Rstk.pop();
+            }
+            Rstk.push(i);
+        }
+        for(int i=n-1;i>=0;i--)
+        {
+            while(!Lstk.empty()&&arr[i]<arr[Lstk.top()])
+            {
+                Lmono[Lstk.top()] = i;
+                Lstk.pop();
+            }
+            Lstk.push(i);
+        }
+        long long res=0;
+        for(int i=0;i<n;i++)
+        {
+            long long num = (Rmono[i]-i)*(i-Lmono[i]);
+            res = res+num*arr[i];
+        }
+        return res%MOD;
+    }
+};
+```
 

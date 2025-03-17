@@ -1,5 +1,9 @@
 #  LeetCode 热题 HOT 100
 
+https://leetcode.cn/problem-list/2cktkvj/
+=======
+题单在这里：[🔥 LeetCode 热题 HOT 100 - 力扣（LeetCode）全球极客挚爱的技术成长平台](https://leetcode.cn/problem-list/2cktkvj/)
+
 :notebook: 表示记录在“大厂”那个笔记中
 
 :bookmark: 表示在 ” 面经合集——题目+答案版“中
@@ -501,6 +505,69 @@ public:
 
 
 
+
+
+### [124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/)
+
+二叉树中的 **路径** 被定义为一条节点序列，序列中每对相邻节点之间都存在一条边。同一个节点在一条路径序列中 **至多出现一次** 。该路径 **至少包含一个** 节点，且不一定经过根节点。
+
+**路径和** 是路径中各节点值的总和。
+
+给你一个二叉树的根节点 `root` ，返回其 **最大路径和** 。
+
+**示例 1：**
+
+![img](assets/exx1.jpg)
+
+```
+输入：root = [1,2,3]
+输出：6
+解释：最优路径是 2 -> 1 -> 3 ，路径和为 2 + 1 + 3 = 6
+```
+
+链接：https://leetcode.cn/problems/binary-tree-maximum-path-sum/solutions/297005/er-cha-shu-zhong-de-zui-da-lu-jing-he-by-leetcode-/
+
+![image-20250315210910816](assets/image-20250315210910816.png)
+
+![image-20250315211030363](assets/image-20250315211030363.png)
+
+```C++
+class Solution {
+private:
+    int maxSum = INT_MIN;
+
+public:
+    int maxGain(TreeNode* node) {
+        if (node == nullptr) {
+            return 0;
+        }
+        
+        // 递归计算左右子节点的最大贡献值
+        // 只有在最大贡献值大于 0 时，才会选取对应子节点
+        int leftGain = max(maxGain(node->left), 0);
+        int rightGain = max(maxGain(node->right), 0);
+
+        // 节点的最大路径和取决于该节点的值与该节点的左右子节点的最大贡献值
+        int priceNewpath = node->val + leftGain + rightGain;
+
+        // 更新答案
+        maxSum = max(maxSum, priceNewpath);
+
+        // 返回节点的最大贡献值  这里返回上去的不能够是选择左右的，只能是选择左 或者右的 不然不是变三岔路口了 就不对了
+        return node->val + max(leftGain, rightGain);
+    }
+
+    int maxPathSum(TreeNode* root) {
+        maxGain(root);
+        return maxSum;
+    }
+};
+```
+
+
+
+
+
 ## 字典树
 
 ### [208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
@@ -650,6 +717,171 @@ public:
 
 
 
+### [139. 单词拆分](https://leetcode.cn/problems/word-break/)
+
+给你一个字符串 `s` 和一个字符串列表 `wordDict` 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 `s` 则返回 `true`。
+
+**注意：**不要求字典中出现的单词全部都使用，并且字典中的单词可以重复使用。
+
+ 
+
+**示例 1：**
+
+```
+输入: s = "leetcode", wordDict = ["leet", "code"]
+输出: true
+解释: 返回 true 因为 "leetcode" 可以由 "leet" 和 "code" 拼接成。
+```
+
+
+
+##### M1 字典树+回溯  结合记忆化
+
+```C++
+class Solution {
+public:
+    struct TrieNode
+    {
+        TrieNode* next[26];
+        bool isEnd;
+    };
+    TrieNode* head;
+    bool failed[310];//记忆化
+    void Init()
+    {
+        head = new TrieNode();
+    }
+    void insert(string s)
+    {
+        TrieNode* p =head;
+        for(char& c:s)
+        {
+            if(p->next[c-'a']==nullptr)
+            {
+                p->next[c-'a'] = new TrieNode();
+            }
+            p=p->next[c-'a'];
+        }
+        p->isEnd = true;
+    }
+    // bool search(string s)
+    // {
+    //     TrieNode* p =head;
+    //     for(char& c:s)
+    //     {
+    //         if(p->next[c-'a']==nullptr)return false;
+    //         p=p->next[c-'a'];
+    //     }
+    //     if(p->isEnd==true)return true;
+    //     return false;
+    // }
+    //逐步遍历字典树：在DFS中维护当前字典树节点，逐个字符移动，避免每次都从根节点开始搜索。
+    bool dfs(string s,int start)
+    {
+        if(failed[start])return false;
+        if(s.size()==start)
+        {
+            return true;
+        }
+        TrieNode* p=head;
+        for(int i=start;i<s.size();i++)
+        {
+            //代表我直接就不能续着这个字母继续下去
+            if(p->next[s[i]-'a']==nullptr)break;
+            p=p->next[s[i]-'a'];
+            if(p->isEnd==true&&dfs(s,i+1))
+            {
+                return true;
+            }            
+        }
+        failed[start] = true;
+        return false;
+    }
+    bool wordBreak(string s, vector<string>& wordDict) {
+        //字典树
+        //构建字典树，然后遍历这个s  看是否是一个单词，是的话递归，继续 直到字典树没有了 或者单词结束
+        //如果单词结束 且字典树是true  return true
+        Init();
+        for(auto& word:wordDict)
+        {
+            insert(word);
+        }
+        return dfs(s,0);
+    }
+};
+```
+
+如果不结合记忆化 会超时
+
+这题还是推荐直接dp
+
+以后想题目 就是先回溯 然后再看能不能dp
+
+
+
+##### M2 DP 推荐
+
+```C++
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        //dp[i] = dp[i-wsize]|dp[i]
+        //true  下一个 
+
+        int n = s.size();
+        vector<bool> dp(n+1);
+        dp[0]=true;
+        for(int i=1;i<=n;i++)
+        {
+            for(int j=0;j<wordDict.size();j++)
+            {
+                string word = wordDict[j];
+                int wn = word.size();//4
+                if(i-wn>=0&&s.substr(i-wn,wn)==word&&dp[i-wn])
+                {
+                    dp[i]=true;
+                    break;
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+用set
+
+```C++
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        //dp[i] = dp[i-wsize]|dp[i]
+        //true  下一个 
+
+        int n = s.size();
+        vector<bool> dp(n+1);
+        dp[0]=true;
+        unordered_set<string> uset(wordDict.begin(),wordDict.end());
+        for(int i=1;i<=n;i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                if(dp[j]&&uset.contains(s.substr(j,i-j)))
+                {
+                    dp[i]=true;
+                    break;
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+
+
+
+
 ## 链表
 
 ### 7.Leetcode 160 相交链表  大厂笔记 :notebook:
@@ -686,7 +918,7 @@ public:
         //如果是环形的 1、如果相遇之前个数不一样，第二轮遇到 2、个数一样 第一轮会遇到
         while(pa!=pb)
         {
-            pa = pa==nullptr?headB:pa->next;
+            pa = pa==nullptr?headB:pa->next; //注意判断的是pa==nullptr,这样才会在不相交的时候共同走到nullptr,下同
             pb = pb==nullptr?headA:pb->next;
         }
         return pa;
@@ -769,6 +1001,67 @@ M2
 O(1) 空间做法：寻找中间节点+反转链表
 
 使用**快慢指针**在一次遍历中找到中间：慢指针一次走一步，快指针一次走两步，快慢指针同时出发。当快指针移动到链表的末尾时，慢指针恰好到链表的中间。通过慢指针将链表分为两部分。
+
+> 胖补充：快满指针找链表的中间，然后翻转后面的部分，再来一轮遍历即确认是否是回文链表。这种做法代码会难写一些，但可以锻炼到链表的一些基本写法。
+>
+> 代码如下：
+> ```c++
+> /**
+>  * Definition for singly-linked list.
+>  * struct ListNode {
+>  *     int val;
+>  *     ListNode *next;
+>  *     ListNode() : val(0), next(nullptr) {}
+>  *     ListNode(int x) : val(x), next(nullptr) {}
+>  *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+>  * };
+>  */
+> class Solution {
+> public:
+>     //找到链表中间:快满指针
+>     ListNode* findMiddle(ListNode* head)
+>     {
+>         ListNode* fast = head;
+>         ListNode* slow = head;
+>         while(fast && fast->next)
+>         {
+>             fast = fast->next->next;
+>             slow = slow->next;
+>         }
+>         return slow; // 奇数个节点,返回中间;偶数个节点,返回靠右的那个
+>     }
+> 
+>     //翻转链表:把head->最后的部分翻转,返回翻转后的头节点
+>     ListNode* reverseList(ListNode* head)
+>     {
+>         ListNode* cur = head;
+>         ListNode* pre = nullptr;
+>         while(cur)
+>         {
+>             ListNode* nxt = cur->next;
+>             cur->next = pre;
+>             pre = cur;
+>             cur = nxt;
+>         }
+>         return pre;
+>     }
+> 
+>     bool isPalindrome(ListNode* head) {
+>         ListNode *mid = findMiddle(head);
+>         ListNode* reverseHead = reverseList(mid);
+>         while(reverseHead && head)
+>         {
+>             if(reverseHead->val != head->val)
+>                 return false;
+>             reverseHead = reverseHead->next;
+>             head = head->next;
+>         }
+>         return true;
+>     }
+> };
+> ```
+>
+> 里面包含的知识点还是挺多的，可以做一下。
 
 
 
@@ -958,7 +1251,7 @@ public:
 };
 ```
 
-#### M2:递归
+#### M2:递归（注意这种写法）
 
 ```C++
 class Solution {
@@ -1473,7 +1766,11 @@ public:
 
 ## **完全背包**
 
+请看D:\PGPostgraduate\githubNotePrepareForWork\PrepareForWorkNotes\Algos\Leetcode\Leetcode——动态规划专题.md
 
+中的背包专题
+
+有一些hot100在里面 就不整理过来了
 
 ### [279. 完全平方数](https://leetcode.cn/problems/perfect-squares/)  :red_circle: 
 
@@ -1553,6 +1850,116 @@ public:
 
 
 
+### [322. 零钱兑换](https://leetcode.cn/problems/coin-change/)
+
+给你一个整数数组 `coins` ，表示不同面额的硬币；以及一个整数 `amount` ，表示总金额。
+
+计算并返回可以凑成总金额所需的 **最少的硬币个数** 。如果没有任何一种硬币组合能组成总金额，返回 `-1` 。
+
+你可以认为每种硬币的数量是无限的。
+
+**示例 1：**
+
+```
+输入：coins = [1, 2, 5], amount = 11
+输出：3 
+解释：11 = 5 + 5 + 1
+```
+
+
+
+##### 背包：
+
+还是先开一个正常的二维dp来做一下这道题目。题解如下：
+
+```c++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        //先用正常二维dp看一下, dp[i][j]表示考虑到第i-1个硬币的时候,总和为j的最少硬币个数
+        int n = coins.size();
+        vector<vector<int>> dp(n+1, vector<int>(amount+1, INT_MAX/2)); //都是正数,初始化为INT_MAX,表示不合法情况，也可以是0x3f3f3f
+        dp[0][0] = 0; //不选硬币的时候,总和为0是合法情况,此时"最少的硬币个数"也是0
+        //dp[i][j] = min(dp[i-1][j], dp[i][j-nums[i]]+1); //不选,或者选
+        //dp[i+1][j] = min(dp[i][j], dp[i+1][j-nums[i]]+1);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<=amount;j++)
+            {
+                if(j<coins[i]) dp[i+1][j] = dp[i][j];
+                else dp[i+1][j] = min(dp[i][j], dp[i+1][j-coins[i]]+1);//注意这个是i+1
+            }
+        }
+        int res = 0;
+        if(dp[n][amount]==(INT_MAX/2)) res = -1;
+        else res = dp[n][amount];
+        return res;
+    }
+};
+```
+
+接下来，可以降维成一维的情况，注意到状态转移方程为：
+
+```c++
+if(j<coins[i]) dp[i+1][j] = dp[i][j];
+else dp[i+1][j] = min(dp[i][j], dp[i+1][j-coins[i]]+1);
+```
+
+可以发现从左到右遍历并不会出现错误的覆盖问题，因为`j-coins[i]`是第`i+1`行的，本来就是要更新后的结果，所以从左往右遍历是正确的，此时代码如下：
+
+```c++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        //先用正常二维dp看一下, dp[i][j]表示考虑到第i-1个硬币的时候,总和为j的最少硬币个数
+        int n = coins.size();
+        vector<int> dp(amount+1,INT_MAX/2); //都是正数,初始化为INT_MAX,表示不合法情况
+        dp[0] = 0; //不选硬币的时候,总和为0是合法情况,此时"最少的硬币个数"也是0
+        //dp[i][j] = min(dp[i-1][j], dp[i][j-nums[i]]+1); //不选,或者选
+        //dp[i+1][j] = min(dp[i][j], dp[i+1][j-nums[i]]+1);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<=amount;j++)
+            {
+                if(j>=coins[i]) dp[j] = min(dp[j], dp[j-coins[i]]+1);
+            }
+        }
+        int res = 0;
+        if(dp[amount]==(INT_MAX/2)) res = -1;
+        else res = dp[amount];
+        return res;
+    }
+};
+```
+
+#####  爬楼梯：
+
+以下这个是类似爬楼梯的思想和写法：
+
+```C++
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        int n = coins.size();
+        vector<int> dp(amount+1,0x3f3f3f);
+        dp[0] = 0; //金额为0不能由硬币组成 !! =0
+        for(int i=0;i<=amount;i++)
+        {
+            for(int j=0;j<coins.size();j++)//挑选一个硬币
+            {
+                int cap = i-coins[j];
+                if(cap<0)continue;
+                dp[i] = min(dp[i],dp[cap]+1);
+            }
+        }
+        if(dp[amount] == 0x3f3f3f)return -1;
+        return dp[amount];
+    }
+};
+```
+
+
+
 ## 0-1背包
 
 ### ==[416. 分割等和子集](https://leetcode.cn/problems/partition-equal-subset-sum/)==
@@ -1585,6 +1992,76 @@ public:
 > - `1 <= nums[i] <= 100`
 
 这是一道0-1背包的题目，
+
+
+
+## 十二、树形 DP
+
+### [337. 打家劫舍 III](https://leetcode.cn/problems/house-robber-iii/)
+
+讲解：[树形 DP：打家劫舍III](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1vu4y1f7dn%2F)
+
+小偷又发现了一个新的可行窃的地区。这个地区只有一个入口，我们称之为 `root` 。
+
+除了 `root` 之外，每栋房子有且只有一个“父“房子与之相连。一番侦察之后，聪明的小偷意识到“这个地方的所有房屋的排列类似于一棵二叉树”。 如果 **两个直接相连的房子在同一天晚上被打劫** ，房屋将自动报警。
+
+给定二叉树的 `root` 。返回 ***在不触动警报的情况下** ，小偷能够盗取的最高金额* 。
+
+**示例 1:**
+
+![img](assets/rob1-tree.jpg)
+
+```
+输入: root = [3,2,3,null,3,null,1]
+输出: 7 
+解释: 小偷一晚能够盗取的最高金额 3 + 3 + 1 = 7
+```
+
+```C++
+class Solution {
+    pair<int, int> dfs(TreeNode* node) {
+        if (node == nullptr) { // 递归边界
+            return {0, 0}; // 没有节点，怎么选都是 0
+        }
+        auto [l_rob, l_not_rob] = dfs(node->left); // 递归左子树
+        auto [r_rob, r_not_rob] = dfs(node->right); // 递归右子树
+        int rob = l_not_rob + r_not_rob + node->val; // 选
+        int not_rob = max(l_rob, l_not_rob) + max(r_rob, r_not_rob); // 不选
+        return {rob, not_rob};
+    }
+
+public:
+    int rob(TreeNode* root) {
+        auto [root_rob, root_not_rob] = dfs(root);
+        return max(root_rob, root_not_rob); // 根节点选或不选的最大值
+    }
+};
+```
+
+
+
+```C++
+class Solution {
+public:
+    pair<int, int> dfs(TreeNode* root)
+    {
+        if (root == nullptr) return { 0,0 };
+        pair<int, int> pl = dfs(root->left);
+        pair<int, int> pr = dfs(root->right);
+        
+        int choose = pl.second + pr.second + root->val;
+        int noChoose = max(pl.first, pl.second) + max(pr.first, pr.second);
+        
+        return { choose , noChoose };
+    }
+    int rob(TreeNode* root) {
+        pair<int,int> p =dfs(root);
+        return max(p.first, p.second);
+    }
+};
+```
+
+
 
 
 
@@ -1655,7 +2132,41 @@ public:
 };
 ```
 
+另一种写法
 
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        // 1 2  3  4
+        //   1  2  6  前缀乘积
+        //24 12 4	  后缀乘积
+        // 0  1 2 3 下标
+        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
+        //并没有做偏移 下标是对应的 没有+1
+        vector<int> prefixProduct(n,1);
+        for(int i=1;i<n;i++)
+        {
+            prefixProduct[i] = prefixProduct[i-1]*nums[i-1];
+        }
+        vector<int> suffixProduct(n,1);
+        for(int i=n-2;i>=0;i--)//-2
+        {
+            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
+        }
+        
+        vector<int> res(n,0);
+        for(int i=0;i<n;i++)
+        {
+            res[i] = prefixProduct[i]*suffixProduct[i];
+        }
+        return res;
+    }
+};
+```
 
 #### 优化：不使用额外空间
 
@@ -1879,41 +2390,8 @@ public:
             }
         }
         return dp[n][k+1][0];
-
-另一种写法
-
-```C++
-class Solution {
-public:
-    vector<int> productExceptSelf(vector<int>& nums) {
-        // 整个乘起来 除以 ni 题目不让用
-        //记录前缀乘积和后缀乘积，乘起来
-        int n=nums.size();
-        // 1 2  3  4
-        //   1  2  6  前缀乘积
-        //24 12 4	  后缀乘积
-        // 0  1 2 3 下标
-        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
-        //并没有做偏移 下标是对应的 没有+1
-        vector<int> prefixProduct(n,1);
-        for(int i=1;i<n;i++)
-        {
-            prefixProduct[i] = prefixProduct[i-1]*nums[i-1];
-        }
-        vector<int> suffixProduct(n,1);
-        for(int i=n-2;i>=0;i--)//-2
-        {
-            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
-        }
-        
-        vector<int> res(n,0);
-        for(int i=0;i<n;i++)
-        {
-            res[i] = prefixProduct[i]*suffixProduct[i];
-        }
-        return res;
     }
-};
+}
 ```
 
 能够发现，`dp[i+1]`永远依赖于`dp[i]`，那么能否降维呢？可以，但需要注意遍历的顺序，假设我们直接这样改：
@@ -1956,7 +2434,9 @@ public:
 
 ```
 
-
+>注意 ：这题目中，k共有0-k一共k+1个状态。
+>
+>例如k=3，则有0不买，买1，买2，买3，一种四种状态，但是我们要加1位防止越界，因此是k+2；
 
 # 图
 
@@ -2135,7 +2615,7 @@ public:
         for(auto& num:nums)
         {
             int x = (num - 1)%n; //数组下标从0开始,数字从1开始,原地充当哈希表
-            if(nums[x]<=n) //如果加超过一次,可能会越界,这是为了稳妥
+            if(nums[x]<=n) //如果加超过一次,可能会越界,这是为了稳妥  【注意】这里有等号，因为1-n的话n也是可能出现的
             {
                 nums[x] += n; //+=n,这样如果遍历结束后<=n的数就是要返回的数
             }
@@ -2143,12 +2623,80 @@ public:
         vector<int> res;
         for(int i=0;i<n;i++)
         {
-            if(nums[i]<=n)
+            if(nums[i]<=n) //【注意】这里有等号
             {
                 res.emplace_back(i+1); //注意push的是i+1,因为哈希映射是值->下标为值-1
             }
         }
         return res;
+    }
+};
+```
+
+
+
+### [128. 最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
+
+给定一个未排序的整数数组 `nums` ，找出数字连续的最长序列（不要求序列元素在原数组中连续）的长度。
+
+请你设计并实现时间复杂度为 `O(n)` 的算法解决此问题。
+
+**示例 1：**
+
+```
+输入：nums = [100,4,200,1,3,2]
+输出：4
+解释：最长数字连续序列是 [1, 2, 3, 4]。它的长度为 4。
+```
+
+
+
+https://leetcode.cn/problems/longest-consecutive-sequence/solutions/276931/zui-chang-lian-xu-xu-lie-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
+
+**简单来说就是每个数都判断一次这个数是不是连续序列的开头那个数**。
+
+- 怎么判断呢，就是用哈希表查找这个数前面一个数是否存在，即num-1在序列中是否存在。存在那这个数肯定不是开头，直接跳过。
+- 因此只需要对每个开头的数进行循环，直到这个序列不再连续，因此复杂度是O(n)。
+  以题解中的序列举例:
+  **[100，4，200，1，3，4，2]**
+  去重后的哈希序列为：
+  **[100，4，200，1，3，2]**
+  按照上面逻辑进行判断：
+
+1. 元素100是开头,因为没有99，且以100开头的序列长度为1
+2. 元素4不是开头，因为有3存在，过，
+3. 元素200是开头，因为没有199，且以200开头的序列长度为1    
+4. 元素1是开头，因为没有0，且以1开头的序列长度为4，因为依次累加，2，3，4都存在。
+5. 元素3不是开头，因为2存在，过，
+6. 元素2不是开头，因为1存在，过。
+
+```C++
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        unordered_set<int> uset;
+        for(auto &num:nums)
+        {
+            uset.insert(num);
+        }
+        int maxLen=0;
+        int tempLen=0;
+        for(auto &num:uset)//注意这里要遍历uset而不是原数组 否则会超时（uset有自动去重）
+        {
+            if(!uset.contains(num-1))
+            {
+                int tempNum = num+1;
+                tempLen = 1;
+                while(uset.contains(tempNum))
+                {
+                    tempNum++;
+                    tempLen++;
+                }
+                maxLen = max(maxLen,tempLen);
+            }
+
+        }
+        return maxLen;
     }
 };
 ```
@@ -2382,10 +2930,7 @@ public:
 
 
 
-
-
-## ==除法求值（做法有带权并查集。。。有点哈人）==
-
+## 除法求值（做法有带权并查集。。。有点哈人）
 > 给你一个变量对数组 `equations` 和一个实数值数组 `values` 作为已知条件，其中 `equations[i] = [Ai, Bi]` 和 `values[i]` 共同表示等式 `Ai / Bi = values[i]` 。每个 `Ai` 或 `Bi` 是一个表示单个变量的字符串。
 >
 > 另有一些以数组 `queries` 表示的问题，其中 `queries[j] = [Cj, Dj]` 表示第 `j` 个问题，请你根据已知条件找出 `Cj / Dj = ?` 的结果作为答案。
@@ -2439,6 +2984,8 @@ public:
 > - `Ai, Bi, Cj, Dj` 由小写英文字母与数字组成
 
 看起来这道题目可以用图论的方法来做。
+
+**并查集有这道题**
 
 
 
@@ -2547,6 +3094,28 @@ public:
 
 ==（2）递归做法：还没有尝试==
 
+# 位运算
+
+### [136. 只出现一次的数字](https://leetcode.cn/problems/single-number/)
+
+给你一个 **非空** 整数数组 `nums` ，除了某个元素只出现一次以外，其余每个元素均出现两次。找出那个只出现了一次的元素。
+
+你必须设计并实现线性时间复杂度的算法来解决此问题，且该算法只使用常量额外空间。
+
+```C++
+class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        int res=0;
+        for(auto& num:nums)
+        {
+            res=res^num;
+        }
+        return res;
+    }
+};
+```
+
 
 
 # 数学
@@ -2618,3 +3187,496 @@ public:
 >
 > 就这样各路军阀一直以这种以一敌一同归于尽的方式厮杀下去，直到少数阵营都死光，那么最后剩下的几个必然属于多数阵营，winner 就是多数阵营。（多数阵营 51个，少数阵营只有49个，死剩下的2个就是多数阵营的人）
 
+
+
+# 字符串
+
+
+
+### [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
+
+给你一个字符串 `s`，找到 `s` 中最长的 回文 子串。
+
+**示例 1：**
+
+```
+输入：s = "babad"
+输出："bab"
+解释："aba" 同样是符合题意的答案。
+```
+
+#### M1 中心拓展法
+
+```C++
+class Solution {
+public:
+    pair<int, int> expandAroundCneter(string s, int l, int r) 
+    {
+        while (l >= 0 && r < s.size() && s[l] == s[r]) 
+        {
+            l--;
+            r++;
+        }
+        return {l+1,r-1};
+    }
+    string longestPalindrome(string s) 
+    {
+        int n = s.size();
+        int start = 0, end = 0;
+        for (int i = 0; i < n; i++) 
+        {
+            int l = i - 1, r = i + 1;
+            auto [l1,r1] = expandAroundCneter(s,l,r);
+            if(r1-l1>end-start) 
+            {
+                end =r1,start = l1;
+            }
+            l = i - 1, r = i;
+            auto [l2,r2] = expandAroundCneter(s,l,r);
+            if(r2-l2>end-start) 
+            {
+                end =r2,start = l2;
+            }
+        }
+        return s.substr(start,end-start+1);
+    }
+};
+```
+
+
+
+#### Manacher  马拉车算法 :car: :horse_racing:  O（n）
+
+【马拉车算法 | Coding Club】 https://www.bilibili.com/video/BV1Sx4y1k7jG/?share_source=copy_web&vd_source=067de257d5f13e60e5b36da1a0ec151e
+
+<img src="assets/5_fig1-1742028156216-3.png" alt="fig1" style="zoom:67%;" />
+
+https://leetcode.cn/problems/longest-palindromic-substring/solutions/2958179/mo-ban-on-manacher-suan-fa-pythonjavacgo-t6cx/
+
+参考代码：
+
+**https://leetcode.cn/problems/longest-palindromic-substring/solutions/7600/5-zui-chang-hui-wen-zi-chuan-cc-by-bian-bian-xiong**
+
+![image-20250315174253247](assets/image-20250315174253247.png)
+
+```c++
+这时我们知道RL[i]至少不会小于RL[j]，并且已经知道了部分的以i为中心的回文串，于是可以令RL[i]=RL[j] 为起始半径。
+又因为(j + i) / 2 = pos ==> j = 2*pos - i 得到 RL[i]=RL[2*pos - i]。
+```
+
+
+
+![image-20250315174259607](assets/image-20250315174259607.png)
+
+```C++
+RL[i] = MaxRight - i
+```
+
+//a  半径是1
+
+//bab 半径是2 
+
+```C++
+class Solution {
+public:
+    string longestPalindrome(string s) {
+        int len = s.size();
+        if(len<1)return "";
+        string s1;
+        for(char c:s)
+        {
+            s1+='#';
+            s1+=c;
+        }
+        s1+='#';
+        len = s1.size();
+        int MaxRight = 0;//最右边字母（右边最大蘑菇右边界）
+        int pos = 0;//center 目前右边最大蘑菇中心
+        int MaxRL = 0;//结果最大半径
+        int MaxPos = 0;//结果最大中心
+        vector<int> RL(len,0);
+        for(int i=0;i<len;i++)
+        {
+            if(i<MaxRight)
+            {
+                RL[i] = min(RL[2*pos-i],MaxRight-i);
+            }
+            else
+            {
+                RL[i] = 1;
+            }
+            //蘑菇不能穿透左边界和有右边界哦 && 蘑菇继续伸展
+            while(i-RL[i]>=0 && i+RL[i]<len && s1[i-RL[i]]==s1[i+RL[i]])
+            {
+                RL[i]++;//蘑菇继续伸展
+            }
+            //成为新的大蘑菇
+            if(RL[i]+i-1>MaxRight)
+            {
+                MaxRight = RL[i]+i-1;
+                pos = i; 
+            }
+            //更新结果
+            if(MaxRL<=RL[i])
+            {
+                MaxRL = RL[i];
+                MaxPos = i;
+            }
+        }
+        return s.substr((MaxPos-MaxRL+1)/2,MaxRL-1);//可以再看看如何还原
+
+    }
+};
+```
+
+
+
+
+
+
+### [647. 回文子串](https://leetcode.cn/problems/palindromic-substrings/)
+
+给你一个字符串 `s` ，请你统计并返回这个字符串中 **回文子串** 的数目。
+
+**回文字符串** 是正着读和倒过来读一样的字符串。
+
+**子字符串** 是字符串中的由连续字符组成的一个序列。
+
+**示例 1：**
+
+```
+输入：s = "abc"
+输出：3
+解释：三个回文子串: "a", "b", "c"
+```
+
+#### 中心拓展法
+
+```C++
+class Solution {
+public:
+    int countSubstrings(string s) {
+        int n=s.size();
+        int res=n;//自己可成为一个回文子串
+        int l=0,r=0;
+        for(int i=0;i<n;i++)
+        {
+            l=i-1,r=i+1;
+            while(l>=0&&r<n&&s[l]==s[r])
+            {
+                res++;
+                l--;r++;
+            }
+
+            l=i-1,r=i;
+            while(l>=0&&r<n&&s[l]==s[r])
+            {
+                res++;
+                l--;r++;
+            }
+        }
+        return res;
+    }
+};
+```
+
+#### Manacher  马拉车算法 O（n）
+
+```C++
+class Solution {
+public:
+    int countSubstrings(string s) {
+        string s1="#";
+        for(auto c:s)
+        {
+            s1+=c;
+            s1+='#';
+        }
+        int n = s1.size();
+        vector<int> RL(n,0);
+        int MaxRight = 0;
+        int pos = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(i<MaxRight)
+            {
+                RL[i] = min(RL[2*pos-i],MaxRight-i);
+            }
+            else
+                RL[i]=1;
+            while(i-RL[i]>=0&&i+RL[i]<n&&s1[i-RL[i]]==s1[i+RL[i]])
+            {
+                RL[i]++;
+            }
+            if(i+RL[i]-1>MaxRight)
+            {
+                MaxRight = i+RL[i]-1;
+                pos = i;
+            }
+            
+        }
+        int count = 0;
+        for (int rl : RL) 
+        {
+            count += rl / 2;
+        }
+        return count;
+    }
+};
+```
+
+
+
+# 贪心
+
+## [55. 跳跃游戏](https://leetcode.cn/problems/jump-game/)
+
+> 给你一个非负整数数组 `nums` ，你最初位于数组的 **第一个下标** 。数组中的每个元素代表你在该位置可以跳跃的最大长度。
+>
+> 判断你是否能够到达最后一个下标，如果可以，返回 `true` ；否则，返回 `false` 。
+>
+> 
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [2,3,1,1,4]
+> 输出：true
+> 解释：可以先跳 1 步，从下标 0 到达下标 1, 然后再从下标 1 跳 3 步到达最后一个下标。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums = [3,2,1,0,4]
+> 输出：false
+> 解释：无论怎样，总会到达下标为 3 的位置。但该下标的最大跳跃长度是 0 ， 所以永远不可能到达最后一个下标。
+> ```
+>
+> 
+>
+> **提示：**
+>
+> - `1 <= nums.length <= 104`
+> - `0 <= nums[i] <= 105`
+
+一般地，算法如下：
+
+- 从左到右遍历 `nums`，同时维护能跳到的最远位置 `mx`，初始值为 0。
+- 如果 i>mx，说明无法跳到 i，返回 false。
+- 否则，用 `i+nums[i]`更新 mx 的最大值。
+
+如果循环中没有返回 false，那么最后返回 true。
+
+最终代码很简单（只能说算法真奇妙）：
+
+```c++
+class Solution {
+public:
+    bool canJump(vector<int>& nums) {
+        int mx = 0;
+        for(int i=0;i<nums.size();i++)
+        {
+            if(i>mx) return false;
+            mx = max(mx, i+nums[i]);
+        }
+        return true;
+
+```
+
+
+
+# 并查集
+
+## 带权并查集
+
+### [399. 除法求值](https://leetcode.cn/problems/evaluate-division/)
+
+给你一个变量对数组 `equations` 和一个实数值数组 `values` 作为已知条件，其中 `equations[i] = [Ai, Bi]` 和 `values[i]` 共同表示等式 `Ai / Bi = values[i]` 。每个 `Ai` 或 `Bi` 是一个表示单个变量的字符串。
+
+另有一些以数组 `queries` 表示的问题，其中 `queries[j] = [Cj, Dj]` 表示第 `j` 个问题，请你根据已知条件找出 `Cj / Dj = ?` 的结果作为答案。
+
+返回 **所有问题的答案** 。如果存在某个无法确定的答案，则用 `-1.0` 替代这个答案。如果问题中出现了给定的已知条件中没有出现的字符串，也需要用 `-1.0` 替代这个答案。
+
+**注意：**输入总是有效的。你可以假设除法运算中不会出现除数为 0 的情况，且不存在任何矛盾的结果。
+
+**注意：**未在等式列表中出现的变量是未定义的，因此无法确定它们的答案。
+
+**示例 1：**
+
+```C++
+输入：equations = [["a","b"],["b","c"]], values = [2.0,3.0], queries = [["a","c"],["b","a"],["a","e"],["a","a"],["x","x"]]
+输出：[6.00000,0.50000,-1.00000,1.00000,-1.00000]
+解释：
+条件：a / b = 2.0, b / c = 3.0
+问题：a / c = ?, b / a = ?, a / e = ?, a / a = ?, x / x = ?
+结果：[6.0, 0.5, -1.0, 1.0, -1.0 ]
+注意：x 是未定义的 => -1.0
+```
+
+
+
+题解：
+
+**https://leetcode.cn/problems/evaluate-division/solutions/548634/399-chu-fa-qiu-zhi-nan-du-zhong-deng-286-w45d/?envType=problem-list-v2&envId=2cktkvj**
+
+```C++
+class Solution {
+public:
+    vector<int> parent;
+    vector<double> weights;// 指向parent节点的权重
+    void init(int thesize)
+    {
+        parent.resize(thesize);
+        weights.resize(thesize,1.0);
+        for(int i=0;i<thesize;i++)
+        {
+            parent[i]=i;
+        }
+    }
+    //找最终的parent节点并压缩路径
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            int origin = parent[a];
+            parent[a]= find(parent[a]);
+            weights[a]*=weights[origin];
+        }
+        return parent[a];
+    }
+     // 将 x 所在的子树连接到 y 所在的子树
+    void buildConnect(int x,int y,double val) // union 记住是double!!!!!
+    {
+        int rootx = find(x);
+        int rooty = find(y);
+        if(rootx==rooty)return ;
+        parent[rootx] = rooty;
+        weights[rootx] = weights[y] * val / weights[x];
+    }
+    double isConnected(int x,int y)
+    {
+        int rootX = find(x);
+        int rootY = find(y);
+        if(rootX!=rootY)
+            return -1.0;
+        else
+            return weights[x]/weights[y];
+    }
+    vector<double> calcEquation(vector<vector<string>>& equations, vector<double>& values, vector<vector<string>>& queries) {
+        // a0 b1 c2
+
+        // 第一步：预处理
+        unordered_map<string,int> umap;
+        int n = equations.size();
+        init(2*n);// 最坏情况下有2*size个变量
+        int id=0;
+        for(int i=0;i<n;i++)
+        {
+            string var1 = equations[i][0];
+            string var2 = equations[i][1];
+            //并查集中使用id 所以这里建立变量到ID的映射 每个变量分配一个id
+            if(!umap.count(var1))umap[var1] = id++;
+            if(!umap.count(var2))umap[var2] = id++;
+            buildConnect(umap[var1],umap[var2],values[i]);
+        }
+        // 第二步：查询
+        int m = queries.size();
+        vector<double> res(m,0.0);
+        for(int i=0;i<m;i++)
+        {
+            string var1 = queries[i][0];
+            string var2 = queries[i][1];
+            // 计算结果，若有未出现的变量则结果为-1
+            if(!umap.count(var1)||!umap.count(var2))res[i] =-1.0;
+            else res[i] = isConnected(umap[var1],umap[var2]);
+        }
+        return res;
+    }
+};
+
+```
+
+
+
+![image-20250317144053006](assets/image-20250317144053006.png)
+
+![image-20250317144022079](assets/image-20250317144022079.png)
+
+
+
+# 单调队列
+
+### [239. 滑动窗口最大值](https://leetcode.cn/problems/sliding-window-maximum/)
+
+给你一个整数数组 `nums`，有一个大小为 `k` 的滑动窗口从数组的最左侧移动到数组的最右侧。你只可以看到在滑动窗口内的 `k` 个数字。滑动窗口每次只向右移动一位。
+
+返回 *滑动窗口中的最大值* 。
+
+**示例 1：**
+
+```
+输入：nums = [1,3,-1,-3,5,3,6,7], k = 3
+输出：[3,3,5,5,6,7]
+解释：
+滑动窗口的位置                最大值
+---------------               -----
+[1  3  -1] -3  5  3  6  7       3
+ 1 [3  -1  -3] 5  3  6  7       3
+ 1  3 [-1  -3  5] 3  6  7       5
+ 1  3  -1 [-3  5  3] 6  7       5
+ 1  3  -1  -3 [5  3  6] 7       6
+ 1  3  -1  -3  5 [3  6  7]      7
+```
+
+
+
+**https://leetcode.cn/problems/sliding-window-maximum/solutions/2499715/shi-pin-yi-ge-shi-pin-miao-dong-dan-diao-ezj6/?envType=problem-list-v2&envId=2cktkvj**
+
+![image-20250317195154557](assets/image-20250317195154557.png)![image-20250317195211911](assets/image-20250317195211911.png)
+
+```C++
+class Solution {
+public:
+    vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+        int n = nums.size();
+        // vector<int> ans(n,0); // 错误！！ 后面push_back了 这里你干什么弄一堆0进去
+         vector<int> ans;
+        deque<int> deq;// 双端队列
+        for(int i=0;i<n;i++)
+        {
+            //in
+            while(!deq.empty()&&nums[i]>=nums[deq.back()])
+            {
+                deq.pop_back();// 维护 q 的单调性 降序
+            }
+            //
+            deq.push_back(i);// 入队
+            // 2. 出
+            if(i-deq.front()>=k)//===== // 队首已经离开窗口了 👇 下有解释
+            {
+                deq.pop_front();
+            }
+            // 3. 记录答案
+            if(i>=k-1)
+            {
+                // 由于队首到队尾单调递减，所以窗口最大值就是队首
+                ans.push_back(nums[deq.front()]);
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+>`if(i-deq.front()>=k)` 有等号的原因：
+>
+>```
+>[1  3  -1] -3  5  3  6  7      
+>0   1   2   3  4
+>```
+>我们可以看到 对于`[1  3  -1] -3`而言 ,3-0 = 3=k  这时候共有4个数字,  是超过k个的
+>
+>只有当 i - j = k-1的时候  他们的个数是 i- j +1 = k个
