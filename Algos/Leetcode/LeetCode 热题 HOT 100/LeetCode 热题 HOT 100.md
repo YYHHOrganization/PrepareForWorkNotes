@@ -3572,7 +3572,7 @@ public:
         return parent[a];
     }
      // 将 x 所在的子树连接到 y 所在的子树
-    void buildConnect(int x,int y,double val) // union 记住是double!!!!!
+    void buildConnect(int x,int y,double val) // union 记住是double!!!!! join
     {
         int rootx = find(x);
         int rooty = find(y);

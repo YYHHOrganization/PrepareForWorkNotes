@@ -1071,7 +1071,7 @@ public:
     int s=0;
     int lenTree(TreeNode* root)
     {
-        if(root == nullptr)return -1; //注意  这个必须是-1
+        if(root == nullptr)return -1; //注意  这个必须是-1 到时会和1抵消
         int left = lenTree(root->left);
         int right= lenTree(root->right);
         int val = left+right+2;
