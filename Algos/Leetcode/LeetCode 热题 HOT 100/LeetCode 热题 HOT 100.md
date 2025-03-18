@@ -221,6 +221,75 @@ public:
 
 
 
+### [33. 搜索旋转排序数组](https://leetcode.cn/problems/search-in-rotated-sorted-array/)
+
+整数数组 `nums` 按升序排列，数组中的值 **互不相同** 。
+
+在传递给函数之前，`nums` 在预先未知的某个下标 `k`（`0 <= k < nums.length`）上进行了 **旋转**，使数组变为 `[nums[k], nums[k+1], ..., nums[n-1], nums[0], nums[1], ..., nums[k-1]]`（下标 **从 0 开始** 计数）。例如， `[0,1,2,4,5,6,7]` 在下标 `3` 处经旋转后可能变为 `[4,5,6,7,0,1,2]` 。
+
+给你 **旋转后** 的数组 `nums` 和一个整数 `target` ，如果 `nums` 中存在这个目标值 `target` ，则返回它的下标，否则返回 `-1` 。
+
+你必须设计一个时间复杂度为 `O(log n)` 的算法解决此问题。
+
+**示例 1：**
+
+```
+输入：nums = [4,5,6,7,0,1,2], target = 0
+输出：4
+```
+
+
+
+```C++
+class Solution {
+public:
+    int search(vector<int>& nums, int target) {
+        int n = nums.size();
+        int last = nums[n-1];
+        //找到第一个小于等于last的值
+        int l = 0,r=n-1;
+        while(l<=r)
+        {
+            int midIdx = l+((r-l)>>1);
+            if(nums[midIdx]>last)l=midIdx+1;
+            else r=midIdx-1;
+        }
+        //cout<<nums[l]<<endl;
+        //寻找值target
+        if(target>=nums[l]&&target<=last)
+        {
+            l=l,r=n-1;
+            while(l<=r)
+            {
+                int mid = l+((r-l)>>1);
+                if(nums[mid]<target) l=mid+1;
+                else r=mid-1;
+            }
+            if(nums[l]==target)return l;
+            else return -1;
+        }
+        else
+        {
+            r=l-1;
+            l=0;
+            while(l<=r)
+            {
+                int mid = l+((r-l)>>1);
+                if(nums[mid]<target) l=mid+1;
+                else r=mid-1;
+            }
+            if(nums[l]==target)return l;
+            else return -1;
+        }
+        return -1;
+    }
+};
+```
+
+个人思路是 两次二分 第一次找最小值分成两边，第二次在其中一边找
+
+
+
 ## 二叉树 :red_circle:
 
 
@@ -560,6 +629,48 @@ public:
     int maxPathSum(TreeNode* root) {
         maxGain(root);
         return maxSum;
+    }
+};
+```
+
+
+
+###  [538. 把二叉搜索树转换为累加树](https://leetcode.cn/problems/convert-bst-to-greater-tree/)
+
+给出二叉 **搜索** 树的根节点，该树的节点值各不相同，请你将其转换为累加树（Greater Sum Tree），使每个节点 `node` 的新值等于原树中大于或等于 `node.val` 的值之和。
+
+提醒一下，二叉搜索树满足下列约束条件：
+
+- 节点的左子树仅包含键 **小于** 节点键的节点。
+- 节点的右子树仅包含键 **大于** 节点键的节点。
+- 左右子树也必须是二叉搜索树。
+
+**注意：**本题和 1038: https://leetcode-cn.com/problems/binary-search-tree-to-greater-sum-tree/ 相同
+
+**示例 1：**
+
+**![img](assets/tree.png)**
+
+```
+输入：[4,1,6,0,2,5,7,null,null,null,3,null,null,null,8]
+输出：[30,36,21,36,35,26,15,null,null,null,33,null,null,null,8]
+```
+
+
+
+```C++
+class Solution {
+public:
+    int sum = 0;
+    TreeNode* convertBST(TreeNode* root) 
+    {
+        //右根左
+        if(root==nullptr)return nullptr;
+        convertBST(root->right);
+        sum+=root->val;
+        root->val = sum;
+        convertBST(root->left);
+        return root;
     }
 };
 ```
@@ -1441,6 +1552,116 @@ public:
 
 
 
+### [23. 合并 K 个升序链表](https://leetcode.cn/problems/merge-k-sorted-lists/)
+
+给你一个链表数组，每个链表都已经按升序排列。
+
+请你将所有链表合并到一个升序链表中，返回合并后的链表。
+
+**示例 1：**
+
+```
+输入：lists = [[1,4,5],[1,3,4],[2,6]]
+输出：[1,1,2,3,4,4,5,6]
+解释：链表数组如下：
+[
+  1->4->5,
+  1->3->4,
+  2->6
+]
+将它们合并到一个有序链表中得到。
+1->1->2->3->4->4->5->6
+```
+
+
+
+#### M1  复杂度较高
+
+```C++
+class Solution {
+public:
+    ListNode* merge2List(ListNode* l1,ListNode* l2)
+    {
+        if(l1==nullptr)return l2;
+        else if(l2==nullptr)return l1;
+        else if(l1->val<l2->val) 
+        {
+            l1->next = merge2List(l1->next,l2);
+            return l1;
+        }
+        else
+        {
+            l2->next = merge2List(l1,l2->next);
+            return l2;
+        }
+    }
+    
+    ListNode* mergeKLists(vector<ListNode*>& lists) 
+    {
+        ListNode* ans=nullptr;
+        for(int i=0;i<(int)lists.size();i++)
+        {
+            ans = merge2List(ans,lists[i]);    
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### M2 分治
+
+https://leetcode.cn/problems/merge-k-sorted-lists/solutions/219756/he-bing-kge-pai-xu-lian-biao-by-leetcode-solutio-2/?envType=problem-list-v2&envId=2cktkvj
+
+```C++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* merge2List(ListNode* l1,ListNode* l2)
+    {
+        if(l1==nullptr)return l2;
+        else if(l2==nullptr)return l1;
+        else if(l1->val<l2->val) 
+        {
+            l1->next = merge2List(l1->next,l2);
+            return l1;
+        }
+        else
+        {
+            l2->next = merge2List(l1,l2->next);
+            return l2;
+        }
+    }
+    ListNode* merge(vector<ListNode*>& lists,int l,int r)
+    {
+        if(l==r)return lists[l];
+        if(l>r)return nullptr;
+        int mid = ((l+r)>>1);
+        return merge2List(merge(lists,l,mid),merge(lists,mid+1,r)); //最终merge返回的一定是一个单个链表
+    }
+    ListNode* mergeKLists(vector<ListNode*>& lists) 
+    {
+        return merge(lists,0,lists.size()-1);
+    }
+};
+```
+
+
+
+#### M3：使用优先队列合并
+
+https://leetcode.cn/problems/merge-k-sorted-lists/solutions/219756/he-bing-kge-pai-xu-lian-biao-by-leetcode-solutio-2/?envType=problem-list-v2&envId=2cktkvj
+
 
 
 ### [141. 环形链表](https://leetcode.cn/problems/linked-list-cycle/)
@@ -1555,6 +1776,93 @@ public:
             }
         }
         return NULL;
+    }
+};
+```
+
+
+
+### [19. 删除链表的倒数第 N 个结点](https://leetcode.cn/problems/remove-nth-node-from-end-of-list/)
+
+给你一个链表，删除链表的倒数第 `n` 个结点，并且返回链表的头结点。
+
+**示例 1：**
+
+![img](assets/remove_ex1.jpg)
+
+```
+输入：head = [1,2,3,4,5], n = 2
+输出：[1,2,3,5]
+```
+
+
+
+##### M1引入虚拟头 更好理解
+
+<img src="assets/p3.png" alt="p3" style="zoom:50%;" />
+
+```C++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode *dummy = new ListNode(0,head);
+        ListNode *l =dummy, *r= head;
+        for(int i=0;i<n;i++)
+        {
+            r=r->next;
+        }
+        while(r)
+        {
+            l=l->next;
+            r=r->next;
+        }
+        l->next = l->next->next;
+        ListNode* ans = dummy->next;//有可能头节点被删除了
+        delete dummy;
+        return ans;
+    }
+};
+```
+
+
+
+M2: m
+
+```C++
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        ListNode *l =head, *r= head;
+        int i=0;
+        while(r)
+        {
+            r=r->next;
+            if(i>n)
+            {
+                l=l->next;
+            }
+            i++;
+        }
+        if(i<=n)return head->next; // 如果要删除的是头的情况下
+
+        ListNode* deleteNode = l->next;
+        if(deleteNode)
+        {
+            l->next = deleteNode->next;
+            delete deleteNode;
+        }
+        // cout<<"test"<<l->val;
+        return head;
     }
 };
 ```
@@ -2729,6 +3037,247 @@ public:
 
 
 
+### [287. 寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/)
+
+给定一个包含 `n + 1` 个整数的数组 `nums` ，其数字都在 `[1, n]` 范围内（包括 `1` 和 `n`），可知至少存在一个重复的整数。
+
+假设 `nums` 只有 **一个重复的整数** ，返回 **这个重复的数** 。
+
+你设计的解决方案必须 **不修改** 数组 `nums` 且只用常量级 `O(1)` 的额外空间。	
+
+**示例 1：**
+
+```
+输入：nums = [1,3,4,2,2]
+输出：2
+```
+交换直到找到一样的（应该是剑指offer做法）
+
+```C++
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        int n=nums.size();
+        for(int i=0;i<n;i++)
+        {
+            //nums[1] != 2
+            //nums[3] == 4
+            //nums[4] !=5
+            while(nums[i]!=(i+1))
+            {
+                //nums[2-1] == 2
+                // cout<< "i"<<i<<" "<< nums[nums[i]-1]<<" "<<nums[i]<<endl;
+                if(nums[nums[i]-1]==nums[i])return nums[i];
+                // 1 3 4 2 2
+                // 1 4 3 2
+                // 1 2 3 4 2
+                swap(nums[i],nums[nums[i]-1]);
+                //nums[1] nums[3-1]
+                //nums[1] nums[4-1]
+            }
+        }
+        return -1;
+    }
+};
+```
+
+别的O（n）方法：https://leetcode.cn/problems/find-the-duplicate-number/solutions/261119/xun-zhao-zhong-fu-shu-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
+
+
+
+### [48. 旋转图像](https://leetcode.cn/problems/rotate-image/)
+
+给定一个 *n* × *n* 的二维矩阵 `matrix` 表示一个图像。请你将图像顺时针旋转 90 度。
+
+你必须在**[ 原地](https://baike.baidu.com/item/原地算法)** 旋转图像，这意味着你需要直接修改输入的二维矩阵。**请不要** 使用另一个矩阵来旋转图像。
+
+**示例 1：**
+
+![img](assets/mat1.jpg)
+
+```
+输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]
+输出：[[7,4,1],[8,5,2],[9,6,3]]
+```
+
+
+
+```C++
+class Solution {
+public:
+    void rotate(vector<vector<int>>& matrix) 
+    {
+        int n = matrix.size();
+        for(int i=0;i<n/2;i++)
+        {
+            // int down = n-i-1;
+            for(int j=0;j<n;j++)
+            {
+                swap(matrix[i][j],matrix[n-i-1][j]);
+            }
+        }
+        //[2][0] => [0][2]
+        //[0][0] => [0][0]
+        for(int i=0;i<n;i++)
+        {
+            // int down = n-i-1;
+            for(int j=0;j<i;j++)
+            {
+                swap(matrix[i][j],matrix[j][i]);
+            }
+        }
+    }
+};
+```
+
+向下翻转 + 主对角线
+
+想要实现顺时针旋转90°，可以先对数组进行上下翻转，再做主对角线对称
+
+
+
+### [31. 下一个排列](https://leetcode.cn/problems/next-permutation/)
+
+整数数组的一个 **排列** 就是将其所有成员以序列或线性顺序排列。
+
+- 例如，`arr = [1,2,3]` ，以下这些都可以视作 `arr` 的排列：`[1,2,3]`、`[1,3,2]`、`[3,1,2]`、`[2,3,1]` 。
+
+整数数组的 **下一个排列** 是指其整数的下一个字典序更大的排列。更正式地，如果数组的所有排列根据其字典顺序从小到大排列在一个容器中，那么数组的 **下一个排列** 就是在这个有序容器中排在它后面的那个排列。如果不存在下一个更大的排列，那么这个数组必须重排为字典序最小的排列（即，其元素按升序排列）。
+
+- 例如，`arr = [1,2,3]` 的下一个排列是 `[1,3,2]` 。
+- 类似地，`arr = [2,3,1]` 的下一个排列是 `[3,1,2]` 。
+- 而 `arr = [3,2,1]` 的下一个排列是 `[1,2,3]` ，因为 `[3,2,1]` 不存在一个字典序更大的排列。
+
+给你一个整数数组 `nums` ，找出 `nums` 的下一个排列。
+
+必须**[ 原地 ](https://baike.baidu.com/item/原地算法)**修改，只允许使用额外常数空间。
+
+**示例 1：**
+
+```
+输入：nums = [1,2,3]
+输出：[1,3,2]
+```
+
+
+
+https://leetcode.cn/problems/next-permutation/solutions/479151/xia-yi-ge-pai-lie-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
+
+以排列 [4,5,2,6,3,1] 为例：
+
+我们能找到的符合条件的一对「较小数」与「较大数」的组合为 2 与 3，满足「较小数」尽量靠右，而「较大数」尽可能小。
+
+当我们完成交换后排列变为 [4,5,**3**,6,**2**,1]，此时我们可以重排「较小数」右边的序列，序列变为 [4,5,3,**1,2,6**]。
+
+具体地，我们这样描述该算法，对于长度为 n 的排列 a：
+
+1、首先从后向前查找第一个顺序对 (i,i+1)，满足 a[i]<a[i+1]。这样「较小数」即为 a[i]。此时 [i+1,n) 必然是下降序列。
+
+​													[4,5,**2**,6,3,1] 
+
+2、如果找到了顺序对，那么在区间 [i+1,n) 中从后向前查找第一个元素 j 满足 a[i]<a[j]。这样「较大数」即为 a[j]。
+
+​													[4,5,**2**,6,**3**,1] 
+
+3、交换 a[i] 与 a[j]，此时可以证明区间 [i+1,n) 必为降序。我们可以直接使用双指针反转区间 [i+1,n) 使其变为升序，而无需对该区间进行排序。
+
+交换：										[4,5,**3**,6,**2**,1]   交换完之后还会是递减的，吧）
+
+重排「较小数」右边的序列： [4,5,3,**1,2,6**]
+
+注意
+
+如果在步骤 1 找不到顺序对，说明当前序列已经是一个降序序列，即最大的序列，我们直接跳过步骤 2 执行步骤 3，即可得到最小的升序序列。
+
+该方法支持序列中存在重复元素，且在 C++ 的标准库函数 [`next_permutation`](https://leetcode.cn/link/?target=https%3A%2F%2Fen.cppreference.com%2Fw%2Fcpp%2Falgorithm%2Fnext_permutation) 中被采用。
+
+
+
+![image-20250318220257817](assets/image-20250318220257817.png)=----->--->=>![image-20250318220320387](assets/image-20250318220320387.png)
+
+
+
+```C++
+class Solution {
+public:
+    void nextPermutation(vector<int>& nums) 
+    {
+        //从后往前 找非递减的 
+        //将后面的反转
+        int n = nums.size();
+        int i=n-2;
+        while(i>=0&&nums[i]>=nums[i+1])i--;
+        if(i>=0)
+        {
+            int j=n-1;
+            while(j>=0&&nums[j]<=nums[i])j--;
+            swap(nums[i],nums[j]);
+        }
+        reverse(nums.begin()+i+1,nums.end());
+        return ;
+    }
+};
+```
+
+
+
+
+
+# 双指针
+
+### [283. 移动零](https://leetcode.cn/problems/move-zeroes/)
+
+给定一个数组 `nums`，编写一个函数将所有 `0` 移动到数组的末尾，同时保持非零元素的相对顺序。
+
+**请注意** ，必须在不复制数组的情况下原地对数组进行操作。
+
+ 
+
+**示例 1:**
+
+```
+输入: nums = [0,1,0,3,12]
+输出: [1,3,12,0,0]
+```
+
+**示例 2:**
+
+```
+输入: nums = [0]
+输出: [0]
+```
+
+
+
+```C++
+class Solution {
+public:
+    void moveZeroes(vector<int>& nums) {
+        int l=0,r=0;
+        int n = nums.size();
+        while( r<n&& nums[r]!=0)r++; //r走到最后一个非0的
+        //一旦找到非0数字 就填入l
+        for(int r=0;r<n;r++)
+        {
+            if(nums[r]!=0)
+            {
+                nums[l] = nums[r];
+                l++;
+            }
+        }
+        for(int i=l;i<n;i++)
+        {
+            nums[i]=0;
+        }
+        return ;
+    }
+};
+```
+
+https://leetcode.cn/problems/move-zeroes/solutions/90229/dong-hua-yan-shi-283yi-dong-ling-by-wang_ni_ma/?envType=problem-list-v2&envId=2cktkvj
+
+
+
 # 滑动窗口
 
 ## [438. 找到字符串中所有字母异位词](https://leetcode.cn/problems/find-all-anagrams-in-a-string/)
@@ -3706,3 +4255,122 @@ public:
 >我们可以看到 对于`[1  3  -1] -3`而言 ,3-0 = 3=k  这时候共有4个数字,  是超过k个的
 >
 >只有当 i - j = k-1的时候  他们的个数是 i- j +1 = k个
+
+
+
+# 其他
+
+## 哈希表 
+
+### [49. 字母异位词分组](https://leetcode.cn/problems/group-anagrams/)
+
+给你一个字符串数组，请你将 **字母异位词** 组合在一起。可以按任意顺序返回结果列表。
+
+**字母异位词** 是由重新排列源单词的所有字母得到的一个新单词。
+
+**示例 1:**
+
+```
+输入: strs = ["eat", "tea", "tan", "ate", "nat", "bat"]
+输出: [["bat"],["nat","tan"],["ate","eat","tea"]]
+```
+
+https://leetcode.cn/problems/group-anagrams/solutions/520469/zi-mu-yi-wei-ci-fen-zu-by-leetcode-solut-gyoc/?envType=problem-list-v2&envId=2cktkvj
+
+方法二：计数
+由于互为字母异位词的两个字符串包含的字母相同，因此两个字符串中的相同字母出现的次数一定是相同的，故可以将每个字母出现的次数使用字符串表示，作为哈希表的键。
+
+由于字符串只包含小写字母，因此对于每个字符串，可以使用长度为 26 的数组记录每个字母出现的次数。需要注意的是，在使用数组作为哈希表的键时，不同语言的支持程度不同，因此不同语言的实现方式也不同。
+
+>此题难点在于对于哈希表的哈希函数自定义
+>
+>如果不懂得写或者忘了也可以用string代替https://leetcode.cn/problems/group-anagrams/solutions/520469/zi-mu-yi-wei-ci-fen-zu-by-leetcode-solut-gyoc/comments/2297396/
+
+```C++
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) 
+    {
+        // 自定义对 array<int, 26> 类型的哈希函数
+        auto arrayHash = [fn = hash<int>{}](const array<int,26>& arr)->size_t
+        {
+            return accumulate(arr.begin(),arr.end(),0u,[&](size_t acc,int num)
+            {
+                return (acc<<1)^fn(num);
+            });
+        };
+        //存储哈希 如果一样的就加入进来 加入vector中，
+        unordered_map<array<int ,26>, vector<string>,decltype(arrayHash)> umap(0,arrayHash);
+
+        int n = strs.size();
+        for(int i=0;i<n;i++)
+        {
+            array<int,26> arr{};//arr 的内容未被初始化，可能会导致未定义行为。
+            string str = strs[i];
+            for(auto &c:str)
+            {
+                arr[c-'a']++;
+            }
+            umap[arr].push_back(str);
+        }
+
+        vector<vector<string>> res;
+        for(auto &vecstr:umap)
+        {
+            res.push_back(vecstr.second);
+        }
+        return res;
+    }
+};
+```
+
+
+
+1. `decltype()`指的是之前声明的变量类型，如`decltye(x)`返回`x`之前声明的变量类型。
+
+2. `array`相比于vector, array是定长数组, vector是可变长度的数组。
+
+3. `arrayHash`匿名函数，嵌套了一个匿名函数`[fn = hash<int>{}]`是初始化捕获列表,也就是说定义了一个`auto fn = hash<int>{}`;供后续使用
+   默认是使用 `hash<T>` 来实现的，但是hash没有办法去实现一个array的哈希，因此需要手动去构造一个哈希函数。
+
+   本次构造哈希函数，是基于已有的hash去实现的，哈希碰撞概率几乎为0。
+
+   `arrayHash`接受一个array<int, 26>类型的数组作为参数，并返回一个size_t类型的哈希值，这是因为cpp文档中规定`hash<T>`的Hash值必须是无符号整型size_t。
+
+   >```C++
+   >auto fn = hash<int>{};
+   >auto arrayhash = [fn](const array<int,26>& arr)->size_t  
+   >.......
+   >```
+
+4. `accumulate`函数在头文件中，有三个形参：
+
+   头两个形参指定要累加的元素范围，
+
+   第三个形参则是累加的初值。
+
+   第四个参数是**累次运算的计算方法**，如果没有给定则默认是加法，可以对上次的结果用本次的数字进行一定的计算后返回保存，
+
+   ​		`[&]`表示以引用的方式捕获作用域外所有的变量，
+
+   ​		两个参数中 `size_t acc ,int num`
+
+   ​		`size_t acc`第一个参数是accumulate在这个指定的范围内前一段范围计算的值和哈希值一样是SIZE_T类型，
+
+   ​		`int num`后一个值是本次要操作的数字，
+
+   ​				在这个哈希算法中，每个元素通过`fn(num)`调用哈希函数对象来获取其哈希值，然后将**之前累次运算结果(acc)**左移一位`(acc << 1)`相当于乘2后与array中本次要操作的数num的哈希值进行异或操作(^)得到新的哈希值。最终，累次运算结果结果将作为这个数组的哈希值返回。
+
+如对于`eat`这个单词，在accumulate函数中累次运算结果如下：
+
+![image-20250318181140437](assets/image-20250318181140437.png)
+
+我们最终得到eat这个单词的哈希值是35651648.
+你现在可能有一个问题了，为什么要搞这么复杂的哈希函数，直接累加不就完了，还用在里面再嵌套一个匿名函数吗，我说这当然是有必要的。你可以自己想想这样哈希函数的哈希碰撞问题，你所设想的这样一个哈希函数是否会导致两个单词不是易位次但是会得到相同的哈希值？如果是这样，那么你的哈希函数显然就是不合适的。**事实证明不断扩大结果集有助于降低哈希冲突的概率，但这却并不表明我们可以完全避免哈希冲突**，你不妨看看下面这个例子。事实上我们在本题中只是将结果集扩大到了2的26次方。
+![image.png](assets/1697814341-RZHLiJ-image.png)
+
+
+
+
+
+#### ==拓展 ： 如何重载等于 重载小于==

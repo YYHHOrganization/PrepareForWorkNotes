@@ -39,6 +39,30 @@ public:
 
 
 
+二分 [ 左闭 , 右闭 ] 板子：
+
+```C++
+int lower_bound(vector<int>& nums, int target) //求解第一个>=target的索引
+{
+        int left = 0, right = nums.size()-1;
+        while(left<=right)//记住:左闭右闭的写法
+        { 
+            int mid = ((left+right)>>1); //本题不会越界
+            if(nums[mid]<target)
+            {
+                left = mid + 1;
+            }
+            else 
+            {
+                right = mid - 1;
+            }
+        }
+        return left; 
+    }
+```
+
+
+
 ## 2.[35. 搜索插入位置](https://leetcode.cn/problems/search-insert-position/)
 
 一道非常常规的板子题：
