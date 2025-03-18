@@ -1736,6 +1736,159 @@ public:
 
 
 
+### [347. 前 K 个高频元素](https://leetcode.cn/problems/top-k-frequent-elements/)
+
+> 给你一个整数数组 `nums` 和一个整数 `k` ，请你返回其中出现频率前 `k` 高的元素。你可以按 **任意顺序** 返回答案。
+
+依旧可以用Top K的思路来做这道题，代码如下：
+```c++
+class Solution {
+public:
+    void quickSelect(vector<pair<int, int>>& nums, int k, int l, int r) //快速选择板子，本题从大到小排序，所以do那里两个条件反着写即可
+    {
+        if(l>=r) return;
+        int i = l-1, j = r+1;
+        int x = nums[((l+r)>>1)].second;
+        while(i<j)
+        {
+            do i++; while(nums[i].second>x);
+            do j--; while(nums[j].second<x);
+            if(i<j) swap(nums[i], nums[j]);
+        }
+        if(k<=j) quickSelect(nums, k, l, j); //别把条件写反了
+        else quickSelect(nums, k, j+1, r);
+    }
+    vector<int> topKFrequent(vector<int>& nums, int k) {
+        //unordered_map, key存元素,value存频率
+        unordered_map<int, int> umap;
+        for(int num: nums)
+        {
+            umap[num]++;
+        }
+        int n = umap.size();
+        vector<pair<int, int>> vec(umap.begin(), umap.end());
+        quickSelect(vec, k-1, 0, n-1); //排序是按照value来进行排序,第k-1个选择完之后,可以保证前k个都是小于这个值的
+        vector<int> res(k);
+        for(int i=0;i<k;i++)
+        {
+            res[i] = vec[i].first; //first是值
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [75. 颜色分类](https://leetcode.cn/problems/sort-colors/)
+
+> 给定一个包含红色、白色和蓝色、共 `n` 个元素的数组 `nums` ，**[原地](https://baike.baidu.com/item/原地算法)** 对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
+>
+> 我们使用整数 `0`、 `1` 和 `2` 分别表示红色、白色和蓝色。
+>
+> 必须在不使用库内置的 sort 函数的情况下解决这个问题。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [2,0,2,1,1,0]
+> 输出：[0,0,1,1,2,2]
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums = [2,0,1]
+> 输出：[0,1,2]
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `n == nums.length`
+> - `1 <= n <= 300`
+> - `nums[i]` 为 `0`、`1` 或 `2`
+>
+>  
+>
+> **进阶：**
+>
+> - 你能想出一个仅使用常数空间的一趟扫描算法吗？
+
+这道题目是**荷兰国旗问题**。
+
+一种简单的思路是两轮for循环遍历，第一次for循环把0都交换到数组的前面，第二次for循环把所有的1都换到0的后面，于是剩下的就都是2了，代码如下：
+
+```c++
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int left = 0;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==0)
+            {
+                swap(nums[left], nums[i]);
+                left++;
+            }
+        }
+        for(int i=left;i<n;i++)
+        {
+            if(nums[i]==1)
+            {
+                swap(nums[i], nums[left]);
+                left++;
+            }
+        }
+    }
+};
+```
+
+接下来思考，能不能用一轮for循环来解决这个问题？这就要用到双指针。思考这样一个过程：
+
+- 首先，我们用p0，p1分别记录0的边界和1的边界（初始值都为0），然后在遍历数组的时候：
+  - 如果`nums[i]==1`，那么`swap(nums[i], nums[p1])`，然后`p1++`；
+  - 否则，判断如果`nums[i]==0`，那么先`swap(nums[i],nums[p0])`。但是有可能p0的位置是之前换过来的1（此时`p0<p1，`注意这里不会取到等号），如果满足`p0<p1`那么就继续调换`swap(nums[i](此时为调换过去的1),nums[p1])`。
+    - 关于指针的移动，都要把`p0`和`p1`往后移动一个位置，不论是否满足`p0<p1`（毕竟来了一个新的数嘛）。
+
+将以上逻辑写作代码，如下：
+
+```c++
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        //一轮for循环,双指针
+        int n = nums.size();
+        int p0 = 0, p1 = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==1)
+            {
+                swap(nums[i], nums[p1]);
+                p1++;
+            }
+            else if(nums[i]==0)
+            {
+                swap(nums[i], nums[p0]);
+                if(p0 < p1)
+                {
+                    swap(nums[i], nums[p1]);
+                }
+                p0++, p1++;
+            }
+        }
+    }
+};
+```
+
+还有一种两边交换的方法，在[75. 颜色分类 - 力扣（LeetCode）](https://leetcode.cn/problems/sort-colors/solutions/437968/yan-se-fen-lei-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj)的方法三中，不过复杂度是一样的，就先不整理了。
+
+
+
 # 动态规划
 
 ### [221. 最大正方形](https://leetcode.cn/problems/maximal-square/)
@@ -2088,6 +2241,135 @@ public:
 ```
 
 
+
+## 区间DP
+
+### [312. 戳气球](https://leetcode.cn/problems/burst-balloons/)
+
+> 有 `n` 个气球，编号为`0` 到 `n - 1`，每个气球上都标有一个数字，这些数字存在数组 `nums` 中。
+>
+> 现在要求你戳破所有的气球。戳破第 `i` 个气球，你可以获得 `nums[i - 1] * nums[i] * nums[i + 1]` 枚硬币。 这里的 `i - 1` 和 `i + 1` 代表和 `i` 相邻的两个气球的序号。如果 `i - 1`或 `i + 1` 超出了数组的边界，那么就当它是一个数字为 `1` 的气球。
+>
+> 求所能获得硬币的最大数量。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [3,1,5,8]
+> 输出：167
+> 解释：
+> nums = [3,1,5,8] --> [3,5,8] --> [3,8] --> [8] --> []
+> coins =  3*1*5    +   3*5*8   +  1*3*8  + 1*8*1 = 167
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums = [1,5]
+> 输出：10
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `n == nums.length`
+> - `1 <= n <= 300`
+> - `0 <= nums[i] <= 100`
+
+本题是区间dp的一道题目，适合先用记忆化搜索来理解过程，正好熟练一下如何在C++中使用记忆化搜索，代码如下：
+
+```c++
+class Solution {
+public:
+    vector<int> val; //存放加了左右区间的气球
+    vector<vector<int>> f; //记忆化搜索
+    int solve(int left, int right) //记忆化搜索
+    {
+        if(left >= right - 1) return 0; //定义不符合,return 0
+        if(f[left][right] != -1) //left 和 right都是开区间,k表示最后一个戳的气球,f[left][right]计算此时的最大分数
+        {
+            return f[left][right];
+        }
+        for(int k = left+1;k<right;k++) //left和right都是开区间,不能戳
+        {
+            int cur = val[k] * val[left] * val[right];
+            int other = solve(left, k) + solve(k, right); //看一下已经计算好的区间的戳气球分数
+            f[left][right] = max(f[left][right], cur + other);
+        }
+        return f[left][right];
+    }   
+    int maxCoins(vector<int>& nums) {
+        int n = nums.size();
+        val.resize(n+2); //左右各加一个气球
+        f.resize(n+2, vector<int>(n+2, -1)); //初始值设置为-1,用于记忆化搜索 
+        for(int i=1;i<=n;i++)
+        {
+            val[i] = nums[i-1];
+        }
+        val[0] = 1, val[n+1] = 1; 
+        return solve(0, n+1);
+    }
+};
+```
+
+使用动态规划来做这道题的话，注意i的遍历顺序问题，解释如下：
+
+```c++
+/**
+ * dp版本代码，最外层的循环，i为什么是n-1 -> 0，而不能反过来？
+ * (i,j) 0 1  2   3   4   ...   n-2   n-1   n   n+1
+ * 0     0 1  2   3   4   ...                   n+1
+ * 1       1  2   3   4   ...                   n+1
+ * 2          2   3   4   ...                   n+1
+ * 3              3   4   ...                   n+1
+ * 4                  4                         n+1
+ * .                      .                     .
+ * .                         .                  .
+ * n-2                          n-2   n-1   n   n+1
+ * n-1                                n-1   n   n+1
+ * n+1
+ *
+ * 须从下往上算，即先算dp[n-1][n+1]：
+ * 根据递推关系，算dp[i][j]时依赖的dp[i][k]和dp[k][j]，其中i<k<j。
+ * 1、如果从上往下计算，依赖的dp[k][j]根本就还未算出（k比i大），比如算dp[0][3]时，依赖的dp[1][3]还是个未知数。
+ * 2、从下往上就不一样，算dp[i][j]时，依赖的dp[i][k]，位于同一行左侧，已计算过；
+ *                                依赖的dp[k][j]，因为k>i，位于更下面的行，也已计算过。
+ */
+```
+
+动态规划的版本如下：
+```c++
+class Solution {
+public:
+    int maxCoins(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> val(n+2);
+        vector<vector<int>> dp(n+2, vector<int>(n+2));
+        for(int i=1;i<=n;i++)
+        {
+            val[i] = nums[i-1];
+        }
+        val[0] = 1;
+        val[n+1] = 1;
+        for(int i=n+1;i>=0;i--) //开区间(i,j),i=0,j=n+1是边界(整体挪了一位)
+        {
+            for(int j=i+2;j<=n+1;j++)
+            {
+                for(int k=i+1;k<j;k++)
+                {
+                    dp[i][j] = max(dp[i][j], dp[i][k] + dp[k][j] + val[i]*val[k]*val[j]);
+                }
+            }
+        }
+        return dp[0][n+1];
+    }
+};
+```
+
+> 务必注意改成动态规划之后的遍历顺序。
 
 
 
@@ -2726,6 +3008,107 @@ public:
     }
 };
 ```
+
+
+
+## [581. 最短无序连续子数组](https://leetcode.cn/problems/shortest-unsorted-continuous-subarray/)
+
+> 给你一个整数数组 `nums` ，你需要找出一个 **连续子数组** ，如果对这个子数组进行升序排序，那么整个数组都会变为升序排序。
+>
+> 请你找出符合题意的 **最短** 子数组，并输出它的长度。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [2,6,4,8,10,9,15]
+> 输出：5
+> 解释：你只需要对 [6, 4, 8, 10, 9] 进行升序排序，那么整个表都会变为升序排序。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums = [1,2,3,4]
+> 输出：0
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：nums = [1]
+> 输出：0
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= nums.length <= 104`
+> - `-105 <= nums[i] <= 105`
+>
+>  
+>
+> **进阶：**你可以设计一个时间复杂度为 `O(n)` 的解决方案吗？
+
+这题也算作是技巧题，有一点贪心的意思在里面，思路比较神奇。来看下面这张图：
+
+![微信截图_20200921203355.png](assets/1600691648-ZCYlql-%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200921203355.png)
+
+也就是说，对于中段来说，其左段是排好序的，右段也是排好序的，并且根据题意，**中段的最大值应该小于右段的最小值，同时中段的最小值应该大于左段的最大值。**那么，我们维护一个`max`值和一个`min`值：
+
+- 对`max`来说，从左到右遍历直到最后一个`<max`的值即为右边界。后面的都会一个比一个大，呈现递增趋势；
+- 对`min`来说，从右到左遍历直到最后一个`>min`的值即为左边界，后面的都会一个比一个小，呈现正确的递减趋势；
+
+`[左边界，右边界]`中间的数即为所求。
+
+如果要证明这件事的话，可以这样想（来源：Leetcode题解）：
+
+> 先只考虑中段数组，设其左边界为`L`，右边界为`R`：
+>
+> - `nums[R]` 不可能是【L，R】中的最大值（否则应该将 `nums[R]` 并入右端数组）
+> - `nums[L]` 不可能是【L，R】中的最小值（否则应该将 `nums[L]` 并入左端数组）
+>
+> 很明显:
+>
+> - 【L，R】中的最大值 `等于`【0，R】中的最大值，设其为 `max`
+> - 【L，R】中的最小值 `等于` 【L， nums.length-1】中的最小值，设其为 `min`
+>
+> 那么有：
+>
+> - `nums[R]` < `max` < `nums[R+1]` < `nums[R+2]` < ... 所以说，从左往右遍历，最后一个小于`max`的为右边界
+> - `nums[L]` > `min` > `nums[L-1]` > `nums[L-2]` > ... 所以说，从右往左遍历，最后一个大于`min`的为左边界
+
+有了以上的思路之后，就可以写出下面的代码：
+
+```c++
+class Solution {
+public:
+    int findUnsortedSubarray(vector<int>& nums) {
+        //右边界:从左往右最后一个<max的值
+        //左边界:从右往左最后一个>min的值
+        int _min = INT_MAX;
+        int _max = INT_MIN;
+        int n = nums.size();
+        int left = 0;
+        int right = -1; //这道题目需要注意left和right的初始值不能随便赋值,保证默认的right-left+1=0,不然如果没有符合要求的就是返回错误结果
+        for(int i=0;i<n;i++)
+        {
+            //维护左边界
+            if(nums[i]>=_max) _max = nums[i];
+            else right = i;
+            
+            //维护右边界
+            if(nums[n-i-1]<=_min) _min = nums[n-i-1];
+            else left = n-i-1;
+        }
+        return right-left+1;
+    }
+};
+```
+
+
 
 
 
