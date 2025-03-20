@@ -290,6 +290,34 @@ public:
 
 
 
+## [4. 寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/)
+
+> 给定两个大小分别为 `m` 和 `n` 的正序（从小到大）数组 `nums1` 和 `nums2`。请你找出并返回这两个正序数组的 **中位数** 。
+>
+> 算法的时间复杂度应该为 `O(log (m+n))` 。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums1 = [1,3], nums2 = [2]
+> 输出：2.00000
+> 解释：合并数组 = [1,2,3] ，中位数 2
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums1 = [1,2], nums2 = [3,4]
+> 输出：2.50000
+> 解释：合并数组 = [1,2,3,4] ，中位数 (2 + 3) / 2 = 2.5
+> ```
+
+本题是一道很困难的题目，主要题解参考[4. 寻找两个正序数组的中位数 - 力扣（LeetCode）](https://leetcode.cn/problems/median-of-two-sorted-arrays/)。
+
+
+
 ## 二叉树 :red_circle:
 
 
@@ -676,6 +704,92 @@ public:
 ```
 
 
+
+## [297. 二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)
+
+> 这道题和LRU那道题是类似的，考察的是能否把复杂的业务写好。务必注意代码中的细节问题。
+
+### （1）做法1：先序遍历
+
+使用根->左->右的顺序进行遍历，当遍历到nullptr的时候，返回`None,`，否则如果是数的话，使用to_string转换为字符串，再加,。
+
+在反序列化的时候，先去掉字符串中所有的`，`并放到数组当中，遇到`None`则return nullptr，否则使用stoi接口还原对应的值。最终的代码如下：
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Codec {
+public:
+
+    void rserialize(TreeNode* root, string& res)
+    {
+        if(root==NULL)
+        {
+            res += "None,";
+            return;
+        }
+        //根,左,右
+        res += to_string(root->val);
+        res += ',';
+        rserialize(root->left, res);
+        rserialize(root->right, res);
+    }
+    // Encodes a tree to a single string.
+    string serialize(TreeNode* root) {
+        string res;
+        rserialize(root, res);
+        //cout<<res<<endl;
+        return res;
+    }
+
+    TreeNode* rdeserialize(list<string>& nums) //根节点(数据是错误的); 数据
+    {
+        if(nums.size()==0) return NULL;
+        if(nums.front()=="None")
+        {
+            nums.erase(nums.begin());
+            return NULL;
+        }
+        TreeNode* root = new TreeNode(stoi(nums.front()));
+        nums.erase(nums.begin());
+        root->left = rdeserialize(nums);
+        root->right = rdeserialize(nums);
+        return root;
+    }
+
+    // Decodes your encoded data to tree.
+    TreeNode* deserialize(string data) {
+        //step1: 把所有的,分隔出来
+        int n = data.size();
+        string str;
+        list<string> nums;
+        for(int i=0; i<n;i++)
+        {
+            if(data[i]==',')
+            {
+                nums.emplace_back(std::move(str));
+            }
+            else str += data[i];
+        }
+        //for(auto s: nums) cout<<s<<endl;
+        return rdeserialize(nums);
+    }
+};
+
+// Your Codec object will be instantiated and called as such:
+// Codec ser, deser;
+// TreeNode* ans = deser.deserialize(ser.serialize(root));
+```
+
+
+
+### ==（2）利用文法解析来做（福报，有空可以看看）==
 
 
 
@@ -2198,6 +2312,168 @@ public:
 
 
 # 动态规划
+
+
+
+### ==[10. 正则表达式匹配](https://leetcode.cn/problems/regular-expression-matching/)==
+
+> 给你一个字符串 `s` 和一个字符规律 `p`，请你来实现一个支持 `'.'` 和 `'*'` 的正则表达式匹配。
+>
+> - `'.'` 匹配任意单个字符
+> - `'*'` 匹配零个或多个前面的那一个元素
+>
+> 所谓匹配，是要涵盖 **整个** 字符串 `s` 的，而不是部分字符串。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：s = "aa", p = "a"
+> 输出：false
+> 解释："a" 无法匹配 "aa" 整个字符串。
+> ```
+>
+> **示例 2:**
+>
+> ```
+> 输入：s = "aa", p = "a*"
+> 输出：true
+> 解释：因为 '*' 代表可以匹配零个或多个前面的那一个元素, 在这里前面的元素就是 'a'。因此，字符串 "aa" 可被视为 'a' 重复了一次。
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：s = "ab", p = ".*"
+> 输出：true
+> 解释：".*" 表示可匹配零个或多个（'*'）任意字符（'.'）。
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= s.length <= 20`
+> - `1 <= p.length <= 20`
+> - `s` 只包含从 `a-z` 的小写字母。
+> - `p` 只包含从 `a-z` 的小写字母，以及字符 `.` 和 `*`。
+> - 保证每次出现字符 `*` 时，前面都匹配到有效的字符
+
+（困难题是这样的）
+
+本题思路如下：（参考[10. 正则表达式匹配 - 力扣（LeetCode）](https://leetcode.cn/problems/regular-expression-matching/solutions/296114/shou-hui-tu-jie-wo-tai-nan-liao-by-hyj8/)）
+
+- 容易想到用`dp[i][j]`来表示s的前i个字符和p的前j个字符的匹配情况，值为true或者false；
+
+接下来就进入到上强度的地方了。因为星号的前面肯定有一个字符，星号也只影响这一个字符，它就像一个拷贝器。如下图：
+
+![image.png](assets/5e7b1748039a2a779d7378bebc4926ef3e584e88cc22b67f3a4e18c0590bcc55-image.png)
+
+- s、p 串是否匹配，取决于：最右端是否匹配、剩余的子串是否匹配。
+- 只是最右端可能是特殊符号，需要分情况讨论而已。
+
+具体的情况为：
+
+> 用`dp[i][j]`表示`s[0...i-1]`和`p[0...j-1]`的匹配情况。具体地：
+>
+> （1）如果`s[i-1]`和`p[j-1]`是匹配的。此时有两种情况：
+>
+> - `s[i-1]==p[j-1]`,或者
+> - `p[j-1]=='.'`
+>
+> 此时问题就转换为了`dp[i-1][i-1]`（也就是对应匹配`s[i-2]`和`p[i-2]`的情况）=> `dp[i][j] = dp[i-1][j-1]`
+>
+> ![image.png](assets/f817caaa40b0c39fc3ddabfa1383a8218ab364b8e49b30e5ce85cb30a3cdc503-image.png)
+>
+> （2）如果`s[i-1]`和`p[j-1]`是不匹配的
+>
+> - 此时右端不匹配，不能保证肯定不行，因为有可能`p[j-1]=='*'`,如果是`*`的话要在前面再寻找；
+> - 否则如果右端不匹配，同时`p[j-1]!='*'`，则匹配失败，没机会拯救了。
+>
+> ![image.png](assets/fe763378879a0a52e9f17171e3bc1db18cfc83bf59f14efcd31ec9edb37adfac-image.png)
+>
+> 接下来就是考虑`p[j-1]=='*'`要怎么处理呢？
+>
+> - 我们先来看第一种情况：`s[i-1],p[j-2]`两者匹配（意味着`s[i-1]==p[j-2] || p[j-2]=='.'`）,此时又有三种情况：
+>
+>   - （a）`p[j-1]`出现的`*`可以让`p[j-2]`消失（s不动），此时`dp[i][j] = dp[i][j-2]`(意味着比较的是s[0...i-1]和p[0...j-3])
+>   - （b）`p[j-1]`出现的`*`可以让`p[j-2]`出现一次，此时`dp[i][j] = dp[i-1][j-2]`（意味着匹配一次，接下来比较的变为s[0....i-2]和p[0...j-3]）
+>   - （c）`p[j-1]`出现的`*`可以让`p[j-2]`出现不止一次（大于等于2次），那么相当于保留住p[j-2]，将s往前找一位，即`dp[i][j] = dp[i-1][j]`(注意对于p字符串来说，s字符串往前找一位，但p字符串还是在匹配`*`)。
+>     - 关于（c）情况的具体分析如下：
+>       - 假设 s 的右端是一个 a，p 的右端是 a * ，* 让 a 重复 >= 2 次
+>       - 星号不是真实字符，s、p是否匹配，要看 s 去掉末尾的 a，p 去掉末尾一个 a，剩下的是否匹配。
+>       - 星号拷贝了 >=2 个 a，拿掉一个，剩下 >=1 个a，p 末端依旧是 a* 没变。
+>       - s 末尾的 a 被抵消了，继续考察 s[0,i-2] 和 p[0,i-1] 是否匹配。
+>
+>   以上的三种情况对应的图示如下：
+>
+>   <img src="assets/a1cc0caf806f7d7f5419d820e0e7be7a364c96656a98ca4d7f351661d6a62aa6-image.png" alt="image.png" style="zoom: 50%;" />
+>
+> - 接下来就是第二种情况，`s[i-1]`,`p[j-2]`两者不匹配，此时还是有希望的，但需要我们用`p[j-1]`的`*`干掉`p[j-2]`的字符，并且只能这样做了，此时有`dp[i][j] = dp[i][j-2]`。此时情况对应下图：
+>
+> ![image.png](assets/dabf2195c460052e2719340de8f2d22f791694d4443424478201be3b5d601fe1-image.png)
+>
+> ### 边界情况处理
+>
+> 写完上面的状态转移方程，接下来就是本题的dp数组初始化问题了：
+>
+> - p 为空串，s 不为空串，肯定不匹配。
+> - s 为空串，但 p 不为空串，要想匹配，只可能是右端是星号，它干掉一个字符后，把 p 变为空串。
+> - s、p 都为空串，肯定匹配。
+>
+> 对应的情况如下图：
+> ![image.png](assets/140597adfd5f03dd481e136163d98e7160cce4761c7cb8227010d828f24b7498-image.png)
+
+有了以上的基础之后，就可以开始写这道「正则表达式匹配」的题目了。（米小游考这个？）:cry:
+
+> 以下基本是Leetcode官方题解，但初学这道题目的时候可以慢慢来，写一份麻烦一些的代码，但是把上面所有的情况都考虑好。
+
+```c++
+class Solution {
+public:
+    bool isMatch(string s, string p) {
+        int m = s.size();
+        int n = p.size();
+
+        //以下这个索引i和j是针对dp数组,match表示两个是否匹配
+        auto matches = [&](int i, int j) 
+        {
+            if(i == 0) return false; //相当于s串没东西,不匹配
+            if(p[j - 1]=='.') return true; //.完全可以匹配任何东西
+            return s[i - 1] == p[j - 1];
+        };
+        vector<vector<int>> f(m+1, vector<int>(n+1));
+        f[0][0] = 1; //s的前0个字符和p的前0个字符算是匹配的
+        for(int i=0;i<=m;i++) //i从0开始，其实涵盖了边界情况
+        {
+            for(int j=1;j<=n;j++)
+            {
+                if(p[j - 1]=='*')
+                {
+                    f[i][j]  |= f[i][j-2]; //j不会越界,因为*不会出现在p的第一个字符中(否则非法)
+                    if(matches(i, j-1))
+                    {
+                        f[i][j] |= (f[i-1][j]||f[i-1][j-2]);
+                    }
+                }
+                else //这种比较好想,意味着不匹配即失败
+                {
+                    if(matches(i, j))
+                    {
+                        f[i][j] |= f[i-1][j-1]; //对i来说,不会越界,因为i==0的时候matches返回false
+                    }
+                }
+            }
+        }
+        return f[m][n];
+    }
+};
+```
+
+
+
+
 
 ### [221. 最大正方形](https://leetcode.cn/problems/maximal-square/)
 
@@ -4050,6 +4326,115 @@ public:
 ```
 
 ==（2）递归做法：还没有尝试==
+
+
+
+## [76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)
+
+> 给你一个字符串 `s` 、一个字符串 `t` 。返回 `s` 中涵盖 `t` 所有字符的最小子串。如果 `s` 中不存在涵盖 `t` 所有字符的子串，则返回空字符串 `""` 。
+>
+>  
+>
+> **注意：**
+>
+> - 对于 `t` 中重复字符，我们寻找的子字符串中该字符数量必须不少于 `t` 中该字符数量。
+> - 如果 `s` 中存在这样的子串，我们保证它是唯一的答案。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：s = "ADOBECODEBANC", t = "ABC"
+> 输出："BANC"
+> 解释：最小覆盖子串 "BANC" 包含来自字符串 t 的 'A'、'B' 和 'C'。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：s = "a", t = "a"
+> 输出："a"
+> 解释：整个字符串 s 是最小覆盖子串。
+> ```
+>
+> **示例 3:**
+>
+> ```
+> 输入: s = "a", t = "aa"
+> 输出: ""
+> 解释: t 中两个字符 'a' 均应包含在 s 的子串中，
+> 因此没有符合条件的子字符串，返回空字符串。
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `m == s.length`
+> - `n == t.length`
+> - `1 <= m, n <= 105`
+> - `s` 和 `t` 由英文字母组成
+>
+>  
+>
+> **进阶：**你能设计一个在 `o(m+n)` 时间内解决此问题的算法吗？
+
+一种比较好想的做法是使用滑动窗口来做，假设我们不做代码上的优化，由于包含的字母范围是大写字母和小写字母，可以开一个128长度的`array`来囊括截止到字母的ASCII码范围，然后用正常的滑动窗口逻辑来做即可。**由于本题求最小，因此在窗口收缩的时候更新逻辑即可。**代码如下：
+
+```c++
+class Solution {
+public:
+    bool isCover(array<int, 128>& s, array<int, 128>& t)
+    {
+        //s涵盖t中所有的,意味着s所有字符数都要>=t
+        for(int i='a';i<='z';i++)
+        {
+            if(s[i]<t[i]) return false;
+        }
+        for(int i='A';i<='Z';i++)
+        {
+            if(s[i]<t[i]) return false;
+        }
+        return true;
+    }
+    string minWindow(string s, string t) {
+        //滑动窗口
+        int left = 0;
+        int m = s.size();
+        int n = t.size();
+        int resLeft = -1, resRight = m+1;
+        array<int, 128> sarray{};
+        array<int, 128> tarray{};
+        for(int i=0;i<n;i++)
+        {
+            tarray[t[i]]++;
+        }
+        for(int right = 0;right<m;right++)
+        {
+            //inset
+            sarray[s[right]]++;
+            while(isCover(sarray, tarray))
+            {
+                sarray[s[left]]--;
+                if(right-left<resRight-resLeft)
+                {
+                    resLeft = left;
+                    resRight = right;
+                }
+                left++;
+            }
+        }
+        //cout<<resLeft<<" "<<resRight<<endl;
+        if(resLeft==-1) return "";
+        return s.substr(resLeft, resRight-resLeft+1);
+    }
+};
+```
+
+
+
+
 
 # 位运算
 
