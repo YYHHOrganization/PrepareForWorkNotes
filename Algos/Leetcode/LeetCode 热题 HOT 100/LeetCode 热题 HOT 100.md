@@ -115,7 +115,7 @@ https://leetcode.cn/problems/longest-increasing-subsequence/solutions/24173/zui-
 
 （思路：构建tails 每次去更新就行了
 
-25/05/03
+25/05/03 也有单调栈那个意味
 
 ```C++
 class Solution {
@@ -602,8 +602,6 @@ public:
 
 
 
-
-
 ### [124. 二叉树中的最大路径和](https://leetcode.cn/problems/binary-tree-maximum-path-sum/)
 
 二叉树中的 **路径** 被定义为一条节点序列，序列中每对相邻节点之间都存在一条边。同一个节点在一条路径序列中 **至多出现一次** 。该路径 **至少包含一个** 节点，且不一定经过根节点。
@@ -705,6 +703,7 @@ public:
 
 
 
+
 ## [297. 二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)
 
 > 这道题和LRU那道题是类似的，考察的是能否把复杂的业务写好。务必注意代码中的细节问题。
@@ -787,9 +786,233 @@ public:
 // TreeNode* ans = deser.deserialize(ser.serialize(root));
 ```
 
-
-
 ### ==（2）利用文法解析来做（福报，有空可以看看）==
+
+
+
+### [114. 二叉树展开为链表](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/)
+
+给你二叉树的根结点 `root` ，请你将它展开为一个单链表：
+
+- 展开后的单链表应该同样使用 `TreeNode` ，其中 `right` 子指针指向链表中下一个结点，而左子指针始终为 `null` 。
+- 展开后的单链表应该与二叉树 [**先序遍历**](https://baike.baidu.com/item/先序遍历/6442839?fr=aladdin) 顺序相同。
+
+ 
+
+**示例 1：**
+
+![img](assets/flaten.jpg)
+
+```
+输入：root = [1,2,5,3,4,null,6]
+输出：[1,null,2,null,3,null,4,null,5,null,6]
+```
+
+
+
+
+
+这题思路比较难想，想通后写起来还行
+
+不考虑原地的话可以前序遍历啥的
+
+https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/solutions/356853/er-cha-shu-zhan-kai-wei-lian-biao-by-leetcode-solu/?envType=problem-list-v2&envId=2cktkvj
+
+考虑原地的话:
+
+https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/?envType=problem-list-v2&envId=2cktkvj
+
+对于当前节点，如果其左子节点不为空，则在其左子树中找到**最右边**的节点，作为**前驱节点**，
+
+<img src="assets/image-20250319145101819.png" alt="image-20250319145101819" style="zoom:67%;" />
+
+将当前节点的右子节点赋给前驱节点的右子节点
+
+<img src="assets/image-20250319145111184.png" alt="image-20250319145111184" style="zoom:67%;" />
+
+并将当前节点的左子节点设为空。
+
+<img src="assets/image-20250319145505056.png" alt="image-20250319145505056" style="zoom:67%;" />
+
+
+
+```C++
+class Solution {
+public:
+    void flatten(TreeNode* root) {
+        TreeNode* cur = root;
+        //cur找到左节点中的最右边的节点
+        //将cur右节点赋给 左节点中的最右节点
+        while(cur)
+        {
+            if(cur->left)
+            {
+                TreeNode* pre = cur->left;
+                //next 记录排好序的左右的根 
+                TreeNode* next =  pre;
+                while(pre->right)
+                {
+                    pre=pre->right;
+                }
+                pre->right = cur->right;
+                cur->left = nullptr;
+                cur->right = next;
+            }
+            cur = cur->right;
+        }
+    }
+};
+```
+
+
+
+### [98. 验证二叉搜索树](https://leetcode.cn/problems/validate-binary-search-tree/)
+
+给你一个二叉树的根节点 `root` ，判断其是否是一个有效的二叉搜索树。
+
+**有效** 二叉搜索树定义如下：
+
+- 节点的左子树只包含 **小于** 当前节点的数。
+- 节点的右子树只包含 **大于** 当前节点的数。
+- 所有左子树和右子树自身必须也是二叉搜索树。
+
+**示例 1：**
+
+![img](assets/tree1.jpg)
+
+```
+输入：root = [2,1,3]
+输出：true
+```
+
+
+
+####  M1: 递归
+
+题解看：https://leetcode.cn/problems/validate-binary-search-tree/solutions/230256/yan-zheng-er-cha-sou-suo-shu-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
+
+```C++
+class Solution {
+public:
+    bool helper(TreeNode* root,long long lower,long long upper)
+    {
+        if(root == nullptr)return true;
+        if(root->val<=lower || root->val >=upper)return false;
+        return helper(root->left,lower,root->val)&&helper(root->right,root->val,upper);
+    }
+    bool isValidBST(TreeNode* root) 
+    {
+        return helper(root,LONG_MIN,LONG_MAX);
+    }
+};
+```
+
+#### M2: 中序遍历
+
+二叉搜索树具有一个重要性质：**二叉搜索树的中序遍历为递增序列。**
+
+(大笔记有类似题目)
+
+```C++
+class Solution {
+public:
+    vector<int> vec;
+    bool dfs(TreeNode* root)
+    {
+        if(root==nullptr)return true;
+        if(!dfs(root->left))return false;
+        if(!vec.empty()&&(root->val<=vec.back()))return false;
+        else
+            vec.push_back(root->val);
+        return dfs(root->right);
+    }
+    bool isValidBST(TreeNode* root) {
+        return dfs(root);
+    }
+};
+```
+
+
+
+### [105. 从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)  :cat:
+
+参考官方题解的视频
+
+https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/solutions/255811/cong-qian-xu-yu-zhong-xu-bian-li-xu-lie-gou-zao-9/?envType=problem-list-v2&envId=2cktkvj	
+
+
+
+![image-20250320095739421](assets/image-20250320095739421.png)
+
+下面的写法请对照上面这个图 不然很容易乱：
+
+```C++
+class Solution {
+public:
+    unordered_map<int,int> index;
+    TreeNode* myBuildTree(vector<int>& preorder, vector<int>& inorder,
+    int PreLeft,int PreRight,int InLeft,int InRight)
+    {
+        if(PreLeft>PreRight)return nullptr;
+        int PreRoot = PreLeft;
+        TreeNode *node = new TreeNode(preorder[PreRoot]);
+        int Pindex = index[preorder[PreRoot]];
+        //x-(preLeft+1) = Pindex-1-inLeft
+        int x = Pindex-InLeft+PreLeft;
+        node->left = myBuildTree(preorder,inorder,PreLeft+1,x,InLeft,Pindex-1 );
+        node->right = myBuildTree(preorder,inorder,x+1,PreRight,Pindex+1,InRight );
+        return node;
+    }
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        int n = inorder.size();
+        for(int i=0;i<n;i++)
+        {
+            index[inorder[i]]=i;
+        }
+        return myBuildTree(preorder,inorder,0,n-1,0,n-1);
+    }
+};
+```
+
+
+
+用size的写法：
+
+```C++
+class Solution {
+public:
+    TreeNode* myBuildTree(vector<int>& preorder,vector<int>& inorder,
+    int preLeft,int preRight,int inLeft,int inRight)
+    {
+        if(preLeft>preRight)return nullptr;
+        int preRoot = preLeft;
+        int inRoot = index[preorder[preRoot]];
+
+        TreeNode* root = new TreeNode(preorder[preRoot]);
+        int size_left_tree = inRoot - inLeft;
+        root->left = myBuildTree(preorder,inorder,
+        preLeft+1,preLeft+size_left_tree,
+        inLeft,inRoot-1);
+
+        root->right = myBuildTree(preorder,inorder,
+        preLeft+size_left_tree+1,preRight,
+        inRoot+1,inRight);
+
+        return root;
+    }
+    unordered_map<int,int> index;
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) 
+    {
+        //preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]
+        int n = inorder.size();
+        for(int i=0;i<n;i++)
+        {
+            index[inorder[i]] = i;
+        }
+        return myBuildTree(preorder,inorder,0,n-1,0,n-1);
+    }
+};
+```
 
 
 
@@ -1044,7 +1267,7 @@ public:
 
 
 
-##### M2 DP 推荐
+##### M2 DP 推荐 （背包）
 
 ```C++
 class Solution {
@@ -1074,7 +1297,7 @@ public:
 };
 ```
 
-用set
+用set 更经典的背包写法
 
 ```C++
 class Solution {
@@ -1247,7 +1470,7 @@ public:
 
 
 
-M2
+M2 :cat: （Y待尝试这个方法）
 
 O(1) 空间做法：寻找中间节点+反转链表
 
@@ -2085,6 +2308,196 @@ public:
 ```
 
 
+### 1.[84. 柱状图中最大的矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/)（板子题）
+
+对于这种类型题，应当可以往一维单调栈上想：单调栈的任务可以是找某个索引左/右第一个满足某个条件的值。本题就是类似的情况。
+
+> 给定 *n* 个非负整数，用来表示柱状图中各个柱子的高度。每个柱子彼此相邻，且宽度为 1 。
+>
+> 求在该柱状图中，能够勾勒出来的矩形的最大面积。
+>
+> 
+>
+> **示例 1:**
+>
+> ![img](assets/histogram.jpg)
+>
+> ```
+> 输入：heights = [2,1,5,6,2,3]
+> 输出：10
+> 解释：最大的矩形为图中红色区域，面积为 10
+> ```
+>
+> **示例 2：**
+>
+> ![img](assets/histogram-1.jpg)
+>
+> ```
+> 输入： heights = [2,4]
+> 输出： 4
+> ```
+>
+> 
+>
+> **提示：**
+>
+> - `1 <= heights.length <=105`
+> - `0 <= heights[i] <= 104`
+
+主要参考的题解：[84. 柱状图中最大的矩形 - 力扣（LeetCode）](https://leetcode.cn/problems/largest-rectangle-in-histogram/solutions/2695467/dan-diao-zhan-fu-ti-dan-pythonjavacgojsr-89s7/)。
+
+其实就是枚举每个位置，用单调栈算出对于每个位置来说，左侧第一个比它小的值和右侧第一个比它小的值，边界条件为：如果索引<0，则为0，如果索引>n-1，则为n-1。用两轮O(n)的复杂度计算左侧和右侧的单调栈，然后再在最后一轮循环中计算结果即可。代码如下：
+
+```c++
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        int n = heights.size();
+        vector<int> lefts(n, -1);//注意这个初值的边界情况设置 ！！
+        vector<int> rights(n, n); //注意这个初值的边界情况设置 ！！
+
+        stack<int> stk;
+        //step 1:算一遍右侧第一个<height[i]的值
+        for(int i=0;i<n;i++)
+        {
+            while(!stk.empty() && heights[i]<heights[stk.top()])
+            {
+                int cur = stk.top();
+                rights[cur] = i;
+                stk.pop();
+            }
+            stk.push(i);
+        }
+        
+        //step 2: 算一遍左侧第一个<height[i]的值,其实只要遍历顺序反过来就行,逻辑基本不变
+        stack<int> stk2;
+        for(int i = n-1;i>=0;i--)
+        {
+            while(!stk2.empty() && heights[i]<heights[stk2.top()])
+            {
+                int cur = stk2.top();
+                lefts[cur] = i;
+                stk2.pop();
+            }
+            stk2.push(i);
+        }
+        
+        int result = 0;
+        //step3:遍历left和right数组,求解结果
+        for(int i=0;i<n;i++)
+        {
+            int area = heights[i] * (rights[i]-lefts[i]-1);
+            result = max(result, area);
+        }
+        return result;
+    }
+};
+```
+
+> 这题考的基础模型其实就是：在一维数组中对每一个数找到第一个比自己小的元素。这类“在一维数组中找第一个满足某种条件的数”的场景就是典型的单调栈应用场景。
+
+注意初始化的边界情况
+
+> ```C++
+> vector<int> lefts(n, -1);//注意这个初值的边界情况设置 ！！
+> vector<int> rights(n, n); //注意这个初值的边界情况设置 ！！
+> ```
+>
+> 对于：
+>
+> <img src="assets/image-20250314215327009.png" alt="image-20250314215327009" style="zoom:50%;" />
+>
+> ```C++
+> L:-1 R:1 左边到-1 
+> L:-1 R:6
+> L:1 R:4
+> L:2 R:4
+> L:1 R:6
+> L:4 R:6 相当于到n了
+> ```
+
+
+
+
+
+### [85. 最大矩形](https://leetcode.cn/problems/maximal-rectangle/)
+
+https://leetcode.cn/problems/maximal-rectangle/solutions/9535/xiang-xi-tong-su-de-si-lu-fen-xi-duo-jie-fa-by-1-8/?envType=problem-list-v2&envId=2cktkvj
+
+大家可以先做84 题，然后回来考虑这道题。
+
+再想一下这个题，看下边的橙色的部分，这完全就是上一道题呀！
+
+![image.png](assets/aabb1b287134cf950aa80526806ef4025e3920d57d237c0369ed34fae83e2690-image.png)
+
+
+
+算法有了，就是求出每一层的 heights[] 然后传给上一题的函数就可以了。
+
+```C++
+class Solution {
+public:
+    //84题 柱状图求最大面积矩形 
+    //以自己的高度 最大可以拼凑多大的矩形
+    int largestRectangleArea(vector<int>& heights)
+    {
+        //求出左边第一个<它的
+        //右边第一个<它的
+        int n =heights.size();
+        stack<int> stkR;
+        vector<int> monoR(n,n);//存储右边第一个<它的的下标
+        stack<int> stkL;
+        vector<int> monoL(n,-1);//存储左边第一个<它的的下标
+        
+        for(int i=0;i<n;i++)
+        {
+            while(!stkR.empty()&&heights[i]<heights[stkR.top()])
+            {
+                monoR[stkR.top()] = i;
+                stkR.pop();
+            }
+            stkR.push(i);
+        }
+        for(int i=n-1;i>=0;i--)
+        {
+            while(!stkL.empty()&&heights[i]<heights[stkL.top()])
+            {
+                monoL[stkL.top()] = i;
+                stkL.pop();
+            }
+            stkL.push(i);
+        }
+        int maxArea=0;
+        for(int i=0;i<n;i++)
+        {
+            int areaL = monoR[i] - monoL[i] -1;
+            int area = areaL*heights[i];
+            maxArea = max(maxArea,area);
+        }
+        return maxArea;
+    }
+    int maximalRectangle(vector<vector<char>>& matrix) {
+        
+        int m = matrix.size();
+        int n = matrix[0].size();
+        vector<int> heights(n,0);
+        int maxRes=0;
+        //遍历每一列，更新高度
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(matrix[i][j]=='1') heights[j]+=1;//如果本行这列是1 就叠加上一行这个值
+                else heights[j]=0;//否则如果本行这列是0 直接就是0
+            }
+            maxRes = max(maxRes,largestRectangleArea(heights));
+        }
+        return maxRes;
+    }
+};
+```
+
+
 
 ## 排序
 
@@ -2276,6 +2689,7 @@ public:
   - 如果`nums[i]==1`，那么`swap(nums[i], nums[p1])`，然后`p1++`；
   - 否则，判断如果`nums[i]==0`，那么先`swap(nums[i],nums[p0])`。但是有可能p0的位置是之前换过来的1（此时`p0<p1，`注意这里不会取到等号），如果满足`p0<p1`那么就继续调换`swap(nums[i](此时为调换过去的1),nums[p1])`。
     - 关于指针的移动，都要把`p0`和`p1`往后移动一个位置，不论是否满足`p0<p1`（毕竟来了一个新的数嘛）。
+    - <img src="assets/image-20250319141419095.png" alt="image-20250319141419095" style="zoom: 67%;" /><img src="assets/image-20250319141430936.png" alt="image-20250319141430936" style="zoom:67%;" /><img src="assets/image-20250319141446581.png" alt="image-20250319141446581" style="zoom:67%;" />
 
 将以上逻辑写作代码，如下：
 
@@ -2872,7 +3286,7 @@ public:
     vector<vector<int>> f; //记忆化搜索
     int solve(int left, int right) //记忆化搜索
     {
-        if(left >= right - 1) return 0; //定义不符合,return 0
+        if(left >= right - 1) return 0; //定义不符合,return 0 //注意需要等号 因为中间必须至少有一个 否则戳不了
         if(f[left][right] != -1) //left 和 right都是开区间,k表示最后一个戳的气球,f[left][right]计算此时的最大分数
         {
             return f[left][right];
@@ -2894,7 +3308,7 @@ public:
             val[i] = nums[i-1];
         }
         val[0] = 1, val[n+1] = 1; 
-        return solve(0, n+1);
+        return solve(0, n+1); // 注意是n+1
     }
 };
 ```
@@ -2931,7 +3345,7 @@ public:
     int maxCoins(vector<int>& nums) {
         int n = nums.size();
         vector<int> val(n+2);
-        vector<vector<int>> dp(n+2, vector<int>(n+2));
+        vector<vector<int>> dp(n+2, vector<int>(n+2));//初始化为0！！！
         for(int i=1;i<=n;i++)
         {
             val[i] = nums[i-1];
@@ -2940,7 +3354,7 @@ public:
         val[n+1] = 1;
         for(int i=n+1;i>=0;i--) //开区间(i,j),i=0,j=n+1是边界(整体挪了一位)
         {
-            for(int j=i+2;j<=n+1;j++)
+            for(int j=i+2;j<=n+1;j++)//注意j需要从i+2开始 且<=n+1
             {
                 for(int k=i+1;k<j;k++)
                 {
@@ -3329,6 +3743,113 @@ public:
 >注意 ：这题目中，k共有0-k一共k+1个状态。
 >
 >例如k=3，则有0不买，买1，买2，买3，一种四种状态，但是我们要加1位防止越界，因此是k+2；
+
+
+
+## 最长有效括号
+
+### [32. 最长有效括号](https://leetcode.cn/problems/longest-valid-parentheses/)
+
+困难
+
+给你一个只包含 `'('` 和 `')'` 的字符串，找出最长有效（格式正确且连续）括号子串的长度。
+
+**示例 1：**
+
+```
+输入：s = "(()"
+输出：2
+解释：最长有效括号子串是 "()"
+```
+
+**示例 2：**
+
+```
+输入：s = ")()())"
+输出：4
+解释：最长有效括号子串是 "()()"
+```
+
+**示例 3：**
+
+```
+输入：s = ""
+输出：0
+```
+
+
+
+题解：看的这下面这个题解里的这个视频
+
+https://leetcode.cn/problems/longest-valid-parentheses/solutions/314683/zui-chang-you-xiao-gua-hao-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
+
+状态转移方程：
+$$
+dp[i] = 2 + dp[i-1] + dp[i-dp[i-1]-2]
+$$
+
+##### 1.1
+
+先判断 $dp[i-1]$ 是不是左括号" ( " ，如果是 ，直接 +2 ，走
+
+![image-20250319222600706](assets/image-20250319222600706.png)
+
+##### 1.2
+
+否则判断$s[i-dp[i-1]-1]$ 是不是左括号" ( " ,如果是，可以凑一对 
+
+![image-20250319222100287](assets/image-20250319222100287.png)
+
+###### 		1.2.1
+
+首先加上 $dp[i-1]$ ，内部连在一起的最长有效括号：
+
+![image-20250319222737916](assets/image-20250319222737916.png)
+
+###### 		1.2.2
+
+它自己串号冰糖葫芦了，接下来找它前面是不是有跟它挨着的另一串冰糖葫芦，
+
+当前串结束后，外部前面是不是还有能连接到一起的  , 加上$dp[i-dp[i-1]-2] $ 
+
+<img src="assets/image-20250319222918516.png" alt="image-20250319222918516" style="zoom:67%;" />
+
+```C++
+class Solution {
+public:
+    int longestValidParentheses(string s) {
+        //dp[i-dp[i-1]-1] 当前右括号==对应==的左括号
+        //dp[i-dp[i-1]-2] 当前串结束后，前面是不是还有能连接到一起的
+        // dp[i] = 2 + dp[i-1] + dp[i-dp[i-1]-2]
+
+        int maxans = 0;
+        int n = s.size();
+        vector<int> dp(n,0);
+        for(int i=1;i<n;i++)
+        {
+            if(s[i]==')')
+            {
+                if(s[i-1]=='(') 
+                {
+                    dp[i]+=2;
+                    if(i>=2)dp[i]+=dp[i-2];
+                }
+                else if(i-dp[i-1]>0 && s[i-dp[i-1]-1]=='(')
+                {
+                    dp[i] = 2+dp[i-1];  
+                    if(i-dp[i-1]>=2) dp[i] += dp[i-dp[i-1]-2];
+                }
+                maxans = max(maxans,dp[i]);
+            }
+        }
+        return maxans;
+    }
+};
+```
+
+
+
+
 
 # 图
 
@@ -4769,6 +5290,75 @@ public:
 
 
 
+###  [621. 任务调度器](https://leetcode.cn/problems/task-scheduler/)
+
+给你一个用字符数组 `tasks` 表示的 CPU 需要执行的任务列表，用字母 A 到 Z 表示，以及一个冷却时间 `n`。每个周期或时间间隔允许完成一项任务。任务可以按任何顺序完成，但有一个限制：两个 **相同种类** 的任务之间必须有长度为 `n` 的冷却时间。
+
+返回完成所有任务所需要的 **最短时间间隔** 。
+
+**示例 1：**
+
+**输入：**tasks = ["A","A","A","B","B","B"], n = 2
+
+**输出：**8
+
+**解释：**
+
+在完成任务 A 之后，你必须等待两个间隔。对任务 B 来说也是一样。在第 3 个间隔，A 和 B 都不能完成，所以你需要待命。在第 4 个间隔，由于已经经过了 2 个间隔，你可以再次执行 A 任务。
+
+
+
+#### 题解：
+
+**题解请看：https://leetcode.cn/problems/task-scheduler/solutions/196302/tong-zi-by-popopop/?envType=problem-list-v2&envId=2cktkvj**
+
+**总排队时间 = (桶个数 - 1) \* (n + 1) + 最后一桶的任务数**：
+
+![image.png](assets/c6a573fa1a4da75c6c6c38113b4ad11ae7b8a1aa8ef714b8416a9bc338797ce0-image.png)
+
+每个任务之间都不存在空余时间，冷却时间已经被完全填满了。**我们执行任务所需的时间，就是任务的数量**：
+
+![image.png](assets/893c01db5923889a865d7a4fe71de22b9519fc5a673473196ab58f26c1073ed2-image.png)
+
+代码详细步骤：
+
+- 任务是大写字母，所以可以使用大小为26的数组做哈希表，存放任务和其对应的数量
+- 我们需要记录最多任务数量 `N`，用于构建 `N`个桶
+- 还需要记录最多任务数量的个数（有多个任务数量都最大且相同）`count`，用于标记最后一个桶的任务数。
+- 知道了上述两个变量 `N` 和 `count`，则可以计算 `time1 = (N - 1) * (n + 1) + count`，这是存在空闲时间的情况（当任务种类较少时，冷却时间够用来处理其他任务，冷却时间未被填满）。
+- `time2 = tasks.length`，这是不存在空闲时间的情况（当任务种类较多时，冷却时间不够用来处理其他任务，冷却时间已被填满）。
+- 那么我们最后返回 `time1` 、`time2` 中较大值即可，因为存在空闲时间时，`time1` 大于 `time2`，不存在空闲时间时，`time2` 大于 `time1`
+
+```C++
+class Solution {
+public:
+    int leastInterval(vector<char>& tasks, int n) {
+        array<int,26> arr;  // 任务和其数量的哈希表
+        for(auto &task:tasks)
+        {
+            arr[task-'A']++;
+        }
+        int N=0;// 最多任务数量
+        int count=0;//同最多任务量N的任务的个数
+        for(int i=0;i<26;i++)
+        {
+            if(arr[i]>N)
+            {
+                N = arr[i];
+                count = 1;
+            }
+            else if(arr[i]==N)//有多个任务数量都最大且相同
+            {
+                count++;
+            }
+        }
+        return max((int)tasks.size(),(N-1)*(n+1)+count);
+    }
+};
+```
+
+
+
 # 贪心
 
 ## [55. 跳跃游戏](https://leetcode.cn/problems/jump-game/)
@@ -5092,7 +5682,160 @@ public:
 };
 ```
 
+## 回溯
 
+### [301. 删除无效的括号 ](https://leetcode.cn/problems/remove-invalid-parentheses/)   hard
+
+给你一个由若干括号和字母组成的字符串 `s` ，删除最小数量的无效括号，使得输入的字符串有效。
+
+返回所有可能的结果。答案可以按 **任意顺序** 返回。
+
+**示例 1：**
+
+```
+输入：s = "()())()"
+输出：["(())()","()()()"]
+```
+题解：
+
+难题难题难题 困难题
+
+多写几遍
+
+题解：https://leetcode.cn/problems/remove-invalid-parentheses/solutions/1068652/gong-shui-san-xie-jiang-gua-hao-de-shi-f-asu8
+
+C++版本：https://leetcode.cn/problems/remove-invalid-parentheses/solutions/1068652/gong-shui-san-xie-jiang-gua-hao-de-shi-f-asu8/comments/1200150/
+
+dfs是选或者不选
+
+遇到左括号 score+1，右score-1
+
+score >0 表示左括号更多
+
+score<0 表示右括号溢出 并且不合法
+
+```C++
+class Solution {
+public:
+    //todo 字符串用引用传
+    int maxscore;
+    int length;
+    int n;
+    unordered_set<string> hash;//用set自动去重
+    void dfs(string &s,int score,string buf,int l,int r,int index)
+    {
+        if(l<0||r<0||score<0||score>maxscore)return ;//分数超过了 没用的 因为另一种括号是不够的
+        if(l==0&&r==0&&buf.length()==length)hash.insert(buf);
+        if(index == n)return ;
+        char ch = s[index];
+        if(ch == '(')
+        {
+            dfs(s,score+1,buf+'(',l,r,index+1);//选
+            dfs(s,score,buf,l-1,r,index+1);//不选 说明删了 需要删的少了一个
+        }
+        else if(ch == ')')
+        {
+            dfs(s,score-1,buf+')',l,r,index+1);//选
+            dfs(s,score,buf,l,r-1,index+1);//不选
+        }
+        else
+        {
+            dfs(s,score,buf+ch,l,r,index+1);
+        }
+    }
+    
+    vector<string> removeInvalidParentheses(string s) 
+    {
+        //假设"("为+1分,")"为-1分，那么合规的字符串分数一定是0
+        //分数一定不会是负数，因为那样意味着)比(多，不可能合规
+        //分数一定不会超过maxscore，maxscore就是所有可匹配的(都在左边，一直+1，能达到的最大分数
+        maxscore = 0;
+        n=s.size();
+        int left = 0,right=0;//左括号右括号的数量
+        int l=0,r=0;//要删除的
+        //看左括号右括号数量 && 同时看要删除的左右括号数量
+        for(auto &c:s)
+        {
+            if(c=='(')
+            {
+                left++;
+                l++;
+            }
+            else if(c==')')
+            {
+                right++;
+                if(l!=0)l--;//还有左括号可以抵消
+                else r++;//没有左括号可以抵消 右括号一定不合法
+            }
+        }
+        maxscore = min(left,right);//最大分数为可匹配的左括号或右括号的数量，故为括号数量较少的那一边 
+        length = n-l-r; //排除需要删除的左括号和右括号后，字符串应该有的长度
+        dfs(s,0,"",l,r,0);
+        return {hash.begin(),hash.end()};    
+    }
+};
+```
+
+
+
+**预处理部分：**
+
+>这段代码的注释和变量部分主要用来确定需要删除的括号数量及有效字符串的最大可能分数（即有效括号对数）。以下是逐步解释：
+>
+>---
+>
+>### 1. **统计需要删除的括号数量（`l`和`r`）**
+>- **目标**：确定最少需要删除多少个左括号（`l`）和右括号（`r`）才能使字符串有效。
+>- **遍历字符串时**：
+>  - **遇到 `(`**：
+>    - `l++`：暂时记录可能多余的左括号（后续可能被右括号匹配）。
+>    - `left++`：总左括号数量。
+>  - **遇到 `)`**：
+>    - 如果存在未匹配的左括号（`l > 0`）：`l--`，表示这个右括号可以匹配之前的左括号，减少需要删除的左括号。
+>    - 否则（`l == 0`）：`r++`，此右括号无法匹配，必须删除。
+>
+>**示例**：  
+>字符串 `"(()"` 中，右括号不足，`l = 1`（需删除1个左括号），`r = 0`；  
+>字符串 `"())"` 中，第二个右括号多余，`l = 0`，`r = 1`。
+>
+>---
+>
+>### 2. **确定有效字符串的长度（`length`）**
+>- **公式**：`length = n - l - r`  
+>  删除多余的 `l` 个左括号和 `r` 个右括号后，有效字符串的长度。
+>
+>---
+>
+>### 3. **计算最大分数（`maxscore`）**
+>- **意义**：有效括号对的最大数量，即字符串中能形成的合法括号对的上限。
+>- **公式**：`maxscore = min(left, right)`  
+>  有效括号对数不能超过左括号或右括号的总数，取两者的较小值。
+>
+>**示例**：  
+>字符串 `"()())("` 中，`left = 3`, `right = 2` → `maxscore = 2`（最多2对有效括号）。
+>
+>---
+>
+>### 4. **DFS中的分数（`score`）与剪枝**
+>- **分数规则**：
+>  - 遇到 `(`：分数 `+1`（左括号未匹配）。
+>  - 遇到 `)`：分数 `-1`（右括号匹配左括号）。
+>- **剪枝条件**：
+>  - `score < 0`：右括号多于左括号，非法。
+>  - `score > maxscore`：左括号超过可能匹配的右括号数量，后续无法平衡，提前终止。
+>
+>---
+>
+>### 整体逻辑
+>1. **预处理**：计算必须删除的括号数量（`l`和`r`）及最大有效括号对数（`maxscore`）。
+>2. **DFS生成有效字符串**：
+>   - 尝试保留或删除每个括号。
+>   - 通过分数和删除数量控制递归路径，确保最终字符串合法且长度正确（`length`）。
+>3. **结果去重**：使用哈希集合存储结果，避免重复。
+>
+>---
+>
+>通过这种方式，代码能够高效地生成所有删除最少括号后的合法字符串。
 
 
 
