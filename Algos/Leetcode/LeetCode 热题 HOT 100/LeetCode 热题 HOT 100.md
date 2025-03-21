@@ -12,7 +12,7 @@ https://leetcode.cn/problem-list/2cktkvj/
 
 ### [300. 最长递增子序列 ](https://leetcode-cn.com/problems/longest-increasing-subsequence/)  :notebook: 记录在“大厂”那个笔记中 :red_circle:
 
-难度中等
+难度中等	
 
 给你一个整数数组 `nums` ，找到其中最长严格递增子序列的长度。
 
@@ -72,7 +72,7 @@ https://leetcode.cn/problem-list/2cktkvj/
 ![image-20220312160621680](assets/image-20220312160621680.png)
 
 ```C++
-class Solution {
+class Solution 
 public:
     int lengthOfLIS(vector<int>& nums) {
         vector<int> dp(nums.size(),1);
@@ -750,14 +750,14 @@ public:
     TreeNode* rdeserialize(list<string>& nums) //根节点(数据是错误的); 数据
     {
         if(nums.size()==0) return NULL;
-        if(nums.front()=="None")
+        if(nums.front()=="None") //用完就扔掉了！
         {
-            nums.erase(nums.begin());
+            nums.erase(nums.begin());//begin是迭代器 front是取值
             return NULL;
         }
         TreeNode* root = new TreeNode(stoi(nums.front()));
         nums.erase(nums.begin());
-        root->left = rdeserialize(nums);
+        root->left = rdeserialize(nums); 
         root->right = rdeserialize(nums);
         return root;
     }
@@ -772,7 +772,7 @@ public:
         {
             if(data[i]==',')
             {
-                nums.emplace_back(std::move(str));
+                nums.emplace_back(std::move(str));//这里应该是相当于把str清空了 改为不移动 但是str=""也可以
             }
             else str += data[i];
         }
@@ -2729,7 +2729,7 @@ public:
 
 
 
-### ==[10. 正则表达式匹配](https://leetcode.cn/problems/regular-expression-matching/)==
+### ==[10. 正则表达式匹配](https://leetcode.cn/problems/regular-expression-matching/)== :cat:
 
 > 给你一个字符串 `s` 和一个字符规律 `p`，请你来实现一个支持 `'.'` 和 `'*'` 的正则表达式匹配。
 >
@@ -2881,6 +2881,45 @@ public:
             }
         }
         return f[m][n];
+    }
+};
+```
+
+Y
+
+```C++
+class Solution {
+public:
+    bool isMatch(string s, string p) {
+        auto matchs = [&](int i,int j)->bool
+        {
+            if(i<=0)return false;
+            if(p[j-1]=='.')return true;
+            return s[i-1]==p[j-1];
+        };
+        int n =s.size();
+        int m = p.size();
+        vector<vector<int>> dp(n+1,vector<int>(m+1,0));//dp[i][j]表示的是s 0~i-1/p 0~j-1是不是匹配的
+        dp[0][0]=1;//!!!
+        for(int i=0;i<=n;i++)//不可以是1 反正matchs(i,_)中都会判断i是否>0
+        {
+           for(int j=1;j<=m;j++)
+           {
+                if(p[j-1]=='*') // a a* // a b*
+                {
+                    dp[i][j] = dp[i][j-2];//①
+                    if(matchs(i,j-1))//// a a* 
+                    {
+                        dp[i][j] |= dp[i-1][j-2]|dp[i-1][j];//或等于|=，而不是等于.前面①如果是true也要过
+                    }
+                }
+                else if(matchs(i,j))
+                {
+                    dp[i][j] = dp[i-1][j-1];
+                }
+           }
+        }
+        return dp[n][m];
     }
 };
 ```
@@ -4953,6 +4992,60 @@ public:
 };
 ```
 
+Y
+
+```C++
+class Solution {
+public:
+    // bool isValid(array<int,128> arrs,array<int,128> arrt)
+    // {
+    //     return arrs==arrt; //❌ 错误 并不是等于 而是覆盖即可
+    // }
+    bool isCover(array<int, 128>& s, array<int, 128>& t)
+    {
+        //s涵盖t中所有的,意味着s所有字符数都要>=t
+        for(int i='a';i<='z';i++)
+        {
+            if(s[i]<t[i]) return false;
+        }
+        for(int i='A';i<='Z';i++)
+        {
+            if(s[i]<t[i]) return false;
+        }
+        return true;
+    }
+    string minWindow(string s, string t) {
+        array<int,128> sarr{};
+        array<int,128> tarr{};
+        int tn = t.size();
+        int n = s.size();
+        for(int i=0;i<tn;i++)
+        {
+            tarr[t[i]]++;
+        }
+        int l=0;
+        int ResLeft=0,ResRight=INT_MAX;//-1?
+        for(int r=0;r<n;r++)
+        {
+            sarr[s[r]]++;
+            while(l<=r&&isCover(sarr,tarr))
+            {
+                // sarr[s[l]]--;//放这里也行 为啥呢 
+                if(r-l<ResRight-ResLeft)
+                {
+                    ResLeft = l;
+                    ResRight = r;
+                }
+                sarr[s[l]]--;
+                l++;
+            }
+        }
+        if(ResRight==INT_MAX)return "";
+        return s.substr(ResLeft,ResRight-ResLeft+1);
+    }
+};
+```
+
 
 
 
@@ -5056,7 +5149,7 @@ public:
 
 
 
-### [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/)
+### [5. 最长回文子串](https://leetcode.cn/problems/longest-palindromic-substring/) :cat:
 
 给你一个字符串 `s`，找到 `s` 中最长的 回文 子串。
 
@@ -5955,3 +6048,45 @@ public:
 
 
 #### ==拓展 ： 如何重载等于 重载小于==
+
+
+
+# 差分
+
+
+
+### 会员题 leetcode253.会议室 II
+
+给定一个会议时间安排的数组，每个会议时间都会包括开始和结束的时间 [[s1,e1],[s2,e2],...] (si < ei)，为避免会议冲突，同时要考虑充分利用会议室资源，请你计算至少需要多少间会议室，才能满足这些会议安排。
+
+示例 1:
+
+输入: [[0, 30],[5, 10],[15, 20]]
+输出: 2
+示例 2:
+
+输入: [[7,10],[2,4]]
+输出: 1
+————————————————
+
+```C++
+class Solution {
+public:
+    int minMeetingRooms(vector<vector<int>>& intervals) {
+        map<int, int> m;
+        for(auto& v: intervals) m[v[0]]++, m[v[1]]--;
+        int ans = 0, res = 0;
+        # 按照key值从小到大排序，如果相同，则value值小的排在前面
+        # 例如(10,-1) 放在 (10,1)前面
+        for(auto& it: m) {
+            ans += it.second;
+            res = max(res, ans);
+        }
+        return res;
+    }
+};
+```
+
+
+
+https://blog.csdn.net/qq_28468707/article/details/103408503
