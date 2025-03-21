@@ -316,6 +316,96 @@ public:
 
 本题是一道很困难的题目，主要题解参考[4. 寻找两个正序数组的中位数 - 力扣（LeetCode）](https://leetcode.cn/problems/median-of-two-sorted-arrays/)。
 
+这里很难整理，直接看题解吧。
+
+二分插入INT_MIN和INT_MAX的版本，实际上还是O(N)复杂度：
+
+```c++
+class Solution {
+public:
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        //step 1:
+        if(nums1.size()>nums2.size())
+        {
+            swap(nums1, nums2);
+        }
+        int m = nums1.size();
+        int n = nums2.size();
+        //step 2:
+        nums1.insert(nums1.begin(), INT_MIN);
+        nums2.insert(nums2.begin(), INT_MIN);
+        nums1.push_back(INT_MAX);
+        nums2.push_back(INT_MAX);
+
+        //step 3:
+        int left = 0, right = m+1;
+        //nums1[mid]<=nums2[j] false false false false(this!) true true 
+        while(left<=right)
+        {
+            int mid = left+((right-left)>>1);
+            int j = (m+n+1)/2 - mid;
+            if(nums1[mid]<=nums2[j+1]) left = mid + 1;
+            else right = mid - 1;
+        }
+        int i = left - 1;
+        int j = (m+n+1)/2-i;
+        int ai = nums1[i];
+        int ai1 = nums1[i+1];
+        int bj = nums2[j];
+        int bj1 = nums2[j+1];
+        if((m+n)%2==1) return max(ai, bj);
+        else return (max(ai, bj) + min(ai1, bj1)) * 1.0 / 2.0;
+    }
+};
+```
+
+
+
+以下是不insert INT_MIN 和INT_MAX的版本：
+
+```c++
+class Solution {
+public:
+    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
+        //step 1:
+        if(nums1.size()>nums2.size())
+        {
+            swap(nums1, nums2);
+        }
+        int m = nums1.size();
+        int n = nums2.size();
+        //step 2:
+        // nums1.insert(nums1.begin(), INT_MIN);
+        // nums2.insert(nums2.begin(), INT_MIN);
+        // nums1.push_back(INT_MAX);
+        // nums2.push_back(INT_MAX);
+
+        //step 3:
+        int left = 0, right = m-1;
+        //nums1[mid]<=nums2[j] false false false false(this!) true true 
+        while(left<=right)
+        {
+            int mid = left+((right-left)>>1);
+            int j = (m+n+1)/2 - mid - 2;
+            if(nums1[mid]<=nums2[j+1]) left = mid + 1;
+            else right = mid - 1;
+        }
+        int i = left - 1;
+        int j = (m+n+1)/2-i-2;
+        int ai = (i>=0)? nums1[i]: INT_MIN;
+        int ai1 = (i+1<m)? nums1[i+1]: INT_MAX;
+        int bj = (j>=0)? nums2[j]: INT_MIN;
+        int bj1 = (j+1<n)? nums2[j+1]:INT_MAX;
+        int _max = max(ai, bj);
+        int _min = min(ai1, bj1);
+        if((m+n)%2==1) return _max;
+        else return (_max + _min) * 1.0 / 2.0;
+    }
+};
+```
+
+
+
 
 
 ## 二叉树 :red_circle:
