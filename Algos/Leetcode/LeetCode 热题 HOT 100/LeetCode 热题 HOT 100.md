@@ -1838,7 +1838,7 @@ public:
             r=r->next->next;
         }
         pre->next = nullptr;
-        return l;
+        return l;//return的是l而不是pre！！！ 【...pre l ...】->【...pre】【 l ...】
     }
     ListNode* mergeList(ListNode* l1,ListNode* l2)
     {
@@ -5936,7 +5936,7 @@ public:
 
 ## 哈希表 
 
-### [49. 字母异位词分组](https://leetcode.cn/problems/group-anagrams/)
+### [49. 字母异位词分组](https://leetcode.cn/problems/group-anagrams/) :cat:
 
 给你一个字符串数组，请你将 **字母异位词** 组合在一起。可以按任意顺序返回结果列表。
 
@@ -5968,9 +5968,9 @@ public:
         // 自定义对 array<int, 26> 类型的哈希函数
         auto arrayHash = [fn = hash<int>{}](const array<int,26>& arr)->size_t
         {
-            return accumulate(arr.begin(),arr.end(),0u,[&](size_t acc,int num)
+            return accumulate(arr.begin(),arr.end(),0u,[&](size_t acc,int num)//【3/22 - 0u】
             {
-                return (acc<<1)^fn(num);
+                return (acc<<1)^fn(num);//【3/22 - fn(num)】
             });
         };
         //存储哈希 如果一样的就加入进来 加入vector中，
@@ -5979,7 +5979,7 @@ public:
         int n = strs.size();
         for(int i=0;i<n;i++)
         {
-            array<int,26> arr{};//arr 的内容未被初始化，可能会导致未定义行为。
+            array<int,26> arr{};//arr 的内容未被初始化，可能会导致未定义行为。 【3/22 - {}】
             string str = strs[i];
             for(auto &c:str)
             {
@@ -5991,7 +5991,7 @@ public:
         vector<vector<string>> res;
         for(auto &vecstr:umap)
         {
-            res.push_back(vecstr.second);
+            res.push_back(vecstr.second);//【3/22 - umap的元素是pair！】
         }
         return res;
     }
