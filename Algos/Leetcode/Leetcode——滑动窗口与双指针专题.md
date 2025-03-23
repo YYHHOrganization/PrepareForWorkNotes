@@ -2113,6 +2113,8 @@ public:
 
 ### （8）[167. 两数之和 II - 输入有序数组](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/)
 
+（如果是非有序数组的两数之和的话，就是用哈希表做）
+
 ```c++
 class Solution {
 public:
@@ -2190,6 +2192,8 @@ public:
 
 
 ### （12）[15. 三数之和](https://leetcode.cn/problems/3sum/)（:no_entry:这题其实挺难的，需要复习)
+
+基于167. 两数之和 II - 输入有序数组。（如果是非有序数组的两数之和的话，就是用哈希表做）
 
 **原始方法**：固定`i`从最左侧开始向右移动，这样`i`之后的元素就可以转换为求解两个元素和为`-nums[i]`的问题。
 
