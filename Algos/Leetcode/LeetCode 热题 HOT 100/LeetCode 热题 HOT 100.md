@@ -3209,6 +3209,31 @@ public:
 
 这是一道0-1背包的题目，
 
+```C++
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        //sum/2
+        int sum = reduce(nums.begin(),nums.end());
+        if(sum%2==1)return false;
+        sum =sum/2;
+        //dp[i][j] = dp[i-1][j]|dp[i-1][j-nums[i]]
+        //dp[-1][0] = true;
+        int n = nums.size();
+        vector<bool> dp(sum+1,false);
+        dp[0]=true;
+        for(int i=0;i<n;i++)
+        {
+            for(int j=sum;j>=nums[i];j--)
+            {
+                dp[j] = dp[j]|dp[j-nums[i]];
+            }
+        }
+        return dp[sum];
+    }
+};
+```
+
 
 
 ## 十二、树形 DP
@@ -5970,7 +5995,7 @@ public:
         {
             return accumulate(arr.begin(),arr.end(),0u,[&](size_t acc,int num)//【3/22 - 0u】
             {
-                return (acc<<1)^fn(num);//【3/22 - fn(num)】
+                return (acc<<1)^fn(num);//【3/22 - fn(num)】 但是不是fn也可以通过的就是了
             });
         };
         //存储哈希 如果一样的就加入进来 加入vector中，
@@ -5979,7 +6004,7 @@ public:
         int n = strs.size();
         for(int i=0;i<n;i++)
         {
-            array<int,26> arr{};//arr 的内容未被初始化，可能会导致未定义行为。 【3/22 - {}】
+            array<int,26> arr{};//arr 的内容未被初始化，可能会导致未定义行为。 【3/22 - {}!!!】
             string str = strs[i];
             for(auto &c:str)
             {
@@ -6033,7 +6058,7 @@ public:
 
    ​		`int num`后一个值是本次要操作的数字，
 
-   ​				在这个哈希算法中，每个元素通过`fn(num)`调用哈希函数对象来获取其哈希值，然后将**之前累次运算结果(acc)**左移一位`(acc << 1)`相当于乘2后与array中本次要操作的数num的哈希值进行异或操作(^)得到新的哈希值。最终，累次运算结果结果将作为这个数组的哈希值返回。
+   ​				在这个哈希算法中，**每个元素通过`fn(num)`调用哈希函数对象来获取其哈希值**，然后将**之前累次运算结果(acc)**左移一位`(acc << 1)`相当于乘2后与array中本次要操作的数num的哈希值进行异或操作(^)得到新的哈希值。最终，累次运算结果结果将作为这个数组的哈希值返回。
 
 如对于`eat`这个单词，在accumulate函数中累次运算结果如下：
 
