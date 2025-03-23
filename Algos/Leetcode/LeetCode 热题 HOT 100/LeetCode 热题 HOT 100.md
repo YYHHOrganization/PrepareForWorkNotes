@@ -4552,6 +4552,10 @@ public:
 
 
 
+------
+
+
+
 ### [287. 寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/)
 
 给定一个包含 `n + 1` 个整数的数组 `nums` ，其数字都在 `[1, n]` 范围内（包括 `1` 和 `n`），可知至少存在一个重复的整数。
@@ -5688,7 +5692,13 @@ public:
 };
 ```
 
-
+> 胖注：在Manacher算法的for循环中，判断没有超过蘑菇最右边界的情况，做半径的更新逻辑也可以写成下面这个：
+> ```c++
+> if(i<=maxRight) //在最大的蘑菇的庇佑下,直接拿前面的结果
+> {
+>     RL[i] = min(RL[2*pos-i], maxRight-i+1);
+> }
+> ```
 
 
 
@@ -5710,6 +5720,8 @@ public:
 ```
 
 #### 中心拓展法
+
+> 这种做法是考虑 aba(以b为中心向左右两侧扩展)以及abba(以中间两个b为中心向两侧扩展)这两种情况，对应的逻辑在下面代码里能看到。
 
 ```C++
 class Solution {
@@ -6178,6 +6190,12 @@ public:
 };
 ```
 
+
+
+------
+
+
+
 ## 回溯
 
 ### [301. 删除无效的括号 ](https://leetcode.cn/problems/remove-invalid-parentheses/)   hard
@@ -6218,7 +6236,7 @@ public:
     int length;
     int n;
     unordered_set<string> hash;//用set自动去重
-    void dfs(string &s,int score,string buf,int l,int r,int index)
+    void dfs(string &s,int score,string buf,int l,int r,int index) //l和r表示的是要删除的左括号和右括号的数目，index是现在考虑到的下标，score表示当前的“分数”（>0表示左括号更多，<0表示右括号溢出，目前序列是不合法的）
     {
         if(l<0||r<0||score<0||score>maxscore)return ;//分数超过了 没用的 因为另一种括号是不够的
         if(l==0&&r==0&&buf.length()==length)hash.insert(buf);
@@ -6234,7 +6252,7 @@ public:
             dfs(s,score-1,buf+')',l,r,index+1);//选
             dfs(s,score,buf,l,r-1,index+1);//不选
         }
-        else
+        else //非左右括号，正常字符，需要在回溯的时候加进来
         {
             dfs(s,score,buf+ch,l,r,index+1);
         }
