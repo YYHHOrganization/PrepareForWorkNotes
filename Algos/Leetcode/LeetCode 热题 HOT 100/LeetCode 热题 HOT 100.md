@@ -406,12 +406,14 @@ public:
 
 
 
+------
 
 
-## 二叉树 :red_circle:
+
+# 二叉树 :red_circle:
 
 
-### [剑指 Offer 68 - II. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/)   :notebook:  记录在“大厂”那个笔记中 :red_circle:
+### [剑指 Offer 68 - II. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/)   :notebook:  更多内容记录在“大厂”那个笔记中 :red_circle:
 
 难度简单
 
@@ -506,6 +508,8 @@ public:
 作者：力扣官方题解
 链接：https://leetcode.cn/problems/lowest-common-ancestor-of-a-binary-tree/solutions/238552/er-cha-shu-de-zui-jin-gong-gong-zu-xian-by-leetc-2/
 
+------
+
 
 
 ### 226. 翻转二叉树
@@ -570,8 +574,7 @@ public:
 
 ##### 深度优先遍历
 
-
-[二叉树：听说递归能做的，栈也能做！](https://mp.weixin.qq.com/s/OH7aCVJ5-Gi32PkNCoZk4A)中给出了前中后序迭代方式的写法，所以本地可以很轻松的切出如下迭代法的代码：
+[二叉树：听说递归能做的，栈也能做！](https://mp.weixin.qq.com/s/OH7aCVJ5-Gi32PkNCoZk4A)中给出了前中后序迭代方式的写法，所以本地可以写出如下迭代法的代码：
 
 C++代码迭代法（前序遍历）
 
@@ -644,7 +647,7 @@ public:
 
 代码虽然可以，但这毕竟不是真正的递归中序遍历了。
 
-但使用迭代方式统一写法的中序是可以的。
+但使用迭代方式统一写法的中序是可以的。（有点怪。。。可以先不太管这个）
 
 代码如下：
 
@@ -689,6 +692,8 @@ public:
 **针对翻转二叉树，我给出了一种递归，三种迭代（两种模拟深度优先遍历，一种层序遍历）的写法，都是之前我们讲过的写法，融汇贯通一下而已。**
 
 大家一定也有自己的解法，但一定要成方法论，这样才能通用，才能举一反三
+
+------
 
 
 
@@ -1106,7 +1111,7 @@ public:
 
 
 
-## 字典树
+# 字典树
 
 ### [208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
 
@@ -1120,6 +1125,8 @@ public:
 - `boolean startsWith(String prefix)` 如果之前已经插入的字符串 `word` 的前缀之一为 `prefix` ，返回 `true` ；否则，返回 `false` 。
 
  
+
+> 这道题其实比较推荐把Node单独定义出来（尽量不要用Trie*本身当作node来使用），这样做不容易出问题。
 
 #### 代码
 
@@ -1198,7 +1205,7 @@ public:
  */
 ```
 
-或者让trie本身是一个node 
+或者让trie本身是一个node （**不是十分推荐**）
 
 ```C++
 class Trie {
@@ -1245,13 +1252,11 @@ public:
         return true;
     }
 };
-
-
-作者：路漫漫我不畏
-链接：https://leetcode.cn/problems/implement-trie-prefix-tree/solutions/98390/trie-tree-de-shi-xian-gua-he-chu-xue-zhe-by-huwt/
-来源：力扣（LeetCode）
-著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 ```
+
+
+
+------
 
 
 
@@ -1446,7 +1451,11 @@ public:
 
 
 
-## 链表
+------
+
+
+
+# 链表
 
 ### 7.Leetcode 160 相交链表  大厂笔记 :notebook:
 
@@ -1489,6 +1498,33 @@ public:
     }
 };
 ```
+
+------
+
+
+
+### [206. 反转链表](https://leetcode.cn/problems/reverse-linked-list/)
+
+算是标准板子了，应当可以快速写出来。代码如下：
+```c++
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* pre = nullptr;
+        ListNode* cur = head;
+        while(cur)
+        {
+            ListNode* nxt = cur->next;
+            cur->next = pre;
+            pre = cur;
+            cur = nxt;
+        }
+        return pre;
+    }
+};
+```
+
+------
 
 
 
@@ -1582,7 +1618,7 @@ O(1) 空间做法：寻找中间节点+反转链表
 >  */
 > class Solution {
 > public:
->     //找到链表中间:快满指针
+>     //找到链表中间:快慢指针
 >     ListNode* findMiddle(ListNode* head)
 >     {
 >         ListNode* fast = head;
@@ -1628,8 +1664,6 @@ O(1) 空间做法：寻找中间节点+反转链表
 > 里面包含的知识点还是挺多的，可以做一下。
 
 
-
-有时间尝试一下
 
 ### [146. LRU 缓存](https://leetcode.cn/problems/lru-cache/)
 
@@ -1839,9 +1873,11 @@ public:
 
 
 
+------
+
+
+
 ### 排序链表
-
-
 
 #### 排序链表前置题1 - [876. 链表的中间结点](https://leetcode.cn/problems/middle-of-the-linked-list/)
 
@@ -2296,9 +2332,11 @@ public:
 
 
 
+------
 
 
-## 单调栈  :red_circle:
+
+# 单调栈  :red_circle:
 
 ### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)  :notebook:   :red_circle: 
 
@@ -2327,7 +2365,7 @@ public:
 
 
 
-**及时去掉无用数据，保证栈中元素有序**
+单调栈的本质：**及时去掉无用数据，保证栈中元素有序**
 
 这个视频讲解很清晰https://www.bilibili.com/video/BV1VN411J7S7/?vd_source=f2def4aba42c7ed69fc648e1a2029c7b
 
@@ -2351,9 +2389,9 @@ public:
         for(int i=n-1;i>=0;i--)
         {
             //如果栈不是空 且当前元素>=栈顶元素 pop出来 
-            while(!s.empty()&&temperatures[i]>=temperatures[s.top()])s.pop();//stk存储的是下标！！要取出
+            while(!s.empty()&&temperatures[i]>=temperatures[s.top()]) s.pop();//stk存储的是下标！！要取出
             if(s.empty())res[i]=0;
-            else res[i]=s.top()-i;
+            else res[i]=s.top()-i; //这种做法会在入栈前更新res对应的结果
             s.push(i);
         }
         return res;
@@ -2361,13 +2399,13 @@ public:
 };
 ```
 
->
->
 >注意：
 >
-> `while(!s.empty()&&temperatures[i]>=temperatures[s.top()])s.pop();`//stk存储的是下标！！要取出来 temperatures[s.top()]
+>`while(!s.empty()&&temperatures[i]>=temperatures[s.top()]) s.pop();`//stk存储的是下标！！要取出来 temperatures[s.top()]
 
-思路二：从前往后的单调栈
+
+
+思路二：从前往后的单调栈（这种平时写的会多一些）
 
 ![image-20250304135517842](assets/image-20250304135517842.png)
 
@@ -2386,7 +2424,7 @@ public:
             while(!s.empty()&&temperatures[i]>temperatures[s.top()])//不能取等号
             //不能取等号/因为这个温度相等的不能让它弹出 因为不是比他大的
             {
-                //记录完了 可以滚了  4 3 2 1 滚
+                //记录完了 可以离开了  4 3 2 1 走喽
                 res[s.top()]=i-s.top();
                 s.pop();
             }
@@ -2396,6 +2434,9 @@ public:
     }
 };
 ```
+
+------
+
 
 
 ### 1.[84. 柱状图中最大的矩形](https://leetcode.cn/problems/largest-rectangle-in-histogram/)（板子题）
@@ -2589,11 +2630,11 @@ public:
 
 
 
-## 排序
+# 排序/快速选择
 
 ### [215. 数组中的第K个最大元素 ](https://leetcode.cn/problems/kth-largest-element-in-an-array/) :bookmark: 
 
-给定整数数组 `nums` 和整数 `k`，请返回数组中第 `**k**` 个最大的元素。
+给定整数数组 `nums` 和整数 `k`，请返回数组中第 `k` 个最大的元素。
 
 请注意，你需要找的是数组排序后的第 `k` 个最大的元素，而不是第 `k` 个不同的元素。
 
@@ -2617,13 +2658,15 @@ public:
 
  #### M1 库函数
 
+> 如果是在自己的编译器中，`nth_element`和`greater`需要记得引入`<algorithm>`头文件。
+
 ```C++
 class Solution {
 public:
     int findKthLargest(vector<int>& nums, int k) 
     {
-        nth_element(nums.begin(),nums.begin()+k-1,nums.end(),greater<int>{});
-        return  nums[k-1];
+        nth_element(nums.begin(),nums.begin()+k-1,nums.end(),greater<int>{}); //greater意味着从大到小找，，
+        return nums[k-1];
     }
 };
 ```
@@ -2658,6 +2701,60 @@ public:
 ```
 
 更具体以及堆排做法 请看:bookmark: 
+
+
+
+#### M3 基于堆排序的选择方法
+
+> 这种方法在面试的场景题里有被问到过，因此还是比较重要的，这里也更新一下堆排的做法。
+>
+> - 如果数据量非常大，但只需要较小的top K（比如一亿个数，但是只取top 100），则可以在遍历的过程中把堆中较小的数换出去（维护一个小顶堆，用于作比较），这样当遍历完所有的数之后堆中剩余的就是top K。
+
+本题的堆排序做法如下，选择**前K个**的基于堆的选择问题见下面的**前K个高频元素**这道题目。
+
+```c++
+class Solution {
+public:
+    void maxHeapify(vector<int>& nums, int index, int size) //index是对应的调整堆的入口,size是当前树的大小
+    {
+        //本题找最大:大根堆
+        int left = index * 2 + 1, right = index * 2 + 2;
+        int maxIndex = index;
+        if(left<size && nums[left]>nums[maxIndex]) maxIndex = left;
+        if(right<size && nums[right]>nums[maxIndex]) maxIndex = right;
+        if(maxIndex != index)
+        {
+            swap(nums[maxIndex], nums[index]);
+            maxHeapify(nums, maxIndex, size); //节点索引没变,还是maxIndex
+        }
+    }
+    void makeMaxHeap(vector<int>& nums, int size) //size是堆中的结点数
+    {
+        //从最后一个非叶子节点开始,调整堆
+        for(int i = size/2-1;i>=0;i--)
+        {
+            maxHeapify(nums, i, size);
+        }
+    }
+    int findKthLargest(vector<int>& nums, int k) {
+        //使用堆排来做
+        int n = nums.size();
+        makeMaxHeap(nums, n);
+        int size = n;
+        for(int i=n-1;i>=n-k+1;i--) //注意这个for循环的边界,可以自己推一下
+        {
+            swap(nums[0], nums[i]); //大顶堆,每一轮最大的都是nums[0],换到最后并调整
+            size--; //后面的放好排序完了的,不动
+            maxHeapify(nums, 0, size);
+        }
+        return nums[0];
+    }
+};
+```
+
+关于C++ STL内置的priority_queue的更多细节，详见`Leetcode——数据结构篇.md`中的相关整理。
+
+------
 
 
 
@@ -3016,7 +3113,77 @@ public:
 
 
 
+------
 
+## 子数组线性DP题目
+
+### [152. 乘积最大子数组](https://leetcode.cn/problems/maximum-product-subarray/)
+
+在寒假笔记中有进行整理，算是子数组类的线性DP做法。
+
+```c++
+class Solution {
+public:
+    int maxProduct(vector<int>& nums) {
+        //至少包含1个数字,res=1开始应该就行
+        //记录最小min和最大max,看见负数就进行交换
+        int res_min=INT_MAX, res_max=INT_MIN;
+        int tmp_min=1, tmp_max=1;
+        for(const int& num:nums)
+        {
+            if(num<0) //出现了一个负数,则攻守之势易也  
+            {
+                int tmp = tmp_min;
+                tmp_min=tmp_max;
+                tmp_max=tmp;
+            }
+            tmp_min=min(tmp_min*num, num); //包括前面的，或者不包括前面的，下同
+            tmp_max=max(tmp_max*num, num);
+            res_min=min(res_min, tmp_min);
+            res_max=max(res_max, tmp_max);
+        }
+        return max(res_min, res_max);
+    }
+};
+```
+
+
+
+------
+
+
+
+## 打家劫舍类型题目
+
+### [198. 打家劫舍](https://leetcode.cn/problems/house-robber/)
+
+每一间房间都可以选择“偷”或者“不偷”，基于此可以写出下面的代码（注意偏移dp数组的i和j以处理越界的问题）
+
+```c++
+class Solution {
+public:
+    int rob(vector<int>& nums) {
+       //f(i) = max(f(i-1),f(i-2)+nums[i]);
+       int n = nums.size();
+       vector<int> dp(n+2);
+       for(int i=0;i<n;i++)
+       {
+        dp[i+2] = max(dp[i+1], dp[i]+nums[i]);
+       }
+       return dp[n+1];
+    }
+};
+```
+
+
+
+
+
+------
+
+
+
+## 矩形DP题目
 
 ### [221. 最大正方形](https://leetcode.cn/problems/maximal-square/)
 
@@ -3037,6 +3204,8 @@ public:
 
 #### 题解
 
+> 以下规律的证明可以参考这个链接：[1277. 统计全为 1 的正方形子矩阵 - 力扣（LeetCode）](https://leetcode.cn/problems/count-square-submatrices-with-all-ones/solutions/101706/tong-ji-quan-wei-1-de-zheng-fang-xing-zi-ju-zhen-2/)
+
 记录**边长**~！
 
 ![image-20250304161829952](assets/image-20250304161829952.png)
@@ -3053,7 +3222,7 @@ public:
     int maximalSquare(vector<vector<char>>& matrix) {
         //前缀和 = 个数
         int m = matrix.size(),n=matrix[0].size();
-        vector<vector<int>> dp(m+1,vector<int>(n+1,0));
+        vector<vector<int>> dp(m+1,vector<int>(n+1,0)); //为了简化边界情况，我们可以把dp数组整体后移一位，其实相当于在mxn矩阵中的最左侧和最上侧分别加了一列和一行0，从而使得dp数组在遍历的时候可以直接从矩阵下标为0的地方开始遍历
         int maxNum=0;
         for(int i=0;i<m;i++)
         {
@@ -3067,6 +3236,10 @@ public:
     }
 };
 ```
+
+
+
+------
 
 
 
@@ -3500,7 +3673,11 @@ public:
 
 
 
-## 前后缀分解
+------
+
+
+
+# 前后缀分解
 
 ### [238. 除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
 
@@ -3633,6 +3810,10 @@ public:
     }
 };
 ```
+
+
+
+------
 
 
 
@@ -3978,9 +4159,13 @@ public:
 
 
 
+------
+
 
 
 # 图
+
+## 拓扑排序篇
 
 ### [207. 课程表](https://leetcode.cn/problems/course-schedule/)
 
@@ -4058,7 +4243,7 @@ public:
 
 本题是一道经典的「拓扑排序」问题。
 
-以上代码用的层序遍历bfs，实际上 用dfs 也行
+以上代码用的层序遍历bfs（**层序遍历应该会比较好写一些**），实际上 用dfs 也行
 
 Y：
 
@@ -4097,7 +4282,7 @@ public:
                 if(indegrees[a]==0)que.push(a);
             }
         }
-        return couN == numCourses;
+        return couN == numCourses; //相当于入队再出队的节点的数量正好是所有的节点数量，说明可以完成拓扑排序
 
     }
 };
@@ -4105,7 +4290,129 @@ public:
 
 
 
+------
+
+
+
+## BFS/DFS篇
+
+### [200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/)
+
+经典DFS板子题，代码如下：
+
+```c++
+class Solution {
+public:
+    int dirs[4][2] = {1,0,-1,0,0,1,0,-1};
+    int numIslands(vector<vector<char>>& grid) {
+        int m = grid.size();
+        int n = grid[0].size();
+        //lambda表达式可以显式指定返回值为void
+        auto dfs = [&](this auto&& dfs, int curX, int curY)->void 
+        {
+            grid[curX][curY]='2'; //插一面旗，表示访问过了
+            for(int d=0;d<4;d++)
+            {
+                int nextX = curX + dirs[d][0];
+                int nextY = curY + dirs[d][1];
+                if(nextX<0 || nextY<0 || nextX>=m || nextY>=n || grid[nextX][nextY]!='1') continue;
+                dfs(nextX,nextY);
+            }
+        };
+        int res = 0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]=='1')
+                {
+                    dfs(i, j);
+                    res++;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+
+
 # 技巧题
+
+
+
+### [155. 最小栈](https://leetcode.cn/problems/min-stack/)
+
+> 【题目】设计一个支持 `push` ，`pop` ，`top` 操作，并能在常数时间内检索到最小元素的栈。
+>
+> 实现 `MinStack` 类:
+>
+> - `MinStack()` 初始化堆栈对象。
+> - `void push(int val)` 将元素val推入堆栈。
+> - `void pop()` 删除堆栈顶部的元素。
+> - `int top()` 获取堆栈顶部的元素。
+> - `int getMin()` 获取堆栈中的最小元素。
+
+基于以下的认知：
+
+- （1）可以维护一个`min`栈，每次在正常栈中`push`进来一个元素的时候，都看一下和`min`栈栈顶元素的大小关系：如果相等或者更小，就`push`到`min`栈中；如果更大，则舍弃掉，不放入最小栈中（**有点单调栈那个意思**。这是基于，直到`min`栈此时栈顶的元素被`pop`出来之前，最小值一定是`min`栈栈顶的元素，而正常栈也是LIFO，所以不会出现问题）。
+- （2）在原栈`pop`元素的时候，如果和`min`栈栈顶元素一致，则同时`pop min`栈栈顶的元素。
+
+所以，初始代码如下：
+
+```c++
+class MinStack {
+public:
+    stack<int> minStack; //最小栈
+    stack<int> stk; //正常栈
+    MinStack() {
+        
+    }
+    
+    void push(int val) {
+        stk.push(val);
+        if(minStack.empty() || val<=minStack.top())
+        {
+            minStack.push(val);
+        }
+    }
+    
+    void pop() {
+        int v = stk.top();
+        stk.pop();
+        if(v==minStack.top())
+        {
+            minStack.pop();
+        }
+    }
+    
+    int top() {
+        return stk.top();
+    }
+    
+    int getMin() {
+        return minStack.top();
+    }
+};
+
+/**
+ * Your MinStack object will be instantiated and called as such:
+ * MinStack* obj = new MinStack();
+ * obj->push(val);
+ * obj->pop();
+ * int param_3 = obj->top();
+ * int param_4 = obj->getMin();
+ */
+```
+
+
+
+------
+
+
 
 ### [448. 找到所有数组中消失的数字](https://leetcode.cn/problems/find-all-numbers-disappeared-in-an-array/)
 
@@ -5164,6 +5471,10 @@ public:
 
 
 
+------
+
+
+
 # 数学
 
 ## 摩尔投票
@@ -5215,7 +5526,7 @@ public:
         for(auto &num:nums)
         {
             if(votes==0)x=num;
-            votes+= (num==x?1:-1);
+            votes += (num==x?1:-1);
         }
         return x;
     }
@@ -5229,9 +5540,11 @@ public:
 > 1. 第一个到来的士兵，直接插上自己阵营的旗帜占领这块高地，此时领主 winner 就是这个阵营的人，现存兵力 count = 1。
 > 2. 如果新来的士兵和前一个士兵是同一阵营，则集合起来占领高地，领主不变，winner 依然是当前这个士兵所属阵营，现存兵力 count++；
 > 3. 如果新来到的士兵不是同一阵营，则前方阵营派一个士兵和它同归于尽。 此时前方阵营兵力count --。（即使双方都死光，这块高地的旗帜 winner 依然不变，因为已经没有活着的士兵可以去换上自己的新旗帜）
-> 4. 当下一个士兵到来，发现前方阵营已经没有兵力，新士兵就成了领主，winner 变成这个士兵所属阵营的旗帜，现存兵力 count ++。
+> 4. 当下一个士兵到来，发现前方阵营已经没有兵力，新士兵就成了领主，winner 变成这个士兵所属阵营的旗帜，现存兵力 count++。
 >
 > 就这样各路军阀一直以这种以一敌一同归于尽的方式厮杀下去，直到少数阵营都死光，那么最后剩下的几个必然属于多数阵营，winner 就是多数阵营。（多数阵营 51个，少数阵营只有49个，死剩下的2个就是多数阵营的人）
+
+------
 
 
 
