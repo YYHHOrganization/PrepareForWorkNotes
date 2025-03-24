@@ -2407,7 +2407,8 @@ public:
     vector<vector<int>> merge(vector<vector<int>>& intervals) {
         //中间的不会变,可以考虑用map实现
         map<int, int> diff;
-        for(auto& interval: intervals){
+        for(auto& interval: intervals)
+        {
             int left = interval[0], right = interval[1];
             diff[left*2]++;
             diff[right*2+1]--; // ！！！不可是diff[(right+1)*2]--;  见👇
@@ -2415,11 +2416,14 @@ public:
         vector<vector<int>> res;
         int s = 0; //>0说明有被覆盖
         int start = -1;
-        for(auto [k,v]: diff){
+        for(auto [k,v]: diff)
+        {
             s+=v;
-            if(s>0 && start==-1){
+            if(s>0 && start==-1)
+            {
                 start = k;
-            } else if(s==0 && start!=-1){
+            } else if(s==0 && start!=-1)
+            {
                 res.push_back({start/2, k/2});
                 start = -1;
             }
@@ -2441,9 +2445,66 @@ public:
 >
 >而`right*2+1`会将right存储在夹缝 “.” 中，如果写成`(right+1)*2` 就还是存在 “|” 中，就实际上就变成重叠了
 
+没有使用map:（实际上map更好）
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        // 1 4 4 5
+        // 1 3 4 5
+        int n = intervals.size();
+        vector<int> diff(20010,0);
+        int maxNum=0;
+        for(int i=0;i<n;i++)
+        {
+            diff[intervals[i][0]*2]++;
+            diff[intervals[i][1]*2+1]--;//+1 最后的结果中/2 依旧还是这个值
+            maxNum = max(maxNum,intervals[i][1]);
+        }
+        vector<vector<int>> res;
+        // 1,2 3,4 4,5
+        // 0,1,0,2,0,3,0,4,0,5 0
+        // 0 1 1 1 0 1 1 1 1 1
+        // 0 1 0 0-1 1 0 +1-1 0 -1
+        vector<int> path;
+        int begin=0;
+        int temp=0;
+        bool isBegin=false;
+        for(int i=0;i<=maxNum*2+2;i++)
+        {
+            temp+=diff[i];
+            if(!isBegin&&temp>0)
+            {
+                begin = i;
+                isBegin = true;
+            }
+            else if(isBegin&& temp==0) 
+            {
+                res.push_back({begin/2,i/2});
+                isBegin = false;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
 
 
 ### （9）[732. 我的日程安排表 III](https://leetcode.cn/problems/my-calendar-iii/)（差分数组法）
+
+以数组 `intervals` 表示若干个区间的集合，其中单个区间为 `intervals[i] = [starti, endi]` 。请你合并所有重叠的区间，并返回 *一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间* 。
+
+**示例 1：**
+
+```
+输入：intervals = [[1,3],[2,6],[8,10],[15,18]]
+输出：[[1,6],[8,10],[15,18]]
+解释：区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
+```
 
 不妨先用差分数组的想法来做这道题，可以做，但问题在于每次插入一个新的区间时，都要遍历一遍整个数组找覆盖最多的值，**而这大概就是后面线段树所要优化的地方。**
 
