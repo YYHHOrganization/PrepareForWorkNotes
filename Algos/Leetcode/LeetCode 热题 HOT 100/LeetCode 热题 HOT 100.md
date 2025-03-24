@@ -8,7 +8,11 @@ https://leetcode.cn/problem-list/2cktkvj/
 
 :bookmark: 表示在 ” 面经合集——题目+答案版“中
 
-## 二分 :red_circle:
+[TOC]
+
+
+
+# 二分 :red_circle:
 
 ### [300. 最长递增子序列 ](https://leetcode-cn.com/problems/longest-increasing-subsequence/)  :notebook: 记录在“大厂”那个笔记中 :red_circle:
 
@@ -290,7 +294,7 @@ public:
 
 
 
-## [4. 寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/)
+### [4. 寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/)
 
 > 给定两个大小分别为 `m` 和 `n` 的正序（从小到大）数组 `nums1` 和 `nums2`。请你找出并返回这两个正序数组的 **中位数** 。
 >
@@ -403,6 +407,47 @@ public:
     }
 };
 ```
+
+
+
+### [240. 搜索二维矩阵 II](https://leetcode.cn/problems/search-a-2d-matrix-ii/)
+
+> 编写一个高效的算法来搜索 `m x n` 矩阵 `matrix` 中的一个目标值 `target` 。该矩阵具有以下特性：
+>
+> - 每行的元素从左到右升序排列。
+> - 每列的元素从上到下升序排列。
+
+![image-20250323170918366](assets/image-20250323170918366.png)
+
+有几种其他解法：
+
+- 直接暴力找：复杂度是O(mn)；
+- 对每一行进行二分寻找：复杂度是O（mlogn）；
+
+而下面即将介绍的这种做法，复杂度是O（m+n）（思考走过的总的路径长度，最多是m+n）。其实就是可以从右上角开始，将其视为一棵”二叉搜索树“，小的节点都在左侧，大的节点都在下侧，依次来进行寻找。如果越界了还没找到，说明没有这个数，return false即可。最终代码如下：
+
+```c++
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int m = matrix.size();
+        int n = matrix[0].size();
+        int x = 0, y = n-1;
+        while(x<m && y>=0) //x走行,y走列
+        {
+            if(matrix[x][y]==target) return true;
+            else if(matrix[x][y]>target)
+            {
+                y--;
+            } 
+            else x++;
+        }
+        return false;
+    }
+};
+```
+
+
 
 
 
@@ -885,7 +930,7 @@ public:
 
 
 
-### [114. 二叉树展开为链表](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/)
+### [114. 二叉树展开为链表](https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/)（奇妙解法，建议记下来）
 
 给你二叉树的根结点 `root` ，请你将它展开为一个单链表：
 
@@ -909,6 +954,8 @@ public:
 
 这题思路比较难想，想通后写起来还行
 
+> 思路比较巧妙，现场推不是很好想，建议记忆下来。
+
 不考虑原地的话可以前序遍历啥的
 
 https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/solutions/356853/er-cha-shu-zhan-kai-wei-lian-biao-by-leetcode-solu/?envType=problem-list-v2&envId=2cktkvj
@@ -929,13 +976,13 @@ https://leetcode.cn/problems/flatten-binary-tree-to-linked-list/?envType=problem
 
 <img src="assets/image-20250319145505056.png" alt="image-20250319145505056" style="zoom:67%;" />
 
-
+接着令`cur->right=next`。
 
 ```C++
 class Solution {
 public:
     void flatten(TreeNode* root) {
-        TreeNode* cur = root;
+        TreeNode* cur = root; //前序遍历:根,左,右,想到每次把右链接到左上面,并且要到左的最右侧才是左子树最后遍历的地方
         //cur找到左节点中的最右边的节点
         //将cur右节点赋给 左节点中的最右节点
         while(cur)
@@ -953,11 +1000,13 @@ public:
                 cur->left = nullptr;
                 cur->right = next;
             }
-            cur = cur->right;
+            cur = cur->right; //相当于解决子问题，即原来的左子树
         }
     }
 };
 ```
+
+------
 
 
 
@@ -2336,6 +2385,102 @@ public:
 
 
 
+### [2. 两数相加](https://leetcode.cn/problems/add-two-numbers/)
+
+> 给你两个 **非空** 的链表，表示两个非负的整数。它们每位数字都是按照 **逆序** 的方式存储的，并且每个节点只能存储 **一位** 数字。
+>
+> 请你将两个数相加，并以相同形式返回一个表示和的链表。
+>
+> 你可以假设除了数字 0 之外，这两个数都不会以 0 开头。
+
+本质上这就是一道大整数加法的链表版本的题目，记得进位即可（**写起来麻烦一点，但是逻辑相对来说清晰一些，时空复杂度超过的人也比较多。**）。代码如下：
+```c++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        ListNode* p = l1; //l1上做加法
+        int cnt = 0; //进位
+        ListNode* q = l2;
+        ListNode* prep = l1;
+        ListNode* preq = l2;
+        while(p && q)
+        {
+            int cur = p->val + q->val + cnt;
+            if(cur>=10)
+            {
+                cur-=10;
+                cnt=1;
+            }
+            else cnt = 0;
+            p->val = cur;
+            prep = p, preq = q;
+            p = p->next;
+            q = q->next;
+        }
+        //退出这个while语句,有可能p指向null或者q指向null,特判一下
+        if(q==nullptr) //比如99999和12
+        {
+            while(p)
+            {
+                int cur = p->val + cnt;
+                if(cur>=10)
+                {
+                    cur-=10;
+                    cnt=1;
+                }
+                else cnt = 0;
+                p->val = cur;
+                prep = p;
+                p = p->next;
+            }
+            if(cnt==1)
+            {
+                ListNode* node = new ListNode(cnt);
+                prep->next = node;
+            }
+        }
+        else if(p==nullptr) //比如12 和9999
+        {
+            ListNode * flag = q;
+            while(q)
+            {
+                int cur = q->val + cnt;
+                if(cur>=10)
+                {
+                    cur-=10;
+                    cnt=1;
+                }
+                else cnt = 0;
+                q->val = cur;
+                preq = q;
+                q = q->next;
+            }
+            if(cnt==1)
+            {
+                ListNode* node = new ListNode(cnt);
+                preq->next = node;
+            }
+            prep->next = flag;
+        }
+        return l1;
+    }
+};
+```
+
+
+
+
+
 # 单调栈  :red_circle:
 
 ### [739. 每日温度](https://leetcode-cn.com/problems/daily-temperatures/)  :notebook:   :red_circle: 
@@ -2916,7 +3061,7 @@ public:
 
 
 
-### ==[10. 正则表达式匹配](https://leetcode.cn/problems/regular-expression-matching/)== :cat:
+### [10. 正则表达式匹配](https://leetcode.cn/problems/regular-expression-matching/):cat:
 
 > 给你一个字符串 `s` 和一个字符规律 `p`，请你来实现一个支持 `'.'` 和 `'*'` 的正则表达式匹配。
 >
@@ -3326,6 +3471,26 @@ public:
     }
 };
 ```
+
+> 胖：另一份通过的代码：
+> ```c++
+> class Solution {
+> public:
+>     int numSquares(int n) {
+>         //dp[i] += dp[i-j*j] i表示当前的n
+>         vector<int> dp(n+1, INT_MAX);
+>         dp[0]=0; 
+>         for(int i=1;i<=n;i++)
+>         {
+>             for(int j=1;j*j<=i;j++)
+>             {
+>                dp[i] = min(dp[i], dp[i-j*j]+1);
+>             }
+>         }
+>         return dp[n];
+>     }
+> };
+> ```
 
 
 
@@ -4577,6 +4742,10 @@ public:
 
 
 
+------
+
+
+
 ### [287. 寻找重复数](https://leetcode.cn/problems/find-the-duplicate-number/)
 
 给定一个包含 `n + 1` 个整数的数组 `nums` ，其数字都在 `[1, n]` 范围内（包括 `1` 和 `n`），可知至少存在一个重复的整数。
@@ -5713,7 +5882,13 @@ public:
 };
 ```
 
-
+> 胖注：在Manacher算法的for循环中，判断没有超过蘑菇最右边界的情况，做半径的更新逻辑也可以写成下面这个：
+> ```c++
+> if(i<=maxRight) //在最大的蘑菇的庇佑下,直接拿前面的结果
+> {
+>     RL[i] = min(RL[2*pos-i], maxRight-i+1);
+> }
+> ```
 
 
 
@@ -5735,6 +5910,8 @@ public:
 ```
 
 #### 中心拓展法
+
+> 这种做法是考虑 aba(以b为中心向左右两侧扩展)以及abba(以中间两个b为中心向两侧扩展)这两种情况，对应的逻辑在下面代码里能看到。
 
 ```C++
 class Solution {
@@ -5837,14 +6014,14 @@ public:
 
 ![image.png](assets/c6a573fa1a4da75c6c6c38113b4ad11ae7b8a1aa8ef714b8416a9bc338797ce0-image.png)
 
-每个任务之间都不存在空余时间，冷却时间已经被完全填满了。**我们执行任务所需的时间，就是任务的数量**：
+在下面这种情况中，每个任务之间都不存在空余时间，冷却时间已经被完全填满了。**我们执行任务所需的时间，就是任务的数量**：
 
 ![image.png](assets/893c01db5923889a865d7a4fe71de22b9519fc5a673473196ab58f26c1073ed2-image.png)
 
 代码详细步骤：
 
 - 任务是大写字母，所以可以使用大小为26的数组做哈希表，存放任务和其对应的数量
-- 我们需要记录最多任务数量 `N`，用于构建 `N`个桶
+- 我们需要记录最多任务数量 `N`，用于构建 `N`个桶（比如上图最多的A有6个，那么N=6，相当于A会成为拖慢进度的任务）
 - 还需要记录最多任务数量的个数（有多个任务数量都最大且相同）`count`，用于标记最后一个桶的任务数。
 - 知道了上述两个变量 `N` 和 `count`，则可以计算 `time1 = (N - 1) * (n + 1) + count`，这是存在空闲时间的情况（当任务种类较少时，冷却时间够用来处理其他任务，冷却时间未被填满）。
 - `time2 = tasks.length`，这是不存在空闲时间的情况（当任务种类较多时，冷却时间不够用来处理其他任务，冷却时间已被填满）。
@@ -6136,6 +6313,10 @@ public:
 
 
 
+------
+
+
+
 # DFS
 
 ## 网格图
@@ -6171,7 +6352,7 @@ public:
             if(idx+1==word.size())return true;//+1
             
             // cout<<x<<" "<<y<<endl;
-            visited[x][y] = 1; // 注意visited位置！
+            visited[x][y] = 1; // 注意visited位置！在这里写是比较好的，相当于当前字符已经访问
             for(int i=0;i<4;i++)
             {
                 int dirx = x+dirs[i][0];
@@ -6202,6 +6383,12 @@ public:
     }
 };
 ```
+
+
+
+------
+
+
 
 ## 回溯
 
@@ -6243,7 +6430,7 @@ public:
     int length;
     int n;
     unordered_set<string> hash;//用set自动去重
-    void dfs(string &s,int score,string buf,int l,int r,int index)
+    void dfs(string &s,int score,string buf,int l,int r,int index) //l和r表示的是要删除的左括号和右括号的数目，index是现在考虑到的下标，score表示当前的“分数”（>0表示左括号更多，<0表示右括号溢出，目前序列是不合法的）
     {
         if(l<0||r<0||score<0||score>maxscore)return ;//分数超过了 没用的 因为另一种括号是不够的
         if(l==0&&r==0&&buf.length()==length)hash.insert(buf);
@@ -6259,7 +6446,7 @@ public:
             dfs(s,score-1,buf+')',l,r,index+1);//选
             dfs(s,score,buf,l,r-1,index+1);//不选
         }
-        else
+        else //非左右括号，正常字符，需要在回溯的时候加进来
         {
             dfs(s,score,buf+ch,l,r,index+1);
         }
