@@ -5085,8 +5085,6 @@ https://leetcode.cn/problems/move-zeroes/solutions/90229/dong-hua-yan-shi-283yi-
 
 
 
-=======
->>>>>>> f3dec298c435d2bbc129e26ce2631d320d98848b
 # 滑动窗口
 
 ## [438. 找到字符串中所有字母异位词](https://leetcode.cn/problems/find-all-anagrams-in-a-string/)
@@ -5169,7 +5167,7 @@ public:
 
 
 
-### （2）不定长滑动窗口（会快一些）
+### （2）不定长滑动窗口（会快一些） :cat:
 
 枚举子串 s′的右端点，如果发现 s′其中一种字母的出现次数大于 p 的这种字母的出现次数，则右移s′的左端点。如果发现s′的长度等于 p 的长度，则说明 s′的每种字母的出现次数，和 p 的每种字母的出现次数都相同（如果出现次数 s′的小于 p 的，不可能长度一样（思考一下不定长滑动窗口的滑动过程）），那么 s′是 p 的异位词。
 
