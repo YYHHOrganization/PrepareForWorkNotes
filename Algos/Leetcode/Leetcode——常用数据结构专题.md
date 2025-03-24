@@ -4271,6 +4271,73 @@ public:
 
 
 
+### [2116. 判断一个括号字符串是否有效](https://leetcode.cn/problems/check-if-a-parentheses-string-can-be-valid/)
+
+一个括号字符串是只由 `'('` 和 `')'` 组成的 **非空** 字符串。如果一个字符串满足下面 **任意** 一个条件，那么它就是有效的：
+
+- 字符串为 `()`.
+- 它可以表示为 `AB`（`A` 与 `B` 连接），其中`A` 和 `B` 都是有效括号字符串。
+- 它可以表示为 `(A)` ，其中 `A` 是一个有效括号字符串。
+
+给你一个括号字符串 `s` 和一个字符串 `locked` ，两者长度都为 `n` 。`locked` 是一个二进制字符串，只包含 `'0'` 和 `'1'` 。对于 `locked` 中 **每一个** 下标 `i` ：
+
+- 如果 `locked[i]` 是 `'1'` ，你 **不能** 改变 `s[i]` 。
+- 如果 `locked[i]` 是 `'0'` ，你 **可以** 将 `s[i]` 变为 `'('` 或者 `')'` 。
+
+如果你可以将 `s` 变为有效括号字符串，请你返回 `true` ，否则返回 `false` 。
+
+ 
+
+**示例 1：**
+
+![img](assets/eg1-1742736444845-1.png)
+
+```C++
+输入：s = "))()))", locked = "010100"
+输出：true
+解释：locked[1] == '1' 和 locked[3] == '1' ，所以我们无法改变 s[1] 或者 s[3] 。
+我们可以将 s[0] 和 s[4] 变为 '(' ，不改变 s[2] 和 s[5] ，使 s 变为有效字符串。
+```
+
+请看0x3f讲解：https://leetcode.cn/problems/check-if-a-parentheses-string-can-be-valid/solutions/1178043/zheng-fan-liang-ci-bian-li-by-endlessche-z8ac/?envType=daily-question&envId=2025-03-23
+
+```C++
+class Solution {
+public:
+    bool canBeValid(string s, string locked) {
+        int n = s.size();
+        if(n%2==1) // ==1！
+        {
+            return false;
+        }
+        int mn = 0,mx=0;//min,max
+        for(int i=0;i<n;i++)
+        {
+            if(locked[i]=='1')// 不能改
+            {
+                //0,2->1,3
+                int d=(s[i]=='(')?1:-1;
+                mx+=d;
+                if(mx<0)return false;// c 不能为负
+                mn+=d;
+            }
+            else //// 可以改 =0 范围进一步扩大 
+            {
+                mn--;// 改成右括号，c 减一
+                mx++;// 改成左括号，c 加一
+            }
+            if(mn<0) // c 不能为负
+            {
+                mn=1;// 此时 c 的取值范围都是奇数，最小的奇数是 1
+            }
+        }
+        return mn==0;// 说明最终 c 能是 0
+    }
+};
+```
+
+
+
 
 
 ## 3.5 表达式解析专题
