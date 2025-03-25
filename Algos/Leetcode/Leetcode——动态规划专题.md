@@ -182,7 +182,7 @@ public:
 class Solution {
 public:
     int deleteAndEarn(vector<int>& nums) {
-        //比如示例2:[2,2,3,3,3,4],删除3之后,所有的2和所有的4都会被删掉,意味着可以构造vec数组,其第i位vec[i]保存nums中=i的数的和,于是对vec数组进行打家劫舍即可得到最后的结果
+        //比如示例2:[2,2,3,3,3,4],删除3之后,所有的2和所有的4都会被删掉,意味着可以构造vec数组,其第i位vec[i]保存nums中=i的数的和,于是对vec数组进行打家劫舍即可得到最后的结果 [0,0,4,9,4]
         int mx = ranges::max(nums);
         vector<int> vec(mx+1, 0);
         for(int num:nums)
@@ -633,6 +633,163 @@ public:
     }
 };
 ```
+
+
+
+### （6）[3418. 机器人可以获得的最大金币数](https://leetcode.cn/problems/maximum-amount-of-money-robot-can-earn/)
+
+依旧是从左上角出发，到达右下角。网格中的每个单元格包含一个值 `coins[i][j]`：
+
+- 如果 `coins[i][j] >= 0`，机器人可以获得该单元格的金币。
+- 如果 `coins[i][j] < 0`，机器人会遇到一个强盗，强盗会抢走该单元格数值的 **绝对值** 的金币。
+
+不过对于本题而言，机器人有一项特殊能力，可以在行程中 **最多感化** 2个单元格的强盗，从而防止这些单元格的金币被抢走。
+
+**注意：**机器人的总金币数可以是负数。
+
+返回机器人在路径上可以获得的 **最大金币数** 。
+
+
+
+这道题目可以给`dp`数组加一维，`dp[i][j][k]`表示到达网格下标为（i，j）的位置时，使用了k次技能后所能获得的最多金币。于是状态转移方程就变成了：
+
+```c++
+dp[i][j][k] = max(dp[i-1][j][k]+coins[i][j], dp[i][j-1][k]+coins[i][j]); //对每个k都要赋值一下(k=0,1,2)，相当于当前格没有感化强盗，需要吃金币/吃伤害
+if(coins[i][j]<0) //有强盗，也可以选择在当前格感化强盗
+{
+	dp[i][j][k] = max(dp[i][j][k], dp[i-1][j][k-1], dp[i][j-1][k-1]); //当前格使用了技能，从k-1次技能转移过来，但也得是从左侧或者上侧过来的
+}
+```
+
+注意到不合法的状态应该是`dp(-1,j,k)`以及`dp(i,-1,k)`（其中k的合法性比较好做，就不提了），本题要求max，则可以用-inf来表示不合法的状态，这样再取max的时候就不会取到-inf了。
+
+- `dp[0,0,0] = coins[0,0]`；表示使用了0次技能，那获得的金币数就是coins[0,0]本身；
+- if k>0， `dp[0,0,0] = max(coins[0,0], 0);`,意味着此时感化了强盗，会让负的金币数变成0,正的金币就不动(相当于没有效果)。
+
+在写代码的时候，依旧可以给i和j都加一维，因为初始化为-inf所以边界条件也有了（注意，由于本题可能有负值的强盗，所以初始化为-inf可能会越界，可以改为-0x3f3f3f）。最终代码如下：
+
+```c++
+class Solution {
+public:
+    int maximumAmount(vector<vector<int>>& coins) {
+        int m = coins.size();
+        int n = coins[0].size();
+        vector<vector<array<int, 3>>> dp(m+1, vector<array<int, 3>>(n+1, array<int,3>{-0x3f3f3f, -0x3f3f3f, -0x3f3f3f}));
+        //dp[0][0][k]的赋值
+        dp[1][1] = {coins[0][0], max(0, coins[0][0]), max(0,coins[0][0])};
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                int x = coins[i][j];
+                //k最多为2,直接写逻辑就行
+                if(i==0 && j==0) continue; //前面赋值了,这里可以稍微特判一下
+                dp[i+1][j+1][0] = max(dp[i][j+1][0], dp[i+1][j][0]) + x;
+                dp[i+1][j+1][1] = max({dp[i][j+1][1] + x, dp[i+1][j][1] + x, dp[i][j+1][0], dp[i+1][j][0]});
+                dp[i+1][j+1][2] = max({dp[i][j+1][2] + x, dp[i+1][j][2] + x, dp[i][j+1][1], dp[i+1][j][1]});
+            }
+        }
+        //return max({dp[m][n][0], dp[m][n][1], dp[m][n][2]}); 
+        return dp[m][n][2]; //感化了两次，效果一定>=感化1次或者0次
+    }
+};
+```
+
+
+
+### （7）[1594. 矩阵的最大非负积](https://leetcode.cn/problems/maximum-non-negative-product-in-a-matrix/)
+
+在前面的题目中，有遇到过求最大绝对值的题目，思路是维护一个最大值和一个最小值，当遇到负数的时候交换最大值和最小值（对本题来说，不要交换dp，而是在状态转移方程的时候交换逻辑），本题也可以用类似的思路来做。最终代码如下：
+```c++
+class Solution {
+public:
+    const int MOD = 1e9+7;
+    int maxProductPath(vector<vector<int>>& grid) {
+        int m = grid.size();
+        int n = grid[0].size();
+        vector dp(m, vector<array<long long, 2>>(n, array<long long, 2>{})); //存最大值与最小值,array第一个数存最大值,第二个数存最小值
+        dp[0][0] = {grid[0][0], grid[0][0]};
+        //第一行和第一列没得选,只有一种结果
+        for(int i=1;i<m;i++)
+        {
+            dp[i][0] = {dp[i-1][0][0] * grid[i][0], dp[i-1][0][1] * grid[i][0]};
+        }
+        for(int j=1;j<n;j++)
+        {
+            dp[0][j] = {dp[0][j-1][0]*grid[0][j], dp[0][j-1][1]*grid[0][j]};
+        }
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                int cur = grid[i][j];
+                if(cur>0) //正常维护即可
+                {
+                    dp[i][j][0] = max(dp[i-1][j][0]*cur, dp[i][j-1][0]*cur);
+                    dp[i][j][1] = min(dp[i-1][j][1]*cur, dp[i][j-1][1]*cur);
+                }
+                else //反着维护,最大值由之前的最小值得到,最小值由之前的最大值得到
+                {
+                    dp[i][j][0] = max(dp[i-1][j][1]*cur, dp[i][j-1][1]*cur); //这题找了半天有个坑,因为有负数的乘法操作,所以cur要乘在里面,不能max(a,b)*cur,会起不到对应的作用
+                    dp[i][j][1] = min(dp[i-1][j][0]*cur, dp[i][j-1][0]*cur);
+                }
+            }
+        }
+        // for(int i=0;i<m;i++)
+        // {
+        //     for(int j=0;j<n;j++)
+        //         cout<<i<<" "<<j<<" "<<dp[i][j][0]<<" "<<dp[i][j][1]<<endl;
+        // }
+        long long res = dp[m-1][n-1][0]%MOD; //最大值
+        if(res<0) return -1;
+        return res;
+
+    }
+};
+```
+
+
+
+### （8）[1301. 最大得分的路径数目](https://leetcode.cn/problems/number-of-paths-with-max-score/)
+
+> 给你一个正方形字符数组 `board` ，你从数组最右下方的字符 `'S'` 出发。
+>
+> 你的目标是到达数组最左上角的字符 `'E'` ，数组剩余的部分为数字字符 `1, 2, ..., 9` 或者障碍 `'X'`。在每一步移动中，你可以向上、向左或者左上方移动，可以移动的前提是到达的格子没有障碍。
+>
+> 一条路径的 「得分」 定义为：路径上所有数字的和。
+>
+> 请你返回一个列表，包含两个整数：第一个整数是 「得分」 的最大值，第二个整数是得到最大得分的方案数，请把结果对 **`10^9 + 7`** **取余**。
+>
+> 如果没有任何路径可以到达终点，请返回 `[0, 0]` 。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：board = ["E23","2X2","12S"]
+> 输出：[7,1]
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：board = ["E12","1X1","21S"]
+> 输出：[4,2]
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：board = ["E11","XXX","11S"]
+> 输出：[0,0]
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `2 <= board.length == board[i].length <= 100`
 
 
 
