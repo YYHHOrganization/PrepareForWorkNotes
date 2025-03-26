@@ -169,6 +169,630 @@ public:
 
 
 
+### （2）[740. 删除并获得点数](https://leetcode.cn/problems/delete-and-earn/)
+
+> 给你一个整数数组 `nums` ，你可以对它进行一些操作。
+>
+> 每次操作中，选择任意一个 `nums[i]` ，删除它并获得 `nums[i]` 的点数。之后，你必须删除 **所有** 等于 `nums[i] - 1` 和 `nums[i] + 1` 的元素。
+>
+> 开始你拥有 `0` 个点数。返回你能通过这些操作获得的最大点数。
+
+依旧是打家劫舍的类型题，“选”或者“不选”当前的值，这题有一种构造想法确实是很巧妙。参考[740. 删除并获得点数 - 力扣（LeetCode）](https://leetcode.cn/problems/delete-and-earn/solutions/3061028/zhi-yu-da-jia-jie-she-pythonjavaccgojsru-e5gg/)，可以转化为纯打家劫舍题目。代码如下：
+```c++
+class Solution {
+public:
+    int deleteAndEarn(vector<int>& nums) {
+        //比如示例2:[2,2,3,3,3,4],删除3之后,所有的2和所有的4都会被删掉,意味着可以构造vec数组,其第i位vec[i]保存nums中=i的数的和,于是对vec数组进行打家劫舍即可得到最后的结果 [0,0,4,9,4]
+        int mx = ranges::max(nums);
+        vector<int> vec(mx+1, 0);
+        for(int num:nums)
+        {
+            vec[num] += num;
+        }
+        int n = vec.size();
+        //开始打家劫舍 dp[i]表示截止到第i个元素的最大点数 dp[i] = max(dp[i-1], dp[i-2]+vec[i])
+        //打家劫舍还可以优化到常数复杂度，但感觉暂时没什么太大必要，代码清晰易读为当前的重点
+        vector<int> dp(n+2, 0);
+        for(int i=0;i<n;i++)
+        {
+            dp[i+2] = max(dp[i+1], dp[i]+vec[i]);
+        }
+        return dp[n+1];
+    }
+};
+```
+
+
+
+### ==（3）[2320. 统计放置房子的方式数](https://leetcode.cn/problems/count-number-of-ways-to-place-houses/)==
+
+> 大概重温了一下当时的做法，有时间再重新做一下。
+
+
+
+### （4）[213. 打家劫舍 II](https://leetcode.cn/problems/house-robber-ii/)
+
+与前面的打家劫舍相比，本题的所有房屋呈现环形分布，意味着最后一间房间连着第一间房间。
+
+简单的做法是直接分类讨论：偷最后一间（此时第一间就不能偷了，从第二间开始算，相当于打家劫舍的子问题），或者不偷最后一间（此时第一间可以偷）。代码如下：
+
+```c++
+class Solution {
+public:
+    int robRange(vector<int>& nums, int left, int right) //偷的范围考虑
+    {
+        //left到right范围内做打家劫舍,返回右边界,此时用几个滚动变量会容易一些
+        //dp[i] = max(dp[i-1], dp[i-2]+nums[i]);
+        int f0 = 0, f1 = 0, f=0; //对应dp[i-2],dp[i-1]
+        for(int i=left;i<=right;i++)
+        {
+            f = max(f1, f0 + nums[i]);
+            f0 = f1;
+            f1 = f;
+        }
+        return f; //相当于返回dp[n-1]
+    }
+    int rob(vector<int>& nums) {
+        int n = nums.size();
+        int last = nums[n-1];
+        //偷最后一间,或者不偷最后一间,偷的话右侧考虑到n-3,因为偷最后一间,那么倒数第二间一定不能偷,此时最右侧只需要考虑到倒数第三间即可
+        return max(robRange(nums, 1, n-3)+last, robRange(nums, 0, n-2));
+    }
+};
+```
+
+
+
+### （5）[3186. 施咒的最大总伤害](https://leetcode.cn/problems/maximum-total-damage-with-spell-casting/)
+
+> 一个魔法师有许多不同的咒语。
+>
+> 给你一个数组 `power` ，其中每个元素表示一个咒语的伤害值，可能会有多个咒语有相同的伤害值。
+>
+> 已知魔法师使用伤害值为 `power[i]` 的咒语时，他们就 **不能** 使用伤害为 `power[i] - 2` ，`power[i] - 1` ，`power[i] + 1` 或者 `power[i] + 2` 的咒语。
+>
+> 每个咒语最多只能被使用 **一次** 。
+>
+> 请你返回这个魔法师可以达到的伤害值之和的 **最大值** 。
+
+本题算是第（2）题：删除并获得点数的进阶版本。代码如下：
+
+```c++
+class Solution {
+public:
+    long long maximumTotalDamage(vector<int>& power) {
+        sort(power.begin(), power.end());
+        unordered_map<int, int> umap; //key:技能伤害值,value:个数
+        //去重,顺便记录个数
+        vector<int> nums;
+        for(int p: power)
+        {
+            if(umap.count(p)==0)
+            {
+                nums.emplace_back(p);
+            }
+            umap[p]++;
+        }
+        int n = nums.size();
+        vector<long long> dp(n, 0); //dp[i]表示考虑到nums[i],所能造成的最大释咒伤害值
+        int k = 2; //本题k=2,其实k也可以替换为别的值
+        dp[0] = (long long)nums[0] * umap[nums[0]];
+        for(int i=1;i<n;i++)
+        {
+            //当前咒语释放,或者不释放，use表示释放
+            long long use = 0;
+            use += (long long)nums[i] * umap[nums[i]]; //释放当前咒语的伤害值
+
+            //删除前面的不能用的咒语,找到最后一个<nums[i]-2的数
+            int j = i;
+            while(j>=0 && nums[j]>=nums[i]-k) j--;
+            if(j>=0) use+=dp[j];
+            dp[i] = max(dp[i-1], use); //不释放的话就是dp[i-1]可以过来
+        }
+        return dp[n-1];
+    }
+};
+```
+
+
+
+### （6）思维扩展：[2140. 解决智力问题](https://leetcode.cn/problems/solving-questions-with-brainpower/)
+
+> 给你一个下标从 **0** 开始的二维整数数组 `questions` ，其中 `questions[i] = [pointsi, brainpoweri]` 。
+>
+> 这个数组表示一场考试里的一系列题目，你需要 **按顺序** （也就是从问题 `0` 开始依次解决），针对每个问题选择 **解决** 或者 **跳过** 操作。解决问题 `i` 将让你 **获得** `pointsi` 的分数，但是你将 **无法** 解决接下来的 `brainpoweri` 个问题（即只能跳过接下来的 `brainpoweri` 个问题）。如果你跳过问题 `i` ，你可以对下一个问题决定使用哪种操作。
+>
+> - 比方说，给你 
+>
+>   ```
+>   questions = [[3, 2], [4, 3], [4, 4], [2, 5]]：
+>   ```
+>
+>   - 如果问题 `0` 被解决了， 那么你可以获得 `3` 分，但你不能解决问题 `1` 和 `2` 。
+>   - 如果你跳过问题 `0` ，且解决问题 `1` ，你将获得 `4` 分但是不能解决问题 `2` 和 `3` 。
+>
+> 请你返回这场考试里你能获得的 **最高** 分数。
+
+
+
+#### （a）自己尝试——错误，踩坑，初见杀
+
+
+
+先尝试写一下状态转移方程，假设`dp[i]`表示考虑到第`i`个问题（`i`的下标从0开始），则有做这道题或者不做这道题两种方案：
+
+```c++
+dp[i] = max(dp[i-1], dp[j]+questions[i].first) //不做这道题，或者做这道题（注意，如果j到-1了，说明都不能从前面的状态转移过来，这个时候其实也是可以做当前题的）
+```
+
+只不过在做这道题的时候，需要找截止到前面允许做这道题的索引，即对于符合要求的j来说，需要满足`questions[j].second < i - j`。有没有可能是再之前的状态转移过来的呢？有可能，但由于每个`dp`数组中的元素都在维护最大值，因此`dp[j]`本身就应该已经包括前面状态最大值的考量了。
+
+本题代码如下：（转化为`dp[i+1]=max(dp[i],dp[j+1]+questions[i].first)`,`j`依旧是从`i`开始往前遍历，找最靠右的那个符合`questions[j].second < i - j`条件的）
+```c++
+class Solution {
+public:
+    long long mostPoints(vector<vector<int>>& questions) {
+        int n = questions.size();
+        vector<long long> dp(n+1, 0);
+        for(int i=0;i<n;i++)
+        {
+            int j = i-1;
+            while(j>=0 && questions[j][1] >= i-j) j--; //还不能转移过来,继续往前走
+            dp[i+1] = max(dp[i], dp[j+1]+questions[i][0]); //极限情况,j=-1,那么其实也可以做这道题
+        }
+        return dp[n];
+    }
+};
+```
+
+> 慢着！这道题目使用上面的解答并不能过掉所有的案例！那么问题出在哪里呢？可以参考这一篇：[2140. 解决智力问题 - 力扣（LeetCode）](https://leetcode.cn/problems/solving-questions-with-brainpower/solutions/2360782/you-guan-guan-fang-jie-da-fang-fa-1zhong-rfqu/)。因为当遍历到第j个元素时，某个**小于j的已选元素k**的"脑力恢复期"可能**仍未结束**，因此不能只考虑选择j所造成的"脑力恢复期"。**这个题在这一点上还是比较坑的，第一次很容易踩坑，因此把踩坑过程也记录下来。**
+
+
+
+#### （b）正确的做法
+
+从后往前推
+
+```c++
+class Solution {
+public:
+    long long mostPoints(vector<vector<int>>& questions) {
+        //dp[i]表示[i, n-1]这个区间的最大值
+        //dp[i] = max(dp[i+1], dp[i+questions[i][1]+1]+questions[i][0])
+        int n = questions.size();
+        vector<long long> dp(n+1, 0);
+        //dp[n-1] = questions[n-1][0];
+        for(int i=n-1;i>=0;i--)
+        {
+            dp[i] = dp[i+1]; //不做题
+            if(i+questions[i][1]+1<n)
+            {
+                dp[i] = max(dp[i], dp[i+questions[i][1]+1]+(long long)questions[i][0]); //做题
+            }
+            else
+            {
+                dp[i] = max((long long)questions[i][0],dp[i]);
+            }
+        }
+        return dp[0];
+    }
+};
+```
+
+一个简便一些的做法：
+
+```c++
+class Solution {
+public:
+    long long mostPoints(vector<vector<int>>& questions) {
+        int n = questions.size();
+        vector<long long> f(n + 1);
+        for (int i = n - 1; i >= 0; i--) {
+            int j = min(i + questions[i][1] + 1, n);
+            f[i] = max(f[i + 1], f[j] + questions[i][0]); //不做当前题,或者做当前题,做当前题就一定有当前题的分数,但转移的时候不一定能从有效值转移过来
+        }
+        return f[0];
+    }
+};
+
+作者：灵茶山艾府
+链接：https://leetcode.cn/problems/solving-questions-with-brainpower/solutions/1213919/dao-xu-dp-by-endlesscheng-2qkc/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+```
+
+
+
+正序解法中，`f[i]` 应该是表示在**能选择 i 处的前提**下 `[0,i]` 内可以获得的最大分数。此时正序遍历是0(n^2)，我们尝试了会超时。
+
+
+
+## 3.最大子数组和（最大子段和）——==未整理完==
+
+有两种做法：
+
+- 定义状态 `f[i]` 表示以 `a[i]` 结尾的最大子数组和，不和 `i` 左边拼起来就是 `f[i]=a[i]`，和`i` 左边拼起来就是 `f[i]=f[i−1]+a[i]`，取最大值就得到了状态转移方程 `f[i]=max(f[i−1],0)+a[i]`，答案为 max(f)(因为不确定最大值是以哪个索引为结尾的，所以要维护中间过程中的max值)。这个做法也叫做 `Kadane` 算法。
+- 用前缀和解决。
+
+### （1）[53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/)——DP法
+
+算是一个正常的板子题，代码如下：
+```c++
+class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        int n = nums.size();
+        int res = nums[0];
+        //vector<int> dp(n+1, 0);
+        //dp[i] = max(dp[i-1]+nums[i], nums[i])
+        int cur = 0;
+        for(int i=0;i<n;i++)
+        {
+            //dp[i+1] = max(dp[i]+nums[i], nums[i]);
+            cur = max(cur, 0) + nums[i];
+            res = max(res, cur);
+            //res = max(res, dp[i+1]);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （2）[1749. 任意子数组和的绝对值的最大值](https://leetcode.cn/problems/maximum-absolute-sum-of-any-subarray/)
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int maxAbsoluteSum(vector<int>& nums) {
+        int res=0, minSum=0, maxSum=0; //子数组有可能是空的,所以初始化为0即可; 如果类似于53题子数组不能为空,则或许需要初始化为INT_MIN/INT_MAX(看需求)
+        for(const int& num: nums)
+        {
+            minSum = min(minSum, 0) + num;
+            maxSum = max(maxSum, 0) + num;
+            res = max(res, max(-minSum, maxSum));
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （3）
+
+
+
+# 二、网格图DP
+
+对于一些二维 DP（例如背包、最长公共子序列），如果把 DP 矩阵画出来，其实状态转移可以视作在网格图上的移动。所以在学习相对更抽象的二维 DP 之前，做一些形象的网格图 DP 会让后续的学习更轻松（比如 0-1 背包的空间优化写法为什么要倒序遍历）。
+
+### 1.基础
+
+### （1）[64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/)
+
+```c++
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        //dp[i][j]表示左上角到[i,j]位置的最小数字总和
+        int m = grid.size();
+        int n = grid[0].size();
+        vector<vector<int>> dp(m, vector<int>(n,0));
+        dp[0][0] = grid[0][0];
+        for(int i=1;i<m;i++) dp[i][0] = dp[i-1][0] + grid[i][0];
+        for(int j=1;j<n;j++) dp[0][j] = dp[0][j-1] + grid[0][j];
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                dp[i][j] = min(dp[i-1][j], dp[i][j-1]) + grid[i][j];
+            }
+        }
+        return dp[m-1][n-1];
+    }
+};
+```
+
+
+
+### （2）不同路径
+
+```c++
+class Solution {
+public:
+    int uniquePaths(int m, int n) {
+        vector<vector<int>> dp(m, vector<int>(n));
+        //初始化第一行和第一列
+        for(int i=0;i<m;i++) dp[i][0]=1; //第一列
+        //第一行 
+        for(int i=0;i<n;i++) dp[0][i]=1;
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+                dp[i][j] = dp[i-1][j]+dp[i][j-1];
+        }
+        return dp[m-1][n-1];
+    }
+};
+```
+
+
+
+### （3）[63. 不同路径 II](https://leetcode.cn/problems/unique-paths-ii/)
+
+也是从左上角走到右下角，但区别在于本题中有障碍物，需要做障碍物的对应判断。
+
+> 本题的要点是在于dp数组初始值的设定，注意考虑好左上角是障碍物的情况，此时第一行和第一列应该都是0.因此赋值逻辑应该写作把第一行和第一列截止到第一个障碍物之前的都设置为`dp[0][0]`（务必注意！每次都写错，不能赋值为1，否则左上角即为障碍物的情况考虑不到）
+
+```c++
+class Solution {
+public:
+    int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {
+        int m = obstacleGrid.size();
+        int n = obstacleGrid[0].size();
+        vector<vector<int>> dp(m, vector<int>(n, 0));
+        //赋值初值
+        dp[0][0] = ((obstacleGrid[0][0]==1)? 0:1);
+        //第一列与第一行
+        for(int i=1;i<m && obstacleGrid[i][0]==0;i++) dp[i][0] = dp[0][0]; //没有遇到障碍物,则有1条路径,否则障碍物及后面的都是0条路径,**务必注意边界测试用例:左上角是障碍物的情况**
+        for(int j=1;j<n && obstacleGrid[0][j]==0;j++) dp[0][j] = dp[0][0];
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                if(obstacleGrid[i][j]==1) dp[i][j] = 0; //有障碍物,过不去
+                else
+                {
+                    dp[i][j] = dp[i-1][j] + dp[i][j-1];
+                }
+            }
+        }
+        return dp[m-1][n-1];
+    }
+};
+```
+
+
+
+### （4）[120. 三角形最小路径和](https://leetcode.cn/problems/triangle/)
+
+> 心得体会：这种二维网格图的dp题，遇到`i-1`，`j-1`不太好像前面的题一样整体把dp数组往右移一位（边界条件会有一点麻烦），所以一般就用`dp[i][j]`来表示与原数组`grid[i][j]`有关的信息，然后手动管理好可能会越界的情况。
+
+```c++
+class Solution {
+public:
+    int minimumTotal(vector<vector<int>>& triangle) {
+        int n = triangle.size();
+        vector<vector<int>> dp(n, vector<int>(n));
+        dp[0][0]=triangle[0][0];
+        if(n==1) return triangle[0][0];
+        for(int i=1;i<n;i++)
+        {
+            //最左侧
+            dp[i][0] = dp[i-1][0]+triangle[i][0];
+            for(int j=1;j<i;j++)
+            {
+                dp[i][j]=min(dp[i-1][j-1],dp[i-1][j])+triangle[i][j];
+            }
+            //最右侧
+            dp[i][i] = dp[i-1][i-1]+triangle[i][i];
+        }
+        //最后一行看看谁最小
+        int res = INT_MAX;
+        for(int i=0;i<n;i++)
+        {
+            res=min(res, dp[n-1][i]);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （5）[2684. 矩阵中移动的最大次数](https://leetcode.cn/problems/maximum-number-of-moves-in-a-grid/)（整理一个DFS做法，有需要再看）
+
+这道题目用dp做有一点邪门，在提交记录当中可以看到，这里补充一种DFS的做法，有需要可以复习一下。
+
+```c++
+class Solution {
+public:
+    int dirs[3][2] = {0,1,1,1,-1,1}; //r,c: 右,右下,或者右上
+    int maxMoves(vector<vector<int>>& grid) {
+        int m = grid.size();
+        int n = grid[0].size();
+        //ans是最大移动的步数
+        int ans = 0;
+        auto dfs = [&](this auto&& dfs, int x, int y)
+        {
+            ans = max(ans, y); //从第一列开始走,y=1即为移动1步,依次类推
+            if(ans==n-1) return; //走到最右侧了,return
+            //往严格大的地方走
+            for(int d=0;d<3;d++)
+            {
+                int curX = x + dirs[d][0];
+                int curY = y + dirs[d][1];
+                if(curX>=m || curX<0 ) continue;
+                if(grid[curX][curY]>grid[x][y])
+                {
+                    dfs(curX, curY); 
+                }
+            }
+            grid[x][y] = 0; //用这个来充当visited数组,后面不会再遍历到了,因为这个节点后面的路径已经探索完了,没必要再探索（跟那些岛屿问题是一样的）
+        };
+        //第一列都试试
+        for(int i=0;i<m;i++)
+        {
+            dfs(i, 0);
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### （6）[3418. 机器人可以获得的最大金币数](https://leetcode.cn/problems/maximum-amount-of-money-robot-can-earn/)
+
+依旧是从左上角出发，到达右下角。网格中的每个单元格包含一个值 `coins[i][j]`：
+
+- 如果 `coins[i][j] >= 0`，机器人可以获得该单元格的金币。
+- 如果 `coins[i][j] < 0`，机器人会遇到一个强盗，强盗会抢走该单元格数值的 **绝对值** 的金币。
+
+不过对于本题而言，机器人有一项特殊能力，可以在行程中 **最多感化** 2个单元格的强盗，从而防止这些单元格的金币被抢走。
+
+**注意：**机器人的总金币数可以是负数。
+
+返回机器人在路径上可以获得的 **最大金币数** 。
+
+
+
+这道题目可以给`dp`数组加一维，`dp[i][j][k]`表示到达网格下标为（i，j）的位置时，使用了k次技能后所能获得的最多金币。于是状态转移方程就变成了：
+
+```c++
+dp[i][j][k] = max(dp[i-1][j][k]+coins[i][j], dp[i][j-1][k]+coins[i][j]); //对每个k都要赋值一下(k=0,1,2)，相当于当前格没有感化强盗，需要吃金币/吃伤害
+if(coins[i][j]<0) //有强盗，也可以选择在当前格感化强盗
+{
+	dp[i][j][k] = max(dp[i][j][k], dp[i-1][j][k-1], dp[i][j-1][k-1]); //当前格使用了技能，从k-1次技能转移过来，但也得是从左侧或者上侧过来的
+}
+```
+
+注意到不合法的状态应该是`dp(-1,j,k)`以及`dp(i,-1,k)`（其中k的合法性比较好做，就不提了），本题要求max，则可以用-inf来表示不合法的状态，这样再取max的时候就不会取到-inf了。
+
+- `dp[0,0,0] = coins[0,0]`；表示使用了0次技能，那获得的金币数就是coins[0,0]本身；
+- if k>0， `dp[0,0,0] = max(coins[0,0], 0);`,意味着此时感化了强盗，会让负的金币数变成0,正的金币就不动(相当于没有效果)。
+
+在写代码的时候，依旧可以给i和j都加一维，因为初始化为-inf所以边界条件也有了（注意，由于本题可能有负值的强盗，所以初始化为-inf可能会越界，可以改为-0x3f3f3f）。最终代码如下：
+
+```c++
+class Solution {
+public:
+    int maximumAmount(vector<vector<int>>& coins) {
+        int m = coins.size();
+        int n = coins[0].size();
+        vector<vector<array<int, 3>>> dp(m+1, vector<array<int, 3>>(n+1, array<int,3>{-0x3f3f3f, -0x3f3f3f, -0x3f3f3f}));
+        //dp[0][0][k]的赋值
+        dp[1][1] = {coins[0][0], max(0, coins[0][0]), max(0,coins[0][0])};
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                int x = coins[i][j];
+                //k最多为2,直接写逻辑就行
+                if(i==0 && j==0) continue; //前面赋值了,这里可以稍微特判一下
+                dp[i+1][j+1][0] = max(dp[i][j+1][0], dp[i+1][j][0]) + x;
+                dp[i+1][j+1][1] = max({dp[i][j+1][1] + x, dp[i+1][j][1] + x, dp[i][j+1][0], dp[i+1][j][0]});
+                dp[i+1][j+1][2] = max({dp[i][j+1][2] + x, dp[i+1][j][2] + x, dp[i][j+1][1], dp[i+1][j][1]});
+            }
+        }
+        //return max({dp[m][n][0], dp[m][n][1], dp[m][n][2]}); 
+        return dp[m][n][2]; //感化了两次，效果一定>=感化1次或者0次
+    }
+};
+```
+
+
+
+### （7）[1594. 矩阵的最大非负积](https://leetcode.cn/problems/maximum-non-negative-product-in-a-matrix/)
+
+在前面的题目中，有遇到过求最大绝对值的题目，思路是维护一个最大值和一个最小值，当遇到负数的时候交换最大值和最小值（对本题来说，不要交换dp，而是在状态转移方程的时候交换逻辑），本题也可以用类似的思路来做。最终代码如下：
+```c++
+class Solution {
+public:
+    const int MOD = 1e9+7;
+    int maxProductPath(vector<vector<int>>& grid) {
+        int m = grid.size();
+        int n = grid[0].size();
+        vector dp(m, vector<array<long long, 2>>(n, array<long long, 2>{})); //存最大值与最小值,array第一个数存最大值,第二个数存最小值
+        dp[0][0] = {grid[0][0], grid[0][0]};
+        //第一行和第一列没得选,只有一种结果
+        for(int i=1;i<m;i++)
+        {
+            dp[i][0] = {dp[i-1][0][0] * grid[i][0], dp[i-1][0][1] * grid[i][0]};
+        }
+        for(int j=1;j<n;j++)
+        {
+            dp[0][j] = {dp[0][j-1][0]*grid[0][j], dp[0][j-1][1]*grid[0][j]};
+        }
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                int cur = grid[i][j];
+                if(cur>0) //正常维护即可
+                {
+                    dp[i][j][0] = max(dp[i-1][j][0]*cur, dp[i][j-1][0]*cur);
+                    dp[i][j][1] = min(dp[i-1][j][1]*cur, dp[i][j-1][1]*cur);
+                }
+                else //反着维护,最大值由之前的最小值得到,最小值由之前的最大值得到
+                {
+                    dp[i][j][0] = max(dp[i-1][j][1]*cur, dp[i][j-1][1]*cur); //这题找了半天有个坑,因为有负数的乘法操作,所以cur要乘在里面,不能max(a,b)*cur,会起不到对应的作用
+                    dp[i][j][1] = min(dp[i-1][j][0]*cur, dp[i][j-1][0]*cur);
+                }
+            }
+        }
+        // for(int i=0;i<m;i++)
+        // {
+        //     for(int j=0;j<n;j++)
+        //         cout<<i<<" "<<j<<" "<<dp[i][j][0]<<" "<<dp[i][j][1]<<endl;
+        // }
+        long long res = dp[m-1][n-1][0]%MOD; //最大值
+        if(res<0) return -1;
+        return res;
+
+    }
+};
+```
+
+
+
+### （8）[1301. 最大得分的路径数目](https://leetcode.cn/problems/number-of-paths-with-max-score/)
+
+> 给你一个正方形字符数组 `board` ，你从数组最右下方的字符 `'S'` 出发。
+>
+> 你的目标是到达数组最左上角的字符 `'E'` ，数组剩余的部分为数字字符 `1, 2, ..., 9` 或者障碍 `'X'`。在每一步移动中，你可以向上、向左或者左上方移动，可以移动的前提是到达的格子没有障碍。
+>
+> 一条路径的 「得分」 定义为：路径上所有数字的和。
+>
+> 请你返回一个列表，包含两个整数：第一个整数是 「得分」 的最大值，第二个整数是得到最大得分的方案数，请把结果对 **`10^9 + 7`** **取余**。
+>
+> 如果没有任何路径可以到达终点，请返回 `[0, 0]` 。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：board = ["E23","2X2","12S"]
+> 输出：[7,1]
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：board = ["E12","1X1","21S"]
+> 输出：[4,2]
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：board = ["E11","XXX","11S"]
+> 输出：[0,0]
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `2 <= board.length == board[i].length <= 100`
+
+
+
 
 
 # 三、背包专题
