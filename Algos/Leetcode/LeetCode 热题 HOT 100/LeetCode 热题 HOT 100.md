@@ -8,13 +8,17 @@ https://leetcode.cn/problem-list/2cktkvj/
 
 :bookmark: 表示在 ” 面经合集——题目+答案版“中
 
+:cat: 表示最新一次Y做不出来/做出来是错的
+
+:kissing_cat: 表示Y最新已经能自己做出来了（曾经不能）
+
 [TOC]
 
 
 
 # 二分 :red_circle:
 
-### [300. 最长递增子序列 ](https://leetcode-cn.com/problems/longest-increasing-subsequence/)  :notebook: 记录在“大厂”那个笔记中 :red_circle:
+### [300. 最长递增子序列 ](https://leetcode-cn.com/problems/longest-increasing-subsequence/)  :notebook: 记录在“大厂”那个笔记中 
 
 难度中等	
 
@@ -294,7 +298,7 @@ public:
 
 
 
-### [4. 寻找两个正序数组的中位数](https://leetcode.cn/problems/median-of-two-sorted-arrays/)
+### [4. 寻找两个正序数组的中位数 ](https://leetcode.cn/problems/median-of-two-sorted-arrays/) :cat:
 
 > 给定两个大小分别为 `m` 和 `n` 的正序（从小到大）数组 `nums1` 和 `nums2`。请你找出并返回这两个正序数组的 **中位数** 。
 >
@@ -320,6 +324,10 @@ public:
 
 本题是一道很困难的题目，主要题解参考[4. 寻找两个正序数组的中位数 - 力扣（LeetCode）](https://leetcode.cn/problems/median-of-two-sorted-arrays/)。
 
+<img src="assets/image-20250325145517732.png" alt="image-20250325145517732" style="zoom: 67%;" />
+
+<img src="assets/image-20250325151608801.png" alt="image-20250325151608801" style="zoom: 67%;" />
+
 这里很难整理，直接看题解吧。
 
 二分插入INT_MIN和INT_MAX的版本，实际上还是O(N)复杂度：
@@ -336,7 +344,7 @@ public:
         int m = nums1.size();
         int n = nums2.size();
         //step 2:
-        nums1.insert(nums1.begin(), INT_MIN);
+        nums1.insert(nums1.begin(), INT_MIN);//注意语法 pos,num
         nums2.insert(nums2.begin(), INT_MIN);
         nums1.push_back(INT_MAX);
         nums2.push_back(INT_MAX);
@@ -458,7 +466,7 @@ public:
 # 二叉树 :red_circle:
 
 
-### [剑指 Offer 68 - II. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/)   :notebook:  更多内容记录在“大厂”那个笔记中 :red_circle:
+### [剑指 Offer 68 - II. 二叉树的最近公共祖先](https://leetcode-cn.com/problems/er-cha-shu-de-zui-jin-gong-gong-zu-xian-lcof/)   :notebook:  更多内容记录在“大厂”那个笔记中 
 
 难度简单
 
@@ -844,11 +852,11 @@ public:
 
 
 
-## [297. 二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/)
+### [297. 二叉树的序列化与反序列化](https://leetcode.cn/problems/serialize-and-deserialize-binary-tree/) :cat:
 
 > 这道题和LRU那道题是类似的，考察的是能否把复杂的业务写好。务必注意代码中的细节问题。
 
-### （1）做法1：先序遍历
+#### （1）做法1：先序遍历
 
 使用根->左->右的顺序进行遍历，当遍历到nullptr的时候，返回`None,`，否则如果是数的话，使用to_string转换为字符串，再加,。
 
@@ -890,7 +898,7 @@ public:
     TreeNode* rdeserialize(list<string>& nums) //根节点(数据是错误的); 数据
     {
         if(nums.size()==0) return NULL;
-        if(nums.front()=="None") //用完就扔掉了！
+        if(nums.front()=="None") //用完就扔掉了！ // 【list获取首元素】
         {
             nums.erase(nums.begin());//begin是迭代器 front是取值
             return NULL;
@@ -907,7 +915,7 @@ public:
         //step1: 把所有的,分隔出来
         int n = data.size();
         string str;
-        list<string> nums;
+        list<string> nums; //【使用链表list！】需要使用链表 否则会超时 上面rdeserialize会有很多删掉队头的操作
         for(int i=0; i<n;i++)
         {
             if(data[i]==',')
@@ -926,7 +934,11 @@ public:
 // TreeNode* ans = deser.deserialize(ser.serialize(root));
 ```
 
-### ==（2）利用文法解析来做（福报，有空可以看看）==
+
+
+
+
+#### ==（2）利用文法解析来做（福报，有空可以看看）==
 
 
 
@@ -987,7 +999,7 @@ public:
         //将cur右节点赋给 左节点中的最右节点
         while(cur)
         {
-            if(cur->left)
+            if(cur->left) // 如果没有左子树 直接往后走就行
             {
                 TreeNode* pre = cur->left;
                 //next 记录排好序的左右的根 
@@ -1078,7 +1090,7 @@ public:
 
 
 
-### [105. 从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)  :cat:
+### [105. 从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)  :kissing_cat:
 
 参考官方题解的视频
 
@@ -1309,7 +1321,7 @@ public:
 
 
 
-### [139. 单词拆分](https://leetcode.cn/problems/word-break/)
+### [139. 单词拆分](https://leetcode.cn/problems/word-break/) :cat:
 
 给你一个字符串 `s` 和一个字符串列表 `wordDict` 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 `s` 则返回 `true`。
 
@@ -3734,7 +3746,7 @@ public:
 
 ## 区间DP
 
-### [312. 戳气球](https://leetcode.cn/problems/burst-balloons/)
+### [312. 戳气球](https://leetcode.cn/problems/burst-balloons/) :cat:
 
 > 有 `n` 个气球，编号为`0` 到 `n - 1`，每个气球上都标有一个数字，这些数字存在数组 `nums` 中。
 >
@@ -4100,27 +4112,39 @@ public:
 > - `1 <= prices.length <= 5000`
 > - `0 <= prices[i] <= 1000`
 
-> 推荐先完成：[122. 买卖股票的最佳时机 II](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)（状态机DP的经典题目，题解可以看[买卖股票的最佳时机【基础算法精讲 21】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ho4y1W7QK/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)）。该题的代码如下：
+
+
+> 推荐先完成：[122. 买卖股票的最佳时机 II](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)（状态机DP的经典题目，题解可以看[买卖股票的最佳时机【基础算法精讲 21】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ho4y1W7QK/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)）。
+>
+> ### [122. 买卖股票的最佳时机 II](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)
+>
+> 给你一个整数数组 `prices` ，其中 `prices[i]` 表示某支股票第 `i` 天的价格。
+>
+> 在每一天，你可以决定是否购买和/或出售股票。你在任何时候 **最多** 只能持有 **一股** 股票。你也可以先购买，然后在 **同一天** 出售。
+>
+> 返回 *你能获得的 **最大** 利润* 。
+>
+> 该题的代码如下：
 >
 > ```c++
 > class Solution {
 > public:
->  int maxProfit(vector<int>& prices) {
->      int n = prices.size();
->      //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
->      int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
->      //dp[0][1] = -INT_MAX;
->      for(int i=0;i<n;i++)
->      {
->          // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
->          // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
->          int f = f1;
->          f1 = max(f1, f2 + prices[i]);
->          f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
->      }
->      //return dp[n][0];
->      return f1;
->  }
+> int maxProfit(vector<int>& prices) {
+>   int n = prices.size();
+>   //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
+>   int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
+>   //dp[0][1] = -INT_MAX;
+>   for(int i=0;i<n;i++)
+>   {
+>       // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
+>       // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
+>       int f = f1;
+>       f1 = max(f1, f2 + prices[i]);
+>       f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
+>   }
+>   //return dp[n][0];
+>   return f1;
+> }
 > };
 > ```
 
@@ -4300,13 +4324,13 @@ $$
 
 ![image-20250319222100287](assets/image-20250319222100287.png)
 
-###### 		1.2.1
+###### 				1.2.1
 
 首先加上 $dp[i-1]$ ，内部连在一起的最长有效括号：
 
 ![image-20250319222737916](assets/image-20250319222737916.png)
 
-###### 		1.2.2
+###### 				1.2.2
 
 它自己串号冰糖葫芦了，接下来找它前面是不是有跟它挨着的另一串冰糖葫芦，
 
@@ -4843,7 +4867,9 @@ public:
 
 想要实现顺时针旋转90°，可以先对数组进行上下翻转，再做主对角线对称
 
+如下图 只遍历 红色部分
 
+<img src="assets/image-20250325091447466.png" alt="image-20250325091447466" style="zoom:50%;" />
 
 ### [31. 下一个排列](https://leetcode.cn/problems/next-permutation/)
 
@@ -6147,6 +6173,8 @@ public:
 题解：
 
 **https://leetcode.cn/problems/evaluate-division/solutions/548634/399-chu-fa-qiu-zhi-nan-du-zhong-deng-286-w45d/?envType=problem-list-v2&envId=2cktkvj**
+
+<img src="assets/1609860627-dZoDYx-image.png" alt="img" style="zoom:33%;" />
 
 ```C++
 class Solution {
