@@ -241,6 +241,8 @@ M1 推荐 不用long
 
 链接：https://leetcode.cn/problems/palindrome-number/solutions/
 
+<img src="assets/9_fig1.png" alt="fig1" style="zoom:67%;" />
+
 ```C++
 class Solution 
 {

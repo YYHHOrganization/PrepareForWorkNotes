@@ -2,7 +2,7 @@
 
 > 这篇文档会聚焦于“动态规划”本身，因此每道题目只会整理动态规划的版本，帮助复习的时候形成完整的体系。为方便理解，部分题目在一轮做的时候不会考虑太多空间优化的问题，除非dp达到了三维再考虑或者是题目很好找到如何优化。`一轮做题的重点在于，把dp写好，空间的压缩与优化可以放到后面来解决。`
 
-
+DP题单:[分享丨【题单】动态规划（入门/背包/状态机/划分/区间/状压/数位/树形/数据结构优化）- 讨论 - 力扣（LeetCode）](https://leetcode.cn/discuss/post/3581838/fen-xiang-gun-ti-dan-dong-tai-gui-hua-ru-007o/)
 
 # 一、入门dp
 
@@ -750,6 +750,8 @@ public:
 
 
 
+## 以下为现阶段困难题部分
+
 ### （8）[1301. 最大得分的路径数目](https://leetcode.cn/problems/number-of-paths-with-max-score/)
 
 > 给你一个正方形字符数组 `board` ，你从数组最右下方的字符 `'S'` 出发。
@@ -790,6 +792,166 @@ public:
 > **提示：**
 >
 > - `2 <= board.length == board[i].length <= 100`
+
+本题是比较有难度的，需要用一个pair维护最大分数以及方案数，具体的注释写在了下面的代码中：
+
+```c++
+class Solution {
+public:
+    using PII = pair<int, int>;
+    const int MOD = 1e9+7;
+    int n = 0;
+    void update(vector<vector<PII>>& dp, int curx, int cury, int oldx, int oldy)
+    {
+        //正常更新逻辑,cur是当前的ij,而old则是考虑的转移过来的状态
+        if(oldx>=n ||oldy>=n || oldx<0 || oldy<0) return;
+        if(dp[oldx][oldy].first > dp[curx][cury].first) //这个状态的值更大
+        {
+            dp[curx][cury] = dp[oldx][oldy];
+        }
+        else if(dp[oldx][oldy].first==dp[curx][cury].first) //相等的情况,
+        {
+            dp[curx][cury].second  += dp[oldx][oldy].second;
+        }
+        if(dp[curx][cury].second>MOD)
+        {
+            dp[curx][cury].second-=MOD;
+        }
+    }
+    vector<int> pathsWithMaxScore(vector<string>& board) {
+        //在dp数组中存放一个PII,表示最大值值和方案数
+        //注意本题是从右下角,向上,左,左上方移动,因此有:(假设我们只考虑最大值)
+        //dp[i][j] = max({dp[i+1][j], dp[i][j+1], dp[i+1][j+1]}) + board[i][j] - '0'; (特判一下'X'的时候应该是-1),然后再找一下从哪个状态过来的,记录一下方案数(如果是相等的,加入之前的,如果之前的更大,则替换为之前的方案数,否则不做处理)
+        n = board[0].size();
+        vector dp(n, vector<PII>(n, {-1,0})); //初始值按照{-1, 0}来赋值就可以了(表示一开始都没得走)
+        //常见的套路：赋值右下角那个值，因为是S所以一定0分，有一个方案。
+        dp[n-1][n-1] = {0, 1};
+        //开始状态转移
+        for(int i=n-1;i>=0;i--)
+        {
+            for(int j=n-1;j>=0;j--)
+            {
+                if(i==n-1 && j==n-1) continue;
+                //默认情况针对障碍物,不是障碍物的话update一下
+                if(board[i][j]!='X')
+                {
+                    update(dp, i, j, i+1, j);
+                    update(dp, i, j, i, j+1);
+                    update(dp, i, j, i+1, j+1);
+                    if(dp[i][j].first!=-1)  //注意,这句需要加,也就是board[i][j]!='X'的时候dp[i][j].first为-1也是不行的,说明别的状态转移不过来,比如中间的XXXX拦住了,此时从下面应该推不上来才对
+                    {
+                        if(board[i][j]!='E') //非目的地,加上分数
+                        {
+                            dp[i][j].first += (board[i][j] - '0'); //有分数,把当前的分数加上
+                        }
+                    }
+                }
+            }
+        }
+        if(dp[0][0].first==-1) return {0,0};
+        else return {dp[0][0].first, dp[0][0].second};
+    }
+};
+```
+
+
+
+### （9）[2435. 矩阵中和能被 K 整除的路径](https://leetcode.cn/problems/paths-in-matrix-whose-sum-is-divisible-by-k/)
+
+> 给你一个下标从 **0** 开始的 `m x n` 整数矩阵 `grid` 和一个整数 `k` 。你从起点 `(0, 0)` 出发，每一步只能往 **下** 或者往 **右** ，你想要到达终点 `(m - 1, n - 1)` 。
+>
+> 请你返回路径和能被 `k` 整除的路径数目，由于答案可能很大，返回答案对 `10^9 + 7` **取余** 的结果。
+
+参考题解：[2435. 矩阵中和能被 K 整除的路径 - 力扣（LeetCode）](https://leetcode.cn/problems/paths-in-matrix-whose-sum-is-divisible-by-k/solutions/1878910/dong-tai-gui-hua-pythonjavacgo-by-endles-94wq/)
+
+需要多做一点题来熟悉套路。本题可以把路径和模k的结果作为一个扩展维度。
+
+![image-20250326214438859](assets/image-20250326214438859.png)
+
+注意这个套路，以后可能会用得到：
+
+```c++
+class Solution {
+public:
+    int numberOfPaths(vector<vector<int>>& grid, int k) {
+        //多一个维度(第三个维度)表示路径和%k对应的余数代表的路径数目
+        //dp[i][j][(v+grid[i][j])%k] = (dp[i-1][j][v] + dp[i][j-1][v])%mod; v的范围是0到k(统统遍历一遍!),防止越界将下标+1
+        //dp[0][0][grid[0][0]%k] = 1;
+        const int MOD = 1e9+7;
+        int m = grid.size();
+        int n = grid[0].size();
+        int dp[m+1][n+1][k];
+        memset(dp, 0, sizeof(dp));
+        dp[1][1][grid[0][0]%k] = 1;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(i==0 && j==0) continue; //之前赋完值了,不管
+                for(int v=0;v<k;v++)
+                {
+                    dp[i+1][j+1][(v+grid[i][j])%k] = (dp[i][j+1][v] + dp[i+1][j][v])%MOD;
+                }
+            }
+        }
+        return dp[m][n][0]; //能够被k整除
+    }
+};
+```
+
+
+
+### （10）[174. 地下城游戏](https://leetcode.cn/problems/dungeon-game/)
+
+省流：左上角为起点，右下角为终点，骑士只能往右或者往下走，初始健康值为x，每一格（包括起点和终点）可能为正数表示加血，负数表示扣血，如果血量<=0立刻死亡。问：能够到达右下角且不死亡的最小的初始健康值x是多少？
+
+可以看一下这个视频：[大巧不工，动态规划的正确打开方式。力扣 174，地下城游戏_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Jex9e6EUf/?spm_id_from=333.337.search-card.all.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)
+
+> 补充：关于本题左上角到右下角DP不满足“无后效性”的说明：[174. 地下城游戏 - 力扣（LeetCode）](https://leetcode.cn/problems/dungeon-game/solutions/326171/di-xia-cheng-you-xi-by-leetcode-solution/)
+>
+> 另一种比较好记的说法：
+>
+> - 从左上到右下是错误的说的通俗易懂点就是如果`dungeon[i][j]`为负数,那走到这一格子就是一个扣血的过程,如果当前剩余血量扣掉之后是负的,那肯定不行,所以有可能前一步多剩点血可能是好事,也有可能初始血量得加点才死不了。**这样的话就很难做出合理的决策了。**因此可以考虑从右下角往左上角推，并保证推导每一步的合法性（**相当于考虑每一步骑士不死所需要的最少血量**）。
+
+**最终解法（看这个！）**:
+
+- 令`dp[i][j]`表示从(i,j)到终点所需的最少血量，可以发现右下角是最小的子问题，而左上是一个比较麻烦的问题，因此我们从右下角转移到左上角（`dp[0][0]`是要求解的终极问题）。
+- 在右下角时，`dp[m-1][n-1] = max(1, 1-dungeon[m-1][n-1])`,如果这个格子是怪比较好理解，至少需要` 1-dungeon[m-1][n-1]`这么多的血才够扣。如果这个格子是回血包，那`1-dungeon[m-1][n-1]<1`，但至少得保证为1才是合理状态（不然就死了）。**也就是说这个状态说明至少需要1的血**
+- 接着是状态转移方程：
+  - `dp[i][j] = max(1, min(dp[i+1][j]-dungeon[i][j], dp[i][j+1]-dungeon[i][j])`;后两者取min是因为要尽量小的血量（因为一定能保证结果合法，所以选少的那个做状态转移是合适的）
+  - 可以设置边界值为0x3f3f3f，意味着血量无穷，在状态转移求min的时候右边界和下边界一定会从合法的那边转过来。
+
+> 出发的血量是无法确定的，想要确定就要枚举（二分），但结束时的血量是可以确定的（>=1，因为从右下推到左上，可以认为往右或者往下走的状态本来就已经通过max(1，xxx）约束强制只考虑合法的情况了，就省了枚举的步骤，所以从结束倒推更快。
+
+最终代码如下：
+```c++
+class Solution {
+public:
+    int calculateMinimumHP(vector<vector<int>>& dungeon) {
+        int m = dungeon.size();
+        int n = dungeon[0].size();
+        vector<vector<int>> dp(m+1, vector<int>(n+1, 0x3f3f3f));
+        dp[m-1][n-1] = max(1, 1-dungeon[m-1][n-1]);
+        for(int i=m-1;i>=0;i--)
+        {
+            for(int j=n-1;j>=0;j--)
+            {
+                if(i==m-1 && j==n-1) continue;
+                dp[i][j] = max(1, min(dp[i][j+1]-dungeon[i][j], dp[i+1][j]-dungeon[i][j]));
+            }
+        }
+        return dp[0][0];
+    }
+};
+```
+
+
+
+### ==（11）[329. 矩阵中的最长递增路径](https://leetcode.cn/problems/longest-increasing-path-in-a-matrix/)==
+
+> 给定一个 `m x n` 整数矩阵 `matrix` ，找出其中 **最长递增路径** 的长度。
+>
+> 对于每个单元格，你可以往上，下，左，右四个方向移动。 你 **不能** 在 **对角线** 方向上移动或移动到 **边界外**（即不允许环绕）。
 
 
 
@@ -906,6 +1068,8 @@ int main()
 ```
 
 >做题步骤可以是：先自己注释里写出转移方程二维dp形式以及边界写完，正式代码上直接写一维的 ，记得j是从右到左遍历
+
+
 
 ### （2）leetcode 494：目标和
 
@@ -1135,9 +1299,58 @@ public:
 
 考虑数目，使用和+
 
+
+
 ### （6）[3180. 执行操作可获得的最大总奖励 I](https://leetcode.cn/problems/maximum-total-reward-using-operations-i/)
 
+> 给你一个整数数组 `rewardValues`，长度为 `n`，代表奖励的值。
+>
+> 最初，你的总奖励 `x` 为 0，所有下标都是 **未标记** 的。你可以执行以下操作 **任意次** ：
+>
+> - 从区间 `[0, n - 1]` 中选择一个 **未标记** 的下标 `i`。
+> - 如果 `rewardValues[i]` **大于** 你当前的总奖励 `x`，则将 `rewardValues[i]` 加到 `x` 上（即 `x = x + rewardValues[i]`），并 **标记** 下标 `i`。
+>
+> 以整数形式返回执行最优操作能够获得的 **最大** 总奖励。
 
+本题是隐式“有顺序要求的”，所以需要一点贪心的思维，假设先考虑大的，再考虑小的，不会好过先考虑小的，再考虑大的，因此可以先对`rewardValues`数组做从小到大的排序，即可转换为0-1背包问题。令`dp[i][j]`表示考虑前i个物体的时候，获取到的总奖励值为j是否可行。最终我们要找到对于dp[n]来说，最大的为true的j是多少。
+
+- 状态转移方程：`dp[i][j] = (dp[i-1][j] | dp[i-1][j-rewardValues[i]])`,不过这里要保证`j>=rewardValues[i] && j-rewardValues[i]<rewardValues[i]`。
+- dp数组开的时候，第一维开到n+1（防止越界），第二维开到2*m即可，m是数组中的最大值（想象一下，最大的那个数一定会被选，因为如果最后选的不是最大的那个数m，则将其改成选择最大的数m会使得总奖励值更大，因此想要获得最大奖励，总要选最大的那个值m），此时选m之前的总奖励x应该<m（不然选不了），因此最大的奖励结果不会超过2m-1。无法得到比2m-1更大的和。
+
+- 最终求解的为使得`dp[n][j]=1`的最大的j，注意到只需要遍历到2m-1即可，m是数组中的最大值。
+
+本题代码如下：
+
+```c++
+class Solution {
+public:
+    int maxTotalReward(vector<int>& rewardValues) {
+        //1.sort
+        //1.dp[i][j]:i是考虑的数, j是使得总奖励为j是否可行 
+        //使得dp[n][j]=true的最大j
+        //第二维多少? 一定会包含最大的rewardValue(设为m),最大奖励值为2*m-1
+        sort(rewardValues.begin(), rewardValues.end());
+        int mx = rewardValues.back();
+        int n = rewardValues.size();
+        vector<int> dp(2*mx+1, 0);
+        dp[0] = 1; //这种奖励情况是合法的,能拿到
+        //接下来就是0-1背包了
+        for(int i=0;i<n;i++)
+        {
+            for(int j=2*rewardValues[i]-1;j>=rewardValues[i];j--)
+            {
+                dp[j] |= dp[j-rewardValues[i]];
+            }
+        }
+        int i = 2*mx-1;
+        for( ;i>=0;i--)
+        {
+            if(dp[i]==1) break;
+        }
+        return i;
+    }
+};
+```
 
 
 

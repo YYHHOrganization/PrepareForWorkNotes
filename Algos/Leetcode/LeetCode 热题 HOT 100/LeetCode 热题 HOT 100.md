@@ -1423,7 +1423,19 @@ public:
 
 
 
-##### M2 DP 推荐 （背包）
+##### M2 DP 推荐 
+
+类似爬楼梯  
+
+这个是排列 有顺序 最好不要当成背包来写
+
+❌错误的思考:`dp[i][j]  = dp[i][j-word.size()]`,这样是不对的,因为**abc**genshin**abc**这种情况是无法考虑进来的,这样的背包写法只能适用于组合,而这题是排列.可以从爬楼梯的角度思考.
+
+遍历string s大小,遍历wordDict所有的word
+
+
+
+正确的:
 
 ```C++
 class Solution {
@@ -1453,7 +1465,7 @@ public:
 };
 ```
 
-用set 更经典的背包写法
+用set 
 
 ```C++
 class Solution {
