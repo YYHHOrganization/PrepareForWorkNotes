@@ -4500,6 +4500,700 @@ public:
 
 
 
+# 七、并查集
+
+### 模板：
+
+```C++
+class UnionFind 
+{
+    vector<int> pa; // 代表元
+    vector<int> sz; // 集合大小
+
+public:
+    int cc; // 连通块个数
+
+    UnionFind(int n) : pa(n), sz(n, 1), cc(n) 
+    {
+        // 一开始有 n 个集合 {0}, {1}, ..., {n-1}
+        // 集合 i 的代表元是自己，大小为 1
+        ranges::iota(pa, 0); // iota(pa.begin(), pa.end(), 0);
+    }
+
+    // 返回 x 所在集合的代表元
+    // 同时做路径压缩，也就是把 x 所在集合中的所有元素的 pa 都改成代表元
+    int find(int x) 
+    {
+        // 如果 pa[x] == x，则表示 x 是代表元
+        if (pa[x] != x)   // 【是if 不是while  这是递归不用while】
+        {
+            pa[x] = find(pa[x]); // pa 改成代表元
+        }
+        return pa[x];
+    }
+
+    // 判断 x 和 y 是否在同一个集合
+    bool is_same(int x, int y) 
+    {
+        // 如果 x 的代表元和 y 的代表元相同，那么 x 和 y 就在同一个集合
+        // 这就是代表元的作用：用来快速判断两个元素是否在同一个集合
+        return find(x) == find(y);
+    }
+
+    // 把 from 所在集合合并到 to 所在集合中
+    // 返回是否合并成功
+    bool merge(int from, int to) 
+    {
+        int x = find(from), y = find(to);
+        if (x == y) { // from 和 to 在同一个集合，不做合并
+            return false;
+        }
+        pa[x] = y; // 合并集合。修改后就可以认为 from 和 to 在同一个集合了
+        sz[y] += sz[x]; // 更新集合大小（注意集合大小保存在代表元上）
+        // 无需更新 sz[x]，因为我们不用 sz[x] 而是用 sz[find(x)] 获取集合大小，但 find(x) == y，我们不会再访问 sz[x]
+        cc--; // 成功合并，连通块个数减一
+        return true;
+    }
+
+    // 返回 x 所在集合的大小
+    int get_size(int x) 
+    {
+        return sz[find(x)]; // 集合大小保存在代表元上
+    }
+};
+```
+
+>iota：https://blog.csdn.net/weixin_43869898/article/details/113029029
+>
+>批量递增赋值，也就是之前的init做法
+>
+>```C++
+>template <class ForwardIterator, class T>
+>//														T val:初始值
+>void iota (ForwardIterator first, ForwardIterator last, T val)
+>{
+>    while (first!=last)
+>    {
+>        *first = val;
+>        ++first;
+>        ++val;
+>    }
+>}
+>```
+
+
+
+## §7.1 基础
+
+3493. 属性图 ~1600
+990. 等式方程的可满足性 1638
+721. 账户合并
+737. 句子相似性 II（会员题）
+1101. 彼此熟识的最早时间（会员题）
+1258. 近义词句子（会员题）
+更多基础题，见 网格图题单 中的 DFS 和 图论题单 中的 DFS，其中大部分题目也可以用并查集实现。
+
+作者：灵茶山艾府
+链接：https://leetcode.cn/discuss/post/mOr1u6/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+
+
+看看以下这题似乎和“https://www.nowcoder.com/discuss/728254026348826624?sourceSSR=users”米哈游这个笔试题目类似
+
+### [3493. 属性图](https://leetcode.cn/problems/properties-graph/)
+
+给你一个二维整数数组 `properties`，其维度为 `n x m`，以及一个整数 `k`。
+
+定义一个函数 `intersect(a, b)`，它返回数组 `a` 和 `b` 中 **共有的不同整数的数量** 。
+
+构造一个 **无向图**，其中每个索引 `i` 对应 `properties[i]`。如果且仅当 `intersect(properties[i], properties[j]) >= k`（其中 `i` 和 `j` 的范围为 `[0, n - 1]` 且 `i != j`），节点 `i` 和节点 `j` 之间有一条边。
+
+返回结果图中 **连通分量** 的数量。
+
+**示例 1：**
+
+**输入：** properties = [[1,2],[1,1],[3,4],[4,5],[5,6],[7,7]], k = 1
+
+**输出：** 3
+
+**解释：**
+
+生成的图有 3 个连通分量：
+
+![img](assets/1742665594-CDVPWz-image.png)
+
+
+
+先建立它们之间的关系，建立完了 则dfs bfs 并查集都可以做
+
+```C++
+class UnionFind
+{
+    vector<int> parent;
+    vector<int> size;
+public:
+    int cc;
+    UnionFind(int n):size(n,1),parent(n),cc(n)
+    {
+        ranges::iota(parent,0);
+    }
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    bool is_same(int x,int y)
+    {
+        x = find(x);
+        y = find(y);
+        if(x==y)return true;
+        return false;
+    }
+    void merge(int from,int to)
+    {
+        from = find(from);
+        to  = find(to);
+        if(from==to)return ;
+        parent[from] =to;
+        size[to]+=size[from];
+        cc--;
+    }
+};
+class Solution {
+public:
+    
+    int numberOfComponents(vector<vector<int>>& properties, int k) {
+        //intersecta b 
+        int n = properties.size();
+        vector<unordered_set<int>> sets(n);
+        for(int i=0;i<n;i++)
+        {
+            unordered_set<int> uset(properties[i].begin(),properties[i].end());
+            sets[i] = uset;
+        }
+        int cnt=0;
+        UnionFind unionFind(n);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                cnt=0;
+                for(int x:sets[j])
+                {
+                    if(sets[i].contains(x))
+                    {
+                        cnt++;
+                        if(cnt>=k)break;
+                    }
+                }
+                if(cnt>=k)
+                {
+                    unionFind.merge(i,j);
+                }
+            }
+        }
+        return unionFind.cc;
+    }
+};
+```
+
+其实板子中的size 和 issame是用不到的，可以删除：
+
+```C++
+class UnionFind
+{
+    vector<int> parent;
+public:
+    int cc;
+    UnionFind(int n):parent(n),cc(n)
+    {
+        ranges::iota(parent,0);
+    }
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    void merge(int from,int to)
+    {
+        from = find(from);
+        to  = find(to);
+        if(from==to)return ;
+        parent[from] =to;
+        cc--;
+    }
+};
+class Solution {
+public:
+    
+    int numberOfComponents(vector<vector<int>>& properties, int k) {
+        //intersecta b 
+        int n = properties.size();
+        vector<unordered_set<int>> sets(n);
+        for(int i=0;i<n;i++)
+        {
+            sets[i] = unordered_set<int>(properties[i].begin(),properties[i].end());
+        }
+        int cnt=0;
+        UnionFind unionFind(n);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                cnt=0;
+                for(int x:sets[j])
+                {
+                    if(sets[i].contains(x))
+                    {
+                        cnt++;
+                        if(cnt>=k)break;
+                    }
+                }
+                if(cnt>=k)
+                {
+                    unionFind.merge(i,j);
+                }
+            }
+        }
+        return unionFind.cc;
+    }
+};
+```
+
+
+
+### [990. 等式方程的可满足性](https://leetcode.cn/problems/satisfiability-of-equality-equations/)
+
+给定一个由表示变量之间关系的字符串方程组成的数组，每个字符串方程 `equations[i]` 的长度为 `4`，并采用两种不同的形式之一：`"a==b"` 或 `"a!=b"`。在这里，a 和 b 是小写字母（不一定不同），表示单字母变量名。
+
+只有当可以将整数分配给变量名，以便满足所有给定的方程时才返回 `true`，否则返回 `false`。 
+
+**示例 1：**
+
+```
+输入：["a==b","b!=a"]
+输出：false
+解释：如果我们指定，a = 1 且 b = 1，那么可以满足第一个方程，但无法满足第二个方程。没有办法分配变量同时满足这两个方程。
+```
+
+
+
+```C++
+class UnionFind
+{
+    vector<int> parent;
+public:
+    UnionFind(int n):parent(n)
+    {
+        ranges::iota(parent,0);
+    }
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            parent[a]=find(parent[a]);
+        }
+        return parent[a];
+    }
+    int is_same(int x,int y)
+    {   
+        x =find(x);
+        y=find(y);
+        if(x==y)return true;
+        return false;
+    }
+    void merge(int from,int to)
+    {
+        from = find(from);
+        to = find(to);
+        if(from==to)return;
+        parent[from] = to;
+    }
+};
+class Solution {
+public:
+    bool equationsPossible(vector<string>& equations) {
+        // == 的一个并查集
+        // 如果一个并查集中的不等，那么false  或者说如果不等的 在一个并查集中 错误
+        //先将所有相等的放在一起
+
+        //记录不等的的idx
+        vector<int> noEqualIdx;
+        int n = equations.size();
+        UnionFind unionFind(26);
+        for(int i=0;i<n;i++)
+        {
+            if(equations[i][1]=='!')
+            {
+                noEqualIdx.push_back(i);
+            }
+            else
+            {
+                unionFind.merge(equations[i][0]-'a',equations[i][3]-'a');
+            }
+        }
+        for(int i=0;i<noEqualIdx.size();i++)
+        {
+            int idx = noEqualIdx[i];
+            if(unionFind.is_same(equations[idx][0]-'a',equations[idx][3]-'a'))
+            {
+                // cout<<equations[i][0]<<" "<<equations[i][3]<<endl;
+                return false;
+            }
+        }
+        return true;
+    }
+};
+```
+
+
+
+### [721. 账户合并](https://leetcode.cn/problems/accounts-merge/)
+
+给定一个列表 `accounts`，每个元素 `accounts[i]` 是一个字符串列表，其中第一个元素 `accounts[i][0]` 是 *名称 (name)*，其余元素是 ***emails*** 表示该账户的邮箱地址。
+
+现在，我们想合并这些账户。如果两个账户都有一些共同的邮箱地址，则两个账户必定属于同一个人。请注意，即使两个账户具有相同的名称，它们也可能属于不同的人，因为人们可能具有相同的名称。一个人最初可以拥有任意数量的账户，但其所有账户都具有相同的名称。
+
+合并账户后，按以下格式返回账户：每个账户的第一个元素是名称，其余元素是 **按字符 ASCII 顺序排列** 的邮箱地址。账户本身可以以 **任意顺序** 返回。
+
+ 
+
+**示例 1：**
+
+```C++
+输入：accounts = [["John", "johnsmith@mail.com", "john00@mail.com"], ["John", "johnnybravo@mail.com"], ["John", "johnsmith@mail.com", "john_newyork@mail.com"], ["Mary", "mary@mail.com"]]
+输出：[["John", 'john00@mail.com', 'john_newyork@mail.com', 'johnsmith@mail.com'],  ["John", "johnnybravo@mail.com"], ["Mary", "mary@mail.com"]]
+解释：
+第一个和第三个 John 是同一个人，因为他们有共同的邮箱地址 "johnsmith@mail.com"。 
+第二个 John 和 Mary 是不同的人，因为他们的邮箱地址没有被其他帐户使用。
+可以以任何顺序返回这些列表，例如答案 [['Mary'，'mary@mail.com']，['John'，'johnnybravo@mail.com']，
+['John'，'john00@mail.com'，'john_newyork@mail.com'，'johnsmith@mail.com']] 也是正确的。
+```
+
+
+
+官方的题解写得很垃圾，我也是：。。
+
+（有空可以看看零茶山艾府的dfs 似乎会精简一些）
+
+```C++
+class UnionFind
+{
+    vector<int> parent;
+public:
+    UnionFind(int n):parent(n)
+    {
+        ranges::iota(parent,0);
+    }
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            parent[a]=find(parent[a]);
+        }
+        return parent[a];
+    }
+    void merge(int from,int to)
+    {
+        from = find(from);
+        to = find(to);
+        if(from==to)return;
+        parent[from] = to;
+    }
+};
+
+class Solution {
+public:
+    vector<vector<string>> accountsMerge(vector<vector<string>>& accounts) {
+        // 输入：
+        // accounts = 
+        // [["John", "johnsmith@mail.com", "john00@mail.com"],
+        //  ["John", "johnnybravo@mail.com"], 
+        //  ["John", "johnsmith@mail.com", "john_newyork@mail.com"],
+        //   ["Mary", "mary@mail.com"]]
+        
+        // 输出：
+        // [["John", 'john00@mail.com', 'john_newyork@mail.com', 'johnsmith@mail.com'], 
+        //  ["John", "johnnybravo@mail.com"], 
+        //  ["Mary", "mary@mail.com"]]
+
+        //每个邮箱对应的编号 map<string, int> emailToIndex;//一个邮箱只会对应一个编号
+        //遍历账户 accounts ，获取邮箱编号，进行邮箱编号合并
+
+        //遍历所有邮箱 emailToIndex，并查集得到该邮箱对应账户，放入账户对应的emails
+
+        //官方题解为何要这么恶心，直接设置set 然后如果是一个就merge且放进set，
+        //然后find其祖先，打印出来（记录一个 hash  打印过的idx不会再打印）
+        map<string,int> emailToIndex;
+        int n = accounts.size();
+        int accountIdx = 0;
+        //遍历账户 accounts ，获取邮箱编号，
+        for(int i=0;i<n;i++) 
+        {
+            for(int j=1;j<accounts[i].size();j++)
+            {
+                string email = accounts[i][j];
+                if(!emailToIndex.contains(email))
+                {
+                    emailToIndex[email] = accountIdx++;
+                }
+            }
+        }
+        //感觉上下可以合并)
+        //进行邮箱编号合并
+        UnionFind uf(accountIdx);
+        for(int i=0;i<n;i++) //如果
+        {
+            string email1 = accounts[i][1];
+            int firstIdx = emailToIndex[email1];
+            for(int j=2;j<accounts[i].size();j++)
+            {
+                string email = accounts[i][j];
+                int afterIdx = emailToIndex[email];
+                //合并
+                uf.merge(firstIdx,afterIdx);
+            }
+        }
+        // 以上并查集已经构造完了，也就是同样的人的 邮箱编号们 已经在一个集合里了
+        
+        //遍历所有accounts，取出email对应idx，存放name
+        //将 unordered_map<int,> -> idx,set<string>:idx,[name,emai...l
+        unordered_map<int,set<string>> idxAllEmail;//idx对应的所有邮箱
+        unordered_map<int,string> idx2name;//idx对应的name
+        for(int i=0;i<n;i++) //如果
+        {
+            string name = accounts[i][0];
+            string email = accounts[i][1];
+            int idx = emailToIndex[email];
+            idx = uf.find(idx);
+            idx2name[idx] = name;
+            for(int j=1;j<accounts[i].size();j++)
+            {
+                idxAllEmail[idx].insert(accounts[i][j]);
+            }
+        }
+        //重建 输出
+        vector<vector<string>> res;
+        for(auto &p :idxAllEmail)
+        {
+            int idx = p.first;
+            set<string> emailsSet = p.second;
+            string name = idx2name[idx];
+            vector<string> temp;
+            temp.push_back(name);
+            for(auto & em:emailsSet)
+            {
+                // cout<<em<<" ";
+                temp.push_back(em);
+            }
+            // cout<<"name"<<name<<endl;
+            res.push_back(temp);
+        }
+        return res;
+        
+        
+
+    }
+};
+```
+
+
+
+## §7.2 进阶
+
+
+
+### [1202. 交换字符串中的元素](https://leetcode.cn/problems/smallest-string-with-swaps/)
+
+给你一个字符串 `s`，以及该字符串中的一些「索引对」数组 `pairs`，其中 `pairs[i] = [a, b]` 表示字符串中的两个索引（编号从 0 开始）。
+
+你可以 **任意多次交换** 在 `pairs` 中任意一对索引处的字符。
+
+返回在经过若干次交换后，`s` 可以变成的按字典序最小的字符串。
+
+ 
+
+**示例 1:**
+
+```
+输入：s = "dcab", pairs = [[0,3],[1,2]]
+输出："bacd"
+解释： 
+交换 s[0] 和 s[3], s = "bcad"
+交换 s[1] 和 s[2], s = "bacd"
+```
+
+
+
+87% 统一存入vec再sort
+
+https://leetcode.cn/problems/smallest-string-with-swaps/solutions/555191/bing-cha-ji-sheng-cheng-lian-tong-tu-by-ea8er/
+
+```C++
+
+class UnionFind
+{
+    vector<int> parent;
+public:
+    UnionFind(int n) :parent(n)
+    {
+        /*ranges::iota(parent, 0);*/
+        for (int i = 0; i < n; i++)
+        {
+            parent[i] = i;
+        }
+    }
+    int find(int a)
+    {
+        if(a != parent[a])
+        {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    void merge(int from, int to)
+    {
+        from = find(from);
+        to = find(to);
+        if (from == to)return;
+        parent[from] = to;
+    }
+};
+class Solution {
+public:
+    string smallestStringWithSwaps(string s, vector<vector<int>>& pairs) {
+        //某些位置可以随意交换  这些位置按照字典序放
+        //1先连接起来， 2然后每个集合都按照字典序放入一个 idx,vec<int>  
+        //然后从左到右 查找这个集合中的最小值 放入并erase
+        if (pairs.size() == 0)return s;
+        int pairn = pairs.size();
+        int sn = s.size();
+        UnionFind uf(sn);
+        for (int i = 0; i < pairn; i++)
+        {
+            uf.merge(pairs[i][0], pairs[i][1]);
+        }
+        
+        //idx,set<int>
+        //需要注意 可能有多个相同字符 如果set就会被去掉。set每次排序或许还是过于费了 可以总的加入后排序
+        // unordered_map<int, multiset<char>> umap;
+        unordered_map<int, vector<int>> umap;
+        for (int i = 0; i < sn; i++)//应该是字符sn 而不是pairn 这样的话不会重复加入
+        {
+            int parent = uf.find(i);
+            umap[parent].push_back(s[i]);//把字符当作int排序 可以的
+        }
+        //再统一排序
+        for(auto &[k,v]:umap)
+        {
+            sort(v.begin(),v.end(),greater<int>{});//从大到小  这样直接从后面取O(1)
+        }
+        for (int i = 0; i < sn; i++)
+        {
+            int parent = uf.find(i);
+            s[i] = umap[parent].back();
+            umap[parent].pop_back();
+        }
+       
+        return s;
+    }
+};
+```
+
+
+
+27%  M 使用multiset边插入边排序 会更慢！不推荐
+
+```C++
+
+class UnionFind
+{
+    vector<int> parent;
+public:
+    UnionFind(int n) :parent(n)
+    {
+        /*ranges::iota(parent, 0);*/
+        for (int i = 0; i < n; i++)
+        {
+            parent[i] = i;
+        }
+    }
+    int find(int a)
+    {
+        if(a != parent[a])
+        {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    void merge(int from, int to)
+    {
+        from = find(from);
+        to = find(to);
+        if (from == to)return;
+        parent[from] = to;
+    }
+};
+class Solution {
+public:
+    string smallestStringWithSwaps(string s, vector<vector<int>>& pairs) {
+        //某些位置可以随意交换  这些位置按照字典序放
+        //先连接起来， 然后每个集合都按照字典序放入一个 idx,set<int>  
+        //然后从左到右 查找这个集合中的最小值 放入并erase
+        if (pairs.size() == 0)return s;
+        int pairn = pairs.size();
+        int sn = s.size();
+        UnionFind uf(sn);
+        for (int i = 0; i < pairn; i++)
+        {
+            uf.merge(pairs[i][0], pairs[i][1]);
+        }
+        
+        //idx,set<int>
+        //需要注意 可能有多个相同字符 如果set就会被去掉。set每次排序或许还是过于费了 可以总的加入后排序
+        unordered_map<int, multiset<char>> umap;
+        for (int i = 0; i < sn; i++)//应该是字符sn 而不是pairn 
+        {
+            int parent = uf.find(i);
+            umap[parent].insert(s[i]);
+        }
+        /*for (auto& p : umap)
+        {
+            cout << p.first << " :" << " ";
+            set<char> se = p.second;
+            for (auto i : se)
+            {
+                cout << i << " ";
+            }
+            cout << endl;
+        }*/
+        for (int i = 0; i < sn; i++)
+        {
+            int parent = uf.find(i);
+            char top = *umap[parent].begin();
+            s[i] = top;
+            umap[parent].erase(umap[parent].begin());
+        }
+       
+        return s;
+    }
+};
+```
+
+
+
+
+
+
+
 # 八、树状数组和线段树
 
 ## 1.树状数组原理讲解
