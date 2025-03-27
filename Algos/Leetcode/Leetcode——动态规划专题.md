@@ -2,7 +2,7 @@
 
 > 这篇文档会聚焦于“动态规划”本身，因此每道题目只会整理动态规划的版本，帮助复习的时候形成完整的体系。为方便理解，部分题目在一轮做的时候不会考虑太多空间优化的问题，除非dp达到了三维再考虑或者是题目很好找到如何优化。`一轮做题的重点在于，把dp写好，空间的压缩与优化可以放到后面来解决。`
 
-
+DP题单:[分享丨【题单】动态规划（入门/背包/状态机/划分/区间/状压/数位/树形/数据结构优化）- 讨论 - 力扣（LeetCode）](https://leetcode.cn/discuss/post/3581838/fen-xiang-gun-ti-dan-dong-tai-gui-hua-ru-007o/)
 
 # 一、入门dp
 
@@ -750,6 +750,8 @@ public:
 
 
 
+## 以下为现阶段困难题部分
+
 ### （8）[1301. 最大得分的路径数目](https://leetcode.cn/problems/number-of-paths-with-max-score/)
 
 > 给你一个正方形字符数组 `board` ，你从数组最右下方的字符 `'S'` 出发。
@@ -791,7 +793,140 @@ public:
 >
 > - `2 <= board.length == board[i].length <= 100`
 
+本题是比较有难度的，需要用一个pair维护最大分数以及方案数，具体的注释写在了下面的代码中：
 
+```c++
+class Solution {
+public:
+    using PII = pair<int, int>;
+    const int MOD = 1e9+7;
+    int n = 0;
+    void update(vector<vector<PII>>& dp, int curx, int cury, int oldx, int oldy)
+    {
+        //正常更新逻辑,cur是当前的ij,而old则是考虑的转移过来的状态
+        if(oldx>=n ||oldy>=n || oldx<0 || oldy<0) return;
+        if(dp[oldx][oldy].first > dp[curx][cury].first) //这个状态的值更大
+        {
+            dp[curx][cury] = dp[oldx][oldy];
+        }
+        else if(dp[oldx][oldy].first==dp[curx][cury].first) //相等的情况,
+        {
+            dp[curx][cury].second  += dp[oldx][oldy].second;
+        }
+        if(dp[curx][cury].second>MOD)
+        {
+            dp[curx][cury].second-=MOD;
+        }
+    }
+    vector<int> pathsWithMaxScore(vector<string>& board) {
+        //在dp数组中存放一个PII,表示最大值值和方案数
+        //注意本题是从右下角,向上,左,左上方移动,因此有:(假设我们只考虑最大值)
+        //dp[i][j] = max({dp[i+1][j], dp[i][j+1], dp[i+1][j+1]}) + board[i][j] - '0'; (特判一下'X'的时候应该是-1),然后再找一下从哪个状态过来的,记录一下方案数(如果是相等的,加入之前的,如果之前的更大,则替换为之前的方案数,否则不做处理)
+        n = board[0].size();
+        vector dp(n, vector<PII>(n, {-1,0})); //初始值按照{-1, 0}来赋值就可以了(表示一开始都没得走)
+        //常见的套路：赋值右下角那个值，因为是S所以一定0分，有一个方案。
+        dp[n-1][n-1] = {0, 1};
+        //开始状态转移
+        for(int i=n-1;i>=0;i--)
+        {
+            for(int j=n-1;j>=0;j--)
+            {
+                if(i==n-1 && j==n-1) continue;
+                //默认情况针对障碍物,不是障碍物的话update一下
+                if(board[i][j]!='X')
+                {
+                    update(dp, i, j, i+1, j);
+                    update(dp, i, j, i, j+1);
+                    update(dp, i, j, i+1, j+1);
+                    if(dp[i][j].first!=-1)  //注意,这句需要加,也就是board[i][j]!='X'的时候dp[i][j].first为-1也是不行的,说明别的状态转移不过来,比如中间的XXXX拦住了,此时从下面应该推不上来才对
+                    {
+                        if(board[i][j]!='E') //非目的地,加上分数
+                        {
+                            dp[i][j].first += (board[i][j] - '0'); //有分数,把当前的分数加上
+                        }
+                    }
+                }
+            }
+        }
+        if(dp[0][0].first==-1) return {0,0};
+        else return {dp[0][0].first, dp[0][0].second};
+    }
+};
+```
+
+
+
+### （9）[2435. 矩阵中和能被 K 整除的路径](https://leetcode.cn/problems/paths-in-matrix-whose-sum-is-divisible-by-k/)
+
+> 给你一个下标从 **0** 开始的 `m x n` 整数矩阵 `grid` 和一个整数 `k` 。你从起点 `(0, 0)` 出发，每一步只能往 **下** 或者往 **右** ，你想要到达终点 `(m - 1, n - 1)` 。
+>
+> 请你返回路径和能被 `k` 整除的路径数目，由于答案可能很大，返回答案对 `10^9 + 7` **取余** 的结果。
+
+参考题解：[2435. 矩阵中和能被 K 整除的路径 - 力扣（LeetCode）](https://leetcode.cn/problems/paths-in-matrix-whose-sum-is-divisible-by-k/solutions/1878910/dong-tai-gui-hua-pythonjavacgo-by-endles-94wq/)
+
+需要多做一点题来熟悉套路。本题可以把路径和模k的结果作为一个扩展维度。
+
+![image-20250326214438859](assets/image-20250326214438859.png)
+
+注意这个套路，以后可能会用得到：
+
+```c++
+class Solution {
+public:
+    int numberOfPaths(vector<vector<int>>& grid, int k) {
+        //多一个维度(第三个维度)表示路径和%k对应的余数代表的路径数目
+        //dp[i][j][(v+grid[i][j])%k] = (dp[i-1][j][v] + dp[i][j-1][v])%mod; v的范围是0到k(统统遍历一遍!),防止越界将下标+1
+        //dp[0][0][grid[0][0]%k] = 1;
+        const int MOD = 1e9+7;
+        int m = grid.size();
+        int n = grid[0].size();
+        int dp[m+1][n+1][k];
+        memset(dp, 0, sizeof(dp));
+        dp[1][1][grid[0][0]%k] = 1;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(i==0 && j==0) continue; //之前赋完值了,不管
+                for(int v=0;v<k;v++)
+                {
+                    dp[i+1][j+1][(v+grid[i][j])%k] = (dp[i][j+1][v] + dp[i+1][j][v])%MOD;
+                }
+            }
+        }
+        return dp[m][n][0]; //能够被k整除
+    }
+};
+```
+
+
+
+### （10）[174. 地下城游戏](https://leetcode.cn/problems/dungeon-game/)
+
+省流：左上角为起点，右下角为终点，骑士只能往右或者往下走，初始健康值为x，每一格（包括起点和终点）可能为正数表示加血，负数表示扣血，如果血量<=0立刻死亡。问：能够到达右下角且不死亡的最小的初始健康值x是多少？
+
+可以看一下这个视频：[大巧不工，动态规划的正确打开方式。力扣 174，地下城游戏_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Jex9e6EUf/?spm_id_from=333.337.search-card.all.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)
+
+> 补充：关于本题左上角到右下角DP不满足“无后效性”的说明：[174. 地下城游戏 - 力扣（LeetCode）](https://leetcode.cn/problems/dungeon-game/solutions/326171/di-xia-cheng-you-xi-by-leetcode-solution/)
+>
+> 另一种比较好记的说法：
+>
+> - 从左上到右下是错误的说的通俗易懂点就是如果`dungeon[i][j]`为负数,那走到这一格子就是一个扣血的过程,如果当前剩余血量扣掉之后是负的,那肯定不行,所以有可能前一步多剩点血可能是好事,也有可能初始血量得加点才死不了。**这样的话就很难做出合理的决策了。**
+
+依据上面的分析，考虑一下从右下角出发到左上角呢？令`dp[i][j]`表示从坐标(i，j)到终点（这里的终点指的就是原来的起点了）所需的最小初始值。换句话说，当我们到达坐标 (*i*,*j*) 时，如果此时我们的路径和不小于 `dp[i][j]`，我们就能到达终点。
+
+我们要明白的一点是，假设我们从公主开始遇到的怪物(负数)，我们可以将它叠加起来，当往上或者往左走是如果我们遇到正数我们无论多少都是可以将它加起来的，但我们要注意的一个地方就是如果加上这个回血的正数大于0时，这个血无论如何骑士是无法得到的，因为我们是从后面开始，所以它帮助不了骑士，骑士要打过前面的怪物才能捡到这个血包，所以我们
+要将此时的状态设置为0。
+
+到此思路已经非常明显了：
+
+1. 如果公主的状态大于0，将它设置为0，我们已经到达公主不需要血包
+2. 然后设置最后一列和最后一行的状态，从公主开始
+3. 对于其余的格子，取最大的数，越大说明威胁越小，所以为max
+4. 然后根据之前的思路拥有我们的动态方程`dungeon[i][j] = (dungeon[i][j] + threat > 0)? 0 : dungeon[i][j] + threat`;
+5. 当我们达到骑士的位置时所叠加起来的负数也就是我们需要的血量，但是我们要加1让骑士的血量不会到0。
+
+> 出发的血量是无法确定的，想要确定就要枚举（二分），但结束时的血量是可以确定的（>=1），就省了枚举的步骤，所以从结束倒推更快。
 
 
 
