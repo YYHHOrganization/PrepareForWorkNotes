@@ -91,12 +91,6 @@ public:
 
 
 
-### ==（4）[121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)==
-
-看了一眼，感觉跟枚举右，维护左的关联性没有那么大，先不在这里做了。
-
-
-
 ### （5）[624. 数组列表中的最大距离](https://leetcode.cn/problems/maximum-distance-in-arrays/)
 
 针对本题来说，**枚举右，维护左**的思想就在于，在每次往后遍历一个数组时，维护左侧遍历完的数组中的最小值和最大值，而最终结果一定在（当前数组最大-历史数组最小，以及历史数组最大-当前数组最小）中产生。
@@ -5336,12 +5330,12 @@ public:
 >//														T val:初始值
 >void iota (ForwardIterator first, ForwardIterator last, T val)
 >{
->    while (first!=last)
->    {
->        *first = val;
->        ++first;
->        ++val;
->    }
+>        while (first!=last)
+>        {
+>            *first = val;
+>            ++first;
+>            ++val;
+>        }
 >}
 >```
 

@@ -1363,6 +1363,108 @@ public:
 
 
 
+### （7）二维背包——[474. 一和零](https://leetcode.cn/problems/ones-and-zeroes/)
+
+> 本题除了背包是二维的，还需要考虑“至多”如何体现在背包当中。对于“至多”的类型，初始值设置为当i=-1时，相当于背包中没有任何物品，对于恰好型的来说`dp[-1][0]`才是合法态，而如果是至多的话`dp[-1][j]`都是合法的（个人理解相当于没用完背包的容量，是满足“至多”属性的，没有问题）。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int findMaxForm(vector<string>& strs, int m, int n) {
+        //二维背包,dp[i][j][k]表示考虑到第i个字符串str,0的个数"至多"为j,1的个数"至多"为k的最大子集的长度(最多能选几个)
+        //dp[i][j][k] = max(dp[i-1][j][k], dp[i-1][j-当前字符串0的个数][k-当前字符串1的个数]+1); 当然,要保证不要越界
+        //dp[-1][j][k] = 0 相当于没有物品可以选,为0
+        int sz = strs.size();
+        vector dp(m+1, vector<int>(n+1)); //dp[0][j][k]都是0,表示什么都没选的情况下,最大子集长度一定是0
+        for(int i=0;i<sz;i++)
+        {
+            int zeroCnt = ranges::count(strs[i], '0');
+            int oneCnt = (int)strs[i].size() - zeroCnt;
+            for(int j=m;j>=zeroCnt;j--)
+            {
+                for(int k=n;k>=oneCnt;k--)
+                {
+                    dp[j][k] = max(dp[j][k], dp[j-zeroCnt][k-oneCnt]+1);
+                }
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
+
+
+### （8）[3489. 零数组变换 IV](https://leetcode.cn/problems/zero-array-transformation-iv/)
+
+> 给你一个长度为 `n` 的整数数组 `nums` 和一个二维数组 `queries` ，其中 `queries[i] = [li, ri, vali]`。
+>
+> 每个 `queries[i]` 表示以下操作在 `nums` 上执行：
+>
+> - 从数组 `nums` 中选择范围 `[li, ri]` 内的一个下标子集。
+> - 将每个选中下标处的值减去 **正好** `vali`。
+>
+> **零数组** 是指所有元素都等于 0 的数组。
+>
+> 返回使得经过前 `k` 个查询（按顺序执行）后，`nums` 转变为 **零数组** 的最小可能 **非负** 值 `k`。如果不存在这样的 `k`，返回 -1。
+>
+> 数组的 **子集** 是指从数组中选择的一些元素（可能为空）。
+>
+> 背包问题花样是真的多。
+
+其实这道题目可以抽象为：对于nums数组的每一个元素来说，找到queries数组中哪些条目可以执行到这个元素，然后每个条目选或者不选，使得最终和为当前元素的值，于是这道题目就变成了**分割等和子集的类似题目**。需要记录让每个数都能减为0的值中的最大值，这个最大值才能做到让整个数组都减为0.
+
+- 注意本题要特判一下0的情况，不然有的测试用例过不去（因为0本身是不用操作的）。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int minZeroArray(vector<int>& nums, vector<vector<int>>& queries) {
+        int n = nums.size();
+        int res = 0;
+        int m = queries.size();
+        for(int i=0;i<n;i++)
+        {
+            int x = nums[i];
+            if(x==0) continue; //对于0来说,并不需要操作
+            //从queries数组中找到能对当前元素进行操作的queries下标
+            //dp[index][j] = dp[index-1][j] | dp[index-1][j-queries[index][2]]
+            //dp[-1][0] = 1;
+            vector<int> dp(x+1); //挑选一些query,使得总和为x
+            dp[0] = 1;
+            for(int index=0;index<m;index++) //每个query
+            {
+                //需要query对当前值是有效的
+                if(queries[index][0]>i || queries[index][1]<i) continue;
+                for(int j=x;j>=queries[index][2];j--)
+                {
+                    dp[j] |= dp[j-queries[index][2]];
+                }
+                if(dp[x]==1) //说明存在,能够分割,保存最大值,计算nums数组的下一个数是否符合
+                {
+                    res = max(res, index+1); //+1是因为答案要求的是前多少个，因此是索引值+1
+                    break; //看nums数组的下一个数的选择情况
+                }
+            }
+            if(dp[x]==0) return -1; //无法达成,直接提前返回
+        }
+        return res;
+    }
+};
+```
+
+
+
+
+
+------
+
+
+
 ## 2.完全背包
 
 完全背包和0-1背包的区别在于，不再是n个物品，而是n种物品（每种物品可以无限制选择），那么此时的状态转移方程就变为：
@@ -1375,7 +1477,7 @@ dfs(i,c) = max(dfs(i-1,c), dfs(i, c-w[i])+v[i]); //可以继续考虑当前第i�
 
 以下是例题。
 
-（完全背包似乎是j从左到右）
+（完全背包在降维的时候，j是从左到右进行遍历的）
 
 ### （1）[322. 零钱兑换](https://leetcode.cn/problems/coin-change/)
 
@@ -1442,6 +1544,63 @@ public:
 ```
 
 
+
+### （2）[518. 零钱兑换 II](https://leetcode.cn/problems/coin-change-ii/)
+
+跟上一道题目是类似的，不过变成了求解总的方案数。代码如下：
+
+> 注意这道题目中间结果可能会爆INT上限，在之前的题目也有遇到过这种问题，即最终求解的结果不会达到INT上限，但中间结果可能会达到。可以把dp数组设置为unigned long long来规避这个问题（比较推荐），之前还有题目会剪枝掉越界的中间结果（毕竟既然保证最终结果不越界，不可能是从中间结果推过来的），**但这样做感觉会破坏代码的鲁棒性，感觉还是先用unsigned long long看一下，不行再剪枝吧。**
+
+```c++
+class Solution {
+public:
+    int change(int amount, vector<int>& coins) {
+        vector<unsigned long long> dp(amount+1, 0);
+        dp[0] = 1;
+        int n = coins.size();
+        for(int i=0;i<n;i++)
+        {
+            for(int j=coins[i];j<=amount;j++)
+            {
+                dp[j] += dp[j-coins[i]];
+            }
+        }
+        return dp[amount];
+    }
+};
+```
+
+
+
+### （3）[279. 完全平方数](https://leetcode.cn/problems/perfect-squares/)（HOT 100） :fire:
+
+> 给你一个整数 `n` ，返回 *和为 `n` 的完全平方数的最少数量* 。
+>
+> **完全平方数** 是一个整数，其值等于另一个整数的平方；换句话说，其值等于一个整数自乘的积。例如，`1`、`4`、`9` 和 `16` 都是完全平方数，而 `3` 和 `11` 不是。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：n = 12
+> 输出：3 
+> 解释：12 = 4 + 4 + 4
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：n = 13
+> 输出：2
+> 解释：13 = 4 + 9
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= n <= 104`
 
 
 
