@@ -752,7 +752,7 @@ public:
 
 ## 以下为现阶段困难题部分
 
-### （8）[1301. 最大得分的路径数目](https://leetcode.cn/problems/number-of-paths-with-max-score/)
+### （8）[1301. 最大得分的路径数目 ](https://leetcode.cn/problems/number-of-paths-with-max-score/):cat:
 
 > 给你一个正方形字符数组 `board` ，你从数组最右下方的字符 `'S'` 出发。
 >
@@ -825,7 +825,7 @@ public:
         n = board[0].size();
         vector dp(n, vector<PII>(n, {-1,0})); //初始值按照{-1, 0}来赋值就可以了(表示一开始都没得走)
         //常见的套路：赋值右下角那个值，因为是S所以一定0分，有一个方案。
-        dp[n-1][n-1] = {0, 1};
+        dp[n-1][n-1] = {0, 1}; 
         //开始状态转移
         for(int i=n-1;i>=0;i--)
         {
@@ -856,7 +856,7 @@ public:
 
 
 
-### （9）[2435. 矩阵中和能被 K 整除的路径](https://leetcode.cn/problems/paths-in-matrix-whose-sum-is-divisible-by-k/)
+### （9）[2435. 矩阵中和能被 K 整除的路径](https://leetcode.cn/problems/paths-in-matrix-whose-sum-is-divisible-by-k/) :cat:
 
 > 给你一个下标从 **0** 开始的 `m x n` 整数矩阵 `grid` 和一个整数 `k` 。你从起点 `(0, 0)` 出发，每一步只能往 **下** 或者往 **右** ，你想要到达终点 `(m - 1, n - 1)` 。
 >
@@ -881,8 +881,8 @@ public:
         int m = grid.size();
         int n = grid[0].size();
         int dp[m+1][n+1][k];
-        memset(dp, 0, sizeof(dp));
-        dp[1][1][grid[0][0]%k] = 1;
+        memset(dp, 0, sizeof(dp));//这题是方案数 所以初始化为0
+        dp[1][1][grid[0][0]%k] = 1;//除了左上角初始值为1
         for(int i=0;i<m;i++)
         {
             for(int j=0;j<n;j++)
@@ -898,6 +898,15 @@ public:
     }
 };
 ```
+
+易错点：
+
+>```C++
+>1 方案数初始化为0才是对的
+>2 第二维初始化需要写为vector<vector<int>>...而不是vector<int>...
+>//vector<vector<vector<int>>> dp(m+1,vector<int>(n+1,vector<int>(k,-0x3f3f3f)));
+>vector<vector<vector<int>>> dp(m+1,vector<vector<int>>(n+1,vector<int>(k,0)));
+>```
 
 
 
@@ -916,10 +925,10 @@ public:
 **最终解法（看这个！）**:
 
 - 令`dp[i][j]`表示从(i,j)到终点所需的最少血量，可以发现右下角是最小的子问题，而左上是一个比较麻烦的问题，因此我们从右下角转移到左上角（`dp[0][0]`是要求解的终极问题）。
-- 在右下角时，`dp[m-1][n-1] = max(1, 1-dungeon[m-1][n-1])`,如果这个格子是怪比较好理解，至少需要` 1-dungeon[m-1][n-1]`这么多的血才够扣。如果这个格子是回血包，那`1-dungeon[m-1][n-1]<1`，但至少得保证为1才是合理状态（不然就死了）。**也就是说这个状态说明至少需要1的血**
+- 在右下角时，`dp[m-1][n-1] = max(1, 1-dungeon[m-1][n-1])`,如果这个格子是怪比较好理解，至少需要` 1-dungeon[m-1][n-1]`这么多的血才够扣。如果这个格子是回血包，那`1-dungeon[m-1][n-1]<1`，但至少得保证为1才是合理状态（不然就死了）。**也就是说这个状态说明至少需要1的血**. 注意是有"**1- dun...**" ,因为至少需要维持1血 
 - 接着是状态转移方程：
   - `dp[i][j] = max(1, min(dp[i+1][j]-dungeon[i][j], dp[i][j+1]-dungeon[i][j])`;后两者取min是因为要尽量小的血量（因为一定能保证结果合法，所以选少的那个做状态转移是合适的）
-  - 可以设置边界值为0x3f3f3f，意味着血量无穷，在状态转移求min的时候右边界和下边界一定会从合法的那边转过来。
+  - 可以设置**边界值**为0x3f3f3f，意味着**血量无穷**，在状态转移**求min**的时候右边界和下边界一定会从合法的那边转过来。(**求最小**)
 
 > 出发的血量是无法确定的，想要确定就要枚举（二分），但结束时的血量是可以确定的（>=1，因为从右下推到左上，可以认为往右或者往下走的状态本来就已经通过max(1，xxx）约束强制只考虑合法的情况了，就省了枚举的步骤，所以从结束倒推更快。
 

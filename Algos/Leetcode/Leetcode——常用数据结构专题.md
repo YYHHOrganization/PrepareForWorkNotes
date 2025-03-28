@@ -4494,6 +4494,772 @@ public:
 
 
 
+# 五、堆（优先队列）
+
+https://leetcode.cn/discuss/post/3583665/fen-xiang-gun-ti-dan-chang-yong-shu-ju-j-bvmv/
+
+
+
+#### priority_queue语法：
+
+https://www.runoob.com/cplusplus/cpp-libs-priority_queue.html
+
+在 C++ 中，`priority_queue` 默认是一个最大堆，这意味着队列的顶部元素总是具有最大的值。
+
+```C++
+#include <queue>
+
+// 声明一个整型优先队列
+priority_queue<int> pq;
+
+// 声明一个自定义类型的优先队列，需要提供比较函数
+struct compare 
+{
+    bool operator()(int a, int b) 
+    {
+        return a > b; // 这里定义了最小堆
+    }
+};
+priority_queue<int, vector<int>, compare> pq_min;//vector<int>注意要显式指定容器
+
+或者定义最小堆也可以直接：
+ priority_queue<int,vector<int>,greater<int>> pq_min;
+```
+
+常用操作
+
+- `empty()`: 检查队列是否为空。
+- `size()`: 返回队列中的元素数量。
+- `top()`: 返回队列顶部的元素（不删除它）。
+- `push()`: 向队列添加一个元素。
+- `pop()`: 移除队列顶部的元素。‘
+
+
+
+使用元素赋值：
+
+```c++
+ priority_queue<int,vector<int>,greater<int>> pq_min(nums.begin(),nums.end());
+```
+
+
+
+#### 原地堆化make_heap(), pop_heap(), push_heap()语法
+
+(例题1962)
+
+https://blog.csdn.net/weixin_42905141/article/details/103617150
+
+>在 C++ STL 中，`pop_heap`、`push_heap` 和 `make_heap` 等函数是用于操作堆的算法，它们的参数通常是一个迭代器范围，表示要操作的元素范围。下面是对这些函数的详细解释，包括参数的含义和用法。
+>
+>### 函数参数
+>
+>1. **`make_heap`**:
+>   ```cpp
+>   make_heap(RandomIt first, RandomIt last);
+>   ```
+>   - **参数**:
+>     - `first`: 指向要堆化的范围的起始迭代器。
+>     - `last`: 指向要堆化的范围的结束迭代器（不包括该位置的元素）。
+>   - **作用**: 将 `[first, last)` 范围内的元素转化为一个最大堆。
+>
+>2. **`pop_heap`**:
+>   ```cpp
+>   pop_heap(RandomIt first, RandomIt last);
+>   ```
+>   - **参数**:
+>     - `first`: 指向堆的起始迭代器。
+>     - `last`: 指向堆的结束迭代器（不包括该位置的元素）。
+>   - **作用**: 将堆顶元素（最大值）移动到 `last - 1` 位置，并重新调整堆，使得 `[first, last - 1)` 仍然是一个有效的堆。
+>
+>3. **`push_heap`**:
+>   ```cpp
+>   push_heap(RandomIt first, RandomIt last);
+>   ```
+>   - **参数**:
+>     - `first`: 指向堆的起始迭代器。
+>     - `last`: 指向堆的结束迭代器（包括新插入的元素）。
+>   - **作用**: 将 `last - 1` 位置的元素插入到堆中，并重新调整堆，使得 `[first, last)` 仍然是一个有效的堆。
+>
+>### `piles.end()` 的含义
+>
+>- `piles.end()` 返回一个指向 `piles` 容器末尾的迭代器。这个迭代器指向的是一个“哨兵”位置，表示容器的结束，但不指向任何有效的元素。因此，`piles.end()` 不能用于访问元素，因为它并不指向一个有效的元素。
+>
+>### 示例
+>
+>假设我们有一个 `std::vector<int> piles`，我们可以这样使用这些函数：
+>
+>```cpp
+>#include <vector>
+>#include <algorithm>
+>#include <iostream>
+>
+>int main() {
+>    std::vector<int> piles = {4, 1, 3, 2, 5};
+>
+>    // 1. 创建最大堆
+>    std::make_heap(piles.begin(), piles.end());
+>
+>    // 2. 弹出堆顶元素
+>    std::pop_heap(piles.begin(), piles.end());
+>    std::cout << "After pop_heap: " << piles.back() << std::endl; // 输出堆顶元素
+>    piles.pop_back(); // 移除堆顶元素
+>
+>    // 3. 继续操作
+>    piles.push_back(6); // 添加新元素
+>    std::push_heap(piles.begin(), piles.end()); // 重新调整堆
+>
+>    // 4. 输出当前堆
+>    for (int pile : piles) {
+>        std::cout << pile << " ";
+>    }
+>    std::cout << std::endl;
+>
+>    return 0;
+>}
+>```
+>
+>在这个示例中，我们首先创建了一个最大堆，然后弹出了堆顶元素，并将其移除。接着，我们添加了一个新元素并重新调整堆。注意，`piles.end()` 只是一个指向容器末尾的迭代器，并不指向有效元素。
+
+## §5.1 基础
+
+### [1046. 最后一块石头的重量](https://leetcode.cn/problems/last-stone-weight/)
+
+有一堆石头，每块石头的重量都是正整数。
+
+每一回合，从中选出两块 **最重的** 石头，然后将它们一起粉碎。假设石头的重量分别为 `x` 和 `y`，且 `x <= y`。那么粉碎的可能结果如下：
+
+- 如果 `x == y`，那么两块石头都会被完全粉碎；
+- 如果 `x != y`，那么重量为 `x` 的石头将会完全粉碎，而重量为 `y` 的石头新重量为 `y-x`。
+
+最后，最多只会剩下一块石头。返回此石头的重量。如果没有石头剩下，就返回 `0`。
+
+**示例：**
+
+```
+输入：[2,7,4,1,8,1]
+输出：1
+解释：
+先选出 7 和 8，得到 1，所以数组转换为 [2,4,1,1,1]，
+再选出 2 和 4，得到 2，所以数组转换为 [2,1,1,1]，
+接着是 2 和 1，得到 1，所以数组转换为 [1,1,1]，
+最后选出 1 和 1，得到 0，最终数组转换为 [1]，这就是最后剩下那块石头的重量。
+```
+
+
+
+#### M1: 推荐
+
+```C++
+class Solution {
+public:
+    int lastStoneWeight(vector<int>& stones) {
+        priority_queue<int> q;
+        for(auto &num:stones)
+        {
+            q.push(num);
+        }
+        while(q.size()>1)
+        {
+            int big = q.top();
+            q.pop();
+            int big2 = q.top();
+            q.pop();
+            if(big>big2)
+            {
+                q.push(big - big2);
+            }
+        }
+        return q.empty()?0:q.top();
+    }
+};
+```
+
+
+
+#### M2.1 : 
+
+```C++
+
+struct Rule {
+	bool operator()(const int& a, const int& b) const  // multiset这个const 一定要有!
+	{
+		return a > b;  // 降序排列
+	}
+};
+class Solution {
+public:
+	int lastStoneWeight(vector<int>& stones) {
+		multiset<int, Rule> stone(stones.begin(), stones.end());
+		while (stone.size()>1)
+		{
+			int big = *stone.begin();
+			stone.erase(stone.begin());
+			int big2 = *stone.begin();
+			stone.erase(stone.begin());
+			if (big != big2)
+			{
+				big = big - big2;
+				stone.insert(big);
+			}
+		}
+
+		if (!stone.empty())return *stone.begin();
+		return 0;
+
+	}
+};
+```
+
+
+
+#### M2.2 : 
+
+```c++
+class Solution {
+public:
+	int lastStoneWeight(vector<int>& stones) {
+		multiset<int> stone(stones.begin(), stones.end());
+		while (stone.size() > 1)
+		{
+			int big = *stone.rbegin(); // 最后一个元素 (end指向的是rbegin的下一个)
+			stone.erase(--stone.end());
+			int big2 = *stone.rbegin();
+			stone.erase(--stone.end());
+			if (big != big2)
+			{
+				big = big - big2;
+				stone.insert(big);
+			}
+		}
+
+		if (!stone.empty())return *stone.begin();
+		return 0;
+
+	}
+};
+```
+
+
+
+
+
+### [3264. K 次乘运算后的最终数组 I](https://leetcode.cn/problems/final-array-state-after-k-multiplication-operations-i/)
+
+简单题
+
+给你一个整数数组 `nums` ，一个整数 `k` 和一个整数 `multiplier` 。
+
+你需要对 `nums` 执行 `k` 次操作，每次操作中：
+
+- 找到 `nums` 中的 **最小** 值 `x` ，如果存在多个最小值，选择最 **前面** 的一个。
+- 将 `x` 替换为 `x * multiplier` 。
+
+请你返回执行完 `k` 次乘运算之后，最终的 `nums` 数组。
+
+#### M1: 应该会比M2慢点
+
+```c++
+class Solution {
+public:
+    vector<int> getFinalState(vector<int>& nums, int k, int multiplier) {
+        while(k--)
+        {
+            auto it = min_element(nums.begin(),nums.end());
+            *it = *it*multiplier;
+        }
+        return nums;
+    }
+};
+```
+
+#### M2:
+
+```C++
+struct cmp
+{
+    bool operator()(const pair<int,int> &a,const pair<int,int>& b)
+    {
+        if(a.first == b.first)return a.second>b.second;
+        return a.first>b.first;
+    }
+};
+class Solution {
+public:
+    
+    vector<int> getFinalState(vector<int>& nums, int k, int multiplier) {
+        priority_queue<pair<int,int>,vector<pair<int,int>>, cmp> q;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            q.push({nums[i],i});
+        }
+        for(int i=0;i<k;i++)
+        {
+            auto [top,idx] = q.top();
+            q.pop();
+            q.push({top*multiplier,idx});
+        }
+        while(!q.empty())
+        {
+            auto [num,idx]  = q.top();
+            q.pop();
+            nums[idx] =num;
+        }
+        //3 3 5
+        //9 3 5
+        //9 9 5
+        //9 9 15
+        //27 9 15
+        return nums;
+    }
+};
+```
+
+
+
+### [2558. 从数量最多的堆取走礼物](https://leetcode.cn/problems/take-gifts-from-the-richest-pile/)
+
+简单题
+
+给你一个整数数组 `gifts` ，表示各堆礼物的数量。每一秒，你需要执行以下操作：
+
+- 选择礼物数量最多的那一堆。
+- 如果不止一堆都符合礼物数量最多，从中选择任一堆即可。
+- 将堆中的礼物数量减少到堆中原来礼物数量的平方根，向下取整。
+
+返回在 `k` 秒后剩下的礼物数量*。*
+
+
+
+100%
+
+```C++
+class Solution {
+public:
+    long long pickGifts(vector<int>& gifts, int k) {
+        priority_queue<int> q;
+        for(auto &g:gifts)q.push(g);
+        for(int i=0;i<k;i++)
+        {
+            int top = q.top();
+            top = sqrt(top);
+            q.pop();
+            q.push(top);
+        }
+        long long res=0;
+        while(!q.empty())
+        {
+            res+= q.top();
+            q.pop();
+        }
+        return res;
+
+    }
+};
+```
+
+
+
+慢 17%
+
+```C++
+class Solution {
+public:
+    long long pickGifts(vector<int>& gifts, int k) {
+        while(k--)
+        {
+            auto it = max_element(gifts.begin(),gifts.end());
+            *it = sqrt(*it) ;
+        }
+        long long res = reduce(gifts.begin(),gifts.end(),0ll);
+        return res;
+    }
+};
+```
+
+
+
+
+
+### [2336. 无限集中的最小数字](https://leetcode.cn/problems/smallest-number-in-infinite-set/)
+
+现有一个包含所有正整数的集合 `[1, 2, 3, 4, 5, ...]` 。
+
+实现 `SmallestInfiniteSet` 类：
+
+- `SmallestInfiniteSet()` 初始化 **SmallestInfiniteSet** 对象以包含 **所有** 正整数。
+- `int popSmallest()` **移除** 并返回该无限集中的最小整数。
+- `void addBack(int num)` 如果正整数 `num` **不** 存在于无限集中，则将一个 `num` **添加** 到该无限集中。
+
+ 
+
+#### M1：不推荐的做法（引入）
+
+实际上，存储所有的值在set中是没有必要的，如果num是无穷呢？
+
+```C++
+class SmallestInfiniteSet {
+public: 
+    set<int> mset;
+    SmallestInfiniteSet() {
+        for(int i=1;i<=1000;i++)mset.insert(i);
+    }
+    
+    int popSmallest() {
+        if(!mset.empty())
+        {
+            int num = *mset.begin();
+            mset.erase(mset.begin());
+            return num;
+        }
+        return -1;
+    }
+    
+    void addBack(int num) {
+        mset.insert(num);
+    }
+};
+```
+
+// 1   3        6 7 8 9 10
+
+
+
+#### M2：推荐
+
+使用一个有序集合 *s* 维护所有小于 *thres* 的正整数，并用 *thres* 表示所有大于等于 *thres* 的正整数。
+
+```C++
+class SmallestInfiniteSet {
+public: 
+    set<int> mset; // 改为只存储thres之后的数字
+    int thres=1;
+    SmallestInfiniteSet() {
+        // for(int i=1;i<=1000;i++)mset.insert(i);
+    }
+    
+    int popSmallest() {
+        if(!mset.empty())
+        {
+            int num = *mset.begin();
+            mset.erase(mset.begin());
+            return num;
+        }
+        int res = thres;
+        thres++;
+        return res;
+    }
+    
+    void addBack(int num) {
+        if(num<thres)
+            mset.insert(num);
+    }
+};
+```
+
+堆做法：
+
+https://leetcode.cn/problems/smallest-number-in-infinite-set/solutions/2546157/gong-shui-san-xie-rong-yi-you-gao-xiao-d-431o/
+
+
+
+### [2530. 执行 K 次操作后的最大分数](https://leetcode.cn/problems/maximal-score-after-applying-k-operations/)
+
+给你一个下标从 **0** 开始的整数数组 `nums` 和一个整数 `k` 。你的 **起始分数** 为 `0` 。
+
+在一步 **操作** 中：
+
+1. 选出一个满足 `0 <= i < nums.length` 的下标 `i` ，
+2. 将你的 **分数** 增加 `nums[i]` ，并且
+3. 将 `nums[i]` 替换为 `ceil(nums[i] / 3)` 。
+
+返回在 **恰好** 执行 `k` 次操作后，你可能获得的最大分数。
+
+向上取整函数 `ceil(val)` 的结果是大于或等于 `val` 的最小整数。
+
+ 
+
+**示例 1：**
+
+```
+输入：nums = [10,10,10,10,10], k = 5
+输出：50
+解释：对数组中每个元素执行一次操作。最后分数是 10 + 10 + 10 + 10 + 10 = 50 
+```
+
+
+
+```C++
+class Solution {
+public:
+    long long maxKelements(vector<int>& nums, int k) {
+        //每次取出最大的叠加
+        
+        //以下这个 O(kn) 会超时
+        // long long res=0;
+        // for(int i=0;i<k;i++)
+        // {
+        //     //max_element --- O(n)
+        //     auto it = max_element(nums.begin(),nums.end());
+        //     res += *it;
+        //     *it = (*it+3-1)/3;
+        // }
+        // return res;
+
+        //O(klogn+n)
+        long long res=0;
+        priority_queue<int> q(nums.begin(),nums.end());
+        //上面初始化赋值等价于下面这个
+        // for(auto &num:nums)
+        // {
+        //     q.push(num);
+        // }
+        for(int i=0;i<k;i++)
+        {
+            int top = q.top();
+            res+=top;
+            top = (top+3-1)/3;
+            q.pop();
+            q.push(top);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [3066. 超过阈值的最少操作数 II](https://leetcode.cn/problems/minimum-operations-to-exceed-threshold-value-ii/)
+
+给你一个下标从 **0** 开始的整数数组 `nums` 和一个整数 `k` 。
+
+你可以对 `nums` 执行一些操作，在一次操作中，你可以：
+
+- 选择 `nums` 中 **最小** 的两个整数 `x` 和 `y` 。
+- 将 `x` 和 `y` 从 `nums` 中删除。
+- 将 `min(x, y) * 2 + max(x, y)` 添加到数组中的任意位置。
+
+**注意，**只有当 `nums` **至少** 包含两个元素时，你才可以执行以上操作。
+
+你需要使数组中的所有元素都 **大于或等于** `k` ，请你返回需要的 **最少** 操作次数。
+
+
+
+```C++
+class Solution {
+public:
+    struct cmp
+    {
+        bool operator()(int a,int b)
+        {
+            return a>b;
+        };
+    };
+    int minOperations(vector<int>& nums, int k) {
+        priority_queue<int,vector<int>,cmp> q(nums.begin(),nums.end());
+        int ans=0;
+        while(q.size()>=2)
+        {
+            int x= q.top();
+            if(x>=k)break ;
+            q.pop();
+            int y = q.top();
+            q.pop();
+            // if(min(x,y)*2+max(x,y)>=k) 会超
+            if(y>=k) q.push(k);
+            else if(min(x,y)*2>=INT_MAX||min(x,y)*2>=k-max(x,y)) q.push(k);
+            else q.push( min(x,y)*2+max(x,y));
+            ans++;
+        }
+        return ans;
+    }
+};
+```
+
+其实不用那么麻烦 开longlong就完事了 0x3f和官方都是开ll
+
+```C++
+class Solution {
+    int minOperations(vector<int>& nums, int k) {
+        //记住这个写法：
+        priority_queue<long long,vector<long long>,greater<long long>> q(nums.begin(),nums.end());
+        int ans=0;
+        while(q.size()>=2)
+        {
+            long long x= q.top();
+            if(x>=k)break ;
+            q.pop();
+            long long y = q.top();
+            q.pop();
+            q.push( min(x,y)*2+max(x,y));
+            ans++;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+
+
+### [1962. 移除石子使总数最小](https://leetcode.cn/problems/remove-stones-to-minimize-the-total/)
+
+给你一个整数数组 `piles` ，数组 **下标从 0 开始** ，其中 `piles[i]` 表示第 `i` 堆石子中的石子数量。另给你一个整数 `k` ，请你执行下述操作 **恰好** `k` 次：
+
+- 选出任一石子堆 `piles[i]` ，并从中 **移除** `floor(piles[i] / 2)` 颗石子。
+
+**注意：**你可以对 **同一堆** 石子多次执行此操作。
+
+返回执行 `k` 次操作后，剩下石子的 **最小** 总数。
+
+`floor(x)` 为 **小于** 或 **等于** `x` 的 **最大** 整数。（即，对 `x` 向下取整）。
+
+
+
+#### M1 空间O（n）不太推荐
+
+```C++
+class Solution {
+public:
+    int minStoneSum(vector<int>& piles, int k) {
+        //每次移走最大的
+        priority_queue<int> q(piles.begin(),piles.end());
+        for(int i=0;i<k;i++)
+        {
+            int top = q.top();
+            q.pop();
+            // q.push((top+2-1)/2);
+            q.push((top+1)/2);
+        }
+        int res=0;
+        while(!q.empty())
+        {
+            res+=q.top();
+            q.pop();
+        }
+        return res;
+    }
+};
+```
+
+
+
+#### O(*n*+*k*log*n*)   空间O（1）推荐  原地堆化
+
+```C++
+class Solution {
+public:
+    int minStoneSum(vector<int>& piles, int k) {
+        make_heap(piles.begin(),piles.end());
+        while(k--&&piles[0]!=1)
+        {
+            pop_heap(piles.begin(),piles.end());
+            piles.back() = (piles.back()+1) / 2;
+            push_heap(piles.begin(),piles.end());
+        }
+        int res = reduce(piles.begin(),piles.end());
+        return res;
+    }
+};
+```
+
+
+
+### [703. 数据流中的第 K 大元素](https://leetcode.cn/problems/kth-largest-element-in-a-stream/)
+
+设计一个找到数据流中第 `k` 大元素的类（class）。注意是排序后的第 `k` 大元素，不是第 `k` 个不同的元素。
+
+请实现 `KthLargest` 类：
+
+- `KthLargest(int k, int[] nums)` 使用整数 `k` 和整数流 `nums` 初始化对象。
+- `int add(int val)` 将 `val` 插入数据流 `nums` 后，返回当前数据流中第 `k` 大的元素。
+
+
+
+```C++
+class KthLargest {
+public:
+// ["KthLargest", "add", "add", "add", "add", "add"]
+// [[3, [4, 5, 8, 2]], [3], [5], [10], [9], [4]]
+//8 5 4 2            heap：4 5 8
+//8 5 4 3 2 [+3]     heap：4 5 8 
+//8 5 5 4 3 2[+5]    heap：5 5 8 
+
+//最大的前k个 放入小顶堆heap
+    priority_queue<int,vector<int>,greater<int>> q;
+    int k1;
+    KthLargest(int k, vector<int>& nums) {
+        k1=k;
+        for(auto& num:nums)
+        {
+            add(num);
+        }
+    }
+    
+    int add(int val) {
+        q.push(val);
+        if(q.size()>k1)
+            q.pop();
+        return q.top();
+    }
+};
+```
+
+
+
+### [3275. 第 K 近障碍物查询](https://leetcode.cn/problems/k-th-nearest-obstacle-queries/)
+
+有一个无限大的二维平面。
+
+给你一个正整数 `k` ，同时给你一个二维数组 `queries` ，包含一系列查询：
+
+- `queries[i] = [x, y]` ：在平面上坐标 `(x, y)` 处建一个障碍物，数据保证之前的查询 **不会** 在这个坐标处建立任何障碍物。
+
+每次查询后，你需要找到离原点第 `k` **近** 障碍物到原点的 **距离** 。
+
+请你返回一个整数数组 `results` ，其中 `results[i]` 表示建立第 `i` 个障碍物以后，离原地第 `k` 近障碍物距离原点的距离。如果少于 `k` 个障碍物，`results[i] == -1` 。
+
+**注意**，一开始 **没有** 任何障碍物。
+
+坐标在 `(x, y)` 处的点距离原点的距离定义为 `|x| + |y|` 。
+
+```C++
+class Solution {
+public:
+    vector<int> resultsArray(vector<vector<int>>& queries, int k) {
+        // 随着queries增加，可能性增大，
+        //堆， 距离原点最近的前k个障碍物，大顶堆 
+        //大顶堆，如果新的更近，把最大的那个扔掉
+        //维护距离最近的k个，从远到进排
+        priority_queue<int,vector<int>> q;
+        int n = queries.size();
+        vector<int> res(n,0);
+        for(int i=0;i<n;i++)
+        {
+            int len = abs(queries[i][0])+abs(queries[i][1]);
+            //写法1：可通过
+            // if(q.size()<k)q.push(len);
+            // else if(len<q.top())
+            // {
+            //     q.pop();
+            //     q.push(len);
+            // }
+            //写法2：可通过
+            q.push(len); // 先加入
+            if(q.size()>k)q.pop(); //如果超过了，将最远的那个pop
+            res[i] = q.size()<k?-1:q.top();
+        }
+        return res;
+    }
+};
+```
+
+
+
+
+
 # 七、并查集
 
 ### 模板：
