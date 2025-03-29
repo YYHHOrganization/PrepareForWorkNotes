@@ -41,6 +41,8 @@
 
 
 
+返回需要选择的箱子的 **最小** 数量。
+
 ```C++
 class Solution {
 public:
@@ -94,7 +96,7 @@ public:
         //剩余容量
         for(int i=0;i<n;i++) 
             capacity[i]-=rocks[i];
-        sort(capacity.begin(),capacity.end());
+        sort(capacity.begin(),capacity.end()); // 剩余容量从小到大排序
         int i=0;
         while(i<n&&additionalRocks>=capacity[i])
         {
@@ -128,6 +130,24 @@ public:
 
 
 ### [1005. K 次取反后最大化的数组和](https://leetcode.cn/problems/maximize-sum-of-array-after-k-negations/)
+
+给你一个整数数组 `nums` 和一个整数 `k` ，按以下方法修改该数组：
+
+- 选择某个下标 `i` 并将 `nums[i]` 替换为 `-nums[i]` 。
+
+重复这个过程恰好 `k` 次。可以多次选择同一个下标 `i` 。
+
+以这种方式修改数组后，返回数组 **可能的最大和** 。
+
+**示例 1：**
+
+```
+输入：nums = [4,2,3], k = 1
+输出：5
+解释：选择下标 1 ，nums 变为 [4,-2,3] 。
+```
+
+
 
 这个做法排序了，复杂度应该会高  有更快的 有O(n+C)的 但是官方代码写得很烂，暂时不想看
 
@@ -329,6 +349,12 @@ public:
     }
 };
 ```
+
+
+
+## §1.2 单序列配对
+
+同上，从最小/最大的元素开始贪心。
 
 
 
