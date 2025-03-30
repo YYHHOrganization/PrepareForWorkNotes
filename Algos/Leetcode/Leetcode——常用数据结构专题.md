@@ -6142,18 +6142,18 @@ void add(int p, int x)
 > - `void update(int index, int val)` 将 `nums[index]` 的值 **更新** 为 `val`
 > - `int sumRange(int left, int right)` 返回数组 `nums` 中索引 `left` 和索引 `right` 之间（ **包含** ）的nums元素的 **和** （即，`nums[left] + nums[left + 1], ..., nums[right]`）
 
-这道题目算是线段树的板子题：
+这道题目算是树状数组的板子题：
 
 ```c++
 class NumArray {
 public:
     vector<int>& nums;
-    vector<int> tree; //线段树
+    vector<int> tree; //树状数组
     int lowbit(int x)
     {
         return x&-x;
     }
-    void add(int index, int val) //线段树index位置+val,往上一路更新
+    void add(int index, int val) //树状数组index位置+val,往上一路更新
     {
         while(index<tree.size())
         {
@@ -6207,7 +6207,7 @@ public:
 >且需要注意：
 >
 >```C++
->	void add(int idx,int val)
+>void add(int idx,int val)
 >    {
 >        //while(idx<numsVec.size()) //❌ ＋1才是对的
 >        while(idx<tree.size())//最好直接用tree
@@ -6217,3 +6217,134 @@ public:
 >        }
 >    }
 >```
+
+
+
+## 线段树
+
+### （1）前置题目1：[104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        if(root==nullptr) return 0;
+        int left = maxDepth(root->left);
+        int right = maxDepth(root->right);
+        return max(left, right) + 1;
+    }
+};
+```
+
+
+
+### （2）前置题目2：[111. 二叉树的最小深度](https://leetcode.cn/problems/minimum-depth-of-binary-tree/)
+
+注意本题不能直接认为跟上一题是一样的思路，因为考虑一个节点只有右子树而没有左子树的情况，此时会误认为深度是1，而实际上应该为3（**因为题目要求的是到叶子节点**），所以要特判一下左右子树是否为空的情况。代码如下：
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if(root==nullptr) return 0;
+        if(root->right && root->left==nullptr) return minDepth(root->right) + 1;
+        else if(root->left && root->right==nullptr) return minDepth(root->left) + 1;
+        else //root->left和root->right都为空也没关系，返回的是1，正是我们想要的
+        {
+            return min(minDepth(root->left), minDepth(root->right)) + 1;
+        }
+    }
+};
+```
+
+
+
+### 经典线段树——[3479. 将水果装入篮子 III](https://leetcode.cn/problems/fruits-into-baskets-iii/)
+
+牢记：l和r是正常的数组下标，而o是线段树为了维护区间某一段的值的下标，l和r因为是正常数组下标所以是从0开始的，而o则是从1开始的（之所以从1开始，是因为比较好算左右子树的索引，分别是`i*2`和`i*2+1`）。
+
+```c++
+class SegmentTree
+{
+    vector<int> mx; //维护区间的最大值，这个区间可以对应到原数组的区间上（思考树状数组）
+    void maintain(int o) //o是线段树维护下标的索引,从1开始，左孩子是o*2，右孩子是o*2+1
+    {
+        mx[o] = max(mx[o*2],mx[o*2+1]);
+    }
+    void build(const vector<int>& a, int o, int l, int r)
+    {
+        if(l==r)
+        {
+            mx[o] = a[l];
+            return;
+        }
+        int mid = (l+r)/2;
+        build(a, 2*o, l, mid);
+        build(a, 2*o+1, mid+1, r);
+        maintain(o);
+    }
+public:
+    SegmentTree(const vector<int>& a) //传入一个数组，构建线段树
+    {
+        size_t n = a.size();
+        //mx.resize(2<<bit_width(n-1));
+        mx.resize(4 * n); //这样也可以
+        build(a, 1, 0, n-1);
+    }
+    //findFirstAndUpdate函数用于找到第一个满足条件的下标，并更新
+    int findFirstAndUpdate(int l, int r, int o, int x) //x是要找的值
+    {
+        if(mx[o]<x) return -1; //当前区间没有>=x的值
+        if(l==r)
+        {
+            mx[o] = -1; //找到了，更新为-1,后面会递归上去，maintain的
+            return l;
+        }
+        int mid = (l+r)/2;
+        int i = findFirstAndUpdate(l, mid, o*2, x);
+        if(i<0)
+        {
+            i = findFirstAndUpdate(mid+1, r, o*2+1, x);
+        }
+        maintain(o);
+        return i;
+    }
+};
+class Solution {
+public:
+    int numOfUnplacedFruits(vector<int>& fruits, vector<int>& baskets) {
+        SegmentTree t(baskets);
+        int n = baskets.size();
+        int cnt = 0;
+        for(int f:fruits)
+        {
+            int res = t.findFirstAndUpdate(0, n-1, 1, f);
+            if(res<0) cnt++;
+        }   
+        return cnt;
+    }
+};
+```
+

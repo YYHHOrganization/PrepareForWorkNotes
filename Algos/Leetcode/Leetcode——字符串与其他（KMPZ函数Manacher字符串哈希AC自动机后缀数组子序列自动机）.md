@@ -216,6 +216,133 @@ public:
 
 
 
+### （4）[3036. 匹配模式数组的子数组数目 II](https://leetcode.cn/problems/number-of-subarrays-that-match-a-pattern-ii/)
+
+依旧是一个匹配问题，首先依据题意把`nums`数组翻译成带有-1，0，1的版本，然后再用翻译之后的只包含-1，0，1的版本去和pattern做模式串匹配，依旧是KMP算法。代码如下：
+```c++
+class Solution {
+public:
+    int kmp(vector<int>& nums, vector<int>& pattern)
+    {
+        //只不过是把字符串形式的KMP改成了int的情况
+        int m = pattern.size();
+        vector<int> pi(m, 0);
+        int c = 0;
+        for(int i=1;i<m;i++)
+        {
+            int v = pattern[i];
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(pattern[c]==v) c++;
+            pi[i] = c;
+        }
+        int cnt = 0; //匹配的个数
+        c = 0;
+        for(int i=0;i<nums.size();i++)
+        {
+            int v = nums[i];
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(pattern[c]==v) c++;
+            if(c==m)
+            {
+                cnt++;
+                c = pi[c-1];
+            }
+        }
+        return cnt;
+    }
+    int countMatchingSubarrays(vector<int>& nums, vector<int>& pattern) {
+        //后一个比前一个大，值为1，相等则为0，后一个比前一个小则为-1
+        int n = nums.size();
+        vector<int> vec(n, -2); //依据本题，最开始的字符设置为一个非法值即可
+        for(int i=1;i<n;i++)
+        {
+            if(nums[i]>nums[i-1]) vec[i] = 1;
+            else if(nums[i]==nums[i-1]) vec[i] = 0;
+            else vec[i] = -1; 
+        }
+        int res = kmp(vec, pattern);
+        return res;
+    }
+};
+```
+
+
+
+### ==中间有一道[1764. 通过连接另一个数组的子数组得到一个数组](https://leetcode.cn/problems/form-array-by-concatenating-subarrays-of-another-array/)看起来风评不太好，先不做了。==
+
+
+
+### （5）[1668. 最大重复子字符串](https://leetcode.cn/problems/maximum-repeating-substring/)
+
+```c++
+class Solution {
+public:
+    bool kmp(string& str, string& pattern)
+    {
+        int m = pattern.size();
+        vector<int> pi(m, 0);
+        int c = 0;
+        for(int i=1;i<m;i++)
+        {
+            char v = pattern[i];
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(pattern[c]==v) c++;
+            pi[i] = c;
+        }
+        c = 0;
+        for(int i=0;i<str.size();i++)
+        {
+            char v = str[i];
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(pattern[c]==v) c++;
+            if(c==m) return true;
+        }
+        return false;
+    }
+    int maxRepeating(string sequence, string word) {
+        int k = 0;
+        bool flag = true;
+        string str = "";
+        while(flag)
+        {
+            str += word;
+            flag = kmp(sequence, str);
+            if(flag) k++;
+        }
+        return k;
+    }
+};
+```
+
+
+
+### （6）[459. 重复的子字符串](https://leetcode.cn/problems/repeated-substring-pattern/)（简单题？？？==证明还没看完，后面再说吧，有点不好理解==）
+
+> 给定一个非空的字符串 `s` ，检查是否可以通过由它的一个子串重复多次构成。
+
+本题相当于考察KMP算法中pi数组的概念。`pi[i]`的含义是以i下标结尾的子串的最长相等前后缀的长度，本题的难点在于如何推导公式（==公式推导有点逆天，可以先放一放==）。
+
+> 公式推导比较复杂，以下是一个简单的理解：
+>
+> - 如果s不包含重复子串（>=2次的重复子串），那么s自己就是一次重复的子串，那么把s + s去头去尾中就一定不包含s自己。
+> - 如果s包含重复子串，那么在s + s去头去尾中就一定能找到s自己
+
+代码如下：
+```c++
+```
+
 
 
 
