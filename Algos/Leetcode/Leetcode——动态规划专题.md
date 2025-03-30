@@ -1947,9 +1947,42 @@ public:
 
 本题虽然更像是分组背包的问题，但也可以用多重背包来进行尝试。相当于有n种物品（表示n个骰子），每种物品的大小都是1，且必须选择1~k个（意味着每个骰子必须要roll出一个值）
 ```c++
+class Solution {
+public:
+    int numRollsToTarget(int n, int k, int target) {
+        //用多重背包来做,二维,相当于n种物品,每个物品价值都为1,每种物品会选择1~k个
+        //dp[i][j] = sum(dp[i-1][j-m*1]),m>=1 && j-m>=0 && m<=k
+        //dp[-1][0] = 1;
+        const int MOD = 1e9+7;
+        vector<vector<int>> dp(n+1, vector<int>(target+1, 0));
+        dp[0][0] = 1;
+        for(int i=0;i<n;i++)
+        {
+            //多重背包,j要从后往前遍历
+            for(int j=target;j>=0;j--)
+            {
+                int sum = 0;
+                for(int m=1;m<=j && m<=k; m++)
+                {
+                    sum = (sum + dp[i][j-m])%MOD;
+                }
+                dp[i+1][j] = sum;
+            }
+        }
+        return dp[n][target]; 
+    }
+};
 ```
 
+用多重背包来做的话，应该也可以用前缀和来进行一些优化，不过以上代码在时间复杂度上可以击败57%，暂时可以先不考虑优化问题了。
 
+
+
+#### ==方法2：分组背包（未看完，感觉不优化的话思路跟多重背包基本一致？）==
+
+用分组背包思考这道题的解法如下：[1155. 掷骰子等于目标和的方法数 - 力扣（LeetCode）](https://leetcode.cn/problems/number-of-dice-rolls-with-target-sum/solutions/2495836/ji-bai-100cong-ji-yi-hua-sou-suo-dao-di-421ab/)。
+
+> 等到后面底力上来了再做相关背包的补充吧。
 
 
 
