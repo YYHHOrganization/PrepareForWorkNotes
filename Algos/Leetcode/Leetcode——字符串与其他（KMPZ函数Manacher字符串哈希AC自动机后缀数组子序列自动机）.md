@@ -1,5 +1,221 @@
 # Leetcode——字符串（KMP/Z函数/Manacher/字符串哈希/AC自动机/后缀数组/子序列自动机）
 
+# 一、KMP算法
+
+首先，可以先阅读这一篇文章：[(99+ 封私信 / 82 条消息) 如何更好地理解和掌握 KMP 算法? - 知乎](https://www.zhihu.com/question/21923021/answer/37475572)
+
+**KMP算法推荐背下来，在理解了原理之后，背下来应该也不会很难。**
+
+> 板子以及介绍如下：
+>
+> 以下是代码的详细注释及KMP过程的说明：（结合上面的那个链接来理解会更好一些）
+>
+> ```cpp
+> private:
+>     vector<int> kmp(string &text, string &pattern) {
+>         int m = pattern.length();
+>         // 1. 构建前缀函数（Partial Match Table，部分匹配表）
+>         vector<int> pi(m); // pi[i]表示pattern[0..i]的最长公共前后缀的长度
+>         int c = 0; // 当前最长公共前后缀的长度，也作为指针指向待匹配位置
+>         for (int i = 1; i < m; i++) { // i从1开始，因为pi[0]一定是0
+>             char v = pattern[i];
+>             // 当c>0且当前字符不匹配时，回退到前一个公共前后缀的位置
+>             while (c > 0 && pattern[c] != v) {
+>                 c = pi[c - 1]; // 根据前缀表回退，避免重复匹配
+>             }
+>             // 如果当前字符匹配，则公共前后缀长度+1
+>             if (pattern[c] == v) {
+>                 c++;
+>             }
+>             pi[i] = c; // 记录当前位置的最长公共前后缀长度
+>         }
+> 
+>         // 2. 使用构建好的pi数组进行模式匹配
+>         vector<int> res; // 存储所有匹配的起始索引
+>         c = 0; // 重置c为0，表示当前已匹配的pattern长度
+>         for (int i = 0; i < text.length(); i++) { // 遍历text的每个字符
+>             char v = text[i];
+>             // 当已匹配部分不为0且当前字符不匹配时，回退c
+>             while (c > 0 && pattern[c] != v) {
+>                 c = pi[c - 1]; // 利用前缀表跳过已匹配的前缀部分
+>             }
+>             // 当前字符匹配，继续推进
+>             if (pattern[c] == v) {
+>                 c++;
+>             }
+>             // 如果c等于pattern长度，说明找到完整匹配
+>             if (c == m) {
+>                 res.push_back(i - m + 1); // 记录起始索引（当前i是pattern最后一个字符的位置）
+>                 c = pi[c - 1]; // 回退c，继续寻找后续可能的匹配
+>             }
+>         }
+>         return res;
+>     }
+> ```
+>
+> ### KMP算法核心过程说明
+>
+> #### 1. 构建前缀函数（Partial Match Table）
+> - **目标**：为模式串 `pattern` 生成前缀表 `pi`，其中 `pi[i]` 表示子串 `pattern[0..i]` 的 **最长公共前后缀** 的长度。
+> - **步骤**：
+>   - 初始化 `c=0`，表示当前最长公共前后缀的长度。
+>   - 遍历 `pattern` 从 `i=1` 到 `i=m-1`：
+>     - 若 `pattern[i]` 与 `pattern[c]` 不匹配，则根据前缀表回退 `c` 至 `pi[c-1]`，直到匹配或 `c=0`。
+>     - 若匹配，则 `c++`，表示公共前后缀长度增加。
+>     - 将 `pi[i]` 设为当前 `c`，记录最长公共前后缀长度。
+> - **示例**：`pattern = "ababc"` 的 `pi` 数组为 `[0,0,1,2,0]`。
+>
+> #### 2. 模式匹配
+> - **目标**：在文本 `text` 中高效查找所有 `pattern` 的起始位置。
+> - **步骤**：
+>   - 初始化 `c=0`，表示已匹配的 `pattern` 长度。
+>   - 遍历 `text` 的每个字符：
+>     - 若当前字符与 `pattern[c]` 不匹配，则通过 `pi` 回退 `c` 至 `pi[c-1]`，跳过已匹配的前缀部分。
+>     - 若匹配，则 `c++`。
+>     - 当 `c == m` 时，记录匹配位置 `i - m + 1`，并回退 `c` 至 `pi[c-1]`，继续后续匹配。
+> - **优势**：利用前缀表避免从头开始匹配，时间复杂度为 **O(n + m)**（n为text长度，m为pattern长度）。
+>
+> ### 关键点总结
+> - **前缀表**：存储每个位置的最长公共前后缀长度，是KMP算法的核心。
+> - **回退机制**：匹配失败时，通过前缀表回退到已知的安全位置，避免重复比较。
+> - **完整匹配处理**：找到匹配后，回退 `c` 以允许重叠匹配（如 `pattern = "aaa"` 在 `text = "aaaa"` 中匹配多次）。
+
+学习了以上的算法之后（记得多写几遍，理解算法原理之后记忆下来），可以开始做这部分的题目了。
+
+### （1）[28. 找出字符串中第一个匹配项的下标](https://leetcode.cn/problems/find-the-index-of-the-first-occurrence-in-a-string/)
+
+板子题，kmp这个板子函数即为需要掌握的函数。
+
+```c++
+class Solution {
+public:
+    vector<int> kmp(string& str, string& pattern)
+    {
+        int m = pattern.size();
+        int c = 0;
+        vector<int> pi(m, 0);
+        for(int i=1;i<m;i++)
+        {
+            char v = pattern[i];
+            //case 1:不匹配
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            //case 2:匹配
+            if(pattern[c]==v) c++;
+            pi[i] = c;
+        }
+
+        //匹配正式的字符串
+        vector<int> res;
+        c = 0;
+        for(int i=0;i<str.size();i++)
+        {
+            char v = str[i];
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(pattern[c]==v) c++;
+            if(c==m)
+            {
+                res.emplace_back(i-m+1);
+                c=pi[c-1];
+            }
+        }
+        return res;
+    }
+    int strStr(string haystack, string needle) {
+        vector<int> res = kmp(haystack, needle);
+        if(res.size()==0) return -1;
+        return res[0];
+    }
+};
+```
+
+
+
+### （2）[796. 旋转字符串](https://leetcode.cn/problems/rotate-string/)
+
+注意判断字符串不等长的情况，不然会有情况考虑错误。
+
+```c++
+class Solution {
+public:
+    vector<int> kmp(string& str, string& pattern)
+    {
+        int m = pattern.size();
+        vector<int> pi(m, 0);
+        int c = 0;
+        for(int i=1;i<m;i++)
+        {
+            char v = pattern[i];
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(pattern[c]==v) c++;
+            pi[i] = c;
+        }
+        vector<int> res;
+        c = 0;
+        for(int i=0;i<str.size();i++)
+        {
+            char v = str[i];
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(pattern[c]==v) c++;
+            if(c==m)
+            {
+                res.emplace_back(i-m+1);
+                c = pi[c-1];
+            }
+        }
+        return res;
+    }
+    bool rotateString(string s, string goal) {
+        if((int)s.size()!=(int)goal.size()) return false; //不然aa a这个用例过不去
+        string str = s + s;
+        vector<int> res = kmp(str, goal);
+        return res.size()!=0;
+    }
+};
+```
+
+
+
+### （3）[1392. 最长快乐前缀](https://leetcode.cn/problems/longest-happy-prefix/)
+
+就是KMP算法的第一个步骤：
+
+```c++
+class Solution {
+public:
+    string longestPrefix(string s) {
+        //其实就是kmp求pi数组的第一个步骤，不要想太复杂了
+        int m = s.size();
+        vector<int> pi(m, 0);
+        int c = 0;
+        for(int i=1;i<m;i++)
+        {
+            char v = s[i];
+            while(c>0 && s[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(s[c]==v) c++;
+            pi[i] = c;
+        }
+        return s.substr(0, pi[m-1]);
+    }
+};
+```
+
+
+
 
 
 
