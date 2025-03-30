@@ -51,6 +51,44 @@ public:
 
 有些DFS的题目也会比较方便用并查集来做，这一点会在对应题目处尝试用并查集再做一遍（`感觉并查集更合适于计算联通分量之类的问题`）。
 
+改为‘2’的做法：
+
+```C++
+class Solution {
+public:
+    int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+    void dfs(vector<vector<char>>& grid,int x,int y)
+    {
+        if(grid[x][y]=='2')return;
+        grid[x][y] = '2';
+        for(int i=0;i<4;i++)
+        {
+            int newX= x+dirs[i][0];
+            int newY = y+dirs[i][1];
+            if(newX<0||newY<0||newX>=grid.size()||newY>=grid[0].size()||grid[newX][newY]=='0'||grid[newX][newY]=='2')continue;
+            dfs(grid,newX,newY);
+        }
+    }
+    int numIslands(vector<vector<char>>& grid) {
+        int m =grid.size();
+        int n = grid[0].size();
+        int res=0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]=='1')
+                {
+                    dfs(grid,i,j);
+                    res++;
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
 
 
 ## 2.[695. 岛屿的最大面积](https://leetcode.cn/problems/max-area-of-island/)
