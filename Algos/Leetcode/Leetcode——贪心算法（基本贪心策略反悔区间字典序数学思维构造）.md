@@ -177,7 +177,7 @@ public:
         int sum = reduce(nums.begin(),nums.end());
         if(k>0)
         {
-            //表示到正数了
+            //表示可以翻偶数次某个数，最后翻回原值
             if(k%2==0)
             {
                 return sum;
@@ -357,6 +357,8 @@ public:
 ## §1.2 单序列配对
 
 同上，从最小/最大的元素开始贪心。
+
+
 
 
 
