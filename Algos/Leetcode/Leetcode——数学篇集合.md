@@ -351,7 +351,7 @@ public:
             stk.emplace(remain_x,0); // 把 Y 壶倒空。
             //x倒空：remain_x//y-remain_y 倒满y需要的  
             //  if remain_x小 x'=0 
-            //  else          x' = remain_x - (y-remain_y);
+            //  else          x' = remain_x - (y-remain_y); //y-remain_y y中还能放的水
             // 把 X 壶的水灌进 Y 壶，直至灌满或倒空。
             stk.emplace(remain_x-min(remain_x,y-remain_y),remain_y+min(remain_x,y-remain_y));
             // 把 Y 壶的水灌进 X 壶，直至灌满或倒空。

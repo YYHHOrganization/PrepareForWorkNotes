@@ -4523,7 +4523,7 @@ struct compare
 priority_queue<int, vector<int>, compare> pq_min;//vector<int>注意要显式指定容器
 
 或者定义最小堆也可以直接：
- priority_queue<int,vector<int>,greater<int>> pq_min;
+ priority_queue<int,vector<int>,greater<int>> pq_min; //相当于父节点>子节点就交换,小顶堆
 ```
 
 常用操作
@@ -4740,7 +4740,73 @@ public:
 };
 ```
 
-
+> 一些补充:
+>
+> 在C++中，`stone.erase(stone.rbegin())` 无法直接使用的原因是**反向迭代器与正向迭代器的类型不兼容**，且标准库的 `erase` 方法只接受**正向迭代器**。以下是详细解释：
+>
+> ---
+>
+> ### **1. 迭代器类型差异**
+> - **`rbegin()`** 返回的是 `reverse_iterator`（反向迭代器），用于**逆向遍历容器**（从末尾到开头）。
+> - **`erase()`** 的参数必须是 `iterator`（正向迭代器），用于**正向访问容器元素**。
+>
+> 反向迭代器与正向迭代器是两种不同的类型，无法直接混用。若强行传递 `reverse_iterator` 给 `erase()`，编译器会报类型错误。
+>
+> ---
+>
+> ### **2. 如何正确获取末尾元素的正向迭代器**
+> 要删除 `multiset` 的最后一个元素，需通过**正向迭代器**操作：
+> ```cpp
+> // 正确方式：通过正向迭代器删除最后一个元素
+> auto it = --stone.end();  // end() 是尾后迭代器，-- 使其指向最后一个元素
+> stone.erase(it);
+> ```
+>
+> 而 `stone.rbegin()` 是反向迭代器，若想将其转换为正向迭代器，需调用 `.base()` 方法：
+> ```cpp
+> // 反向迭代器转正向迭代器（一般不推荐）
+> auto reverse_it = stone.rbegin();
+> auto forward_it = reverse_it.base();  // 此时 forward_it 指向 end()，需调整
+> ```
+>
+> 但 `.base()` 转换后的正向迭代器**指向原反向迭代器的下一个位置**。例如对`rbegin()`和`rend()`调用了`.base()`方法后：
+> - `rbegin()` 对应 `end()`（尾后位置）
+> - `rend()` 对应 `begin()`（首元素位置）
+>
+> 因此，直接使用 `stone.erase(stone.rbegin().base())` 会导致试图删除 `end()`，这是**未定义行为**。
+>
+> ---
+>
+> ### **3. 正确使用反向迭代器删除元素**
+> 若坚持用反向迭代器，需调整其位置后再转换：
+> ```cpp
+> auto reverse_it = stone.rbegin();
+> // 反向迭代器前进一位，再转正向迭代器
+> auto forward_it = (++reverse_it).base();  // 此时 forward_it 指向最后一个元素,++反向迭代器应该相当于往左走
+> stone.erase(forward_it);
+> ```
+> 此方法较为复杂且易出错，**建议直接使用正向迭代器** `--stone.end()`。
+>
+> ---
+>
+> ### **4. 示例代码对比**
+> #### **错误方式（类型不匹配）**
+> ```cpp
+> stone.erase(stone.rbegin());  // 编译错误：reverse_iterator 无法转为 iterator
+> ```
+>
+> #### **正确方式（正向迭代器）**
+> ```cpp
+> auto it = --stone.end();  // 获取最后一个元素的正向迭代器
+> stone.erase(it);          // 正确删除
+> ```
+>
+> ---
+>
+> ### **总结**
+> - **`rbegin()` 返回反向迭代器，与 `erase()` 需要的正向迭代器类型不兼容。**
+> - **删除末尾元素应使用 `--stone.end()`**，这是最直接且安全的方式。
+> - 反向迭代器的 `.base()` 方法通常用于特定场景（如逆向遍历时的边界处理），不建议在删除操作中强行转换。
 
 
 
@@ -4830,7 +4896,7 @@ public:
 
 返回在 `k` 秒后剩下的礼物数量*。*
 
-
+> 关于堆化的复杂度的探讨，可以看这篇：[2558. 从数量最多的堆取走礼物 - 力扣（LeetCode）](https://leetcode.cn/problems/take-gifts-from-the-richest-pile/solutions/2501655/yuan-di-dui-hua-o1-kong-jian-fu-ti-dan-p-fzdh/)
 
 100%
 
@@ -4879,6 +4945,24 @@ public:
 ```
 
 
+
+本题也可以考虑原地堆化，代码如下：
+
+```c++
+class Solution {
+public:
+    long long pickGifts(vector<int>& gifts, int k) {
+        make_heap(gifts.begin(), gifts.end());
+        while(k-- && gifts[0] > 1) //算是一个小剪枝,如果堆顶<=1,那么不需要再调整了
+        {
+            pop_heap(gifts.begin(), gifts.end());
+            gifts.back() = sqrt(gifts.back());
+            push_heap(gifts.begin(), gifts.end());
+        }
+        return accumulate(gifts.begin(), gifts.end(), 0LL);
+    }
+};
+```
 
 
 
@@ -4961,6 +5045,8 @@ public:
 堆做法：
 
 https://leetcode.cn/problems/smallest-number-in-infinite-set/solutions/2546157/gong-shui-san-xie-rong-yi-you-gao-xiao-d-431o/
+
+> 本题可以使用堆的做法，但有一些不太好写，考虑的问题相对比较多，因此主要还是用set。（因为要考虑这个无限集合中不应该有重复的数字）
 
 
 
