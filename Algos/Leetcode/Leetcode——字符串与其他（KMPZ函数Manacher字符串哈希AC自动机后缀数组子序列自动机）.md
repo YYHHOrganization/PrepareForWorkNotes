@@ -335,13 +335,91 @@ public:
 
 本题相当于考察KMP算法中pi数组的概念。`pi[i]`的含义是以i下标结尾的子串的最长相等前后缀的长度，本题的难点在于如何推导公式（==公式推导有点逆天，可以先放一放==）。
 
-> 公式推导比较复杂，以下是一个简单的理解：
->
-> - 如果s不包含重复子串（>=2次的重复子串），那么s自己就是一次重复的子串，那么把s + s去头去尾中就一定不包含s自己。
-> - 如果s包含重复子串，那么在s + s去头去尾中就一定能找到s自己
 
-代码如下：
+
+#### （i）解法1：根据pi数组来判断
+
+其基本原理基于，我们观察下面的字符串以及pi数组的值：
+
+> a b c a b c a b c a b c
+>
+> 0 0 0 1 2 3 1 2 3 4 5 6
+
+判断方式为用`n-pi[n-1]`, 其中n为字符串的长度，pi记录截止到某个字符的最长相等的前后缀的长度，记为`remainLength=n-pi[n-1]`，为去掉最长相等前后缀的剩余长度，如果`n%remainLength==0`，意味着**数组长度减去最长相同前后缀的长度相当于是第一个周期的长度，也就是一个周期的长度，如果这个周期可以被整除，就说明整个数组就是这个周期的循环。**（相当于可以“一格一格匹配，中间都是能对上的”）。具体地，还是以上面的“abcabcabcabc”为例：
+
+> a b c a b c a b c a b c
+>
+> remainLength = n - pi[n-1] = 12 - 9 = 3，而n%remainLength = 12%3 ==0 ，因此我们每次挪三位，发现一定都是匹配的，比如：第一次挪动：
+>
+> ------
+>
+> ​      a b c a b c a b c a b c
+>
+> ​		  | | |
+>
+> a b c a b c a b c a b c
+>
+> 一定是匹配上的，因为下面那行的abc相当于“abcabcabcabc”的后缀，而上面那行的abc相当于“abcabcabcabc”这个字符串的最长匹配前后缀的结尾，那这两个abc一定是相同的（符合pi数组的定义），依次类推可以把数组前移一段来查看验证。
+>
+> 更多的可以看这篇题解：[459. 重复的子字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/repeated-substring-pattern/solutions/1705527/by-carlsun-2-g3iz/)
+
+这种做法的代码如下：
+
 ```c++
+class Solution {
+public:
+    bool judge(string& pattern)
+    {
+        int m = pattern.size();
+        int c = 0;
+        vector<int> pi(m, 0);
+        for(int i=1;i<m;i++)
+        {
+            char v = pattern[i];
+            while(c>0 && pattern[c]!=v)
+            {
+                c = pi[c-1];
+            }
+            if(pattern[c]==v) c++;
+            pi[i] = c;
+        }
+        //只有下面的是新的逻辑
+        int remainLength = m - pi[m-1];
+        if(pi[m-1]!=0 && m%remainLength==0) return true; //注意判断pi[m-1]!=0,不然remainLength=m自己,说明自己单独成一个串,是不符合题意的
+        return false;
+    }
+    bool repeatedSubstringPattern(string s) {
+        return judge(s);
+    }
+};
+```
+
+
+
+#### （ii）解法2：
+
+公式推导比较复杂，以下是一个简单的理解：
+
+- 如果s不包含重复子串（>=2次的重复子串），那么s自己就是一次重复的子串，那么把s + s去头去尾中就一定不包含s自己。
+- 如果s包含重复子串，那么在s + s去头去尾中就一定能找到s自己
+
+简易的证明过程可以参考：[459. 重复的子字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/repeated-substring-pattern/solutions/1705527/by-carlsun-2-g3iz/)。
+
+代码如下（熟悉一下库函数）：
+```c++
+class Solution {
+public:
+    bool repeatedSubstringPattern(string s) {
+        string t = s + s;
+        t.erase(t.begin());
+        t.erase(t.end() - 1); //去头去尾,注意这里要end-1,不然删除的迭代器是错误的
+        if(t.find(s) != std::string::npos) //这是C++的一个坑,string的find函数找不到返回的是npos
+        {
+            return true;
+        }
+        return false;
+    }
+};
 ```
 
 

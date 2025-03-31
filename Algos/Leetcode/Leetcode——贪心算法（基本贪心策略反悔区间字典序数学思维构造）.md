@@ -314,7 +314,7 @@ public:
     int minimumCost(vector<int>& nums) 
     {
         //第一个一定要选 ， 找到除了第一个以外，最小的2个数字， top2问题 
-        nth_element(nums.begin()+1,nums.begin()+2,nums.end());
+        nth_element(nums.begin()+1,nums.begin()+2,nums.end()); //回忆nth_element这个接口,可以参考https://www.geeksforgeeks.org/stdnth_element-in-cpp/
         return nums[0]+nums[1]+nums[2];
 
         //10 3 1 1 
@@ -346,6 +346,171 @@ public:
             }
         }
         return nums[0]+fi+se;
+    }
+};
+```
+
+
+
+### [1338. 数组大小减半](https://leetcode.cn/problems/reduce-array-size-to-the-half/)
+
+```c++
+typedef pair<int, int> PII;
+struct compare
+{
+    bool operator()(const PII& a, const PII& b)
+    {
+        return a.second > b.second;
+    }
+};
+class Solution {
+public:
+    int minSetSize(vector<int>& arr) {
+        //放到哈希表里,然后排序
+        unordered_map<int, int> umap;
+        int total = arr.size();
+        for(int i=0;i<total;i++)
+        {
+            umap[arr[i]]++;
+        }
+        vector<PII> vec(umap.begin(), umap.end());
+        sort(vec.begin(), vec.end(), compare());
+        int cnt = 0;
+        int sum = 0;
+        for(auto& p: vec)
+        {
+            sum += p.second;
+            cnt++;
+            if(sum>=total/2) break;
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### [1710. 卡车上的最大单元数](https://leetcode.cn/problems/maximum-units-on-a-truck/)
+
+```c++
+class Solution {
+public:
+    static bool compare(vector<int>& a, vector<int>& b) //注意得是static
+    {
+        return a[1] > b[1];
+    }
+    int maximumUnits(vector<vector<int>>& boxTypes, int truckSize) {
+        //把boxTypes数组按照numberOfUnitsPerBox从大到小排序,然后计算即可
+        sort(boxTypes.begin(), boxTypes.end(), compare);
+        int sum = 0;
+        int cnt = 0;
+        int n = boxTypes.size();
+        for(int i=0;i<n;i++)
+        {
+            if(sum + boxTypes[i][0] > truckSize)
+            {
+                cnt += (truckSize - sum) * boxTypes[i][1] ; //剩下的都装当前的箱子种类
+                break;
+            }
+            else
+            {
+                sum += boxTypes[i][0];
+                cnt += boxTypes[i][1] * boxTypes[i][0];
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### [3075. 幸福值最大化的选择方案](https://leetcode.cn/problems/maximize-happiness-of-selected-children/)
+
+```c++
+class Solution {
+public:
+    long long maximumHappinessSum(vector<int>& happiness, int k) {
+        //选择最大的k个数,第i个数happiness[i]做处理:max(happiness[i] - i, 0);结果累加到最终值上去(当然也可以在for循环里提前剪枝)
+        long long res = 0;
+        //注意,本题只能用排序来做,不能优化为快速选择,因为前k个值都要求有序递减,快速选择无法保证这一点
+        sort(happiness.begin(), happiness.end(), greater<int>());
+        for(int i=0;i<k;i++)
+        {
+            res += (long long)max(happiness[i] - i, 0);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [2554. 从一个范围内选择最多整数 I](https://leetcode.cn/problems/maximum-number-of-integers-to-choose-from-a-range-i/)
+
+> 给你一个整数数组 `banned` 和两个整数 `n` 和 `maxSum` 。你需要按照以下规则选择一些整数：
+>
+> - 被选择整数的范围是 `[1, n]` 。
+> - 每个整数 **至多** 选择 **一次** 。
+> - 被选择整数不能在数组 `banned` 中。
+> - 被选择整数的和不超过 `maxSum` 。
+>
+> 请你返回按照上述规则 **最多** 可以选择的整数数目。
+
+用哈希即可。不要想着对`banned`数组排序什么的，复杂度又高，又不好写（写的很不好看）。最终代码如下：
+
+```c++
+class Solution {
+public:
+    int maxCount(vector<int>& banned, int n, int maxSum) {
+        unordered_set<int> uset;
+        int sz = banned.size();
+        for(int i=0;i<sz;i++)
+        {
+            if(!uset.contains(banned[i]))
+                uset.insert(banned[i]);
+        }
+        int curSum = 0;
+        for(int cur=1;cur<=n;cur++) //用for循环+continue/break是比较好写的，如果用while的话感觉不是特别好写，以后可以优先选for循环的写法。
+        {
+            if(uset.contains(cur)) continue;
+            if(curSum + cur > maxSum) break;
+            else
+            {
+                curSum += cur;
+                cnt++;
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### [2126. 摧毁小行星](https://leetcode.cn/problems/destroying-asteroids/)
+
+注意可能出现的越界问题：
+
+```c++
+class Solution {
+public:
+    bool asteroidsDestroyed(int mass, vector<int>& asteroids) {
+        //按照从小到大的顺序与小行星碰撞,假设碰撞a和b都是合法的,那肯定是先撞小的那个更稳妥一些
+        int n = asteroids.size();
+        sort(asteroids.begin(), asteroids.end());
+        long long curSum = mass;
+        int index = 0; //从0开始撞
+        for( ;index<n;index++)
+        {
+            if(curSum>=asteroids[index])
+            {
+                curSum += (long long)asteroids[index];
+            }
+            else break;
+        }
+        return (index==n);
+
     }
 };
 ```
@@ -635,7 +800,7 @@ public:
 在下标为 0, 1, 3 和 4 处，都有 perm[i] > nums[i] 。因此我们返回 4 。
 ```
 
-
+思路:田忌赛马:
 
 ```C++
 class Solution {
