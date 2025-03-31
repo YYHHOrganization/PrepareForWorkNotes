@@ -6281,6 +6281,45 @@ public:
 
 
 
+另一种算法,自顶向下:
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int res = INT_MAX;
+    void dfs(TreeNode* root ,int height)
+    {
+        height++;
+        if(root==nullptr)return;
+        if(root->left==nullptr&&root->right==nullptr)
+        {
+            res = min(height,res);
+            return;
+        }
+        dfs(root->left,height);
+        dfs(root->right,height);
+    }
+    int minDepth(TreeNode* root) {
+        if(root==nullptr)return 0;
+        dfs(root, 0);
+        return res;
+    }
+};
+```
+
+
+
 ### 经典线段树——[3479. 将水果装入篮子 III](https://leetcode.cn/problems/fruits-into-baskets-iii/)
 
 牢记：l和r是正常的数组下标，而o是线段树为了维护区间某一段的值的下标，l和r因为是正常数组下标所以是从0开始的，而o则是从1开始的（之所以从1开始，是因为比较好算左右子树的索引，分别是`i*2`和`i*2+1`）。
