@@ -177,7 +177,7 @@ public:
         int sum = reduce(nums.begin(),nums.end());
         if(k>0)
         {
-            //表示到正数了
+            //表示可以翻偶数次某个数，最后翻回原值
             if(k%2==0)
             {
                 return sum;
@@ -360,6 +360,314 @@ public:
 
 
 
+### [2144. 打折购买糖果的最小开销](https://leetcode.cn/problems/minimum-cost-of-buying-candies-with-discount/) 1261
+
+一家商店正在打折销售糖果。每购买 **两个** 糖果，商店会 **免费** 送一个糖果。
+
+免费送的糖果唯一的限制是：它的价格需要小于等于购买的两个糖果价格的 **较小值** 。
+
+- 比方说，总共有 `4` 个糖果，价格分别为 `1` ，`2` ，`3` 和 `4` ，一位顾客买了价格为 `2` 和 `3` 的糖果，那么他可以免费获得价格为 `1` 的糖果，但不能获得价格为 `4` 的糖果。
+
+给你一个下标从 **0** 开始的整数数组 `cost` ，其中 `cost[i]` 表示第 `i` 个糖果的价格，请你返回获得 **所有** 糖果的 **最小** 总开销。
+
+**示例 1：**
+
+```
+输入：cost = [1,2,3]
+输出：5
+解释：我们购买价格为 2 和 3 的糖果，然后免费获得价格为 1 的糖果。
+总开销为 2 + 3 = 5 。这是开销最小的 唯一 方案。
+注意，我们不能购买价格为 1 和 3 的糖果，并免费获得价格为 2 的糖果。
+这是因为免费糖果的价格必须小于等于购买的 2 个糖果价格的较小值。
+```
+
+
+
+M1
+
+3个打包卖
+
+```C++
+class Solution {
+public:
+    int minimumCost(vector<int>& cost) {
+        sort(cost.begin(),cost.end(),greater<int>{});
+        int res=0;
+        int n = cost.size();
+        for(int i=0;i<n;i++)
+        {
+            if(i%3!=2)res+=cost[i];
+        }
+        return res;
+    }
+};
+```
+
+
+
+M2: M
+
+```C++
+class Solution {
+public:
+    int minimumCost(vector<int>& cost) {
+        //最大 第二大的一定会买
+        //排序后一定可以送第三大的糖 
+        //继续上述步骤 
+        sort(cost.begin(),cost.end(),greater<int>{});
+        //9 7 7 5 2 2 1 1
+        int res=0;
+        int n = cost.size();
+        for(int i=0;i<n;)
+        {
+            if(i<n)
+            {
+                res+= cost[i];
+                i++;
+            }
+            if(i<n)
+            {
+                res+= cost[i];
+                i++;
+            }
+            if(i<n)
+            {
+                i++;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [561. 数组拆分 ](https://leetcode.cn/problems/array-partition/)约 1300
+
+给定长度为 `2n` 的整数数组 `nums` ，你的任务是将这些数分成 `n` 对, 例如 `(a1, b1), (a2, b2), ..., (an, bn)` ，使得从 `1` 到 `n` 的 `min(ai, bi)` 总和最大。
+
+返回该 **最大总和** 。
+
+**示例 1：**
+
+```
+输入：nums = [1,4,3,2]
+输出：4
+解释：所有可能的分法（忽略元素顺序）为：
+1. (1, 4), (2, 3) -> min(1, 4) + min(2, 3) = 1 + 2 = 3
+2. (1, 3), (2, 4) -> min(1, 3) + min(2, 4) = 1 + 2 = 3
+3. (1, 2), (3, 4) -> min(1, 2) + min(3, 4) = 1 + 3 = 4
+所以最大总和为 4
+```
+
+```C++
+class Solution {
+public:
+    int arrayPairSum(vector<int>& nums) {
+        // 大的数字和大的数字放一起
+        sort(nums.begin(),nums.end(),greater<int>());
+        int n =nums.size();
+        int res=0;
+        for(int i=1;i<n;i+=2)
+        {
+            res+=nums[i];
+        }
+        return res;
+    }
+};
+```
+
+OR(题目说了长度是2n)
+
+```C++
+class Solution {
+public:
+    int arrayPairSum(vector<int>& nums) {
+        // 大的数字和大的数字放一起
+        sort(nums.begin(),nums.end());
+        int n =nums.size();
+        int res=0;
+        for(int i=0;i<n;i+=2)
+        {
+            res+=nums[i];
+        }
+        return res;
+    }
+};
+```
+
+证明：
+
+https://leetcode.cn/problems/array-partition/solutions/5534/minshu-dui-bi-shi-you-xu-shu-lie-shang-xiang-lin-y/
+
+<img src="assets/image-20250330204319874.png" alt="image-20250330204319874" style="zoom: 67%;" />
+
+![image-20250330204348220](assets/image-20250330204348220.png)
+
+![image-20250330204410088](assets/image-20250330204410088.png)
+
+### [1877. 数组中最大数对和的最小值](https://leetcode.cn/problems/minimize-maximum-pair-sum-in-array/)
+
+一个数对 `(a,b)` 的 **数对和** 等于 `a + b` 。**最大数对和** 是一个数对数组中最大的 **数对和** 。
+
+- 比方说，如果我们有数对 `(1,5)` ，`(2,3)` 和 `(4,4)`，**最大数对和** 为 `max(1+5, 2+3, 4+4) = max(6, 5, 8) = 8` 。
+
+给你一个长度为 **偶数** `n` 的数组 `nums` ，请你将 `nums` 中的元素分成 `n / 2` 个数对，使得：
+
+- `nums` 中每个元素 **恰好** 在 **一个** 数对中，且
+- **最大数对和** 的值 **最小** 。
+
+请你在最优数对划分的方案下，返回最小的 **最大数对和** 。
+
+**示例 1：**
+
+```
+输入：nums = [3,5,2,3]
+输出：7
+解释：数组中的元素可以分为数对 (3,3) 和 (5,2) 。
+最大数对和为 max(3+3, 5+2) = max(6, 7) = 7 。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int minPairSum(vector<int>& nums) 
+    {
+        //尽量平均
+        //最大和最小放一起
+        sort(nums.begin(),nums.end());
+        int n= nums.size();
+        int res=0;
+        for(int i=0;i<n/2;i++)
+        {
+            res = max(res,nums[i]+nums[n-i-1]);
+        }
+        return res;
+    }
+};
+```
+
+
+
+最大数对和的最小值，贪心解的正确性证明：
+
+https://leetcode.cn/problems/minimize-maximum-pair-sum-in-array/solutions/885704/gong-shui-san-xie-noxiang-xin-ke-xue-xi-ru29y
+
+![image-20250330211656395](assets/image-20250330211656395.png)
+
+![image-20250330211715475](assets/image-20250330211715475.png)
+
+![image-20250330211725870](assets/image-20250330211725870.png)
+
+知道了上面的证明“非对称方式”不会比“对称方式”更优，那么我们首先对于第一步来说，比如我们取最小元素和其他东西配对，只有当另一个值取到最大元素（对称）的时候，结果最小（最优）
+
+那么去掉这两个元素，继续取剩下数组中的最大和最小元素配对即可。
+
+
+
+### [881. 救生艇](https://leetcode.cn/problems/boats-to-save-people/) 1530 经典题
+
+给定数组 `people` 。`people[i]`表示第 `i` 个人的体重 ，**船的数量不限**，每艘船可以承载的最大重量为 `limit`。
+
+每艘船最多可同时载两人，但条件是这些人的重量之和最多为 `limit`。
+
+返回 *承载所有人所需的最小船数* 。
+
+**示例 1：**
+
+```
+输入：people = [1,2], limit = 3
+输出：1
+解释：1 艘船载 (1, 2)
+```
+
+
+
+https://leetcode.cn/problems/boats-to-save-people/solutions/2828004/jian-ji-yi-dong-de-tu-shi-tui-dao-fu-duo-g02g/
+
+```C++
+class Solution {
+public:
+    int numRescueBoats(vector<int>& people, int limit) {
+        int n = people.size();
+        int cnt=0;
+        int l=0,r=n-1;
+        sort(people.begin(),people.end());
+        while(l<=r)
+        {
+            if(people[l]+people[r]<=limit)
+            {
+                cnt++;
+                l++;
+                r--;
+            }
+            else
+            {
+                cnt++;
+                r--;
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### [2592. 最大化数组的伟大值](https://leetcode.cn/problems/maximize-greatness-of-an-array/)
+
+给你一个下标从 0 开始的整数数组 `nums` 。你需要将 `nums` 重新排列成一个新的数组 `perm` 。
+
+定义 `nums` 的 **伟大值** 为满足 `0 <= i < nums.length` 且 `perm[i] > nums[i]` 的下标数目。
+
+请你返回重新排列 `nums` 后的 **最大** 伟大值。
+
+ 
+
+**示例 1：**
+
+```
+输入：nums = [1,3,5,2,1,3,1]
+输出：4
+解释：一个最优安排方案为 perm = [2,5,1,3,3,1,1] 。
+在下标为 0, 1, 3 和 4 处，都有 perm[i] > nums[i] 。因此我们返回 4 。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int maximizeGreatness(vector<int>& nums) {
+        //1 1 1 2 3 3 5 nums
+        sort(nums.begin(),nums.end());
+        int n =nums.size();
+        int f=n-2;
+        int k=n-1;
+        int cnt=0;
+        for(;k>=0&&f>=0;)
+        {
+            if(nums[k]>nums[f])
+            {
+                cnt++;
+                k--;
+                f--;
+            }
+            else
+            {
+                f--;
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
 ## §1.3 双序列配对
 
 ### （1）[455. 分发饼干](https://leetcode.cn/problems/assign-cookies/)
+
