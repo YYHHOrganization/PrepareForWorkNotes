@@ -834,6 +834,74 @@ public:
 
 
 
+### [2576. 求出最多标记下标](https://leetcode.cn/problems/find-the-maximum-number-of-marked-indices/)（看答案） :cat:
+
+给你一个下标从 **0** 开始的整数数组 `nums` 。
+
+一开始，所有下标都没有被标记。你可以执行以下操作任意次：
+
+- 选择两个 **互不相同且未标记** 的下标 `i` 和 `j` ，满足 `2 * nums[i] <= nums[j]` ，标记下标 `i` 和 `j` 。
+
+请你执行上述操作任意次，返回 `nums` 中最多可以标记的下标数目。
+
+**示例 1：**
+
+```C++
+输入：nums = [3,5,2,4]
+输出：2
+解释：第一次操作中，选择 i = 2 和 j = 1 ，操作可以执行的原因是 2 * nums[2] <= nums[1] ，标记下标 2 和 1 。
+没有其他更多可执行的操作，所以答案为 2 。
+```
+
+
+
+#### M1 :二分
+
+在二分专题中
+
+假如最终有 K对匹配的数对，就一定是左边最小的 K个数与右边最大的K 个数进行匹配。
+
+![image-20250401000437309](assets/image-20250401000437309.png)
+
+m:左边1区间中的红色，需要和右边2区间中的红色匹配（`int left = 0, right = n-k;`）
+
+反证，如果与橙色（更小），那么一定能与红色。
+
+​			如果与绿色（更大），那么右边2区间内不足k个，不是我们要的答案。
+
+#### M2 :贪心
+
+https://leetcode.cn/problems/find-the-maximum-number-of-marked-indices/solutions/2914153/tan-xin-pai-xu-shuang-zhi-zhen-tui-dao-z-bqx3/
+
+**结论**：假如最终有 K对匹配的数对，就一定是左边最小的 K个数与右边最大的K 个数进行匹配。
+
+由方法一的匹配方式可知，我们需要用 nums 左半部分中的数，去匹配 nums 右半部分中的数。
+
+在 nums 的右半部分中，找到第一个满足 2⋅nums[0]≤nums[j] 的 j，那么 nums[1] 只能匹配右半部分中的下标大于 j 的数，依此类推。
+
+这可以用同向双指针实现。
+
+```C++
+class Solution {
+public:
+    int maxNumOfMarkedIndices(vector<int>& nums) {
+        sort(nums.begin(),nums.end());
+        int n = nums.size();
+        int i=0;
+        for(int j=(n+1)/2;j<n;j++)
+        {
+            if(nums[i]*2<=nums[j])// 找到一个匹配
+            {
+                i++;
+            }
+        }
+        return 2*i;
+    }
+};
+```
+
+
+
 ## §1.3 双序列配对
 
 ### （1）[455. 分发饼干](https://leetcode.cn/problems/assign-cookies/)

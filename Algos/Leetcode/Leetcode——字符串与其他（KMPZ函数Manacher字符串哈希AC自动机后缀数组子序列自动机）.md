@@ -15,7 +15,7 @@
 >  vector<int> kmp(string &text, string &pattern) {
 >      int m = pattern.length();
 >      // 1. 构建前缀函数（Partial Match Table，部分匹配表）
->      vector<int> pi(m); // pi[i]表示pattern[0..i]的最长公共前后缀的长度
+>      vector<int> pi(m); // pi[i]表示pattern[0..i]的最长公共前后缀的长度 【pi数组初值是0！且首值永远位0】
 >      int c = 0; // 当前最长公共前后缀的长度，也作为指针指向待匹配位置
 >      for (int i = 1; i < m; i++) { // i【必须从1开始】，因为pi[0]一定是0 
 >          char v = pattern[i];
@@ -227,7 +227,7 @@ public:
     {
         //只不过是把字符串形式的KMP改成了int的情况
         int m = pattern.size();
-        vector<int> pi(m, 0);
+        vector<int> pi(m, 0); 
         int c = 0;
         for(int i=1;i<m;i++)
         {
