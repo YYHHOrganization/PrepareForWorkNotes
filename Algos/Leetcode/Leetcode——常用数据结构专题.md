@@ -6387,3 +6387,121 @@ public:
 };
 ```
 
+
+
+### （3）[2940. 找到 Alice 和 Bob 可以相遇的建筑](https://leetcode.cn/problems/find-building-where-alice-and-bob-can-meet/)
+
+> 给你一个下标从 **0** 开始的正整数数组 `heights` ，其中 `heights[i]` 表示第 `i` 栋建筑的高度。
+>
+> 如果一个人在建筑 `i` ，且存在 `i < j` 的建筑 `j` 满足 `heights[i] < heights[j]` ，那么这个人可以移动到建筑 `j` 。
+>
+> 给你另外一个数组 `queries` ，其中 `queries[i] = [ai, bi]` 。第 `i` 个查询中，Alice 在建筑 `ai` ，Bob 在建筑 `bi` 。
+>
+> 请你能返回一个数组 `ans` ，其中 `ans[i]` 是第 `i` 个查询中，Alice 和 Bob 可以相遇的 **最左边的建筑** 。如果对于查询 `i` ，Alice 和 Bob 不能相遇，令 `ans[i]` 为 `-1` 。
+
+这道题目在上一题线段树的基础上，主要加了一个起始位置的判断，即找到第一个>=x的数，且必须在某个位置`index`的右边。在构建基础线段树的时候大致逻辑不变，问题相当于计算区间 [b+1,n−1] 中第一个大于 v=heights[a] 的高度的位置。这可以用线段树二分解决。
+
+创建一棵维护区间最大值 mx 的线段树。对于每个询问，递归这棵线段树，分类讨论：
+
+- 如果当前区间（线段树的节点对应的区间）最大值 mx≤v，则当前区间没有大于 v 的数，返回 −1。
+- 如果当前区间只包含一个元素，则找到答案，返回该元素的下标。
+- 如果左子树包含 b+1，则递归左子树。
+- 如果左子树返回 −1，则返回递归右子树的结果。
+
+最终代码如下：
+
+```c++
+//线段树起手
+class SegmentTree
+{
+    vector<int> mx;
+    void build(const vector<int>& a, int left, int right, int o)
+    {
+        if(left==right)
+        {
+            mx[o] = a[left];
+            return;
+        }
+        int mid = (left+right) / 2;
+        build(a, left, mid, o*2);
+        build(a, mid+1, right, o*2 + 1);
+        mx[o] = max(mx[o*2], mx[o*2+1]); //相当于原来的maintain
+    }
+public:
+    SegmentTree(const vector<int>& a)
+    {
+        size_t n = a.size();
+        mx.resize((2<<bit_width(n-1)));
+        build(a, 0, n-1, 1);
+    }
+    //区别在于增加leftBound参数,表示下界,意味着查询操作必须在严格大于等于leftBound的地方进行
+    int findFirstAndUpdate(int left, int right, int leftBound, int o, int x) //其实本题不需要update,会好一些
+    {
+        //前面是与查询本身有关的,照着原来的写即可
+        if(mx[o]<=x) return -1; //要找的是第一个>x的数
+        if(left==right)
+        {
+            //本题不需要把值置为-1,直接return正确结果即可
+            return left;
+        }
+        int mid = (left+right) / 2;
+        int i = -1;
+        //得保证左区间合法,再去找左区间
+        if(mid >= leftBound) //左区间是合法的,这里默认leftBound至少应该>=left,题意也是这样的
+        {
+            i = findFirstAndUpdate(left, mid, leftBound, o*2, x);
+            if(i>=0) return i;
+        }
+        //左子树没希望了,返回右子树的结果,在里面会继续与leftBound做判断(感觉直接返回右子树的结果是一种简便写法,但是不是有点不太好理解?毕竟右子树没有显式做范围是否合法的判断)
+        return findFirstAndUpdate(mid+1, right, leftBound, o*2+1, x);
+    }
+
+};
+class Solution {
+public:
+    vector<int> leftmostBuildingQueries(vector<int>& heights, vector<vector<int>>& queries) {
+        SegmentTree t(heights);
+        int n = heights.size();
+        int m = queries.size();
+        vector<int> res(m, -1);
+        for(int i=0;i<m;i++)
+        {
+            int a = queries[i][0];
+            int b = queries[i][1];
+            //保证a是小的,b是大的
+            if(a>b) swap(a, b);
+            if(a==b || heights[a]<heights[b]) 
+            {
+                res[i] = b; //此时b就是最终结果,因为a可以直接跳到b上
+                continue;
+            }
+            else
+            {
+                //线段树处理的情况,heights[a]>=heights[b],于是要找到严格b右侧的第一个>heights[a]的值
+                int ans = t.findFirstAndUpdate(0, n-1, b+1, 1, heights[a]);
+                res[i] = ans;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+> 补充：关于线段树find的时候右子树的隐式处理：
+>
+> 在`findFirstAndUpdate`函数中，右子树不需要显式检查是否在`leftBound`的右侧，原因在于递归调用的参数传递和线段树的区间分割特性已经隐式保证了这一点。具体逻辑如下：
+>
+> 1. **线段树的结构特性**：每个节点的区间`[left, right]`在递归过程中会被不断分割为左子树`[left, mid]`和右子树`[mid+1, right]`。初始调用时，`left`和`right`覆盖整个数组，确保了`leftBound`必然落在初始区间内。
+>
+> 2. **左子树的显式检查**：
+>    - 处理左子树时，需要检查其右边界`mid`是否大于等于`leftBound`（即`mid >= leftBound`）。
+>    - 若`mid < leftBound`，说明左子树的整个区间`[left, mid]`都在`leftBound`左侧，无法满足条件，直接跳过。
+>
+> 3. **右子树的隐式处理**：
+>    - 当进入右子树时，其区间为`[mid+1, right]`。此时`mid+1`可能小于`leftBound`（例如，原区间为`[0,5]`，`leftBound=4`，右子树区间`[3,5]`的起始点`3 < 4`）。
+>    - 但递归调用右子树时，参数`left`会被更新为`mid+1`，并在新的递归层级中重新计算`mid`。此时，新层级的左子树可能覆盖`leftBound`（例如，右子树区间`[3,5]`的新`mid=4`，满足`mid >= leftBound`）。
+>    - 递归过程会持续分割区间，直到找到满足`leftBound`的叶子节点或确认无解。每一层的`mid`检查会自动过滤无效区间，因此无需显式检查右子树的左边界。
+>
+> **总结**：右子树不需要显式检查`mid+1 >= leftBound`，因为递归调用会动态调整区间，并在每一层通过`mid >= leftBound`的隐式判断确保有效性。左子树的显式检查是为了快速跳过完全无效的区间，而右子树的处理通过递归参数传递和动态分割自然覆盖了所有可能情况。
