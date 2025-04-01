@@ -2647,6 +2647,390 @@ public:
 
 
 
+# 十、数位 DP
+
+[数位 DP v1.0 模板讲解](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1rS4y1s721%2F%3Ft%3D19m36s)
+
+[数位 DP v2.0 模板讲解](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1Fg4y1Q7wv%2F%3Ft%3D31m28s) 上下界数位 DP
+
+
+
+### [2719. 统计整数数目](https://leetcode.cn/problems/count-of-integers/)
+
+给你两个数字字符串 `num1` 和 `num2` ，以及两个整数 `max_sum` 和 `min_sum` 。如果一个整数 `x` 满足以下条件，我们称它是一个好整数：
+
+- `num1 <= x <= num2`
+- `min_sum <= digit_sum(x) <= max_sum`.
+
+请你返回好整数的数目。答案可能很大，请返回答案对 `109 + 7` 取余后的结果。
+
+注意，`digit_sum(x)` 表示 `x` 各位数字之和。
+
+**示例 1：**
+
+```c++
+输入：num1 = "1", num2 = "12", min_num = 1, max_num = 8
+输出：11
+解释：总共有 11 个整数的数位和在 1 到 8 之间，分别是 1,2,3,4,5,6,7,8,10,11 和 12 。所以我们返回 11 。
+```
+
+
+
+把问题拆分成：
+
+计算 ≤num 2  的好整数个数，记作 a。
+计算 ≤num 1 −1 的好整数个数，记作 b。
+那么答案就是 a−b。
+
+
+
+考虑（<=nums2 的 ) ➖减去  （<=nums1的) ➕（==nums1的）
+
+
+
+V1.0
+
+```C++
+class Solution {
+    const int MOD = 1e9 + 7;
+    //计算 ≤numStr（上界） 的好整数个数  //好整数 min_sum <= sum(x) <= max_sum.
+    int calc(string& s, int min_sum, int max_sum)
+    {
+        int n = s.size();
+        vector<vector<int>> memo(n, vector<int>(min(9 * n, max_sum) + 1, -1));
+        auto dfs = [&](this auto&& self,int i,int sum,bool is_limit)->int
+        {
+            if (sum > max_sum)  // 非法
+                return 0;
+            if (i == n)
+                return sum >= min_sum ? 1 : 0;
+            //返回记忆化的
+            if (!is_limit && memo[i][sum] != -1)
+                return memo[i][sum];
+            int up = is_limit ? s[i] - '0' : 9;
+            int res = 0;
+            for (int d = 0; d <= up; d++)
+            {
+                res = (res + self(i + 1, sum + d, is_limit && d == up)) % MOD;
+            }
+            if (!is_limit)
+                memo[i][sum] = res;
+            return res;
+        };
+        return dfs(0, 0, true);
+    }
+public:
+    int count(string num1, string num2, int min_sum, int max_sum) {
+        int ans = calc(num2, min_sum, max_sum) - calc(num1, min_sum, max_sum) + MOD; // 避免负数
+        int sum = 0;
+        for (char c : num1)
+        {
+            sum += (c - '0');
+        }
+        ans += (sum >= min_sum && sum <= max_sum);
+        return ans % MOD;
+    }
+};
+```
+
+
+
+注释版本：
+
+```cpp
+class Solution {
+    const int MOD = 1e9 + 7;  // 模数，用于结果取模
+
+    // 计算 ≤numStr 的好整数个数（数位和介于[min_sum, max_sum]）
+    int calc(string& s, int min_sum, int max_sum) 
+    {
+        int n = s.size();
+        // memo[i][sum] 表示处理到第i位，当前和为sum时的记忆化结果
+        // 第二维大小优化：sum最多为 min(9*n, max_sum)，+1是因为包含0到该值的所有可能
+        vector<vector<int>> memo(n, vector<int>(min(9 * n, max_sum) + 1, -1));
+        
+        // 递归函数：数位DP核心
+        // 参数：当前位i，当前和sum，是否受上限约束is_limit
+        auto dfs = [&](this auto&& self, int i, int sum, bool is_limit) -> int 
+        {
+            if (sum > max_sum) return 0;  // 当前和超过max_sum，直接剪枝
+            if (i == n) return sum >= min_sum ? 1 : 0;  // 所有位处理完毕，检查sum是否≥min_sum
+            
+            // 若不受限且已记忆化，直接返回结果（注意：受限状态无法复用，故不记忆化）
+            if (!is_limit && memo[i][sum] != -1) return memo[i][sum];
+            
+            int up = is_limit ? s[i] - '0' : 9;  // 当前位的最大值（受限则为s[i]，否则为9）
+            int res = 0;
+            for (int d = 0; d <= up; d++) // 枚举当前位的所有可能数字
+            {  
+                // 递归到下一位，更新sum和is_limit状态（若当前位选到上限且d==up，则下一位仍受限）
+                res = (res + self(i + 1, sum + d, is_limit && d == up)) % MOD;
+            }
+            
+            if (!is_limit) memo[i][sum] = res;  // 仅记忆化非受限状态的结果
+            return res;
+        };
+        
+        return dfs(0, 0, true);  // 从第0位开始，初始和为0，受限于上限 。 is_limit是true可以保证第一位不乱选
+    }
+
+public:
+    int count(string num1, string num2, int min_sum, int max_sum) 
+    {
+        // 计算[num1, num2]内的好整数数 = calc(num2) - calc(num1) + (num1是否合法)
+        int ans = (calc(num2, min_sum, max_sum) - calc(num1, min_sum, max_sum) + MOD) % MOD;//【 + MOD！👇】
+        // 单独检查num1是否合法
+        int sum = 0;
+        for (char c : num1) sum += (c - '0');
+        if (sum >= min_sum && sum <= max_sum) ans = (ans + 1) % MOD;
+        return ans;
+    }
+};
+```
+
+>`int ans = (calc(num2, min_sum, max_sum) - calc(num1, min_sum, max_sum) + MOD) % MOD;//【 + MOD！👇】`
+>
+>注意这里一定要 **+MOD**
+>
+>因为calc(num2, min_sum, max_sum) 返回的是MOD返回的，
+>
+>所以可能会导致 `calc(num2, min_sum, max_sum) < calc(num1, min_sum, max_sum)`是负数
+
+
+
+```c++
+// 上界5555
+// 14  
+// 22 [14 22 可记忆化]
+// 55
+// 19 [55 19不可记忆化]
+```
+
+
+
+**关于 `min(9 * n, max_sum) + 1, -1)` 的解释：**
+
+- **`min(9 * n, max_sum)`**：当前处理数字的位数为 `n`，每位最大为9，因此数位和的最大可能值为 `9 * n`。但题目要求数位和不超过 `max_sum`，因此当 `max_sum < 9 * n` 时，超过 `max_sum` 的和无意义，可直接剪枝。取两者的最小值是为了优化记忆化数组的空间，避免存储无效状态。
+  
+- **`+1`**：因为数位和的取值范围是 `[0, min(9 * n, max_sum)]`，共有 `min(9 * n, max_sum) + 1` 个可能值，所以需要 `+1` 来包含所有情况。
+
+- **`-1`**：初始化记忆化数组的默认值为-1，表示该状态未被计算过。
+
+
+
+关于语法：
+
+>##### 三种递归lambda实现方式
+>
+>1 `std::function`（类型明确）
+>
+>```C++
+>function<int(int, int, bool)> dfs = [&](int i, int sum, bool is_limit) -> int 
+>{
+>    // ... 递归调用直接使用 dfs(i+1, ...)
+>     dfs(i+1, sum+d, ...);
+>};
+>return dfs(0, 0, true); // 
+>```
+>
+>2 泛型lambda + 显式传递自身（通用模板）
+>
+>```C++
+>auto dfs = [&](auto&& self, int i, int sum, bool is_limit) -> int 
+>{
+>    // 递归调用时传递 self 自身
+>    self(self, i+1, sum+d, ...); // ✅
+>};
+>return dfs(dfs, 0, 0, true); // ✅ 初始调用仍用 dfs（见下方解释）
+>```
+>
+>2 C++23显式对象参数（`this auto&&`）
+>
+>```C++
+>auto dfs = [&](this auto&& self,int i,int sum,bool is_limit)->int
+>{
+>    self(i+1, sum+d, ...); // self
+>};
+>return dfs(0, 0, true); // 
+>```
+>
+>
+>
+>具体涉及到auto，function等的语法可以看 D:\PGPostgraduate\githubNotePrepareForWork\PrepareForWorkNotes\Algos\Leetcode\C++ 特殊语法 C++ 新特性 刷题时候遇到的.md
+
+
+
+### [788. 旋转数字](https://leetcode.cn/problems/rotated-digits/)
+
+我们称一个数 X 为好数, 如果它的每位数字逐个地被旋转 180 度后，我们仍可以得到一个有效的，且和 X 不同的数。要求每位数字都要被旋转。
+
+如果一个数的每位数字被旋转以后仍然还是一个数字， 则这个数是有效的。0, 1, 和 8 被旋转后仍然是它们自己；2 和 5 可以互相旋转成对方（在这种情况下，它们以不同的方向旋转，换句话说，2 和 5 互为镜像）；6 和 9 同理，除了这些以外其他的数字旋转以后都不再是有效的数字。
+
+现在我们有一个正整数 `N`, 计算从 `1` 到 `N` 中有多少个数 X 是好数？
+
+**示例：**
+
+```
+输入: 10
+输出: 4
+解释: 
+在[1, 10]中有四个好数： 2, 5, 6, 9。
+注意 1 和 10 不是好数, 因为他们在旋转之后不变。
+```
+
+
+
+V1.0
+
+```C++
+int diffs[10]  = {0,0,1,-1,-1,1,1,-1,0,1};
+                //0 1 2  3  4 5 6  7 8 9 
+class Solution {
+public:
+    int rotatedDigits(int n) {
+        // 0 1 8 （a=0）
+        // 2 - 5 ， 6 - 9 （b=1）
+        // 3 4 7 （c=-1）
+
+        //有数字是b=1类  可
+        //有数字是c=-1类 不可 退出
+
+        // 1a 2b 
+        // 8a 6b 其实这两后面的情况是一样的 可以记忆化搜索 
+        string s = to_string(n);
+        int m = s.size();
+        vector<vector<int>> dp(m,vector<int>(2,-1));//有diff和没有diff的情况
+        auto dfs = [&](this auto &&dfs,int i,bool has_diff,bool is_limit)->int
+        {
+            if(i==m) return has_diff;// 只有包含 2/5/6/9 才算一个好数
+            if(!is_limit&&dp[i][has_diff]!=-1) return dp[i][has_diff];
+            int up = is_limit?(s[i]-'0'):9;
+            int res=0;
+            for(int d=0;d<=up;d++)// 枚举要填入的数字 d
+            {
+                if(diffs[d]!=-1)//不是3 4 7
+                {
+                    res+= dfs(i+1,has_diff||diffs[d],is_limit&&d==up);//进入i+1
+                }
+            }
+            if(!is_limit) dp[i][has_diff] = res;
+            return res;
+        };
+        return dfs(0,false,true);//
+    }
+};
+```
+
+https://leetcode.cn/problems/rotated-digits/
+
+<img src="assets/image-20250331212952884.png" alt="image-20250331212952884" style="zoom: 80%;" />
+
+<img src="assets/image-20250331213001008.png" alt="image-20250331213001008" style="zoom:80%;" />
+
+
+
+### [902. 最大为 N 的数字组合](https://leetcode.cn/problems/numbers-at-most-n-given-digit-set/)
+
+给定一个按 **非递减顺序** 排列的数字数组 `digits` 。你可以用任意次数 `digits[i]` 来写的数字。例如，如果 `digits = ['1','3','5']`，我们可以写数字，如 `'13'`, `'551'`, 和 `'1351315'`。
+
+返回 *可以生成的小于或等于给定整数 `n` 的正整数的个数* 。
+
+**示例 1：**
+
+```
+输入：digits = ["1","3","5","7"], n = 100
+输出：20
+解释：
+可写出的 20 个数字是：
+1, 3, 5, 7, 11, 13, 15, 17, 31, 33, 35, 37, 51, 53, 55, 57, 71, 73, 75, 77.
+```
+
+
+
+增加`isNum`
+
+```C++
+class Solution {
+public://10min内 自己 +1贴
+    int atMostNGivenDigitSet(vector<string>& digits, int n)
+    {
+        string s = to_string(n);//将 n 转换成字符串 s
+        int m = s.size();
+        //i  , is_limit, is_num->中间不可以有看空缺的0 因为这个吧？
+        vector<int> dp(m, -1);
+        //定义 dp(i,isLimit,isNum) 表示构造从左往右第 i 位及其之后数位的合法方案数
+        auto dfs = [&](this auto&& dfs, int i, bool is_limit, bool is_num)->int
+        {
+            if (i == m)return is_num;
+            if (!is_limit && is_num && dp[i] != -1)return dp[i];// [is_num ]
+            int res = 0;
+            if (!is_num)
+            {
+                res = dfs(i + 1, false, false);
+            }
+            char up = is_limit ? s[i] : '9';
+            for (int d = 0; d < digits.size(); d++)
+            {
+                if (digits[d][0] > up)break;
+                res += dfs(i + 1, is_limit && digits[d][0] == up, true);
+            }
+            if (!is_limit && is_num) dp[i] = res;
+            return res;
+        };
+        return dfs(0, true, false);
+    }
+};
+```
+
+
+
+链接：https://leetcode.cn/problems/numbers-at-most-n-given-digit-set/solutions/1900101/shu-wei-dp-tong-yong-mo-ban-xiang-xi-zhu-e5dg/
+
+`isNum` 表示` i `前面的数位是否填了数字。
+
+若为假，则当前位可以跳过（不填数字），或者要填入的数字至少为 1；
+
+若为真，则必须填数字，且要填入的数字从 0 开始。
+
+这样我们可以控制构造出的是一位数/两位数/三位数等等。对于本题而言，要填入的数字可直接从 `digits `中选择。
+
+m不可以没有的原因可能包含，中间不可以有看空缺的0 ，没有isNum就没办法构造某一位不填的现象
+
+![image-20250331215836889](assets/image-20250331215836889.png)
+
+0X3f注释版：
+
+```C++
+class Solution {
+public:
+    int atMostNGivenDigitSet(vector<string> &digits, int n) {
+        auto s = to_string(n);
+        int m = s.length(), dp[m];
+        memset(dp, -1, sizeof(dp)); // dp[i] = -1 表示 i 这个状态还没被计算出来
+        function<int(int, bool, bool)> f = [&](int i, bool is_limit, bool is_num) -> int {
+            if (i == m) return is_num; // 如果填了数字，则为 1 种合法方案
+            if (!is_limit && is_num && dp[i] >= 0) return dp[i]; // 在不受到任何约束的情况下，返回记录的结果，避免重复运算
+            int res = 0;
+            if (!is_num) // 前面不填数字，那么可以跳过当前数位，也不填数字
+                // is_limit 改为 false，因为没有填数字，位数都比 n 要短，自然不会受到 n 的约束
+                // is_num 仍然为 false，因为没有填任何数字
+                res = f(i + 1, false, false);
+            char up = is_limit ? s[i] : '9'; // 根据是否受到约束，决定可以填的数字的上限
+            // 注意：对于一般的题目而言，如果这里 is_num 为 false，则必须从 1 开始枚举，由于本题 digits 没有 0，所以无需处理这种情况
+            for (auto &d : digits) { // 枚举要填入的数字 d
+                if (d[0] > up) break; // d 超过上限，由于 digits 是有序的，后面的 d 都会超过上限，故退出循环
+                // is_limit：如果当前受到 n 的约束，且填的数字等于上限，那么后面仍然会受到 n 的约束
+                // is_num 为 true，因为填了数字
+                res += f(i + 1, is_limit && d[0] == up, true);
+            }
+            if (!is_limit && is_num) dp[i] = res; // 在不受到任何约束的情况下，记录结果
+            return res;
+        };
+        return f(0, true, false);
+    }
+};
+```
+
 
 
 # 十二、树形 DP
