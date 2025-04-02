@@ -426,7 +426,6 @@ public:
 
 
 ### [3075. 幸福值最大化的选择方案](https://leetcode.cn/problems/maximize-happiness-of-selected-children/)
-
 给你一个长度为 `n` 的数组 `happiness` ，以及一个 **正整数** `k` 。
 
 `n` 个孩子站成一队，其中第 `i` 个孩子的 **幸福值** 是 `happiness[i]` 。你计划组织 `k` 轮筛选从这 `n` 个孩子中选出 `k` 个孩子。
@@ -446,6 +445,8 @@ public:
 所选孩子的幸福值之和为 3 + 1 = 4 。
 ```
 代码：
+
+> [划分型 DP 的套路【力扣周赛 388】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Xr421J77b/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99),证明在这个视频的前4分钟。
 
 ```c++
 class Solution {
