@@ -91,12 +91,6 @@ public:
 
 
 
-### ==（4）[121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)==
-
-看了一眼，感觉跟枚举右，维护左的关联性没有那么大，先不在这里做了。
-
-
-
 ### （5）[624. 数组列表中的最大距离](https://leetcode.cn/problems/maximum-distance-in-arrays/)
 
 针对本题来说，**枚举右，维护左**的思想就在于，在每次往后遍历一个数组时，维护左侧遍历完的数组中的最小值和最大值，而最终结果一定在（当前数组最大-历史数组最小，以及历史数组最大-当前数组最小）中产生。
@@ -2163,6 +2157,4351 @@ public:
 
 ### §2.1 一维差分（扫描线）
 
-### 1.[1094. 拼车](https://leetcode.cn/problems/car-pooling/)
+>差分即存储**变化值**。
 
-​                               
+### （1）[1094. 拼车](https://leetcode.cn/problems/car-pooling/)
+
+一种最为基础的差分写法（自己看完原理写的）：
+
+> 创建一个长为 1001 的差分数组，这可以保证 *d* 数组不会下标越界。
+
+```c++
+class Solution {
+public:
+    bool carPooling(vector<vector<int>>& trips, int capacity) {
+        //差分数组,离米小游的题目又近了一些
+        //写法1:直接把长度定为1001,这样一定不会超
+        vector<int> d(1001);
+        //一开始都是0,意味着每一段都没有乘客
+        for(int i=0;i<trips.size();i++){
+            int start = trips[i][1];
+            int end = trips[i][2];
+            int p = trips[i][0]; //乘客数量
+            d[start]+=p;
+            d[end]-=p; //end对应的站不算,因为乘客下车了
+        }
+        int start = 0;
+        //可以靠差分数组还原原来的数组
+        for(int i=0;i<1001;i++){
+            start+=d[i];
+            if(start>capacity) return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+第二种写法是利用平衡树（C++ 中的 `map`，Java 中的 `TreeMap`）代替差分数组，因为我们只需要考虑在`from_i`到`to_i`这部分的乘客数，其余位置的乘客数是保持不变的，无需考虑。平衡树可以保证我们是从小到大遍历这些位置的。当然，如果你不想用平衡树的话，也可以用哈希表，把哈希表的 key 取出来排序，就可以从小到大遍历这些位置了。
+
+此时第二种写法的代码如下（可能是因为map的原因，这种写法会慢一些，感觉看数据量吧，比如这题`trip`的大小只有1000其实直接可以开一个定长vector来解决）：
+
+```c++
+class Solution {
+public:
+    bool carPooling(vector<vector<int>>& trips, int capacity) {
+        map<int, int> d; //差分数组,但只用存对应区间即可,中间不会发生变化
+        for(auto trip: trips){
+            int num = trip[0], start = trip[1], end=trip[2];
+            d[start]+=num;
+            d[end]-=num;
+        }
+        int s = 0;
+        for(auto [k, v]: d){ //只有在k所在的索引位置，才会产生值的变动，所以map的话这么遍历是没问题的
+            s+=v;
+            if(s>capacity) return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （2）[2848. 与车相交的点](https://leetcode.cn/problems/points-that-intersect-with-cars/)
+
+```c++
+class Solution {
+public:
+    int numberOfPoints(vector<vector<int>>& nums) {
+        //一开始都是0,用差分做,返回哪些不是0
+        vector<int> d(102);
+        int maxLength = 0; //统计到这里就可以了
+        int cnt = 0;
+        for(int i=0;i<nums.size();i++){
+            d[nums[i][0]]++;
+            d[nums[i][1]+1]--; //注意这个+1!! 因为最后一个是包含的
+            maxLength = max(maxLength, nums[i][1]);
+        }
+        int s = 0;
+        for(int i=0;i<maxLength+1;i++){
+            s+=d[i];
+            cnt += (s!=0);
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### （3）[1893. 检查是否区域内所有整数都被覆盖](https://leetcode.cn/problems/check-if-all-the-integers-in-a-range-are-covered/)
+
+```c++
+class Solution {
+public:
+    bool isCovered(vector<vector<int>>& ranges, int left, int right) {
+        //正常覆盖即可
+        vector<int> diff(55);
+        for(auto& range: ranges){
+            int l = range[0], r = range[1];
+            diff[l]++;
+            diff[r+1]--;
+        }
+        int s = 0;
+        for(int i=0;i<51;i++){
+            s+=diff[i];
+            if(i>=left && i<=right){
+                if(s==0) return false;
+            }
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （4）[1854. 人口最多的年份](https://leetcode.cn/problems/maximum-population-year/)
+
+依旧是简单题：
+
+```c++
+class Solution {
+public:
+    int maximumPopulation(vector<vector<int>>& logs) {
+        //计算一下人口数,这个数据量可以用map来记录
+        map<int, int> diff;
+        for(auto& log: logs){
+            int left = log[0], right = log[1];
+            diff[left]++;
+            diff[right]--;
+        }
+        int s = 0;
+        int max_year = -1;
+        int max = -1;
+        for(auto [k,v]: diff){
+            s+=v;
+            if(s>max){
+                max = s;
+                max_year = k;
+            }
+        }
+        return max_year;
+    }
+};
+```
+
+
+
+### （5）[2960. 统计已测试设备](https://leetcode.cn/problems/count-tested-devices-after-test-operations/)
+
+本题的难点在于如何将其转换到差分的思想上去。注意思考问题的时候不要硬往什么板子上靠，可以从原理上来理解。
+
+- 记res为累计每个设备需要下降的电量数。x为每个设备输入的电量数。当`x-res>0`时，说明当前的设备是要被检测的，于是`res+=1`，最后返回`res`值即为要检测的设备数。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int countTestedDevices(vector<int>& batteryPercentages) {
+        int res = 0;
+        for(int i=0;i<batteryPercentages.size();i++){
+            if(batteryPercentages[i]-res>0) res++; //>0才会去测试该设备
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （6）[1109. 航班预订统计](https://leetcode.cn/problems/corporate-flight-bookings/)
+
+算是经典差分题目了，返回的也算是还原后的数组。代码如下：
+
+```c++
+class Solution {
+public:
+    vector<int> corpFlightBookings(vector<vector<int>>& bookings, int n) {
+        vector<int> diff(n+1);
+        for(auto& booking: bookings){
+            int left = booking[0]-1, right = booking[1]-1, num = booking[2]; //diff数组是从0开始编号的
+            diff[left]+=num;
+            diff[right+1]-=num;
+        }
+        vector<int> res(n);
+        int s = 0;
+        for(int i=0;i<n;i++){
+            s+=diff[i];
+            res[i] = s;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （7）[3355. 零数组变换 I](https://leetcode.cn/problems/zero-array-transformation-i/)
+
+依旧是最基础的差分数组做法：
+
+```c++
+class Solution {
+public:
+    bool isZeroArray(vector<int>& nums, vector<vector<int>>& queries) {
+        //可-1可不-1的情况下,-1,如果最后<=0即可
+        int n = nums.size();
+        vector<int> diff(n+1);  //最后一位其实并不重要,可以理解为只是为了防止越界
+        diff[0] = nums[0];
+        //差分数组要算出来
+        for(int i=1;i<n;i++){
+            diff[i] = nums[i]-nums[i-1];
+        }
+        for(auto& q: queries){
+            int left = q[0], right = q[1];
+            diff[left]--;
+            diff[right+1]++;
+        }
+        //还原回nums,同时看是否都能<=0
+        int s = 0;
+        for(int i=0;i<n;i++){
+            s+=diff[i];
+            if(s>0) return false;
+        }
+        return true;
+    }
+};
+```
+
+
+
+### （8）[56. 合并区间](https://leetcode.cn/problems/merge-intervals/)（值得再做一遍差分做法）
+
+这道题目的难点在于如何正确地写好要输出的内容，根据基础差分板子可以求出每个值是否被覆盖，而求解最后区间的时候，可以对差分数组求前缀和，以还原原数组，看区间覆盖情况（把连续 >0 的段当作合并后的区间）。
+
+- 技巧：考虑`[1,4],[5,6]`这个用例，如果只是按差分数组前缀和>0来判断的话，会得到`[1,6]`，不过按照题目的要求来答案应该是`[1,4],[5,6]`，解决方案是可以把索引全部*2，这样原来相邻的索引就不会被考虑进来了。代码如下：
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        //中间的不会变,可以考虑用map实现
+        map<int, int> diff;
+        for(auto& interval: intervals)
+        {
+            int left = interval[0], right = interval[1];
+            diff[left*2]++;
+            diff[right*2+1]--; // ！！！不可是diff[(right+1)*2]--;  见👇
+        }
+        vector<vector<int>> res;
+        int s = 0; //>0说明有被覆盖
+        int start = -1;
+        for(auto [k,v]: diff)
+        {
+            s+=v;
+            if(s>0 && start==-1)
+            {
+                start = k;
+            } else if(s==0 && start!=-1)
+            {
+                res.push_back({start/2, k/2});
+                start = -1;
+            }
+        }
+        return res;
+    }
+};
+```
+
+>👇
+>
+>`diff[right*2+1]--; // ！！！不可是diff[(right+1)*2]--;  `
+>
+>因为其实是把right存在夹缝之中 本来是
+>
+>| | | | | |
+>
+>|.|.|.|.|.|. *2之后
+>
+>而`right*2+1`会将right存储在夹缝 “.” 中，如果写成`(right+1)*2` 就还是存在 “|” 中，就实际上就变成重叠了
+
+没有使用map:（实际上map更好）
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> merge(vector<vector<int>>& intervals) {
+        // 1 4 4 5
+        // 1 3 4 5
+        int n = intervals.size();
+        vector<int> diff(20010,0);
+        int maxNum=0;
+        for(int i=0;i<n;i++)
+        {
+            diff[intervals[i][0]*2]++;
+            diff[intervals[i][1]*2+1]--;//+1 最后的结果中/2 依旧还是这个值
+            maxNum = max(maxNum,intervals[i][1]);
+        }
+        vector<vector<int>> res;
+        // 1,2 3,4 4,5
+        // 0,1,0,2,0,3,0,4,0,5 0
+        // 0 1 1 1 0 1 1 1 1 1
+        // 0 1 0 0-1 1 0 +1-1 0 -1
+        vector<int> path;
+        int begin=0;
+        int temp=0;
+        bool isBegin=false;
+        for(int i=0;i<=maxNum*2+2;i++)
+        {
+            temp+=diff[i];
+            if(!isBegin&&temp>0)
+            {
+                begin = i;
+                isBegin = true;
+            }
+            else if(isBegin&& temp==0) 
+            {
+                res.push_back({begin/2,i/2});
+                isBegin = false;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+
+
+### （9）[732. 我的日程安排表 III](https://leetcode.cn/problems/my-calendar-iii/)（差分数组法）
+
+以数组 `intervals` 表示若干个区间的集合，其中单个区间为 `intervals[i] = [starti, endi]` 。请你合并所有重叠的区间，并返回 *一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间* 。
+
+**示例 1：**
+
+```
+输入：intervals = [[1,3],[2,6],[8,10],[15,18]]
+输出：[[1,6],[8,10],[15,18]]
+解释：区间 [1,3] 和 [2,6] 重叠, 将它们合并为 [1,6].
+```
+
+不妨先用差分数组的想法来做这道题，可以做，但问题在于每次插入一个新的区间时，都要遍历一遍整个数组找覆盖最多的值，**而这大概就是后面线段树所要优化的地方。**
+
+先用差分数组来做一下这道题目：
+
+```c++
+class MyCalendarThree {
+public:
+    map<int, int> diff;
+    MyCalendarThree() {
+        
+    }
+    
+    int book(int startTime, int endTime) {
+        diff[startTime]++;
+        diff[endTime]--; //左闭右开区间,所以右边是endTime   //注意这个时间指的是结束了
+        int res = 0;
+        int s = 0;
+        for(auto& [k, v]: diff){ 
+            s += v;
+            res = max(res, s);
+        }
+        return res;
+    }
+};
+
+/**
+ * Your MyCalendarThree object will be instantiated and called as such:
+ * MyCalendarThree* obj = new MyCalendarThree();
+ * int param_1 = obj->book(startTime,endTime);
+ */
+```
+
+
+
+### （10）[2406. 将区间分为最少组数](https://leetcode.cn/problems/divide-intervals-into-minimum-number-of-groups/)
+
+这个思路一下子没想到，其实**最多被覆盖数就是需要的区间数**，如果按照上下车来理解的话，就是最多在车上的人的人数。**思路的转换还是比较巧的。**
+
+> 这个是会议室模型，只要任意时刻至多有 x 个会议室在同时使用，那么就至多需要 x 个会议室。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int minGroups(vector<vector<int>>& intervals) {
+        map<int, int> diff;
+        for(auto& interval:intervals){
+            int left = interval[0], right = interval[1];
+            diff[left]++;
+            diff[right+1]--;
+        }
+        int res = 0;
+        int s = 0;
+        for(auto& [k, v]: diff){
+            s += v;
+            res = max(res, s);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （11）[2381. 字母移位 II](https://leetcode.cn/problems/shifting-letters-ii/)
+
+> 补充：C++当中的对负数取模运算。
+>
+> 在C++中，取余运算符`%`的结果满足以下规则：
+> **余数的符号与被除数（左操作数）相同，且绝对值小于除数（右操作数）的绝对值**。
+>
+> ### **示例分析：`-2 % 3`**
+>
+> 1. **计算过程**：
+>    - 被除数为 `-2`，除数为 `3`。
+>    - 商向零取整：`-2 / 3 = 0`（整数除法）。
+>    - 余数公式：`余数 = 被除数 - 商 * 除数`
+>      `余数 = -2 - (0 * 3) = -2`。
+> 2. **结果验证**：
+>    - 余数符号与被除数 `-2` 一致（负）。
+>    - 余数绝对值 `2` 小于除数绝对值 `3`。
+>
+> ### **C++取余规则总结**
+>
+> | **表达式** | **余数符号**   | **余数值** | **验证公式**           |
+> | ---------- | -------------- | ---------- | ---------------------- |
+> | `-2 % 3`   | 同被除数（负） | `-2`       | `-2 = 0 * 3 + (-2)`    |
+> | `2 % -3`   | 同被除数（正） | `2`        | `2 = 0 * (-3) + 2`     |
+> | `-5 % 3`   | 负             | `-2`       | `-5 = (-1) * 3 + (-2)` |
+> | `5 % -3`   | 正             | `2`        | `5 = (-1) * (-3) + 2`  |
+>
+> ### **对比数学模运算**
+>
+> 数学中模运算余数通常非负，例如：
+>
+> - 数学上 `-2 mod 3 = 1`（因为 `-2 = (-1)*3 + 1`）。
+>   但在C++中，`%`运算符是取余（非数学模运算），结果符号由被除数决定。
+
+本题的代码如下：
+
+```c++
+class Solution {
+public:
+    string shiftingLetters(string s, vector<vector<int>>& shifts) {
+        //其实需要计算差分并还原字符串即可,
+        int n = s.size();
+        vector<int> diff(n+1);
+        diff[0] = s[0]-'a';
+        for(int i=1;i<n;i++){
+            diff[i] = s[i]-s[i-1];
+        }
+        for(auto& shift: shifts){
+            int left = shift[0], right =shift[1], num = ((shift[2]==1)?1:-1);
+            diff[left]+=num;
+            diff[right+1]-=num; //值可能会越界,但这个问题后面再考虑
+        }
+        string res;
+        int sum = 0;
+        for(int i=0;i<n;i++){
+            sum += diff[i];
+            //cout<<diff[i]<<" "<<sum<<" "<<(sum%26+26)%26<<endl;
+            res.push_back('a'+((sum%26+26)%26)); //根据经验，不管正的负的，写成这样都能够正确取余运算。
+        }
+        return res;
+    }
+};
+```
+
+
+
+Y
+
+```C++
+class Solution {
+public:
+    string shiftingLetters(string s, vector<vector<int>>& shifts) 
+    {
+        // map<int,int> diff;
+        vector<int> diff(50010,0);
+        for(int i=0;i<shifts.size();i++)
+        {
+            int left = shifts[i][0],right = shifts[i][1],move = shifts[i][2];
+            if(move==1)
+            {
+                diff[left]++;
+                diff[right+1]--;//一定要注意+1的问题！！！！
+            }
+            else
+            {
+                diff[left]--;
+                diff[right+1]++;
+            }
+        }
+        int sSum=0;
+        for(int i=0;i<s.size();i++)
+        {
+            sSum+=diff[i];
+            s[i] = ((s[i]-'a'+sSum)%26+26)%26 +'a';
+        }
+        return s;
+    }
+};
+```
+
+
+
+### ==（12）[3453. 分割正方形 I](https://leetcode.cn/problems/separate-squares-i/)（这题只有两个赞，先不做了）==
+
+
+
+## §2.2 二维差分
+
+推荐先读一下这篇：[2132. 用邮票贴满网格图 - 力扣（LeetCode）](https://leetcode.cn/problems/stamping-the-grid/solutions/1199642/wu-nao-zuo-fa-er-wei-qian-zhui-he-er-wei-zwiu/)
+
+二维差分和二维前缀和有一些像，重点是能够画出下面这张图：
+
+![image-20250302134239576](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/image-20250302134239576.png)
+
+
+
+### （1）[2536. 子矩阵元素加 1](https://leetcode.cn/problems/increment-submatrices-by-one/)
+
+**算是板子题。**既涉及到了差分数组的更新，又涉及到了如何用二维差分数组还原出原来的数组（**计算原数组的时候使用二维前缀和来做**）。代码如下：
+
+```c++
+class Solution {
+public:
+    vector<vector<int>> rangeAddQueries(int n, vector<vector<int>>& queries) {
+        vector<vector<int>> diff(n+2, vector<int>(n+2)); //差分外面多一圈,前缀和里面多一圈,不如直接把大小设置为n+2,计算完前缀和之后,取中间n*n即为最终结果
+        for(auto& q: queries){
+            int r1 = q[0]+1, c1 = q[1]+1, r2=q[2]+1, c2=q[3]+1;
+            diff[r1][c1]+=1;
+            diff[r2+1][c1]-=1;
+            diff[r1][c2+1]-=1;
+            diff[r2+1][c2+1]+=1;
+        }
+        //还原原来的数组
+        for(int i=1;i<=n;i++){
+            for(int j=1;j<=n;j++){
+                //二维前缀和，注意这里是+=，相当于diff[i][j] = diff[i][j-1]+diff[i-1][j]-diff[i-1][j-1]+diff[i][j];
+                diff[i][j] += diff[i][j-1]+diff[i-1][j]-diff[i-1][j-1];
+            }
+        }
+        //移除外面0那一圈,保留中间n*n的取余,即为答案
+        diff.pop_back();
+        diff.erase(diff.begin());
+        for(auto& row:diff){
+            row.pop_back();
+            row.erase(row.begin());
+        }
+        return diff;
+    }
+};
+```
+
+
+
+# 三、栈
+
+## ==1.[1441. 用栈操作构建数组](https://leetcode.cn/problems/build-an-array-with-stack-operations/)==
+
+这题先不做了，有点意义不明，且难度也比较低。
+
+
+
+## 2.[844. 比较含退格的字符串](https://leetcode.cn/problems/backspace-string-compare/)
+
+可以直接用两个栈作比较，如下：
+```c++
+class Solution {
+public:
+    bool backspaceCompare(string s, string t) {
+        //用两个栈来比较s和t中的内容
+        stack<char> stks;
+        stack<char> stkt;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='#')
+            {
+                if(!stks.empty()) stks.pop();
+            }
+            else stks.push(s[i]);
+        }
+
+        for(int i=0;i<t.size();i++)
+        {
+            if(t[i]=='#')
+            {
+                if(!stkt.empty()) stkt.pop();
+            }
+            else stkt.push(t[i]);
+        }
+
+        //从栈顶开始比较两个栈中的内容是否一致
+        if(stks.empty()&&stkt.empty()) return true;
+        while(!stks.empty() && !stkt.empty())
+        {
+            char c1 = stks.top(), c2 = stkt.top();
+            if(c1!=c2) return false;
+            stks.pop(); 
+            stkt.pop();
+        }
+        return (stks.empty()&&stkt.empty());
+    }
+};
+```
+
+不过这种做法比较麻烦，实际上可以直接在字符串上做操作，来模拟一个栈，这样还更好比较。代码如下：
+
+```c++
+class Solution {
+public:
+    string build(string s)
+    {
+        //返回做了#退格处理之后的结果
+        string res;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='#'&&!res.empty()) res.pop_back();
+            else if(s[i]!='#') res.push_back(s[i]);
+        }
+        return res;
+    }
+    bool backspaceCompare(string s, string t) {
+        return build(s)==build(t);
+    }
+};
+```
+
+
+
+## 3.[682. 棒球比赛](https://leetcode.cn/problems/baseball-game/)
+
+直接用栈模拟应该没问题，也可以用`vector`去计算操作，不过复杂度是一样的，就不额外尝试了。
+
+```c++
+class Solution {
+public:
+    int calPoints(vector<string>& operations) {
+        //"C,D,+"其实都不需要特意入栈,只要操作之后把结果入栈即可
+        stack<int> scores;
+        for(string& s: operations)
+        {
+            if(s=="C")
+            {
+                scores.pop();
+            }
+            else if(s=="D")
+            {
+                int num = scores.top();
+                scores.push(num*2);
+            }
+            else if(s=="+")
+            {
+                int num = scores.top();
+                scores.pop();
+                int num2 = scores.top();
+                scores.push(num);
+                scores.push(num+num2);
+            }
+            else
+            {
+                scores.push(stoi(s));
+            }
+        }
+        //把栈里的值加在一起
+        int sum = 0;
+        while(!scores.empty())
+        {
+            sum+=scores.top();
+            scores.pop();
+        }
+        return sum;
+    }
+};
+```
+
+
+
+## 4.[2390. 从字符串中移除星号](https://leetcode.cn/problems/removing-stars-from-a-string/)
+
+```c++
+class Solution {
+public:
+    string removeStars(string s) {
+        //*其实就是退格符
+        string res;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='*')
+            {
+                if(!res.empty()) res.pop_back();
+            } 
+            else
+            {
+                res.push_back(s[i]);
+            }
+        }
+        return res;
+    }
+};
+```
+
+Y 
+
+```C++
+class Solution {
+public:
+    string removeStars(string s) 
+    {
+        vector<char> res;
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='*'&&!res.empty())
+            {
+                res.pop_back();
+            }
+            else
+            {
+                res.push_back(s[i]);
+            }
+        }
+        return string(res.begin(),res.end());
+    }
+};
+```
+
+
+
+## 5.[1472. 设计浏览器历史记录](https://leetcode.cn/problems/design-browser-history/)
+
+**这道题目有一定的模拟题的性质，需要仔细考虑。**用数组模拟一个栈即可，每次push进来都放到数组后面，后退 `steps` 步或前进 `steps` 步都仅仅会修改当前的索引值，而`visit`操作则会一直删除数组后面的元素，直到`visit`指定的url。代码如下：
+
+> 写的时候，要注意在`back`和`forward`的时候，别忘了更新现在`cur`的值。
+
+```c++
+class BrowserHistory {
+public:
+    vector<string> histories;
+    int cur = 0; //当前浏览的网页是histories[cur]
+    BrowserHistory(string homepage) {
+        histories.push_back(homepage);
+    }
+    
+    void visit(string url) {
+        //当前为最新浏览网页,后面的都不要了
+        cur++;
+        histories.resize(cur);//！！！！！！！！！！！！！！！！！！
+        histories.push_back(url);
+    }
+    
+    string back(int steps) {
+        int index = max(0, cur-steps);
+        //记得把cur移动过去,下面函数也是类似
+        cur = index;
+        return histories[cur];
+    }
+    
+    string forward(int steps) {
+        int n = histories.size(); 
+        int index = min(cur+steps, n-1); //直接min(cur+steps, histories.size()-1)是会报错的,因为histories.size()不是int类型,更多见https://cplusplus.com/reference/vector/vector/size/
+        cur = index;
+        return histories[cur];
+    }
+};
+
+/**
+ * Your BrowserHistory object will be instantiated and called as such:
+ * BrowserHistory* obj = new BrowserHistory(homepage);
+ * obj->visit(url);
+ * string param_2 = obj->back(steps);
+ * string param_3 = obj->forward(steps);
+ */
+```
+
+
+
+## 6.[946. 验证栈序列](https://leetcode.cn/problems/validate-stack-sequences/)
+
+这道题目也算是一道小模拟题，但可能会经常做错（H本人）。每次都先按照入栈序列push进来，再按照出栈序列看看能不能出栈，最后返回栈是否为空即可。
+
+```c++
+class Solution {
+public:
+    bool validateStackSequences(vector<int>& pushed, vector<int>& popped) {
+        //即便是popped和pushed对应,popped对应的索引也不会越界
+        stack<int> stk;
+        int n = pushed.size();
+        for(int i=0, j=0;i<n;i++)
+        {
+            stk.push(pushed[i]); //固定一定把pushed对应的值放入栈
+            while(!stk.empty()&&stk.top()==popped[j]) //!!!!!记得判断!stk.empty()
+            {
+                stk.pop();
+                j++; //j不会越界,因为题目说了popped.length==pushed.length
+            }
+        }
+        return stk.empty();
+    }
+};
+```
+
+
+
+## 7.[3412. 计算字符串的镜像分数](https://leetcode.cn/problems/find-mirror-score-of-a-string/)
+
+想了一下，直接看答案了hhh。需要体会一下栈的思想。本题对每个字母维护一个栈，还是非常巧妙的。
+
+```c++
+class Solution {
+public:
+    long long calculateScore(string s) {
+        //镜像表示字母表中索引相加为26
+        //暴力做的话复杂度是O(n^2),注意是距离最近的,考虑用栈
+        vector<stack<int>> alphaStk(26);
+        //1.如果镜像的栈为空,则放入当前字母栈;否则从镜像栈里弹出一个元素,计算分数并累加
+        long long score = 0;
+        for(int i=0;i<s.size();i++)
+        {
+            int index = s[i] - 'a';
+            int mirror = 25-index;
+            if(!alphaStk[mirror].empty())
+            {
+                int t = alphaStk[mirror].top();
+                alphaStk[mirror].pop();
+                score+=(long long)(i-t);
+            }
+            else
+            {
+                alphaStk[index].push(i); //把当前索引放入对应字母栈中
+            }
+        }
+        return score;
+    }
+};
+```
+
+
+
+## 8.[71. 简化路径](https://leetcode.cn/problems/simplify-path/)（难点：写出干净清晰的代码） :octopus:
+
+感觉上应该能做，但自己写了一些感觉有点埋汰，就来看看优质代码怎么写。以下代码感觉还是比较优雅的：
+
+> 题意抽象为如下，就会简单很多：
+>
+> 给你一组由 `/` 隔开的字符串（忽略空串和 `.`），请你从左到右遍历这些字符串，依次删除每个 `..` 及其左侧的字符串（模拟返回上一级目录）。
+>
+> **解决思路：**
+>
+> 把 path 用 / 分割，得到一个字符串列表。
+>
+> 遍历字符串列表的同时，用栈维护遍历过的字符串：
+>
+> - 如果当前字符串是空串或者 `.`，什么也不做（跳过）。
+> - 如果当前字符串不是 `..`，那么把字符串入栈。
+> - 否则弹出栈顶字符串（前提是栈不为空），模拟返回上一级目录。
+>
+> 最后把栈中字符串用 / 拼接起来（最前面也要有个 /）。
+>
+> 补充知识：
+>
+> - C++中的`istringstream`：[C++ istringstream用法详解_天选打工仔 inurl:csdn-CSDN博客](https://blog.csdn.net/weixin_41028555/article/details/136907277)
+> - C++中的`getline`：[C++中getline()的用法-CSDN博客](https://blog.csdn.net/weixin_44480968/article/details/104282535#:~:text=getline是C++标准库函数；它有两种形式，一种是头文件< istream)
+> - https://www.cnblogs.com/keep--fighting/p/17563552.html
+
+优雅！
+
+```c++
+class Solution {
+public:
+    string simplifyPath(string path) {
+        vector<string> stk;
+        istringstream ss(path);
+        string s; //接收每个子字符串
+        while(getline(ss, s, '/')) //以/间隔
+        {
+            if(s.empty() || s==".") {continue;} //只有一个.,此时忽略掉即可
+            else if(s=="..")
+            {
+                if(!stk.empty()) stk.pop_back();
+            }
+            else
+            {
+                stk.push_back(s);
+            }
+        }
+        string result;
+        result+="/";
+        for(int i=0;i<stk.size();i++)
+        {
+            result+=stk[i];
+            if(i<stk.size()-1) result+="/";
+        }
+        return result;
+    }
+};
+```
+
+> ```cpp
+>  vector<string> names = split(path, '/');C++不可以 不过类似C#的这种语法
+> ```
+
+
+
+## 9.[3170. 删除星号以后字典序最小的字符串](https://leetcode.cn/problems/lexicographically-minimum-string-after-removing-stars/)
+
+> 要点在于贪心的思路：每次要删除的时候，我们总是**尽量删除索引大的下标**，这样可以让剩下的字符串的字典序尽可能小。
+
+```c++
+class Solution {
+public:
+    string clearStars(string s) {
+        vector<vector<int>> stk(26);
+        for(int i=0;i<s.size();i++)
+        {
+            if(s[i]=='*')
+            {
+                for(int j=0;j<26;j++)
+                {
+                    if(!stk[j].empty())
+                    {
+                        stk[j].pop_back();
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                stk[s[i]-'a'].push_back(i);
+            }
+        }
+        vector<int> index;
+        for(int i=0;i<26;i++)//把index push进来 再排序 
+        {
+            index.insert(index.end(), stk[i].begin(), stk[i].end());
+        }
+        sort(index.begin(), index.end());
+        string res;
+        //还原
+        for(int i=0;i<index.size();i++)
+        {
+            res.push_back(s[index[i]]);//注意这里是s[index[i]]
+        }
+        return res;
+
+    }
+};
+```
+
+
+
+## 10.[155. 最小栈](https://leetcode.cn/problems/min-stack/)
+
+> 【题目】设计一个支持 `push` ，`pop` ，`top` 操作，并能在常数时间内检索到最小元素的栈。
+>
+> 实现 `MinStack` 类:
+>
+> - `MinStack()` 初始化堆栈对象。
+> - `void push(int val)` 将元素val推入堆栈。
+> - `void pop()` 删除堆栈顶部的元素。
+> - `int top()` 获取堆栈顶部的元素。
+> - `int getMin()` 获取堆栈中的最小元素。
+
+基于以下的认知：
+
+- （1）可以维护一个`min`栈，每次在正常栈中`push`进来一个元素的时候，都看一下和`min`栈栈顶元素的大小关系：如果相等或者更小，就`push`到`min`栈中；如果更大，则舍弃掉，不放入最小栈中（**有点单调栈那个意思**。这是基于，直到`min`栈此时栈顶的元素被`pop`出来之前，最小值一定是`min`栈栈顶的元素，而正常栈也是LIFO，所以不会出现问题）。
+- （2）在原栈`pop`元素的时候，如果和`min`栈栈顶元素一致，则同时`pop min`栈栈顶的元素。
+
+所以，初始代码如下：
+
+```c++
+class MinStack {
+public:
+    stack<int> minStack; //最小栈
+    stack<int> stk; //正常栈
+    MinStack() {
+        
+    }
+    
+    void push(int val) {
+        stk.push(val);
+        if(minStack.empty() || val<=minStack.top())
+        {
+            minStack.push(val);
+        }
+    }
+    
+    void pop() {
+        int v = stk.top();
+        stk.pop();
+        if(v==minStack.top())
+        {
+            minStack.pop();
+        }
+    }
+    
+    int top() {
+        return stk.top();
+    }
+    
+    int getMin() {
+        return minStack.top();
+    }
+};
+
+/**
+ * Your MinStack object will be instantiated and called as such:
+ * MinStack* obj = new MinStack();
+ * obj->push(val);
+ * obj->pop();
+ * int param_3 = obj->top();
+ * int param_4 = obj->getMin();
+ */
+```
+
+
+
+## 11.[1381. 设计一个支持增量操作的栈](https://leetcode.cn/problems/design-a-stack-with-increment-operation/)
+
+> 请你设计一个支持对其元素进行增量操作的栈。
+>
+> 实现自定义栈类 `CustomStack` ：
+>
+> - `CustomStack(int maxSize)`：用 `maxSize` 初始化对象，`maxSize` 是栈中最多能容纳的元素数量。
+> - `void push(int x)`：如果栈还未增长到 `maxSize` ，就将 `x` 添加到栈顶。
+> - `int pop()`：弹出栈顶元素，并返回栈顶的值，或栈为空时返回 **-1** 。
+> - `void inc(int k, int val)`：栈底的 `k` 个元素的值都增加 `val` 。如果栈中元素总数小于 `k` ，则栈中的所有元素都增加 `val` 。
+
+### （1）错误写法，C++的坑，特意记录，必须注意！！
+
+一种非常常规的思路是使用数组去模拟，代码如下（==错的！！复习时不要乱看==）（==请注意！！！，以下代码中隐含了一处错误，会导致结果不正确，能发现是哪里吗？==）：
+
+```c++
+class CustomStack {
+public:
+    vector<int> value;
+    int top = 0; //模拟栈顶指针,一开始确认好,top指向的是栈顶的**元素**本身
+    CustomStack(int maxSize) {
+        top = -1;
+        value.resize(maxSize);
+    }
+    
+    void push(int x) {
+        if(top<value.size()-1) 
+        {
+            value[top+1]=x;
+            top++;
+        }
+    }
+    
+    int pop() {
+        //不真的删掉元素,而是只改变top指针的位置
+        if(top==-1) return -1;
+        top--;
+        return value[top+1]; 
+    }
+    
+    void increment(int k, int val) {
+        for(int i=0;i<min(k, top+1);i++) //注意,这里的top+1表示当前栈中的元素个数
+        {
+            value[i] += val;
+        }
+    }
+};
+```
+
+这就是一个经典的C++的坑，不注意的话可能debug够喝一壶的。问题出在这里：
+
+```
+void push(int x) {
+    if(top<value.size()-1) 
+    {
+    	value[top+1]=x;
+    	top++;
+    }
+}
+```
+
+还没有意识到？要这么写！！！`top<(int)value.size()-1`，不然的话取出的`value.size()`的类型被认为是`unsigned int`类型，会导致结果出错。美丽C++是这样的。
+
+> 错误来自于`top=-1`，在`top<value.size()-1`比较的时候，`top`会被变成`unsigned int`，从而导致即使`top=-1`时，即使`value.size()>0`,也会判断为“`top<value.size()-1`是`false`。”
+>
+> 【思考】以后取`nums.size()`时，为了不出现这种逆天问题，还是拿`n=nums.size()`去接吧。
+
+
+
+### （2）正确写法
+
+```c++
+class CustomStack {
+public:
+    vector<int> value;
+    int top = 0; //模拟栈顶指针,一开始确认好,top指向的是栈顶的**元素**本身
+    CustomStack(int maxSize) {
+        top = -1;//top初始时-1！！！！
+        value.resize(maxSize);
+    }
+    
+    void push(int x) {
+        if(top<(int)value.size()-1) 
+        {
+            value[top+1]=x;
+            top++;
+        }
+    }
+    
+    int pop() {
+        //不真的删掉元素,而是只改变top指针的位置
+        if(top==-1) return -1;
+        top--;//==0的时候时可以的 就是一个元素的情况 然后top回归-1
+        return value[top+1]; 
+    }
+    
+    void increment(int k, int val) {
+        for(int i=0;i<min(k, top+1);i++) //注意,这里的top+1表示当前栈中的元素个数
+        {
+            value[i] += val;
+        }
+    }
+};
+
+/**
+ * Your CustomStack object will be instantiated and called as such:
+ * CustomStack* obj = new CustomStack(maxSize);
+ * obj->push(x);
+ * int param_2 = obj->pop();
+ * obj->increment(k,val);
+ */
+```
+
+
+
+### ==（3）利用差分的思想==
+
+在方法一中，只剩下 inc 操作的时间复杂度不为 O(1)，因此可以尝试对该操作进行优化。
+
+我们用一个辅助数组 add 记录每次 inc 操作。具体地，如果 inc 操作是将栈底的 k 个元素（将 k 与栈中元素个数取较小值）增加 val，那么我们将 add[k - 1] 增加 val。这样做的目的在于，只有在 pop 操作时，我们才需要知道栈顶元素的具体值，在其余的情况下，我们只要存储每个元素的增量就行了。
+
+因此在遇到 pop 操作时，我们返回栈顶元素的初始值加上增量 add[top]。在这之后，我们将增量向栈底进行传递，累加至 add[top - 1] 处，这样 inc 操作的时间复杂度也减少至 O(1) 了。
+
+> 优先级相对没有那么高，先不写了。
+
+
+
+## 3.3 临项消除专题
+
+### （1）[2696. 删除子串后的字符串最小长度](https://leetcode.cn/problems/minimum-string-length-after-removing-substrings/)
+
+> 给你一个仅由 **大写** 英文字符组成的字符串 `s` 。
+>
+> 你可以对此字符串执行一些操作，在每一步操作中，你可以从 `s` 中删除 **任一个** `"AB"` 或 `"CD"` 子字符串。
+>
+> 通过执行操作，删除所有 `"AB"` 和 `"CD"` 子串，返回可获得的最终字符串的 **最小** 可能长度。
+>
+> **注意**，删除子串后，重新连接出的字符串可能会产生新的 `"AB"` 或 `"CD"` 子串。
+
+```c++
+class Solution {
+public:
+    int minLength(string s) {
+        //一个一个push进来,是B就看栈顶是不是A,是D就看栈顶是不是C,其他情况都可以正常push进来
+        vector<char> stk;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='B')
+            {
+                if(!stk.empty()&&stk.back()=='A') stk.pop_back();
+                else stk.push_back(s[i]);
+            }
+            else if(s[i]=='D')
+            {
+                if(!stk.empty()&&stk.back()=='C') stk.pop_back();
+                else stk.push_back(s[i]);
+            }
+            else stk.push_back(s[i]);
+        } 
+        return stk.size();
+    }
+};
+```
+
+注：这样做是可以照顾到删除一组`AB`之后，下一次进入的`s[i]='B'`会继续和栈顶剩下的`A`发生消除的情况的。
+
+
+
+### （2）[1047. 删除字符串中的所有相邻重复项](https://leetcode.cn/problems/remove-all-adjacent-duplicates-in-string/)
+
+跟上一题基本一样，思路是类似的。
+
+```c++
+class Solution {
+public:
+    string removeDuplicates(string s) {
+        //用栈,每次push进来一个就进行判断即可,不需要考虑while之类的问题
+        string res;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(!res.empty() && s[i]==res.back()) res.pop_back();
+            else res.push_back(s[i]);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （3）[1544. 整理字符串](https://leetcode.cn/problems/make-the-string-great/)
+
+```c++
+class Solution {
+public:
+    string makeGood(string s) {
+        //依旧是类似的题目,每次pop栈顶即可
+        string res;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(!res.empty())
+            {
+                bool flag1 = ((s[i]-'a')==(res.back()-'A'));
+                bool flag2 = ((s[i]-'A')==(res.back()-'a')); //flag1 || flag2 表示两个字母是否互为大小写关系
+                if(flag1||flag2)
+                {
+                    res.pop_back();
+                } 
+                else
+                {
+                    res.push_back(s[i]);
+                }
+            }
+            else res.push_back(s[i]);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （4）[1003. 检查替换后的词是否有效](https://leetcode.cn/problems/check-if-word-is-valid-after-substitutions/)
+
+> 给你一个字符串 `s` ，请你判断它是否 **有效** 。
+>
+> 字符串 `s` **有效** 需要满足：假设开始有一个空字符串 `t = ""` ，你可以执行 **任意次** 下述操作将 `t` **转换为** `s` ：
+>
+> - 将字符串 `"abc"` 插入到 `t` 中的任意位置。形式上，`t` 变为 `tleft + "abc" + tright`，其中 `t == tleft + tright` 。注意，`tleft` 和 `tright` 可能为 **空** 。
+>
+> 如果字符串 `s` 有效，则返回 `true`；否则，返回 `false`。
+
+这道题目应该可以正常实现，但也有更优雅一点的做法，这里记录一下：
+
+- 字符 a：类似左括号，直接入栈。
+- 字符 b：如果栈为空，或者栈顶不为 a，则返回 false，否则将栈顶修改为 b（或者出栈再入栈）。
+- 字符 c：如果栈为空，或者栈顶不为 b，则返回 false，否则弹出栈顶，相当于找到了一个 abc。
+
+代码实现时，b 和 c 的逻辑可以合并在一起，a 和 b 的入栈逻辑可以合并在一起。当然也可以不合并。以下是一份比较容易读的代码：
+
+```c++
+class Solution {
+public:
+    bool isValid(string s) {
+        stack<char> stk;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='a') //是'a'则直接入栈即可
+            {
+                stk.push(s[i]); 
+            }
+            else //是'b',则栈顶必须是'a',如果确实是的话,把栈顶的a pop出去,再把b push进来,其实c也是同理
+            {
+                if(stk.empty() || stk.top()!=s[i]-1) return false;
+                stk.pop();
+                if(s[i]=='b')
+                {
+                    stk.push(s[i]);
+                }
+            }
+        }
+        return stk.empty();
+        
+    }
+};
+```
+
+> 本题的启示是，如果要在空字符串中不断选择位置插入`abc`等字符串，可以用栈来解决，并且按照类似于本题的方式来做。
+
+
+
+### （5）[2216. 美化数组的最少删除数](https://leetcode.cn/problems/minimum-deletions-to-make-array-beautiful/)
+
+> 给你一个下标从 **0** 开始的整数数组 `nums` ，如果满足下述条件，则认为数组 `nums` 是一个 **美丽数组** ：
+>
+> - `nums.length` 为偶数
+> - 对所有满足 `i % 2 == 0` 的下标 `i` ，`nums[i] != nums[i + 1]` 均成立
+>
+> 注意，空数组同样认为是美丽数组。
+>
+> 你可以从 `nums` 中删除任意数量的元素。当你删除一个元素时，被删除元素右侧的所有元素将会向左移动一个单位以填补空缺，而左侧的元素将会保持 **不变** 。
+>
+> 返回使 `nums` 变为美丽数组所需删除的 **最少** 元素数目*。*
+
+这道题目可以有如下思路：（**套路**：==从前往后遍历 + 需要考虑相邻元素 + 有消除操作 = 栈。==）
+
+遍历数组，用栈来模拟这个过程（实际不需要栈，后面会说明）：
+
+- 如果栈大小为偶数，可以随意加入元素；
+- 如果栈大小为奇数，那么加入的元素不能和栈顶相同。
+
+遍历结束后，若栈大小为奇数，则移除栈顶。
+
+实际上不需要栈，用一个变量表示栈的奇偶性即可。不过这里为了学习知识，同时为了让代码可读性好一些，还是用栈来做。
+
+代码如下：
+```c++
+class Solution {
+public:
+    int minDeletion(vector<int>& nums) {
+        //在判断是否要pop元素的时候,额外加上此时的索引,如果栈顶在偶数索引,并且和当前元素一样,则需要出栈.否则不用出栈.
+        //记录出栈的元素数,即为所求
+        vector<int> tmp;
+        int cnt = 0;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            if(!tmp.empty() && (tmp.back()==nums[i]))
+            {
+                if(((int)tmp.size()%2)==1) //此时索引为奇数,需要pop
+                {
+                    tmp.pop_back();
+                    cnt++;
+                }
+                tmp.push_back(nums[i]);
+            }
+            else
+            {
+                tmp.push_back(nums[i]);
+            }
+        }
+        //nums.length还得是偶数,如果是奇数,cnt再+1（因为题目要求最后结果长度为偶数）
+        if(((int)tmp.size()%2)==1) cnt++;
+        return cnt;
+    }
+};
+```
+
+
+
+### （6）[1209. 删除字符串中的所有相邻重复项 II](https://leetcode.cn/problems/remove-all-adjacent-duplicates-in-string-ii/)
+
+> 给你一个字符串 `s`，「`k` 倍重复项删除操作」将会从 `s` 中选择 `k` 个相邻且相等的字母，并删除它们，使被删去的字符串的左侧和右侧连在一起。
+>
+> 你需要对 `s` 重复进行无限次这样的删除操作，直到无法继续为止。
+>
+> 在执行完所有删除操作后，返回最终得到的字符串。
+>
+> 本题答案保证唯一。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：s = "abcd", k = 2
+> 输出："abcd"
+> 解释：没有要删除的内容。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：s = "deeedbbcccbdaa", k = 3
+> 输出："aa"
+> 解释： 
+> 先删除 "eee" 和 "ccc"，得到 "ddbbbdaa"
+> 再删除 "bbb"，得到 "dddaa"
+> 最后删除 "ddd"，得到 "aa"
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：s = "pbbcggttciiippooaais", k = 2
+> 输出："ps"
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= s.length <= 10^5`
+> - `2 <= k <= 10^4`
+> - `s` 中只含有小写英文字母。
+
+根据前面的学习，这种题目应该**能够想到栈的套路。**但巧妙之处在于，我们可以这样维护：
+
+- 当前字符与前一个不同时，往栈中压入 `1`。否则栈顶元素加 `1`。
+- 如果栈顶元素等于 `k`，则从字符串中删除这 `k` 个字符，并将 `k` 从栈顶移除。
+
+可以原地修改字符串，但会有索引类的问题要考虑。因此可以考虑不原地修改，而是记录每个字符和对应字符出现的次数，这样可以在最后很方便地还原整个删除后的字符串。此时代码如下：
+
+```c++
+class Solution {
+public:
+    string removeDuplicates(string s, int k) {
+        //每次看新进来的字符和栈顶比较,如果相同,则栈顶cnt+1;否则加入新的项进来
+        //如果栈顶元素个数达到了k个,则直接删除
+        vector<pair<char, int>> stk;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(stk.empty() || s[i]!=stk.back().first)
+            {
+                stk.push_back({s[i], 1});
+            }
+            else if(s[i]==stk.back().first)
+            {
+                auto& t = stk.back();
+                t.second+=1;
+                if(t.second==k)
+                {
+                    stk.pop_back();
+                }
+            }
+        }
+        //重建字符串
+        string res;
+        for(int i=0;i<stk.size();i++)
+        {
+            int cnt = stk[i].second;
+            for(int j=0;j<cnt;j++) res+=stk[i].first;
+        }
+        return res;
+    }
+};
+```
+
+> 总之，这道题目的思路还是有不小的学习意义的，即遇到不重复元素时在栈顶加入新的元素，遇到重复元素时栈顶元素出现次数+1，达到k个则会pop出栈顶元素。
+
+Y 用pair是好的 不然容易乱
+
+```C++
+class Solution {
+public:
+    string removeDuplicates(string s, int k) {
+        vector<pair<char,int>> stk;
+        for(char& c:s)
+        {
+            if(!stk.empty()&&c==stk.back().first)
+            {
+                //stk.back().second++;  也可以
+                auto &t = stk.back();
+                t.second+=1;
+                if(stk.back().second == k)stk.pop_back() ;
+            }
+            else
+            {
+                stk.push_back({c,1});
+            }
+        }
+        string ans;
+        for(auto & [c,n] :stk)
+        {
+            for(int i=0;i<n;i++)
+            {
+                ans+=c;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### （7）[2211. 统计道路上的碰撞次数](https://leetcode.cn/problems/count-collisions-on-a-road/)
+
+> 在一条无限长的公路上有 `n` 辆汽车正在行驶。汽车按从左到右的顺序按从 `0` 到 `n - 1` 编号，每辆车都在一个 **独特的** 位置。
+>
+> 给你一个下标从 **0** 开始的字符串 `directions` ，长度为 `n` 。`directions[i]` 可以是 `'L'`、`'R'` 或 `'S'` 分别表示第 `i` 辆车是向 **左** 、向 **右** 或者 **停留** 在当前位置。每辆车移动时 **速度相同** 。
+>
+> 碰撞次数可以按下述方式计算：
+>
+> - 当两辆移动方向 **相反** 的车相撞时，碰撞次数加 `2` 。
+> - 当一辆移动的车和一辆静止的车相撞时，碰撞次数加 `1` 。
+>
+> 碰撞发生后，涉及的车辆将无法继续移动并停留在碰撞位置。除此之外，汽车不能改变它们的状态或移动方向。
+>
+> 返回在这条道路上发生的 **碰撞总次数** 。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：directions = "RLRSLL"
+> 输出：5
+> 解释：
+> 将会在道路上发生的碰撞列出如下：
+> - 车 0 和车 1 会互相碰撞。由于它们按相反方向移动，碰撞数量变为 0 + 2 = 2 。
+> - 车 2 和车 3 会互相碰撞。由于 3 是静止的，碰撞数量变为 2 + 1 = 3 。
+> - 车 3 和车 4 会互相碰撞。由于 3 是静止的，碰撞数量变为 3 + 1 = 4 。
+> - 车 4 和车 5 会互相碰撞。在车 4 和车 3 碰撞之后，车 4 会待在碰撞位置，接着和车 5 碰撞。碰撞数量变为 4 + 1 = 5 。
+> 因此，将会在道路上发生的碰撞总次数是 5 。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：directions = "LLRR"
+> 输出：0
+> 解释：
+> 不存在会发生碰撞的车辆。因此，将会在道路上发生的碰撞总次数是 0 。
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= directions.length <= 105`
+> - `directions[i]` 的值为 `'L'`、`'R'` 或 `'S'`
+
+这道题目有一点模拟性质在里面，我们可以分别考虑当前元素为“R,L,S”对应栈顶元素为“R,L,S”的情况，每次发生碰撞后，统计碰撞次数并pop出去，然后放一个`S`进入栈，直到最后。
+
+![image-20250304171241830](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/image-20250304171241830.png)
+
+类比上面的思路，代码如下（硬模拟，肯定有更好的写法，但这里直接硬写了，保证准确）：
+
+```c++
+class Solution {
+public:
+    int countCollisions(string directions) {
+        //看见R无脑放进来
+        //看见L，如果栈顶为R，碰撞+2，pop出去栈顶，放进来一个S；如果栈顶为S，碰撞+1，pop出去栈顶，放进来一个S
+        //看见S：如果栈顶为R，碰撞+1，pop出去栈顶，放进来一个S
+        stack<char> stk;
+        int n = directions.size();
+        int cnt = 0;
+        for(int i=0;i<n;i++)
+        {
+            //对当前情况进行解算，flag=0表示退出解算过程
+            int flag = 1;
+            char cur = directions[i];
+            while(flag) // 模拟中。。。
+            {
+                if(cur=='R')
+                {
+                    //放入栈：模拟结束
+                    stk.push(cur); break;
+                }
+                else if(cur=='L')
+                {
+                    if(stk.empty()) 
+                    {
+                        stk.push(cur); break;
+                    }
+                    if(stk.top()=='R')
+                    {
+                        cnt+=2; stk.pop();
+                        cur='S'; //撞完之后变成S了
+                    } 
+                    else if(stk.top()=='S')
+                    {
+                        cnt+=1; stk.pop();
+                        cur='S';
+                    }
+                    else 
+                    {
+                        //没什么大问题，放入栈就行(当前是L，栈顶为L)
+                        stk.push(cur); break;
+                    }
+                }
+                else if(cur=='S')
+                {
+                    if(stk.empty())
+                    {
+                        stk.push(cur); break;
+                    }
+                    if(stk.top()=='R')
+                    {
+                        cnt+=1; stk.pop();
+                        cur = 'S';
+                    }
+                    else //没什么大问题，放入栈即可 
+                    {
+                        stk.push(cur); break;
+                    }
+                }
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+#### （a）降维打击版本
+
+> 分析题意：
+>
+> - 当两辆移动方向 相反 的车相撞时，碰撞次数加 2 。--> 两辆车被撞停，答案 + 2。
+> - 当一辆移动的车和一辆静止的车相撞时，碰撞次数加 1 。--> 一辆车被撞停，答案 +1。
+>
+> 显然，左侧的 ’L’ 和右侧的 ’R’ 不会被撞停；而中间的车辆都会最终停止，因此统计中间的、一开始没有停止的车辆数（即不是 ’S’ 的车辆数）即可。
+
+此降维打击版本的代码如下：
+
+```c++
+class Solution {
+public:
+    int countCollisions(string directions) {
+        //左侧的L都没问题，右侧的R也都没问题，中间的不是S即为所求
+        int left = 0, right = directions.size()-1;
+        while(left<=right && directions[left]=='L') left++;
+        while(left<=right && directions[right]=='R') right--;
+        int res = 0;
+        //此时left不是L了，right也不是R了
+        for(int i=left;i<=right;i++)
+        {
+            res += (directions[i]!='S');
+        }
+        return res;
+    }
+};
+```
+
+> 啊！这灼热的真理！
+>
+> ![深渊咏者·渊火.png](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/kqywd4okieiaiwe01m59clo290h2jac.png)
+
+
+
+### （8）[735. 小行星碰撞](https://leetcode.cn/problems/asteroid-collision/)
+
+> 给定一个整数数组 `asteroids`，表示在同一行的小行星。数组中小行星的索引表示它们在空间中的相对位置。
+>
+> 对于数组中的每一个元素，其绝对值表示小行星的大小，正负表示小行星的移动方向（正表示向右移动，负表示向左移动）。每一颗小行星以相同的速度移动。
+>
+> 找出碰撞后剩下的所有小行星。碰撞规则：两个小行星相互碰撞，较小的小行星会爆炸。如果两颗小行星大小相同，则两颗小行星都会爆炸。两颗移动方向相同的小行星，永远不会发生碰撞。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：asteroids = [5,10,-5]
+> 输出：[5,10]
+> 解释：10 和 -5 碰撞后只剩下 10 。 5 和 10 永远不会发生碰撞。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：asteroids = [8,-8]
+> 输出：[]
+> 解释：8 和 -8 碰撞后，两者都发生爆炸。
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：asteroids = [10,2,-5]
+> 输出：[10]
+> 解释：2 和 -5 发生碰撞后剩下 -5 。10 和 -5 发生碰撞后剩下 10 。
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `2 <= asteroids.length <= 104`
+> - `-1000 <= asteroids[i] <= 1000`
+> - `asteroids[i] != 0`
+
+这道题目用栈的做法跟上一道题目是类似的。一定程度上属于模拟题，**很容易写错或者是写的很麻烦。**自己尝试了挺久的，最终代码如下（==第一版写了一坨，还是要优化加强代码质量啊==）：
+
+```c++
+class Solution {
+public:
+    vector<int> asteroidCollision(vector<int>& asteroids) {
+       vector<int> stk; //存放最终的小行星
+       for(auto& asteroid: asteroids)
+       {
+            if(asteroid>0) stk.push_back(asteroid);
+            else //当前小行星为负
+            {  
+                bool isAlive = true; //当前小行星是否存活
+                while(!stk.empty() && isAlive && stk.back()>0) //栈顶得是正数才有比较价值，不然可以退出了
+                {
+                    isAlive = (stk.back() < -asteroid); //当小行星质量>栈顶元素时，小行星存活
+                    //是否会pop出去栈中的元素。仔细思考一下，不会死循环的
+                    if(stk.back()<=-asteroid)
+                    {
+                        stk.pop_back();
+                    }
+                }
+                if(isAlive) stk.push_back(asteroid);
+            }
+       } 
+       return stk;
+    }
+};
+```
+
+> 在`while`循环条件中做一些判断，可以减少`while`里面逻辑的冗余。总之优秀代码还是要多多练习。
+
+
+
+## 3.4 合法括号字符串
+
+### （1）[20. 有效的括号](https://leetcode.cn/problems/valid-parentheses/)
+
+```c++
+class Solution {
+public:
+    bool isValid(string s) {
+        //看见左括号入栈，右括号的话栈顶一定是正确的左括号
+        unordered_map<char, char> umap;
+        umap[')'] = '(';
+        umap[']'] = '[';
+        umap['}'] = '{';
+        stack<char> stk;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='(' || s[i]=='[' || s[i]=='{')
+            {
+                stk.push(s[i]);
+            }
+            else
+            {
+                if(stk.empty()) return false;
+                if(stk.top()!=umap[s[i]]) return false;
+                stk.pop();
+            }
+        }
+        return stk.empty();
+    }
+};
+```
+
+
+
+### （2）[921. 使括号有效的最少添加](https://leetcode.cn/problems/minimum-add-to-make-parentheses-valid/)
+
+```c++
+class Solution {
+public:
+    int minAddToMakeValid(string s) {
+        //跟刚才那道题目差不多，左括号入栈，右括号不匹配的话+1,最终+栈中剩余元素数即可
+        stack<char> stk;
+        int n = s.size();
+        int cnt = 0;
+        for(int i=0;i<n;i++)
+        {   
+            if(s[i]=='(') stk.push(s[i]);
+            else
+            {
+                if(!stk.empty() && stk.top()=='(')
+                {
+                    stk.pop();
+                    continue;
+                }
+                cnt+=1;
+            }
+        }
+        cnt+=stk.size();
+        return cnt;
+    }
+};
+```
+
+
+
+Y
+
+```C++
+class Solution {
+public:
+    int minAddToMakeValid(string s) {
+        //())) 2
+        //((( 3
+        //(()()(
+        //)))(((
+        //右括号 且不匹配 直接+1 不push
+        //左括号push
+        //最后 栈大小+右cnt
+        stack<int> stk;
+        int cnt=0;
+        for(char &c:s)
+        {
+            if(c=='(')stk.push(c);
+            else
+            {
+                if(stk.empty())cnt++;
+                else stk.pop();
+            }
+        }
+        return cnt+stk.size();
+    }
+};
+```
+
+
+
+### （3）[1021. 删除最外层的括号](https://leetcode.cn/problems/remove-outermost-parentheses/)
+
+> 真·括号领域大神。这题自己写的有点埋汰，看的题解。
+
+其实开一个计数器就可以了，看见左括号cnt+1，看见右括号cnt-1。每一次cnt=0时是一次原语，cnt!=0的部分会是最后字符串的结果。代码如下：（==神奇的是调换一下语句的顺序，既可以达到要求，代码也很优雅==）
+
+```c++
+class Solution {
+public:
+    string removeOuterParentheses(string s) {
+        int cnt = 0;
+        string res;
+        int n = s.size();
+        //两次cnt=0之间的计数即算，看见左括号cnt+1，看见右括号cnt-1.神奇的是调换一下语句的顺序，既可以达到要求，代码也很优雅
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]==')') cnt--;
+            if(cnt) res+=s[i];
+            if(s[i]=='(') cnt++;
+        }
+        return res;
+    }
+};
+```
+
+> ### **原理解释**
+>
+> - **最外层左括号**：当遇到原语的第一个 `'('` 时，此时 `cnt=0`，条件 `if(cnt)` 不满足，不加入结果。之后 `cnt` 增到1，后续内部字符的 `cnt >=1` 会被保留。
+> - **最外层右括号**：当遇到原语的最后一个 `')'` 时，先减少 `cnt`（如从1→0），此时 `cnt=0` 导致该右括号不被保留。
+> - **内部字符**：在原语内部时，`cnt >=1`，所有字符均被保留。
+>
+> 通过调换语句执行的顺序，代码一下子就变得优雅起来了。
+
+Y
+
+```C++
+class Solution {
+public:
+    string removeOuterParentheses(string s) {
+        //遇到左括号
+        //  判断0 非0push -> +1
+        //遇到右括号
+        //  -1  -> 判断0 非0push
+        //   0(1 ( 2 )1 (2 )1 )0 (1(2)1)0
+        //对于左括号 0要在其之前判断
+        //对于右括号 0要在其之后判断
+        string res;
+        int cnt=0;
+        for(char& c:s)
+        {
+            if(c=='(')
+            {
+                if(cnt!=0)res.push_back(c);
+                cnt++;
+            }
+            else//(c==')')
+            {
+                cnt--;
+                if(cnt!=0)res.push_back(c);
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （4）[1614. 括号的最大嵌套深度](https://leetcode.cn/problems/maximum-nesting-depth-of-the-parentheses/)
+
+```c++
+class Solution {
+public:
+    int maxDepth(string s) {
+        int res = 0;
+        //记录左括号的最大个数，即可。
+        int n = s.size();
+        int cnt = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='(')
+            {
+                cnt++;
+                res = max(res, cnt);
+            }
+            else if(s[i]==')')
+            {
+                cnt--;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （5）[1190. 反转每对括号间的子串](https://leetcode.cn/problems/reverse-substrings-between-each-pair-of-parentheses/)
+
+> 给出一个字符串 `s`（仅含有小写英文字母和括号）。
+>
+> 请你按照从括号内到外的顺序，逐层反转每对匹配括号中的字符串，并返回最终的结果。
+>
+> 注意，您的结果中 **不应** 包含任何括号。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：s = "(abcd)"
+> 输出："dcba"
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：s = "(u(love)i)"
+> 输出："iloveu"
+> 解释：先反转子字符串 "love" ，然后反转整个字符串。
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入：s = "(ed(et(oc))el)"
+> 输出："leetcode"
+> 解释：先反转子字符串 "oc" ，接着反转 "etco" ，然后反转整个字符串。
+> ```
+
+依旧没有那么好想。核心在于要思考好题目的意思，“反转”意味着要把当前记录的字符串反转，而距离最近的字符（截止到再之前的那个'()'）正好就位于栈顶，因此这部分就是更新之后的字符串。==总之吧还是多做题。==
+
+本题代码如下：
+
+```c++
+class Solution {
+public:
+    string reverseParentheses(string s) {
+        //看见左括号,当前str入栈,并清空;否则如果是正常字符,str直接加入正常字符就行;碰见右括号,则str变为栈顶+当前str字符翻转的结果.
+        stack<string> stk;
+        string res;
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]!='(' && s[i]!=')')
+            {
+                res+=s[i];
+            }
+            else if(s[i]=='(')
+            {
+                stk.push(res);
+                res = ""; //清空,相当于这部分的字符已经存于栈中
+            }
+            else
+            {
+                reverse(res.begin(), res.end());
+                //此时栈中一定有(,没必要特地判空
+                res = stk.top() + res;
+                stk.pop();//！！！
+            }
+        }
+        return res;
+    }
+};
+```
+
+==这道题目还有解法2，不过还没有进行尝试。有需求的话可以去看Leetcode官方题解的方法2.==
+
+
+
+实际上，遇到左括号，之前的str入栈（后面与反转后的拿出来拼接），新的char+到str后，保留之后要反转的所有字符。
+
+遇到右括号 这个括号里的字符完整了，可以反转
+
+举个例子
+
+>```	C++
+>		//str abcd
+>        //stk 
+>        //  (入栈 str=""
+>        //  )反转str dcba + 栈顶
+>        
+>        //str 
+>        //( ""入栈      str"ed" 
+>        //( "ed"入栈    str"et"
+>        //( "et"入栈    str"oc"
+>        //)   +栈顶et + oc翻转co   =etco
+>        //)   +栈顶ed +etco翻转octe =edocte
+>        //edocte el
+>        //)   +栈顶"" +edocte el翻转=leetcode
+>```
+
+
+
+>注意错误写法 ❌ `// str = s_top+ reverse(str.begin(),str.end());` 是错误的❌  因为 `reverse(str.begin(),str.end())`*函数**无返回值***
+
+
+
+### （6）[856. 括号的分数](https://leetcode.cn/problems/score-of-parentheses/)
+
+> 给定一个平衡括号字符串 `S`，按下述规则计算该字符串的分数：
+>
+> - `()` 得 1 分。
+> - `AB` 得 `A + B` 分，其中 A 和 B 是平衡括号字符串。
+> - `(A)` 得 `2 * A` 分，其中 A 是平衡括号字符串。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入： "()"
+> 输出： 1
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入： "(())"
+> 输出： 2
+> ```
+>
+> **示例 3：**
+>
+> ```
+> 输入： "()()"
+> 输出： 2
+> ```
+>
+> **示例 4：**
+>
+> ```
+> 输入： "(()(()))"
+> 输出： 6
+> ```
+>
+>  
+>
+> **提示：**
+>
+> 1. `S` 是平衡括号字符串，且只含有 `(` 和 `)` 。
+> 2. `2 <= S.length <= 50`
+
+依旧是括号题，这是每题都不会啊:cry:，直接看答案了，栈的方法还是很巧妙的（对应力扣官方题解中的方法2）：
+
+> 我们把平衡字符串 s 看作是一个空字符串加上 s 本身，并且定义空字符串的分数为 0。使用栈 st 记录平衡字符串的分数，在开始之前要压入分数 0，表示空字符串的分数。
+>
+> 在遍历字符串 s 的过程中：
+>
+> - 遇到左括号，那么我们需要计算该左括号内部的子平衡括号字符串 A 的分数，我们也要先压入分数 0，表示 A 前面的空字符串的分数。
+> - 遇到右括号，说明该右括号内部的子平衡括号字符串 A 的分数已经计算出来了，我们将它弹出栈，并保存到变量 v 中。如果 v=0，那么说明子平衡括号字符串 A 是空串，(A) 的分数为 1，否则 (A) 的分数为 2v，然后将 (A) 的分数加到栈顶元素上。
+>
+> 遍历结束后，栈顶元素保存的就是 s 的分数。
+>
+
+```c++
+class Solution {
+public:
+    int scoreOfParentheses(string s) {
+        stack<int> stk;
+        stk.push(0); //用作最后的计算
+        int n = s.size();
+        int value = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='(') stk.push(0);
+            else //右括号
+            {
+                value = stk.top();
+                stk.pop();
+                if(value==0) stk.top()+=1;
+                else stk.top() += 2*value;
+            }
+        }
+        return stk.top();
+    }
+};
+```
+
+```
+        //((()))()
+        //stack +0 0 0 0 
+        //      (((
+        //stack 0 0 0 0=pop 0 0 0= 0 0 1
+        //      ((()
+        //stack 0 0 1  =pop 0 0  = 0  2
+        //      ((())
+        //stack 0 2    =pop 0    =  4
+        //      ((()))(
+        //stack 4 0    =push 4 0 
+        //      ((()))()
+        //stack 4 0    =pop 4 +1 =5  
+       
+```
+
+
+
+一个冗长但是比较简单理解的方法：
+
+>示意图可以看这篇题解：[856. 括号的分数 - 力扣（LeetCode）](https://leetcode.cn/problems/score-of-parentheses/solutions/1878748/zhua-wa-mou-si-by-muse-77-hy72/)，这道题也有分治之类的解法。
+>
+><img src="assets/1665287037-XCtbhA-image.png" alt="image.png" style="zoom: 33%;" />
+>
+><img src="assets/1665287046-XplBvJ-image.png" alt="image.png" style="zoom:33%;" />
+>
+><img src="assets/1665287052-OhodXC-image.png" alt="image.png" style="zoom:33%;" />
+>
+>```C++
+>class Solution {
+>public:
+>    int scoreOfParentheses(string s) {
+>        stack<string> stk;
+>        for(int i=0;i<s.size();i++)
+>        {
+>            if(s[i]=='(')
+>            {
+>                stk.emplace("(");
+>            }
+>            else
+>            {
+>                if(!stk.empty()&&stk.top()=="(")
+>                {
+>                    stk.pop();
+>                    stk.emplace("1");//emplace(1)是错的
+>                    continue;
+>                }
+>                int v=0;
+>                while(!stk.empty()&&stk.top()!="(")
+>                {
+>                    v+=stoi(stk.top());
+>                    stk.pop();
+>                }
+>                v*=2;
+>                if(!stk.empty())
+>                {
+>                    stk.pop();
+>                    stk.emplace(to_string(v));
+>                }
+>            }
+>        }
+>        int res=0;
+>        while(!stk.empty())
+>        {
+>            res+=stoi(stk.top());
+>            stk.pop();
+>        }
+>        return res;
+>    }
+>};
+>```
+>
+>
+
+### ==（7）[1249. 移除无效的括号](https://leetcode.cn/problems/minimum-remove-to-make-valid-parentheses/)==（括号题后面不做了，先不管了）
+
+
+
+### [2116. 判断一个括号字符串是否有效](https://leetcode.cn/problems/check-if-a-parentheses-string-can-be-valid/)
+
+一个括号字符串是只由 `'('` 和 `')'` 组成的 **非空** 字符串。如果一个字符串满足下面 **任意** 一个条件，那么它就是有效的：
+
+- 字符串为 `()`.
+- 它可以表示为 `AB`（`A` 与 `B` 连接），其中`A` 和 `B` 都是有效括号字符串。
+- 它可以表示为 `(A)` ，其中 `A` 是一个有效括号字符串。
+
+给你一个括号字符串 `s` 和一个字符串 `locked` ，两者长度都为 `n` 。`locked` 是一个二进制字符串，只包含 `'0'` 和 `'1'` 。对于 `locked` 中 **每一个** 下标 `i` ：
+
+- 如果 `locked[i]` 是 `'1'` ，你 **不能** 改变 `s[i]` 。
+- 如果 `locked[i]` 是 `'0'` ，你 **可以** 将 `s[i]` 变为 `'('` 或者 `')'` 。
+
+如果你可以将 `s` 变为有效括号字符串，请你返回 `true` ，否则返回 `false` 。
+
+ 
+
+**示例 1：**
+
+![img](assets/eg1-1742736444845-1.png)
+
+```C++
+输入：s = "))()))", locked = "010100"
+输出：true
+解释：locked[1] == '1' 和 locked[3] == '1' ，所以我们无法改变 s[1] 或者 s[3] 。
+我们可以将 s[0] 和 s[4] 变为 '(' ，不改变 s[2] 和 s[5] ，使 s 变为有效字符串。
+```
+
+请看0x3f讲解：https://leetcode.cn/problems/check-if-a-parentheses-string-can-be-valid/solutions/1178043/zheng-fan-liang-ci-bian-li-by-endlessche-z8ac/?envType=daily-question&envId=2025-03-23
+
+```C++
+class Solution {
+public:
+    bool canBeValid(string s, string locked) {
+        int n = s.size();
+        if(n%2==1) // ==1！
+        {
+            return false;
+        }
+        int mn = 0,mx=0;//min,max
+        for(int i=0;i<n;i++)
+        {
+            if(locked[i]=='1')// 不能改
+            {
+                //0,2->1,3
+                int d=(s[i]=='(')?1:-1;
+                mx+=d;
+                if(mx<0)return false;// c 不能为负
+                mn+=d;
+            }
+            else //// 可以改 =0 范围进一步扩大 
+            {
+                mn--;// 改成右括号，c 减一
+                mx++;// 改成左括号，c 加一
+            }
+            if(mn<0) // c 不能为负
+            {
+                mn=1;// 此时 c 的取值范围都是奇数，最小的奇数是 1
+            }
+        }
+        return mn==0;// 说明最终 c 能是 0
+    }
+};
+```
+
+
+
+
+
+## 3.5 表达式解析专题
+
+
+
+# 四、字典树（Trie树）
+
+## 1.板子[208. 实现 Trie (前缀树)](https://leetcode.cn/problems/implement-trie-prefix-tree/)
+
+> **[Trie](https://baike.baidu.com/item/字典树/9825209?fr=aladdin)**（发音类似 "try"）或者说 **前缀树** 是一种树形数据结构，用于高效地存储和检索字符串数据集中的键。这一数据结构有相当多的应用情景，例如自动补全和拼写检查。
+>
+> 请你实现 Trie 类：
+>
+> - `Trie()` 初始化前缀树对象。
+> - `void insert(String word)` 向前缀树中插入字符串 `word` 。
+> - `boolean search(String word)` 如果字符串 `word` 在前缀树中，返回 `true`（即，在检索之前已经插入）；否则，返回 `false` 。
+> - `boolean startsWith(String prefix)` 如果之前已经插入的字符串 `word` 的前缀之一为 `prefix` ，返回 `true` ；否则，返回 `false` 。
+
+字典树的学习可以看这篇文章：[208. 实现 Trie (前缀树) - 力扣（LeetCode）](https://leetcode.cn/problems/implement-trie-prefix-tree/solutions/2993894/cong-er-cha-shu-dao-er-shi-liu-cha-shu-p-xsj4/)
+
+这是一道板子题，需要整理一下：
+
+```c++
+struct Node
+{
+    Node* son[26]{};
+    bool isEnd = false;
+};
+class Trie {
+public:
+    Node* root;
+    Trie() {
+        root=new Node();
+    }
+
+    int find(string word) //0表示没有找到,1表示找到是结尾,2表示找到不是结尾(是前缀)
+    {
+        Node* cur = root;
+        for(char c: word)
+        {
+            c -= 'a';
+            if(cur->son[c]==nullptr) return 0;
+            cur = cur->son[c];
+        }
+        if(cur->isEnd) return 1;
+        else return 2;
+    }
+    
+    void insert(string word) {
+        Node* cur = root;
+        for(char c: word)
+        {
+            c -= 'a';
+            if(cur->son[c]==nullptr) //如果没有
+            {
+                cur->son[c] = new Node();
+            }
+            cur = cur->son[c];
+        }
+        cur->isEnd = true;
+    }
+
+    
+    bool search(string word) {
+        return find(word)==1; //需要是全字匹配
+    }
+    
+    bool startsWith(string prefix) {
+        return find(prefix)!=0; //不是匹配不上就行
+    }
+};
+
+/**
+ * Your Trie object will be instantiated and called as such:
+ * Trie* obj = new Trie();
+ * obj->insert(word);
+ * bool param_2 = obj->search(word);
+ * bool param_3 = obj->startsWith(prefix);
+ */
+```
+
+
+
+## ==2.[211. 添加与搜索单词 - 数据结构设计](https://leetcode.cn/problems/design-add-and-search-words-data-structure/)==
+
+> 请你设计一个数据结构，支持 添加新单词 和 查找字符串是否与任何先前添加的字符串匹配 。
+>
+> 实现词典类 `WordDictionary` ：
+>
+> - `WordDictionary()` 初始化词典对象
+> - `void addWord(word)` 将 `word` 添加到数据结构中，之后可以对它进行匹配
+> - `bool search(word)` 如果数据结构中存在字符串与 `word` 匹配，则返回 `true` ；否则，返回 `false` 。`word` 中可能包含一些 `'.'` ，每个 `.` 都可以表示任何一个字母。
+
+这道题算是上一题的进阶版本，针对word中的`.`，永远可以匹配一个字母，那么就可以写一个match函数，在遇到.的时候，递归调用子树来做字符串匹配。本题代码如下：
+```c++
+```
+
+
+
+# 五、堆（优先队列）
+
+https://leetcode.cn/discuss/post/3583665/fen-xiang-gun-ti-dan-chang-yong-shu-ju-j-bvmv/
+
+
+
+#### priority_queue语法：
+
+https://www.runoob.com/cplusplus/cpp-libs-priority_queue.html
+
+在 C++ 中，`priority_queue` 默认是一个最大堆，这意味着队列的顶部元素总是具有最大的值。
+
+```C++
+#include <queue>
+
+// 声明一个整型优先队列
+priority_queue<int> pq;
+
+// 声明一个自定义类型的优先队列，需要提供比较函数
+struct compare 
+{
+    bool operator()(int a, int b) 
+    {
+        return a > b; // 这里定义了最小堆
+    }
+};
+priority_queue<int, vector<int>, compare> pq_min;//vector<int>注意要显式指定容器
+
+或者定义最小堆也可以直接：
+ priority_queue<int,vector<int>,greater<int>> pq_min; //相当于父节点>子节点就交换,小顶堆
+```
+
+常用操作
+
+- `empty()`: 检查队列是否为空。
+- `size()`: 返回队列中的元素数量。
+- `top()`: 返回队列顶部的元素（不删除它）。
+- `push()`: 向队列添加一个元素。
+- `pop()`: 移除队列顶部的元素。‘
+
+
+
+使用元素赋值：
+
+```c++
+ priority_queue<int,vector<int>,greater<int>> pq_min(nums.begin(),nums.end());
+```
+
+
+
+#### 原地堆化make_heap(), pop_heap(), push_heap()语法
+
+(例题1962)
+
+https://blog.csdn.net/weixin_42905141/article/details/103617150
+
+>在 C++ STL 中，`pop_heap`、`push_heap` 和 `make_heap` 等函数是用于操作堆的算法，它们的参数通常是一个迭代器范围，表示要操作的元素范围。下面是对这些函数的详细解释，包括参数的含义和用法。
+>
+>### 函数参数
+>
+>1. **`make_heap`**:
+>   ```cpp
+>   make_heap(RandomIt first, RandomIt last);
+>   ```
+>   - **参数**:
+>     - `first`: 指向要堆化的范围的起始迭代器。
+>     - `last`: 指向要堆化的范围的结束迭代器（不包括该位置的元素）。
+>   - **作用**: 将 `[first, last)` 范围内的元素转化为一个最大堆。
+>
+>2. **`pop_heap`**:
+>   ```cpp
+>   pop_heap(RandomIt first, RandomIt last);
+>   ```
+>   - **参数**:
+>     - `first`: 指向堆的起始迭代器。
+>     - `last`: 指向堆的结束迭代器（不包括该位置的元素）。
+>   - **作用**: 将堆顶元素（最大值）移动到 `last - 1` 位置，并重新调整堆，使得 `[first, last - 1)` 仍然是一个有效的堆。
+>
+>3. **`push_heap`**:
+>   ```cpp
+>   push_heap(RandomIt first, RandomIt last);
+>   ```
+>   - **参数**:
+>     - `first`: 指向堆的起始迭代器。
+>     - `last`: 指向堆的结束迭代器（包括新插入的元素）。
+>   - **作用**: 将 `last - 1` 位置的元素插入到堆中，并重新调整堆，使得 `[first, last)` 仍然是一个有效的堆。
+>
+>### `piles.end()` 的含义
+>
+>- `piles.end()` 返回一个指向 `piles` 容器末尾的迭代器。这个迭代器指向的是一个“哨兵”位置，表示容器的结束，但不指向任何有效的元素。因此，`piles.end()` 不能用于访问元素，因为它并不指向一个有效的元素。
+>
+>### 示例
+>
+>假设我们有一个 `std::vector<int> piles`，我们可以这样使用这些函数：
+>
+>```cpp
+>#include <vector>
+>#include <algorithm>
+>#include <iostream>
+>
+>int main() {
+>    std::vector<int> piles = {4, 1, 3, 2, 5};
+>
+>    // 1. 创建最大堆
+>    std::make_heap(piles.begin(), piles.end());
+>
+>    // 2. 弹出堆顶元素
+>    std::pop_heap(piles.begin(), piles.end());
+>    std::cout << "After pop_heap: " << piles.back() << std::endl; // 输出堆顶元素
+>    piles.pop_back(); // 移除堆顶元素
+>
+>    // 3. 继续操作
+>    piles.push_back(6); // 添加新元素
+>    std::push_heap(piles.begin(), piles.end()); // 重新调整堆
+>
+>    // 4. 输出当前堆
+>    for (int pile : piles) {
+>        std::cout << pile << " ";
+>    }
+>    std::cout << std::endl;
+>
+>    return 0;
+>}
+>```
+>
+>在这个示例中，我们首先创建了一个最大堆，然后弹出了堆顶元素，并将其移除。接着，我们添加了一个新元素并重新调整堆。注意，`piles.end()` 只是一个指向容器末尾的迭代器，并不指向有效元素。
+
+## §5.1 基础
+
+### [1046. 最后一块石头的重量](https://leetcode.cn/problems/last-stone-weight/)
+
+有一堆石头，每块石头的重量都是正整数。
+
+每一回合，从中选出两块 **最重的** 石头，然后将它们一起粉碎。假设石头的重量分别为 `x` 和 `y`，且 `x <= y`。那么粉碎的可能结果如下：
+
+- 如果 `x == y`，那么两块石头都会被完全粉碎；
+- 如果 `x != y`，那么重量为 `x` 的石头将会完全粉碎，而重量为 `y` 的石头新重量为 `y-x`。
+
+最后，最多只会剩下一块石头。返回此石头的重量。如果没有石头剩下，就返回 `0`。
+
+**示例：**
+
+```
+输入：[2,7,4,1,8,1]
+输出：1
+解释：
+先选出 7 和 8，得到 1，所以数组转换为 [2,4,1,1,1]，
+再选出 2 和 4，得到 2，所以数组转换为 [2,1,1,1]，
+接着是 2 和 1，得到 1，所以数组转换为 [1,1,1]，
+最后选出 1 和 1，得到 0，最终数组转换为 [1]，这就是最后剩下那块石头的重量。
+```
+
+
+
+#### M1: 推荐
+
+```C++
+class Solution {
+public:
+    int lastStoneWeight(vector<int>& stones) {
+        priority_queue<int> q;
+        for(auto &num:stones)
+        {
+            q.push(num);
+        }
+        while(q.size()>1)
+        {
+            int big = q.top();
+            q.pop();
+            int big2 = q.top();
+            q.pop();
+            if(big>big2)
+            {
+                q.push(big - big2);
+            }
+        }
+        return q.empty()?0:q.top();
+    }
+};
+```
+
+
+
+#### M2.1 : 
+
+```C++
+
+struct Rule {
+	bool operator()(const int& a, const int& b) const  // multiset这个const 一定要有!
+	{
+		return a > b;  // 降序排列
+	}
+};
+class Solution {
+public:
+	int lastStoneWeight(vector<int>& stones) {
+		multiset<int, Rule> stone(stones.begin(), stones.end());
+		while (stone.size()>1)
+		{
+			int big = *stone.begin();
+			stone.erase(stone.begin());
+			int big2 = *stone.begin();
+			stone.erase(stone.begin());
+			if (big != big2)
+			{
+				big = big - big2;
+				stone.insert(big);
+			}
+		}
+
+		if (!stone.empty())return *stone.begin();
+		return 0;
+
+	}
+};
+```
+
+
+
+#### M2.2 : 
+
+```c++
+class Solution {
+public:
+	int lastStoneWeight(vector<int>& stones) {
+		multiset<int> stone(stones.begin(), stones.end());
+		while (stone.size() > 1)
+		{
+			int big = *stone.rbegin(); // 最后一个元素 (end指向的是rbegin的下一个)
+			stone.erase(--stone.end());
+			int big2 = *stone.rbegin();
+			stone.erase(--stone.end());
+			if (big != big2)
+			{
+				big = big - big2;
+				stone.insert(big);
+			}
+		}
+
+		if (!stone.empty())return *stone.begin();
+		return 0;
+
+	}
+};
+```
+
+> 一些补充:
+>
+> 在C++中，`stone.erase(stone.rbegin())` 无法直接使用的原因是**反向迭代器与正向迭代器的类型不兼容**，且标准库的 `erase` 方法只接受**正向迭代器**。以下是详细解释：
+>
+> ---
+>
+> ### **1. 迭代器类型差异**
+> - **`rbegin()`** 返回的是 `reverse_iterator`（反向迭代器），用于**逆向遍历容器**（从末尾到开头）。
+> - **`erase()`** 的参数必须是 `iterator`（正向迭代器），用于**正向访问容器元素**。
+>
+> 反向迭代器与正向迭代器是两种不同的类型，无法直接混用。若强行传递 `reverse_iterator` 给 `erase()`，编译器会报类型错误。
+>
+> ---
+>
+> ### **2. 如何正确获取末尾元素的正向迭代器**
+> 要删除 `multiset` 的最后一个元素，需通过**正向迭代器**操作：
+> ```cpp
+> // 正确方式：通过正向迭代器删除最后一个元素
+> auto it = --stone.end();  // end() 是尾后迭代器，-- 使其指向最后一个元素
+> stone.erase(it);
+> ```
+>
+> 而 `stone.rbegin()` 是反向迭代器，若想将其转换为正向迭代器，需调用 `.base()` 方法：
+> ```cpp
+> // 反向迭代器转正向迭代器（一般不推荐）
+> auto reverse_it = stone.rbegin();
+> auto forward_it = reverse_it.base();  // 此时 forward_it 指向 end()，需调整
+> ```
+>
+> 但 `.base()` 转换后的正向迭代器**指向原反向迭代器的下一个位置**。例如对`rbegin()`和`rend()`调用了`.base()`方法后：
+> - `rbegin()` 对应 `end()`（尾后位置）
+> - `rend()` 对应 `begin()`（首元素位置）
+>
+> 因此，直接使用 `stone.erase(stone.rbegin().base())` 会导致试图删除 `end()`，这是**未定义行为**。
+>
+> ---
+>
+> ### **3. 正确使用反向迭代器删除元素**
+> 若坚持用反向迭代器，需调整其位置后再转换：
+> ```cpp
+> auto reverse_it = stone.rbegin();
+> // 反向迭代器前进一位，再转正向迭代器
+> auto forward_it = (++reverse_it).base();  // 此时 forward_it 指向最后一个元素,++反向迭代器应该相当于往左走
+> stone.erase(forward_it);
+> ```
+> 此方法较为复杂且易出错，**建议直接使用正向迭代器** `--stone.end()`。
+>
+> ---
+>
+> ### **4. 示例代码对比**
+> #### **错误方式（类型不匹配）**
+> ```cpp
+> stone.erase(stone.rbegin());  // 编译错误：reverse_iterator 无法转为 iterator
+> ```
+>
+> #### **正确方式（正向迭代器）**
+> ```cpp
+> auto it = --stone.end();  // 获取最后一个元素的正向迭代器
+> stone.erase(it);          // 正确删除
+> ```
+>
+> ---
+>
+> ### **总结**
+> - **`rbegin()` 返回反向迭代器，与 `erase()` 需要的正向迭代器类型不兼容。**
+> - **删除末尾元素应使用 `--stone.end()`**，这是最直接且安全的方式。
+> - 反向迭代器的 `.base()` 方法通常用于特定场景（如逆向遍历时的边界处理），不建议在删除操作中强行转换。
+
+
+
+### [3264. K 次乘运算后的最终数组 I](https://leetcode.cn/problems/final-array-state-after-k-multiplication-operations-i/)
+
+简单题
+
+给你一个整数数组 `nums` ，一个整数 `k` 和一个整数 `multiplier` 。
+
+你需要对 `nums` 执行 `k` 次操作，每次操作中：
+
+- 找到 `nums` 中的 **最小** 值 `x` ，如果存在多个最小值，选择最 **前面** 的一个。
+- 将 `x` 替换为 `x * multiplier` 。
+
+请你返回执行完 `k` 次乘运算之后，最终的 `nums` 数组。
+
+#### M1: 应该会比M2慢点
+
+```c++
+class Solution {
+public:
+    vector<int> getFinalState(vector<int>& nums, int k, int multiplier) {
+        while(k--)
+        {
+            auto it = min_element(nums.begin(),nums.end());
+            *it = *it*multiplier;
+        }
+        return nums;
+    }
+};
+```
+
+#### M2:
+
+```C++
+struct cmp
+{
+    bool operator()(const pair<int,int> &a,const pair<int,int>& b)
+    {
+        if(a.first == b.first)return a.second>b.second;
+        return a.first>b.first;
+    }
+};
+class Solution {
+public:
+    
+    vector<int> getFinalState(vector<int>& nums, int k, int multiplier) {
+        priority_queue<pair<int,int>,vector<pair<int,int>>, cmp> q;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            q.push({nums[i],i});
+        }
+        for(int i=0;i<k;i++)
+        {
+            auto [top,idx] = q.top();
+            q.pop();
+            q.push({top*multiplier,idx});
+        }
+        while(!q.empty())
+        {
+            auto [num,idx]  = q.top();
+            q.pop();
+            nums[idx] =num;
+        }
+        //3 3 5
+        //9 3 5
+        //9 9 5
+        //9 9 15
+        //27 9 15
+        return nums;
+    }
+};
+```
+
+
+
+### [2558. 从数量最多的堆取走礼物](https://leetcode.cn/problems/take-gifts-from-the-richest-pile/)
+
+简单题
+
+给你一个整数数组 `gifts` ，表示各堆礼物的数量。每一秒，你需要执行以下操作：
+
+- 选择礼物数量最多的那一堆。
+- 如果不止一堆都符合礼物数量最多，从中选择任一堆即可。
+- 将堆中的礼物数量减少到堆中原来礼物数量的平方根，向下取整。
+
+返回在 `k` 秒后剩下的礼物数量*。*
+
+> 关于堆化的复杂度的探讨，可以看这篇：[2558. 从数量最多的堆取走礼物 - 力扣（LeetCode）](https://leetcode.cn/problems/take-gifts-from-the-richest-pile/solutions/2501655/yuan-di-dui-hua-o1-kong-jian-fu-ti-dan-p-fzdh/)
+
+100%
+
+```C++
+class Solution {
+public:
+    long long pickGifts(vector<int>& gifts, int k) {
+        priority_queue<int> q;
+        for(auto &g:gifts)q.push(g);
+        for(int i=0;i<k;i++)
+        {
+            int top = q.top();
+            top = sqrt(top);
+            q.pop();
+            q.push(top);
+        }
+        long long res=0;
+        while(!q.empty())
+        {
+            res+= q.top();
+            q.pop();
+        }
+        return res;
+
+    }
+};
+```
+
+
+
+慢 17%
+
+```C++
+class Solution {
+public:
+    long long pickGifts(vector<int>& gifts, int k) {
+        while(k--)
+        {
+            auto it = max_element(gifts.begin(),gifts.end());
+            *it = sqrt(*it) ;
+        }
+        long long res = reduce(gifts.begin(),gifts.end(),0ll);
+        return res;
+    }
+};
+```
+
+
+
+本题也可以考虑原地堆化，代码如下：
+
+```c++
+class Solution {
+public:
+    long long pickGifts(vector<int>& gifts, int k) {
+        make_heap(gifts.begin(), gifts.end());
+        while(k-- && gifts[0] > 1) //算是一个小剪枝,如果堆顶<=1,那么不需要再调整了
+        {
+            pop_heap(gifts.begin(), gifts.end());
+            gifts.back() = sqrt(gifts.back());
+            push_heap(gifts.begin(), gifts.end());
+        }
+        return accumulate(gifts.begin(), gifts.end(), 0LL);
+    }
+};
+```
+
+
+
+### [2336. 无限集中的最小数字](https://leetcode.cn/problems/smallest-number-in-infinite-set/)
+
+现有一个包含所有正整数的集合 `[1, 2, 3, 4, 5, ...]` 。
+
+实现 `SmallestInfiniteSet` 类：
+
+- `SmallestInfiniteSet()` 初始化 **SmallestInfiniteSet** 对象以包含 **所有** 正整数。
+- `int popSmallest()` **移除** 并返回该无限集中的最小整数。
+- `void addBack(int num)` 如果正整数 `num` **不** 存在于无限集中，则将一个 `num` **添加** 到该无限集中。
+
+ 
+
+#### M1：不推荐的做法（引入）
+
+实际上，存储所有的值在set中是没有必要的，如果num是无穷呢？
+
+```C++
+class SmallestInfiniteSet {
+public: 
+    set<int> mset;
+    SmallestInfiniteSet() {
+        for(int i=1;i<=1000;i++)mset.insert(i);
+    }
+    
+    int popSmallest() {
+        if(!mset.empty())
+        {
+            int num = *mset.begin();
+            mset.erase(mset.begin());
+            return num;
+        }
+        return -1;
+    }
+    
+    void addBack(int num) {
+        mset.insert(num);
+    }
+};
+```
+
+// 1   3        6 7 8 9 10
+
+
+
+#### M2：推荐
+
+使用一个有序集合 *s* 维护所有小于 *thres* 的正整数，并用 *thres* 表示所有大于等于 *thres* 的正整数。
+
+```C++
+class SmallestInfiniteSet {
+public: 
+    set<int> mset; // 改为只存储thres之后的数字
+    int thres=1;
+    SmallestInfiniteSet() {
+        // for(int i=1;i<=1000;i++)mset.insert(i);
+    }
+    
+    int popSmallest() {
+        if(!mset.empty())
+        {
+            int num = *mset.begin();
+            mset.erase(mset.begin());
+            return num;
+        }
+        int res = thres;
+        thres++;
+        return res;
+    }
+    
+    void addBack(int num) {
+        if(num<thres)
+            mset.insert(num);
+    }
+};
+```
+
+堆做法：
+
+https://leetcode.cn/problems/smallest-number-in-infinite-set/solutions/2546157/gong-shui-san-xie-rong-yi-you-gao-xiao-d-431o/
+
+> 本题可以使用堆的做法，但有一些不太好写，考虑的问题相对比较多，因此主要还是用set。（因为要考虑这个无限集合中不应该有重复的数字）
+
+
+
+### [2530. 执行 K 次操作后的最大分数](https://leetcode.cn/problems/maximal-score-after-applying-k-operations/)
+
+给你一个下标从 **0** 开始的整数数组 `nums` 和一个整数 `k` 。你的 **起始分数** 为 `0` 。
+
+在一步 **操作** 中：
+
+1. 选出一个满足 `0 <= i < nums.length` 的下标 `i` ，
+2. 将你的 **分数** 增加 `nums[i]` ，并且
+3. 将 `nums[i]` 替换为 `ceil(nums[i] / 3)` 。
+
+返回在 **恰好** 执行 `k` 次操作后，你可能获得的最大分数。
+
+向上取整函数 `ceil(val)` 的结果是大于或等于 `val` 的最小整数。
+
+ 
+
+**示例 1：**
+
+```
+输入：nums = [10,10,10,10,10], k = 5
+输出：50
+解释：对数组中每个元素执行一次操作。最后分数是 10 + 10 + 10 + 10 + 10 = 50 
+```
+
+
+
+```C++
+class Solution {
+public:
+    long long maxKelements(vector<int>& nums, int k) {
+        //每次取出最大的叠加
+        
+        //以下这个 O(kn) 会超时
+        // long long res=0;
+        // for(int i=0;i<k;i++)
+        // {
+        //     //max_element --- O(n)
+        //     auto it = max_element(nums.begin(),nums.end());
+        //     res += *it;
+        //     *it = (*it+3-1)/3;
+        // }
+        // return res;
+
+        //O(klogn+n)
+        long long res=0;
+        priority_queue<int> q(nums.begin(),nums.end());
+        //上面初始化赋值等价于下面这个
+        // for(auto &num:nums)
+        // {
+        //     q.push(num);
+        // }
+        for(int i=0;i<k;i++)
+        {
+            int top = q.top();
+            res+=top;
+            top = (top+3-1)/3;
+            q.pop();
+            q.push(top);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [3066. 超过阈值的最少操作数 II](https://leetcode.cn/problems/minimum-operations-to-exceed-threshold-value-ii/)
+
+给你一个下标从 **0** 开始的整数数组 `nums` 和一个整数 `k` 。
+
+你可以对 `nums` 执行一些操作，在一次操作中，你可以：
+
+- 选择 `nums` 中 **最小** 的两个整数 `x` 和 `y` 。
+- 将 `x` 和 `y` 从 `nums` 中删除。
+- 将 `min(x, y) * 2 + max(x, y)` 添加到数组中的任意位置。
+
+**注意，**只有当 `nums` **至少** 包含两个元素时，你才可以执行以上操作。
+
+你需要使数组中的所有元素都 **大于或等于** `k` ，请你返回需要的 **最少** 操作次数。
+
+
+
+```C++
+class Solution {
+public:
+    struct cmp
+    {
+        bool operator()(int a,int b)
+        {
+            return a>b;
+        };
+    };
+    int minOperations(vector<int>& nums, int k) {
+        priority_queue<int,vector<int>,cmp> q(nums.begin(),nums.end());
+        int ans=0;
+        while(q.size()>=2)
+        {
+            int x= q.top();
+            if(x>=k)break ;
+            q.pop();
+            int y = q.top();
+            q.pop();
+            // if(min(x,y)*2+max(x,y)>=k) 会超
+            if(y>=k) q.push(k);
+            else if(min(x,y)*2>=INT_MAX||min(x,y)*2>=k-max(x,y)) q.push(k);
+            else q.push( min(x,y)*2+max(x,y));
+            ans++;
+        }
+        return ans;
+    }
+};
+```
+
+其实不用那么麻烦 开longlong就完事了 0x3f和官方都是开ll
+
+```C++
+class Solution {
+    int minOperations(vector<int>& nums, int k) {
+        //记住这个写法：
+        priority_queue<long long,vector<long long>,greater<long long>> q(nums.begin(),nums.end());
+        int ans=0;
+        while(q.size()>=2)
+        {
+            long long x= q.top();
+            if(x>=k)break ;
+            q.pop();
+            long long y = q.top();
+            q.pop();
+            q.push( min(x,y)*2+max(x,y));
+            ans++;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### [1962. 移除石子使总数最小](https://leetcode.cn/problems/remove-stones-to-minimize-the-total/)
+
+给你一个整数数组 `piles` ，数组 **下标从 0 开始** ，其中 `piles[i]` 表示第 `i` 堆石子中的石子数量。另给你一个整数 `k` ，请你执行下述操作 **恰好** `k` 次：
+
+- 选出任一石子堆 `piles[i]` ，并从中 **移除** `floor(piles[i] / 2)` 颗石子。
+
+**注意：**你可以对 **同一堆** 石子多次执行此操作。
+
+返回执行 `k` 次操作后，剩下石子的 **最小** 总数。
+
+`floor(x)` 为 **小于** 或 **等于** `x` 的 **最大** 整数。（即，对 `x` 向下取整）。
+
+
+
+#### M1 空间O（n）不太推荐
+
+```C++
+class Solution {
+public:
+    int minStoneSum(vector<int>& piles, int k) {
+        //每次移走最大的
+        priority_queue<int> q(piles.begin(),piles.end());
+        for(int i=0;i<k;i++)
+        {
+            int top = q.top();
+            q.pop();
+            // q.push((top+2-1)/2);
+            q.push((top+1)/2);
+        }
+        int res=0;
+        while(!q.empty())
+        {
+            res+=q.top();
+            q.pop();
+        }
+        return res;
+    }
+};
+```
+
+
+
+#### O(*n*+*k*log*n*)   空间O（1）推荐  原地堆化
+
+```C++
+class Solution {
+public:
+    int minStoneSum(vector<int>& piles, int k) {
+        make_heap(piles.begin(),piles.end());
+        while(k--&&piles[0]!=1)
+        {
+            pop_heap(piles.begin(),piles.end());
+            piles.back() = (piles.back()+1) / 2;
+            push_heap(piles.begin(),piles.end());
+        }
+        int res = reduce(piles.begin(),piles.end());
+        return res;
+    }
+};
+```
+
+
+
+### [703. 数据流中的第 K 大元素](https://leetcode.cn/problems/kth-largest-element-in-a-stream/)
+
+设计一个找到数据流中第 `k` 大元素的类（class）。注意是排序后的第 `k` 大元素，不是第 `k` 个不同的元素。
+
+请实现 `KthLargest` 类：
+
+- `KthLargest(int k, int[] nums)` 使用整数 `k` 和整数流 `nums` 初始化对象。
+- `int add(int val)` 将 `val` 插入数据流 `nums` 后，返回当前数据流中第 `k` 大的元素。
+
+
+
+```C++
+class KthLargest {
+public:
+// ["KthLargest", "add", "add", "add", "add", "add"]
+// [[3, [4, 5, 8, 2]], [3], [5], [10], [9], [4]]
+//8 5 4 2            heap：4 5 8
+//8 5 4 3 2 [+3]     heap：4 5 8 
+//8 5 5 4 3 2[+5]    heap：5 5 8 
+
+//最大的前k个 放入小顶堆heap
+    priority_queue<int,vector<int>,greater<int>> q;
+    int k1;
+    KthLargest(int k, vector<int>& nums) {
+        k1=k;
+        for(auto& num:nums)
+        {
+            add(num);
+        }
+    }
+    
+    int add(int val) {
+        q.push(val);
+        if(q.size()>k1)
+            q.pop();
+        return q.top();
+    }
+};
+```
+
+
+
+### [3275. 第 K 近障碍物查询](https://leetcode.cn/problems/k-th-nearest-obstacle-queries/)
+
+有一个无限大的二维平面。
+
+给你一个正整数 `k` ，同时给你一个二维数组 `queries` ，包含一系列查询：
+
+- `queries[i] = [x, y]` ：在平面上坐标 `(x, y)` 处建一个障碍物，数据保证之前的查询 **不会** 在这个坐标处建立任何障碍物。
+
+每次查询后，你需要找到离原点第 `k` **近** 障碍物到原点的 **距离** 。
+
+请你返回一个整数数组 `results` ，其中 `results[i]` 表示建立第 `i` 个障碍物以后，离原地第 `k` 近障碍物距离原点的距离。如果少于 `k` 个障碍物，`results[i] == -1` 。
+
+**注意**，一开始 **没有** 任何障碍物。
+
+坐标在 `(x, y)` 处的点距离原点的距离定义为 `|x| + |y|` 。
+
+```C++
+class Solution {
+public:
+    vector<int> resultsArray(vector<vector<int>>& queries, int k) {
+        // 随着queries增加，可能性增大，
+        //堆， 距离原点最近的前k个障碍物，大顶堆 
+        //大顶堆，如果新的更近，把最大的那个扔掉
+        //维护距离最近的k个，从远到进排
+        priority_queue<int,vector<int>> q;
+        int n = queries.size();
+        vector<int> res(n,0);
+        for(int i=0;i<n;i++)
+        {
+            int len = abs(queries[i][0])+abs(queries[i][1]);
+            //写法1：可通过
+            // if(q.size()<k)q.push(len);
+            // else if(len<q.top())
+            // {
+            //     q.pop();
+            //     q.push(len);
+            // }
+            //写法2：可通过
+            q.push(len); // 先加入
+            if(q.size()>k)q.pop(); //如果超过了，将最远的那个pop
+            res[i] = q.size()<k?-1:q.top();
+        }
+        return res;
+    }
+};
+```
+
+
+
+
+
+# 七、并查集
+
+### 模板：
+
+```C++
+class UnionFind 
+{
+    vector<int> pa; // 代表元
+    vector<int> sz; // 集合大小
+
+public:
+    int cc; // 连通块个数
+
+    UnionFind(int n) : pa(n), sz(n, 1), cc(n) 
+    {
+        // 一开始有 n 个集合 {0}, {1}, ..., {n-1}
+        // 集合 i 的代表元是自己，大小为 1
+        ranges::iota(pa, 0); // iota(pa.begin(), pa.end(), 0);
+    }
+
+    // 返回 x 所在集合的代表元
+    // 同时做路径压缩，也就是把 x 所在集合中的所有元素的 pa 都改成代表元
+    int find(int x) 
+    {
+        // 如果 pa[x] == x，则表示 x 是代表元
+        if (pa[x] != x)   // 【是if 不是while  这是递归不用while】
+        {
+            pa[x] = find(pa[x]); // pa 改成代表元
+        }
+        return pa[x];
+    }
+
+    // 判断 x 和 y 是否在同一个集合
+    bool is_same(int x, int y) 
+    {
+        // 如果 x 的代表元和 y 的代表元相同，那么 x 和 y 就在同一个集合
+        // 这就是代表元的作用：用来快速判断两个元素是否在同一个集合
+        return find(x) == find(y);
+    }
+
+    // 把 from 所在集合合并到 to 所在集合中
+    // 返回是否合并成功
+    bool merge(int from, int to) 
+    {
+        int x = find(from), y = find(to);
+        if (x == y) { // from 和 to 在同一个集合，不做合并
+            return false;
+        }
+        pa[x] = y; // 合并集合。修改后就可以认为 from 和 to 在同一个集合了
+        sz[y] += sz[x]; // 更新集合大小（注意集合大小保存在代表元上）
+        // 无需更新 sz[x]，因为我们不用 sz[x] 而是用 sz[find(x)] 获取集合大小，但 find(x) == y，我们不会再访问 sz[x]
+        cc--; // 成功合并，连通块个数减一
+        return true;
+    }
+
+    // 返回 x 所在集合的大小
+    int get_size(int x) 
+    {
+        return sz[find(x)]; // 集合大小保存在代表元上
+    }
+};
+```
+
+>iota：https://blog.csdn.net/weixin_43869898/article/details/113029029
+>
+>批量递增赋值，也就是之前的init做法
+>
+>```C++
+>template <class ForwardIterator, class T>
+>//														T val:初始值
+>void iota (ForwardIterator first, ForwardIterator last, T val)
+>{
+>        while (first!=last)
+>        {
+>            *first = val;
+>            ++first;
+>            ++val;
+>        }
+>}
+>```
+
+
+
+## §7.1 基础
+
+3493. 属性图 ~1600
+990. 等式方程的可满足性 1638
+721. 账户合并
+737. 句子相似性 II（会员题）
+1101. 彼此熟识的最早时间（会员题）
+1258. 近义词句子（会员题）
+更多基础题，见 网格图题单 中的 DFS 和 图论题单 中的 DFS，其中大部分题目也可以用并查集实现。
+
+作者：灵茶山艾府
+链接：https://leetcode.cn/discuss/post/mOr1u6/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+
+
+看看以下这题似乎和“https://www.nowcoder.com/discuss/728254026348826624?sourceSSR=users”米哈游这个笔试题目类似
+
+### [3493. 属性图](https://leetcode.cn/problems/properties-graph/)
+
+给你一个二维整数数组 `properties`，其维度为 `n x m`，以及一个整数 `k`。
+
+定义一个函数 `intersect(a, b)`，它返回数组 `a` 和 `b` 中 **共有的不同整数的数量** 。
+
+构造一个 **无向图**，其中每个索引 `i` 对应 `properties[i]`。如果且仅当 `intersect(properties[i], properties[j]) >= k`（其中 `i` 和 `j` 的范围为 `[0, n - 1]` 且 `i != j`），节点 `i` 和节点 `j` 之间有一条边。
+
+返回结果图中 **连通分量** 的数量。
+
+**示例 1：**
+
+**输入：** properties = [[1,2],[1,1],[3,4],[4,5],[5,6],[7,7]], k = 1
+
+**输出：** 3
+
+**解释：**
+
+生成的图有 3 个连通分量：
+
+![img](assets/1742665594-CDVPWz-image.png)
+
+
+
+先建立它们之间的关系，建立完了 则dfs bfs 并查集都可以做
+
+```C++
+class UnionFind
+{
+    vector<int> parent;
+    vector<int> size;
+public:
+    int cc;
+    UnionFind(int n):size(n,1),parent(n),cc(n)
+    {
+        ranges::iota(parent,0);
+    }
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    bool is_same(int x,int y)
+    {
+        x = find(x);
+        y = find(y);
+        if(x==y)return true;
+        return false;
+    }
+    void merge(int from,int to)
+    {
+        from = find(from);
+        to  = find(to);
+        if(from==to)return ;
+        parent[from] =to;
+        size[to]+=size[from];
+        cc--;
+    }
+};
+class Solution {
+public:
+    
+    int numberOfComponents(vector<vector<int>>& properties, int k) {
+        //intersecta b 
+        int n = properties.size();
+        vector<unordered_set<int>> sets(n);
+        for(int i=0;i<n;i++)
+        {
+            unordered_set<int> uset(properties[i].begin(),properties[i].end());
+            sets[i] = uset;
+        }
+        int cnt=0;
+        UnionFind unionFind(n);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                cnt=0;
+                for(int x:sets[j])
+                {
+                    if(sets[i].contains(x))
+                    {
+                        cnt++;
+                        if(cnt>=k)break;
+                    }
+                }
+                if(cnt>=k)
+                {
+                    unionFind.merge(i,j);
+                }
+            }
+        }
+        return unionFind.cc;
+    }
+};
+```
+
+其实板子中的size 和 issame是用不到的，可以删除：
+
+```C++
+class UnionFind
+{
+    vector<int> parent;
+public:
+    int cc;
+    UnionFind(int n):parent(n),cc(n)
+    {
+        ranges::iota(parent,0);
+    }
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    void merge(int from,int to)
+    {
+        from = find(from);
+        to  = find(to);
+        if(from==to)return ;
+        parent[from] =to;
+        cc--;
+    }
+};
+class Solution {
+public:
+    
+    int numberOfComponents(vector<vector<int>>& properties, int k) {
+        //intersecta b 
+        int n = properties.size();
+        vector<unordered_set<int>> sets(n);
+        for(int i=0;i<n;i++)
+        {
+            sets[i] = unordered_set<int>(properties[i].begin(),properties[i].end());
+        }
+        int cnt=0;
+        UnionFind unionFind(n);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                cnt=0;
+                for(int x:sets[j])
+                {
+                    if(sets[i].contains(x))
+                    {
+                        cnt++;
+                        if(cnt>=k)break;
+                    }
+                }
+                if(cnt>=k)
+                {
+                    unionFind.merge(i,j);
+                }
+            }
+        }
+        return unionFind.cc;
+    }
+};
+```
+
+
+
+### [990. 等式方程的可满足性](https://leetcode.cn/problems/satisfiability-of-equality-equations/)
+
+给定一个由表示变量之间关系的字符串方程组成的数组，每个字符串方程 `equations[i]` 的长度为 `4`，并采用两种不同的形式之一：`"a==b"` 或 `"a!=b"`。在这里，a 和 b 是小写字母（不一定不同），表示单字母变量名。
+
+只有当可以将整数分配给变量名，以便满足所有给定的方程时才返回 `true`，否则返回 `false`。 
+
+**示例 1：**
+
+```
+输入：["a==b","b!=a"]
+输出：false
+解释：如果我们指定，a = 1 且 b = 1，那么可以满足第一个方程，但无法满足第二个方程。没有办法分配变量同时满足这两个方程。
+```
+
+
+
+```C++
+class UnionFind
+{
+    vector<int> parent;
+public:
+    UnionFind(int n):parent(n)
+    {
+        ranges::iota(parent,0);
+    }
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            parent[a]=find(parent[a]);
+        }
+        return parent[a];
+    }
+    int is_same(int x,int y)
+    {   
+        x =find(x);
+        y=find(y);
+        if(x==y)return true;
+        return false;
+    }
+    void merge(int from,int to)
+    {
+        from = find(from);
+        to = find(to);
+        if(from==to)return;
+        parent[from] = to;
+    }
+};
+class Solution {
+public:
+    bool equationsPossible(vector<string>& equations) {
+        // == 的一个并查集
+        // 如果一个并查集中的不等，那么false  或者说如果不等的 在一个并查集中 错误
+        //先将所有相等的放在一起
+
+        //记录不等的的idx
+        vector<int> noEqualIdx;
+        int n = equations.size();
+        UnionFind unionFind(26);
+        for(int i=0;i<n;i++)
+        {
+            if(equations[i][1]=='!')
+            {
+                noEqualIdx.push_back(i);
+            }
+            else
+            {
+                unionFind.merge(equations[i][0]-'a',equations[i][3]-'a');
+            }
+        }
+        for(int i=0;i<noEqualIdx.size();i++)
+        {
+            int idx = noEqualIdx[i];
+            if(unionFind.is_same(equations[idx][0]-'a',equations[idx][3]-'a'))
+            {
+                // cout<<equations[i][0]<<" "<<equations[i][3]<<endl;
+                return false;
+            }
+        }
+        return true;
+    }
+};
+```
+
+
+
+### [721. 账户合并](https://leetcode.cn/problems/accounts-merge/)
+
+给定一个列表 `accounts`，每个元素 `accounts[i]` 是一个字符串列表，其中第一个元素 `accounts[i][0]` 是 *名称 (name)*，其余元素是 ***emails*** 表示该账户的邮箱地址。
+
+现在，我们想合并这些账户。如果两个账户都有一些共同的邮箱地址，则两个账户必定属于同一个人。请注意，即使两个账户具有相同的名称，它们也可能属于不同的人，因为人们可能具有相同的名称。一个人最初可以拥有任意数量的账户，但其所有账户都具有相同的名称。
+
+合并账户后，按以下格式返回账户：每个账户的第一个元素是名称，其余元素是 **按字符 ASCII 顺序排列** 的邮箱地址。账户本身可以以 **任意顺序** 返回。
+
+ 
+
+**示例 1：**
+
+```C++
+输入：accounts = [["John", "johnsmith@mail.com", "john00@mail.com"], ["John", "johnnybravo@mail.com"], ["John", "johnsmith@mail.com", "john_newyork@mail.com"], ["Mary", "mary@mail.com"]]
+输出：[["John", 'john00@mail.com', 'john_newyork@mail.com', 'johnsmith@mail.com'],  ["John", "johnnybravo@mail.com"], ["Mary", "mary@mail.com"]]
+解释：
+第一个和第三个 John 是同一个人，因为他们有共同的邮箱地址 "johnsmith@mail.com"。 
+第二个 John 和 Mary 是不同的人，因为他们的邮箱地址没有被其他帐户使用。
+可以以任何顺序返回这些列表，例如答案 [['Mary'，'mary@mail.com']，['John'，'johnnybravo@mail.com']，
+['John'，'john00@mail.com'，'john_newyork@mail.com'，'johnsmith@mail.com']] 也是正确的。
+```
+
+
+
+官方的题解写得很垃圾，我也是：。。
+
+（有空可以看看零茶山艾府的dfs 似乎会精简一些）
+
+```C++
+class UnionFind
+{
+    vector<int> parent;
+public:
+    UnionFind(int n):parent(n)
+    {
+        ranges::iota(parent,0);
+    }
+    int find(int a)
+    {
+        if(parent[a]!=a)
+        {
+            parent[a]=find(parent[a]);
+        }
+        return parent[a];
+    }
+    void merge(int from,int to)
+    {
+        from = find(from);
+        to = find(to);
+        if(from==to)return;
+        parent[from] = to;
+    }
+};
+
+class Solution {
+public:
+    vector<vector<string>> accountsMerge(vector<vector<string>>& accounts) {
+        // 输入：
+        // accounts = 
+        // [["John", "johnsmith@mail.com", "john00@mail.com"],
+        //  ["John", "johnnybravo@mail.com"], 
+        //  ["John", "johnsmith@mail.com", "john_newyork@mail.com"],
+        //   ["Mary", "mary@mail.com"]]
+        
+        // 输出：
+        // [["John", 'john00@mail.com', 'john_newyork@mail.com', 'johnsmith@mail.com'], 
+        //  ["John", "johnnybravo@mail.com"], 
+        //  ["Mary", "mary@mail.com"]]
+
+        //每个邮箱对应的编号 map<string, int> emailToIndex;//一个邮箱只会对应一个编号
+        //遍历账户 accounts ，获取邮箱编号，进行邮箱编号合并
+
+        //遍历所有邮箱 emailToIndex，并查集得到该邮箱对应账户，放入账户对应的emails
+
+        //官方题解为何要这么恶心，直接设置set 然后如果是一个就merge且放进set，
+        //然后find其祖先，打印出来（记录一个 hash  打印过的idx不会再打印）
+        map<string,int> emailToIndex;
+        int n = accounts.size();
+        int accountIdx = 0;
+        //遍历账户 accounts ，获取邮箱编号，
+        for(int i=0;i<n;i++) 
+        {
+            for(int j=1;j<accounts[i].size();j++)
+            {
+                string email = accounts[i][j];
+                if(!emailToIndex.contains(email))
+                {
+                    emailToIndex[email] = accountIdx++;
+                }
+            }
+        }
+        //感觉上下可以合并)
+        //进行邮箱编号合并
+        UnionFind uf(accountIdx);
+        for(int i=0;i<n;i++) //如果
+        {
+            string email1 = accounts[i][1];
+            int firstIdx = emailToIndex[email1];
+            for(int j=2;j<accounts[i].size();j++)
+            {
+                string email = accounts[i][j];
+                int afterIdx = emailToIndex[email];
+                //合并
+                uf.merge(firstIdx,afterIdx);
+            }
+        }
+        // 以上并查集已经构造完了，也就是同样的人的 邮箱编号们 已经在一个集合里了
+        
+        //遍历所有accounts，取出email对应idx，存放name
+        //将 unordered_map<int,> -> idx,set<string>:idx,[name,emai...l
+        unordered_map<int,set<string>> idxAllEmail;//idx对应的所有邮箱
+        unordered_map<int,string> idx2name;//idx对应的name
+        for(int i=0;i<n;i++) //如果
+        {
+            string name = accounts[i][0];
+            string email = accounts[i][1];
+            int idx = emailToIndex[email];
+            idx = uf.find(idx);
+            idx2name[idx] = name;
+            for(int j=1;j<accounts[i].size();j++)
+            {
+                idxAllEmail[idx].insert(accounts[i][j]);
+            }
+        }
+        //重建 输出
+        vector<vector<string>> res;
+        for(auto &p :idxAllEmail)
+        {
+            int idx = p.first;
+            set<string> emailsSet = p.second;
+            string name = idx2name[idx];
+            vector<string> temp;
+            temp.push_back(name);
+            for(auto & em:emailsSet)
+            {
+                // cout<<em<<" ";
+                temp.push_back(em);
+            }
+            // cout<<"name"<<name<<endl;
+            res.push_back(temp);
+        }
+        return res;
+        
+        
+
+    }
+};
+```
+
+
+
+## §7.2 进阶
+
+
+
+### [1202. 交换字符串中的元素](https://leetcode.cn/problems/smallest-string-with-swaps/)
+
+给你一个字符串 `s`，以及该字符串中的一些「索引对」数组 `pairs`，其中 `pairs[i] = [a, b]` 表示字符串中的两个索引（编号从 0 开始）。
+
+你可以 **任意多次交换** 在 `pairs` 中任意一对索引处的字符。
+
+返回在经过若干次交换后，`s` 可以变成的按字典序最小的字符串。
+
+ 
+
+**示例 1:**
+
+```
+输入：s = "dcab", pairs = [[0,3],[1,2]]
+输出："bacd"
+解释： 
+交换 s[0] 和 s[3], s = "bcad"
+交换 s[1] 和 s[2], s = "bacd"
+```
+
+
+
+87% 统一存入vec再sort
+
+https://leetcode.cn/problems/smallest-string-with-swaps/solutions/555191/bing-cha-ji-sheng-cheng-lian-tong-tu-by-ea8er/
+
+```C++
+
+class UnionFind
+{
+    vector<int> parent;
+public:
+    UnionFind(int n) :parent(n)
+    {
+        /*ranges::iota(parent, 0);*/
+        for (int i = 0; i < n; i++)
+        {
+            parent[i] = i;
+        }
+    }
+    int find(int a)
+    {
+        if(a != parent[a])
+        {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    void merge(int from, int to)
+    {
+        from = find(from);
+        to = find(to);
+        if (from == to)return;
+        parent[from] = to;
+    }
+};
+class Solution {
+public:
+    string smallestStringWithSwaps(string s, vector<vector<int>>& pairs) {
+        //某些位置可以随意交换  这些位置按照字典序放
+        //1先连接起来， 2然后每个集合都按照字典序放入一个 idx,vec<int>  
+        //然后从左到右 查找这个集合中的最小值 放入并erase
+        if (pairs.size() == 0)return s;
+        int pairn = pairs.size();
+        int sn = s.size();
+        UnionFind uf(sn);
+        for (int i = 0; i < pairn; i++)
+        {
+            uf.merge(pairs[i][0], pairs[i][1]);
+        }
+        
+        //idx,set<int>
+        //需要注意 可能有多个相同字符 如果set就会被去掉。set每次排序或许还是过于费了 可以总的加入后排序
+        // unordered_map<int, multiset<char>> umap;
+        unordered_map<int, vector<int>> umap;
+        for (int i = 0; i < sn; i++)//应该是字符sn 而不是pairn 这样的话不会重复加入
+        {
+            int parent = uf.find(i);
+            umap[parent].push_back(s[i]);//把字符当作int排序 可以的
+        }
+        //再统一排序
+        for(auto &[k,v]:umap)
+        {
+            sort(v.begin(),v.end(),greater<int>{});//从大到小  这样直接从后面取O(1)
+        }
+        for (int i = 0; i < sn; i++)
+        {
+            int parent = uf.find(i);
+            s[i] = umap[parent].back();
+            umap[parent].pop_back();
+        }
+       
+        return s;
+    }
+};
+```
+
+
+
+27%  M 使用multiset边插入边排序 会更慢！不推荐
+
+```C++
+
+class UnionFind
+{
+    vector<int> parent;
+public:
+    UnionFind(int n) :parent(n)
+    {
+        /*ranges::iota(parent, 0);*/
+        for (int i = 0; i < n; i++)
+        {
+            parent[i] = i;
+        }
+    }
+    int find(int a)
+    {
+        if(a != parent[a])
+        {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    void merge(int from, int to)
+    {
+        from = find(from);
+        to = find(to);
+        if (from == to)return;
+        parent[from] = to;
+    }
+};
+class Solution {
+public:
+    string smallestStringWithSwaps(string s, vector<vector<int>>& pairs) {
+        //某些位置可以随意交换  这些位置按照字典序放
+        //先连接起来， 然后每个集合都按照字典序放入一个 idx,set<int>  
+        //然后从左到右 查找这个集合中的最小值 放入并erase
+        if (pairs.size() == 0)return s;
+        int pairn = pairs.size();
+        int sn = s.size();
+        UnionFind uf(sn);
+        for (int i = 0; i < pairn; i++)
+        {
+            uf.merge(pairs[i][0], pairs[i][1]);
+        }
+        
+        //idx,set<int>
+        //需要注意 可能有多个相同字符 如果set就会被去掉。set每次排序或许还是过于费了 可以总的加入后排序
+        unordered_map<int, multiset<char>> umap;
+        for (int i = 0; i < sn; i++)//应该是字符sn 而不是pairn 
+        {
+            int parent = uf.find(i);
+            umap[parent].insert(s[i]);
+        }
+        /*for (auto& p : umap)
+        {
+            cout << p.first << " :" << " ";
+            set<char> se = p.second;
+            for (auto i : se)
+            {
+                cout << i << " ";
+            }
+            cout << endl;
+        }*/
+        for (int i = 0; i < sn; i++)
+        {
+            int parent = uf.find(i);
+            char top = *umap[parent].begin();
+            s[i] = top;
+            umap[parent].erase(umap[parent].begin());
+        }
+       
+        return s;
+    }
+};
+```
+
+
+
+
+
+
+
+# 八、树状数组和线段树
+
+## 1.树状数组原理讲解
+
+[307. 区域和检索 - 数组可修改 - 力扣（LeetCode）](https://leetcode.cn/problems/range-sum-query-mutable/solutions/2524481/dai-ni-fa-ming-shu-zhuang-shu-zu-fu-shu-lyfll/)
+
+比较推荐的是看这个视频：[五分钟丝滑动画讲解 | 树状数组_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ce411u7qP/?spm_id_from=333.337.search-card.all.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)
+
+初衷其实是，给一个数组，需要快速做两个操作：
+
+- （1）修改数组中某个元素的值；
+- （2）快速求出前n个元素的和；
+
+![image-20250309154211423](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/image-20250309154211423.png)
+
+首先，介绍一下`lowbit`函数，其可以用来求解一个二进制数字的最低位表示哪个数字：
+
+```c++
+inline int lowbit(int x)
+{
+    return x & (-x);
+}
+```
+
+比如说1000110，计算lowbit的结果为最后的二进制10，即为十进制的2。设上面这个树状数组为b，序号从1开始。看上图的最后一行，这些区间的长度为1，而对应序号的lowbit也都是1。倒数第二行对应的区间长度为2，对应序号的lowbit=2，其他几行也有类似的规律：
+
+![image-20250309155025322](Leetcode%E2%80%94%E2%80%94%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%93%E9%A2%98.assets/image-20250309155025322.png)
+
+（左侧记录的值为对应的lowbit值）。比如`b[12]`这个元素对应的序列长度正好是lowbit(12)，而且对应的这个序列结尾的序号也是12，其他序列也有一样的性质。
+
+> 也就是说，序号为i的序列代表长度为lowbit(i)，且以i为结尾的序列。
+
+此时，计算前`p`个元素的和，用递归的形式写就是：
+
+```c++
+ll count(int p)
+{
+    if(p==0) return 0;
+    return count(p-lowbit(p)) + b[p];
+}
+```
+
+不用递归，而是用循环的方式来写：
+
+```c++
+ll count(int p)
+{
+    ll result = 0;
+    while(p)
+    {
+        result += b[p];
+        p -= lowbit(p);
+    }
+    return result;
+}
+```
+
+
+
+另一个性质如下：
+
+> 一个序列`b[i]`正上方的序列，正好就是`b[i+lowbit(i)]`。
+
+于是在修改某个值的时候，就可以不断加上lowbit[i]找到上方的所有序列，进行修改。所以add的函数如下：
+
+```c++
+void add(int p, int x)
+{
+    while(p<N)
+    {
+        b[p] += x;
+        p += lowbit(p);
+    }
+}
+```
+
+
+
+### (1)树状数组的优势
+
+假设我们要求解区间和，那么不用树状数组的话，有两种求解方式：
+
+- （a）直接暴力加起来求和，此时求解复杂度O（n），对某一个索引的位置单独加一个值的复杂度为O（1）；
+- （b）使用前缀和，此时求解复杂度为O（1），但假如我们修改了数组中的某个值，更新前缀和的复杂度又变成了O（n）；
+
+因此，树状数组（包括线段树也是）其实是对以上两种做法的综合考量，把查询与修改的时间都变为O(logn)，可以把整体复杂度从O(n)降到O(logn)，所以可以大大提升代码效率。
+
+
+
+## 2.树状数组题目
+
+### （1）[307. 区域和检索 - 数组可修改](https://leetcode.cn/problems/range-sum-query-mutable/)
+
+> 给你一个数组 `nums` ，请你完成两类查询。
+>
+> 1. 其中一类查询要求 **更新** 数组 `nums` 下标对应的值
+> 2. 另一类查询要求返回数组 `nums` 中索引 `left` 和索引 `right` 之间（ **包含** ）的nums元素的 **和** ，其中 `left <= right`
+>
+> 实现 `NumArray` 类：
+>
+> - `NumArray(int[] nums)` 用整数数组 `nums` 初始化对象
+> - `void update(int index, int val)` 将 `nums[index]` 的值 **更新** 为 `val`
+> - `int sumRange(int left, int right)` 返回数组 `nums` 中索引 `left` 和索引 `right` 之间（ **包含** ）的nums元素的 **和** （即，`nums[left] + nums[left + 1], ..., nums[right]`）
+
+这道题目算是树状数组的板子题：
+
+```c++
+class NumArray {
+public:
+    vector<int>& nums;
+    vector<int> tree; //树状数组
+    int lowbit(int x)
+    {
+        return x&-x;
+    }
+    void add(int index, int val) //树状数组index位置+val,往上一路更新
+    {
+        while(index<tree.size())
+        {
+            tree[index] += val;
+            index+=lowbit(index);
+        }
+    }
+
+    int prefixSum(int index) //前缀和(截止到index)
+    {
+        int sum = 0;
+        while(index>0)
+        {
+            sum += tree[index];
+            index-=lowbit(index);
+        }
+        return sum;
+    }
+
+    NumArray(vector<int>& nums) :tree(nums.size()+1), nums(nums){
+        for(int i=0;i<nums.size();i++)
+        {
+            add(i+1, nums[i]);
+        }
+    }
+    
+    void update(int index, int val) {
+        add(index+1, val-nums[index]); //把add的值加到树状数组中
+        nums[index] = val; //更新原始数组
+    }
+    
+    int sumRange(int left, int right) {
+        return prefixSum(right+1) - prefixSum(left);
+    }
+};
+
+/**
+ * Your NumArray object will be instantiated and called as such:
+ * NumArray* obj = new NumArray(nums);
+ * obj->update(index,val);
+ * int param_2 = obj->sumRange(left,right);
+ */
+```
+
+
+
+>注意！树状数组索引＋1了
+>
+>因此用到 树状数组 的时候，需要+1
+>
+>且需要注意：
+>
+>```C++
+>void add(int idx,int val)
+>    {
+>        //while(idx<numsVec.size()) //❌ ＋1才是对的
+>        while(idx<tree.size())//最好直接用tree
+>        {
+>            tree[idx]+=val;
+>            idx+=lowbit(idx);
+>        }
+>    }
+>```
+
+
+
+## 线段树
+
+### （1）前置题目1：[104. 二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/)
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        if(root==nullptr) return 0;
+        int left = maxDepth(root->left);
+        int right = maxDepth(root->right);
+        return max(left, right) + 1;
+    }
+};
+```
+
+
+
+### （2）前置题目2：[111. 二叉树的最小深度](https://leetcode.cn/problems/minimum-depth-of-binary-tree/)
+
+注意本题不能直接认为跟上一题是一样的思路，因为考虑一个节点只有右子树而没有左子树的情况，此时会误认为深度是1，而实际上应该为3（**因为题目要求的是到叶子节点**），所以要特判一下左右子树是否为空的情况。代码如下：
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if(root==nullptr) return 0;
+        if(root->right && root->left==nullptr) return minDepth(root->right) + 1;
+        else if(root->left && root->right==nullptr) return minDepth(root->left) + 1;
+        else //root->left和root->right都为空也没关系，返回的是1，正是我们想要的
+        {
+            return min(minDepth(root->left), minDepth(root->right)) + 1;
+        }
+    }
+};
+```
+
+
+
+另一种算法,自顶向下:
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int res = INT_MAX;
+    void dfs(TreeNode* root ,int height)
+    {
+        height++;
+        if(root==nullptr)return;
+        if(root->left==nullptr&&root->right==nullptr)
+        {
+            res = min(height,res);
+            return;
+        }
+        dfs(root->left,height);
+        dfs(root->right,height);
+    }
+    int minDepth(TreeNode* root) {
+        if(root==nullptr)return 0;
+        dfs(root, 0);
+        return res;
+    }
+};
+```
+
+
+
+### 经典线段树——[3479. 将水果装入篮子 III](https://leetcode.cn/problems/fruits-into-baskets-iii/)
+
+牢记：l和r是正常的数组下标，而o是线段树为了维护区间某一段的值的下标，l和r因为是正常数组下标所以是从0开始的，而o则是从1开始的（之所以从1开始，是因为比较好算左右子树的索引，分别是`i*2`和`i*2+1`）。
+
+```c++
+class SegmentTree
+{
+    vector<int> mx; //维护区间的最大值，这个区间可以对应到原数组的区间上（思考树状数组）
+    void maintain(int o) //o是线段树维护下标的索引,从1开始，左孩子是o*2，右孩子是o*2+1
+    {
+        mx[o] = max(mx[o*2],mx[o*2+1]);
+    }
+    void build(const vector<int>& a, int o, int l, int r)
+    {
+        if(l==r)
+        {
+            mx[o] = a[l];
+            return;
+        }
+        int mid = (l+r)/2;
+        build(a, 2*o, l, mid);
+        build(a, 2*o+1, mid+1, r);
+        maintain(o);
+    }
+public:
+    SegmentTree(const vector<int>& a) //传入一个数组，构建线段树
+    {
+        size_t n = a.size();
+        //mx.resize(2<<bit_width(n-1));
+        mx.resize(4 * n); //这样也可以
+        build(a, 1, 0, n-1);
+    }
+    //findFirstAndUpdate函数用于找到第一个满足条件的下标，并更新
+    int findFirstAndUpdate(int l, int r, int o, int x) //x是要找的值
+    {
+        if(mx[o]<x) return -1; //当前区间没有>=x的值
+        if(l==r)
+        {
+            mx[o] = -1; //找到了，更新为-1,后面会递归上去，maintain的
+            return l;
+        }
+        int mid = (l+r)/2;
+        int i = findFirstAndUpdate(l, mid, o*2, x);
+        if(i<0)
+        {
+            i = findFirstAndUpdate(mid+1, r, o*2+1, x);
+        }
+        maintain(o);
+        return i;
+    }
+};
+class Solution {
+public:
+    int numOfUnplacedFruits(vector<int>& fruits, vector<int>& baskets) {
+        SegmentTree t(baskets);
+        int n = baskets.size();
+        int cnt = 0;
+        for(int f:fruits)
+        {
+            int res = t.findFirstAndUpdate(0, n-1, 1, f);
+            if(res<0) cnt++;
+        }   
+        return cnt;
+    }
+};
+```
+
+
+
+### （3）[2940. 找到 Alice 和 Bob 可以相遇的建筑](https://leetcode.cn/problems/find-building-where-alice-and-bob-can-meet/)
+
+> 给你一个下标从 **0** 开始的正整数数组 `heights` ，其中 `heights[i]` 表示第 `i` 栋建筑的高度。
+>
+> 如果一个人在建筑 `i` ，且存在 `i < j` 的建筑 `j` 满足 `heights[i] < heights[j]` ，那么这个人可以移动到建筑 `j` 。
+>
+> 给你另外一个数组 `queries` ，其中 `queries[i] = [ai, bi]` 。第 `i` 个查询中，Alice 在建筑 `ai` ，Bob 在建筑 `bi` 。
+>
+> 请你能返回一个数组 `ans` ，其中 `ans[i]` 是第 `i` 个查询中，Alice 和 Bob 可以相遇的 **最左边的建筑** 。如果对于查询 `i` ，Alice 和 Bob 不能相遇，令 `ans[i]` 为 `-1` 。
+
+这道题目在上一题线段树的基础上，主要加了一个起始位置的判断，即找到第一个>=x的数，且必须在某个位置`index`的右边。在构建基础线段树的时候大致逻辑不变，问题相当于计算区间 [b+1,n−1] 中第一个大于 v=heights[a] 的高度的位置。这可以用线段树二分解决。
+
+创建一棵维护区间最大值 mx 的线段树。对于每个询问，递归这棵线段树，分类讨论：
+
+- 如果当前区间（线段树的节点对应的区间）最大值 mx≤v，则当前区间没有大于 v 的数，返回 −1。
+- 如果当前区间只包含一个元素，则找到答案，返回该元素的下标。
+- 如果左子树包含 b+1，则递归左子树。
+- 如果左子树返回 −1，则返回递归右子树的结果。
+
+最终代码如下：
+
+```c++
+//线段树起手
+class SegmentTree
+{
+    vector<int> mx;
+    void build(const vector<int>& a, int left, int right, int o)
+    {
+        if(left==right)
+        {
+            mx[o] = a[left];
+            return;
+        }
+        int mid = (left+right) / 2;
+        build(a, left, mid, o*2);
+        build(a, mid+1, right, o*2 + 1);
+        mx[o] = max(mx[o*2], mx[o*2+1]); //相当于原来的maintain
+    }
+public:
+    SegmentTree(const vector<int>& a)
+    {
+        size_t n = a.size();
+        mx.resize((2<<bit_width(n-1)));
+        build(a, 0, n-1, 1);
+    }
+    //区别在于增加leftBound参数,表示下界,意味着查询操作必须在严格大于等于leftBound的地方进行
+    int findFirstAndUpdate(int left, int right, int leftBound, int o, int x) //其实本题不需要update,会好一些
+    {
+        //前面是与查询本身有关的,照着原来的写即可
+        if(mx[o]<=x) return -1; //要找的是第一个>x的数
+        if(left==right)
+        {
+            //本题不需要把值置为-1,直接return正确结果即可
+            return left;
+        }
+        int mid = (left+right) / 2;
+        int i = -1;
+        //得保证左区间合法,再去找左区间
+        if(mid >= leftBound) //左区间是合法的,这里默认leftBound至少应该>=left,题意也是这样的
+        {
+            i = findFirstAndUpdate(left, mid, leftBound, o*2, x);
+            if(i>=0) return i;
+        }
+        //左子树没希望了,返回右子树的结果,在里面会继续与leftBound做判断(感觉直接返回右子树的结果是一种简便写法,但是不是有点不太好理解?毕竟右子树没有显式做范围是否合法的判断)
+        return findFirstAndUpdate(mid+1, right, leftBound, o*2+1, x);
+    }
+
+};
+class Solution {
+public:
+    vector<int> leftmostBuildingQueries(vector<int>& heights, vector<vector<int>>& queries) {
+        SegmentTree t(heights);
+        int n = heights.size();
+        int m = queries.size();
+        vector<int> res(m, -1);
+        for(int i=0;i<m;i++)
+        {
+            int a = queries[i][0];
+            int b = queries[i][1];
+            //保证a是小的,b是大的
+            if(a>b) swap(a, b);
+            if(a==b || heights[a]<heights[b]) 
+            {
+                res[i] = b; //此时b就是最终结果,因为a可以直接跳到b上
+                continue;
+            }
+            else
+            {
+                //线段树处理的情况,heights[a]>=heights[b],于是要找到严格b右侧的第一个>heights[a]的值
+                int ans = t.findFirstAndUpdate(0, n-1, b+1, 1, heights[a]);
+                res[i] = ans;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+> 补充：关于线段树find的时候右子树的隐式处理：
+>
+> 在`findFirstAndUpdate`函数中，右子树不需要显式检查是否在`leftBound`的右侧，原因在于递归调用的参数传递和线段树的区间分割特性已经隐式保证了这一点。具体逻辑如下：
+>
+> 1. **线段树的结构特性**：每个节点的区间`[left, right]`在递归过程中会被不断分割为左子树`[left, mid]`和右子树`[mid+1, right]`。初始调用时，`left`和`right`覆盖整个数组，确保了`leftBound`必然落在初始区间内。
+>
+> 2. **左子树的显式检查**：
+>    - 处理左子树时，需要检查其右边界`mid`是否大于等于`leftBound`（即`mid >= leftBound`）。
+>    - 若`mid < leftBound`，说明左子树的整个区间`[left, mid]`都在`leftBound`左侧，无法满足条件，直接跳过。
+>
+> 3. **右子树的隐式处理**：
+>    - 当进入右子树时，其区间为`[mid+1, right]`。此时`mid+1`可能小于`leftBound`（例如，原区间为`[0,5]`，`leftBound=4`，右子树区间`[3,5]`的起始点`3 < 4`）。
+>    - 但递归调用右子树时，参数`left`会被更新为`mid+1`，并在新的递归层级中重新计算`mid`。此时，新层级的左子树可能覆盖`leftBound`（例如，右子树区间`[3,5]`的新`mid=4`，满足`mid >= leftBound`）。
+>    - 递归过程会持续分割区间，直到找到满足`leftBound`的叶子节点或确认无解。每一层的`mid`检查会自动过滤无效区间，因此无需显式检查右子树的左边界。
+>
+> **总结**：右子树不需要显式检查`mid+1 >= leftBound`，因为递归调用会动态调整区间，并在每一层通过`mid >= leftBound`的隐式判断确保有效性。左子树的显式检查是为了快速跳过完全无效的区间，而右子树的处理通过递归参数传递和动态分割自然覆盖了所有可能情况。
