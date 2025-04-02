@@ -8,7 +8,7 @@
 
 适用于需要计算连通块个数、大小的题目。部分题目也可以用 BFS 或并查集解决。
 
-## 1.[200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/)(板子题)
+### 1.[200. 岛屿数量](https://leetcode.cn/problems/number-of-islands/)(板子题)
 
 这里就是常规的做法。另一种做法是在把遍历到的grid都改成2（相当于在遍历过的陆地上插一面旗），这样也不需要visited数组了。
 
@@ -91,7 +91,7 @@ public:
 
 
 
-## 2.[695. 岛屿的最大面积](https://leetcode.cn/problems/max-area-of-island/)
+### 2.[695. 岛屿的最大面积](https://leetcode.cn/problems/max-area-of-island/)
 
 > 给你一个大小为 `m x n` 的二进制矩阵 `grid` 。
 >
@@ -143,7 +143,7 @@ public:
 
 
 
-## 3.[面试题 16.19. 水域大小](https://leetcode.cn/problems/pond-sizes-lcci/)
+### 3.[面试题 16.19. 水域大小](https://leetcode.cn/problems/pond-sizes-lcci/)
 
 > 你有一个用于表示一片土地的整数矩阵`land`，该矩阵中每个点的值代表对应地点的海拔高度。若值为0则表示水域。由垂直、水平或对角连接的水域为池塘。池塘的大小是指相连接的水域的个数。编写一个方法来计算矩阵中所有池塘的大小，返回值需要从小到大排序。
 >
@@ -210,7 +210,7 @@ public:
 
 
 
-## ==4.[LCS 03. 主题空间](https://leetcode.cn/problems/YesdPw/)（这题卡了巨久。。很不爽，做不出来，下次再做一遍）==
+### ==4.[LCS 03. 主题空间](https://leetcode.cn/problems/YesdPw/)（这题卡了巨久。。很不爽，做不出来，下次再做一遍）==
 
 > 「以扣会友」线下活动所在场地由若干主题空间与走廊组成，场地的地图记作由一维字符串型数组 `grid`，字符串中仅包含 `"0"～"5"` 这 6 个字符。地图上每一个字符代表面积为 1 的区域，其中 `"0"` 表示走廊，其他字符表示主题空间。相同且连续（连续指上、下、左、右四个方向连接）的字符组成同一个主题空间。
 >
@@ -413,7 +413,7 @@ public:
 >**DFS提前终止导致未完全标记访问**：当DFS遇到走廊或边界时立即返回-1，导致后续节点未被访问和标记。这些未被标记的节点可能在后续循环中被误判为新区域，从而错误计算面积
 
 
-## 5.[463. 岛屿的周长](https://leetcode.cn/problems/island-perimeter/)
+### 5.[463. 岛屿的周长](https://leetcode.cn/problems/island-perimeter/)
 
 ```c++
 class Solution {
@@ -463,7 +463,7 @@ public:
 
 
 
-## 6.[2658. 网格图中鱼的最大数目](https://leetcode.cn/problems/maximum-number-of-fish-in-a-grid/)
+### 6.[2658. 网格图中鱼的最大数目](https://leetcode.cn/problems/maximum-number-of-fish-in-a-grid/)
 
 似乎就是统计面积最大的岛屿。（当然这里的面积是每一格有鱼的格子的值之和）。代码如下：
 ```c++
@@ -507,7 +507,7 @@ public:
 
 
 
-## 7.[1034. 边界着色](https://leetcode.cn/problems/coloring-a-border/)
+### 7.[1034. 边界着色](https://leetcode.cn/problems/coloring-a-border/)
 
 > 给你一个大小为 `m x n` 的整数矩阵 `grid` ，表示一个网格。另给你三个整数 `row`、`col` 和 `color` 。网格中的每个值表示该位置处的网格块的颜色。
 >
@@ -693,7 +693,303 @@ public:
 
 
 
+### 8. [1020. 飞地的数量](https://leetcode.cn/problems/number-of-enclaves/)
+
+给你一个大小为 `m x n` 的二进制矩阵 `grid` ，其中 `0` 表示一个海洋单元格、`1` 表示一个陆地单元格。
+
+一次 **移动** 是指从一个陆地单元格走到另一个相邻（**上、下、左、右**）的陆地单元格或跨过 `grid` 的边界。
+
+返回网格中 **无法** 在任意次数的移动中离开网格边界的陆地单元格的数量。
+
+**示例 1：**
+
+![img](assets/enclaves1.jpg)
+
+```
+输入：grid = [[0,0,0,0],[1,0,1,0],[0,1,1,0],[0,0,0,0]]
+输出：3
+解释：有三个 1 被 0 包围。一个 1 没有被包围，因为它在边界上。
+```
 
 
 
+我们可以从网格**边界**上的每个陆地单元格开始深度优先搜索，遍历完边界之后，所有和网格边界相连的陆地单元格就都被访问过了。
+
+然后遍历整个网格，如果网格中的一个陆地单元格没有被访问过，则该陆地单元格不和网格的边界相连，是飞地。
+
+```C++
+class Solution {
+public:
+    int numEnclaves(vector<vector<int>>& grid) {
+        //从边缘出发，如果能接触到 置为2 最后为1的就是不可以出去的
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        int m = grid.size(),n = grid[0].size();
+        auto dfs = [&](this auto&& dfs,int x,int y)
+        {
+            if(grid[x][y]!=1)return;
+            grid[x][y] = 2;
+            for(int i=0;i<4;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]!=1)continue;
+                dfs(curX,curY);
+            }
+        };
+        for(int i=0;i<m;i++)
+        {
+            dfs(i,0);
+            dfs(i,n-1);
+        }
+        for(int j=0;j<n;j++)
+        {
+            dfs(0,j);
+            dfs(m-1,j);
+        }
+        int cnt=0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]==1)cnt++;
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### [2684. 矩阵中移动的最大次数](https://leetcode.cn/problems/maximum-number-of-moves-in-a-grid/)
+
+这题用dp做过,有空用dfs实现下
+
+
+
+### [1254. 统计封闭岛屿的数目](https://leetcode.cn/problems/number-of-closed-islands/)
+
+二维矩阵 `grid` 由 `0` （土地）和 `1` （水）组成。岛是由最大的4个方向连通的 `0` 组成的群，封闭岛是一个 `完全` 由1包围（左、上、右、下）的岛。
+
+请返回 *封闭岛屿* 的数目。
+
+**示例 1：**
+
+![img](assets/sample_3_1610.png)
+
+```
+输入：grid = [[1,1,1,1,1,1,1,0],[1,0,0,0,0,1,1,0],[1,0,1,0,1,1,1,0],[1,0,0,0,0,1,0,1],[1,1,1,1,1,1,1,0]]
+输出：2
+解释：
+灰色区域的岛屿是封闭岛屿，因为这座岛屿完全被水域包围（即被 1 区域包围）。
+```
+这题也可以用并查集 ,bfs做
+
+这题dfs思路与上面那题一样,先遍历边界格子
+
+```C++
+class Solution {
+public:
+    int closedIsland(vector<vector<int>>& grid) {
+        //周围从0可联通的 必然不是封闭岛 ->2
+        //再次遍历 为0 cnt++ 置为2
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        int m = grid.size();
+        int n = grid[0].size();
+        auto dfs = [&](this auto&& dfs,int x,int y)
+        {
+            if(grid[x][y]!=0)return;//退出递归条件
+            grid[x][y] = 2;//更改
+            for(int i=0;i<4;i++)//遍历上下左右 并递归
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]!=0)continue;
+                dfs(curX,curY);
+            }
+        };
+        for(int i=0;i<m;i++)
+        {
+            dfs(i,0);
+            dfs(i,n-1);
+        }
+        for(int j=0;j<n;j++)
+        {
+            dfs(0,j);
+            dfs(m-1,j);
+        }
+        int cnt=0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]==0)
+                {
+                    cnt++;
+                    dfs(i,j);
+                }
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### [130. 被围绕的区域](https://leetcode.cn/problems/surrounded-regions/)
+
+给你一个 `m x n` 的矩阵 `board` ，由若干字符 `'X'` 和 `'O'` 组成，**捕获** 所有 **被围绕的区域**：
+
+- **连接：**一个单元格与水平或垂直方向上相邻的单元格连接。
+- **区域：连接所有** `'O'` 的单元格来形成一个区域。
+- **围绕：**如果您可以用 `'X'` 单元格 **连接这个区域**，并且区域中没有任何单元格位于 `board` 边缘，则该区域被 `'X'` 单元格围绕。
+
+通过 **原地** 将输入矩阵中的所有 `'O'` 替换为 `'X'` 来 **捕获被围绕的区域**。你不需要返回任何值。
+
+**示例 1：**
+
+**输入：**board = [["X","X","X","X"],["X","O","O","X"],["X","X","O","X"],["X","O","X","X"]]
+
+**输出：**[["X","X","X","X"],["X","X","X","X"],["X","X","X","X"],["X","O","X","X"]]
+
+**解释：**
+
+![img](assets/1718167191-XNjUTG-image.png)
+
+在上图中，底部的区域没有被捕获，因为它在 board 的边缘并且不能被围绕。
+
+
+
+类似上面的几个题
+
+有空可以复习做
+
+可以通过的做法有很多,比较好的做法是: 边界dfs, 置为'A', 然后遍历所有格子, 对于'A'变回'O'(与边界相连的格子)  , 而'O'变为'X' 
+
+https://leetcode.cn/problems/surrounded-regions/solutions/369110/bei-wei-rao-de-qu-yu-by-leetcode-solution/
+
+
+
+### [1905. 统计子岛屿](https://leetcode.cn/problems/count-sub-islands/)
+
+给你两个 `m x n` 的二进制矩阵 `grid1` 和 `grid2` ，它们只包含 `0` （表示水域）和 `1` （表示陆地）。一个 **岛屿** 是由 **四个方向** （水平或者竖直）上相邻的 `1` 组成的区域。任何矩阵以外的区域都视为水域。
+
+如果 `grid2` 的一个岛屿，被 `grid1` 的一个岛屿 **完全** 包含，也就是说 `grid2` 中该岛屿的每一个格子都被 `grid1` 中同一个岛屿完全包含，那么我们称 `grid2` 中的这个岛屿为 **子岛屿** 。
+
+请你返回 `grid2` 中 **子岛屿** 的 **数目** 。
+
+**示例 1：**
+
+![img](assets/test1.png)
+
+```
+输入：grid1 = [[1,1,1,0,0],[0,1,1,1,1],[0,0,0,0,0],[1,0,0,0,0],[1,1,0,1,1]], grid2 = [[1,1,1,0,0],[0,0,1,1,1],[0,1,0,0,0],[1,0,1,1,0],[0,1,0,1,0]]
+输出：3
+解释：如上图所示，左边为 grid1 ，右边为 grid2 。
+grid2 中标红的 1 区域是子岛屿，总共有 3 个子岛屿。
+```
+代码:
+
+```C++
+class Solution {
+public:
+    int countSubIslands(vector<vector<int>>& grid1, vector<vector<int>>& grid2) {
+        //grid2 中岛屿 全部对应grid1的1  被完全包含 遍历过则置为2。如果是子岛屿，cnt++
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        int m = grid1.size();
+        int n = grid1[0].size();
+        auto dfs = [&]( this auto&& dfs,int x,int y)->bool
+        {
+            bool isChild=false;
+            if(grid2[x][y]!=1)return true;
+            grid2[x][y]=2;
+            if(grid1[x][y]==1)isChild = true;
+            for(int i=0;i<4;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||grid2[curX][curY]!=1)continue;
+                bool isC = dfs(curX,curY);
+                if(isC==false)isChild = false;
+            }
+            return isChild;
+        };
+        int cnt=0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid2[i][j]==1)
+                {
+                    if(dfs(i,j)==true)cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### [1391. 检查网格中是否存在有效路径](https://leetcode.cn/problems/check-if-there-is-a-valid-path-in-a-grid/)
+
+```C++
+class Solution {
+public:
+//       -1,0
+//  0,-1  0,0  0,1
+//        1,0
+    //0下 1右 2上 3左 -1不可以通
+    //pipe[3][2]=3，代表3号拼图可以由向上的方向进入其中，并转向左方向继续前进。
+    //pipe[5][3]=-1，代表5号拼图不可以由向左的方向进入其中。
+    int pipe[7][4] =  // 表示 这个i编号的拼图 能否可以由上下左右四个方向通过来
+    {
+        {-1,-1,-1,-1},
+        {-1,1,-1,3},
+        {0,-1,2,-1},
+        {-1,0,3,-1},
+        {-1,-1,1,0},
+        {3,2,-1,-1},
+        {1,-1,-1,2}
+    };
+    bool hasValidPath(vector<vector<int>>& grid) {
+        int dirs[4][2] = {{1,0},{0,1},{-1,0},{0,-1}}; ////0下 1右 2上 3左
+        int m = grid.size();
+        int n = grid[0].size();
+        auto dfs = [&](this auto&& dfs,int x,int y,int dir)->bool
+        {
+            //cout<<x<<"  "<<y<<endl;
+            if(grid[x][y]<0)return false;
+            grid[x][y] = -1;
+            if(x==m-1&&y==n-1)return true;
+            // int Kind = grid[x][y];
+            bool res=false;
+            int curX = x+dirs[dir][0];
+            int curY = y+dirs[dir][1];
+                //cout<<"curxy"<<curX <<"  "<<curY<<endl;
+            if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]<0)return false;
+            int curKind = grid[curX][curY];
+            if(pipe[curKind][dir]>=0) 
+            {
+                //cout<<"kind"<<curKind<<"    curxy"<<curX <<"  "<<curY<<"in"<<endl;
+                if(dfs(curX,curY,pipe[curKind][dir]))res = true;
+            }
+            return res;
+        };
+
+        int kind = grid[0][0];
+        for(int i=0;i<4;i++)
+        {
+            if(pipe[kind][i]>=0)
+            {
+                if(dfs(0,0,pipe[kind][i]))return true;
+                grid[0][0]=kind;
+            }
+        }
+        return false;
+    }
+};
+```
 
