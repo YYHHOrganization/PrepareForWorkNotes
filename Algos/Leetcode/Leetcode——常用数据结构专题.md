@@ -2156,3 +2156,13 @@ public:
     }
 };
 ```
+
+
+
+# 二、差分
+
+### §2.1 一维差分（扫描线）
+
+### 1.[1094. 拼车](https://leetcode.cn/problems/car-pooling/)
+
+​                               
