@@ -426,6 +426,25 @@ public:
 
 
 ### [3075. 幸福值最大化的选择方案](https://leetcode.cn/problems/maximize-happiness-of-selected-children/)
+给你一个长度为 `n` 的数组 `happiness` ，以及一个 **正整数** `k` 。
+
+`n` 个孩子站成一队，其中第 `i` 个孩子的 **幸福值** 是 `happiness[i]` 。你计划组织 `k` 轮筛选从这 `n` 个孩子中选出 `k` 个孩子。
+
+在每一轮选择一个孩子时，所有 **尚未** 被选中的孩子的 **幸福值** 将减少 `1` 。注意，幸福值 **不能** 变成负数，且只有在它是正数的情况下才会减少。
+
+选择 `k` 个孩子，并使你选中的孩子幸福值之和最大，返回你能够得到的 **最大值** 。
+
+**示例 1：**
+
+```
+输入：happiness = [1,2,3], k = 2
+输出：4
+解释：按以下方式选择 2 个孩子：
+- 选择幸福值为 3 的孩子。剩余孩子的幸福值变为 [0,1] 。
+- 选择幸福值为 1 的孩子。剩余孩子的幸福值变为 [0] 。注意幸福值不能小于 0 。
+所选孩子的幸福值之和为 3 + 1 = 4 。
+```
+代码：
 
 > [划分型 DP 的套路【力扣周赛 388】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Xr421J77b/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99),证明在这个视频的前4分钟。
 
@@ -904,5 +923,87 @@ public:
 
 ## §1.3 双序列配对
 
+同上，从最小/最大的元素开始贪心。
+
 ### （1）[455. 分发饼干](https://leetcode.cn/problems/assign-cookies/)
+
+假设你是一位很棒的家长，想要给你的孩子们一些小饼干。但是，每个孩子最多只能给一块饼干。
+
+对每个孩子 `i`，都有一个胃口值 `g[i]`，这是能让孩子们满足胃口的饼干的最小尺寸；并且每块饼干 `j`，都有一个尺寸 `s[j]` 。如果 `s[j] >= g[i]`，我们可以将这个饼干 `j` 分配给孩子 `i` ，这个孩子会得到满足。你的目标是满足尽可能多的孩子，并输出这个最大数值。
+
+**示例 1:**
+
+```C++
+输入: g = [1,2,3], s = [1,1]
+输出: 1
+解释: 
+你有三个孩子和两块小饼干，3 个孩子的胃口值分别是：1,2,3。
+虽然你有两块小饼干，由于他们的尺寸都是 1，你只能让胃口值是 1 的孩子满足。
+所以你应该输出 1。
+```
+
+
+
+从小到大排序
+
+优先将小的饼干分给小胃口的孩子，孩子不够吃，再看看更大的饼干行不行
+
+```C++
+class Solution {
+public:
+    int findContentChildren(vector<int>& ch, vector<int>& co) {
+        sort(ch.begin(), ch.end());
+        int chn = ch.size();
+        sort(co.begin(), co.end());
+        int con = co.size();
+        int chi = 0, coo = 0;
+        for (; chi < chn && coo < con;)
+        {
+            if (co[coo] >= ch[chi])
+            {
+                coo++;
+                chi++;
+            }
+            else
+            {
+                coo++;//看更大的cookie饼干能否满足孩子
+            }
+        }
+        return chi;//返回可满足的孩子数量
+    }
+};
+```
+
+
+
+从大到小排序
+
+优先将最大的饼干分给胃口最大的孩子，孩子不够吃，再给次大胃口的孩子
+
+```C++
+class Solution {
+public:
+    int findContentChildren(vector<int>& ch, vector<int>& co) {
+        sort(ch.begin(), ch.end(), greater<int>());
+        int chn = ch.size();
+        sort(co.begin(), co.end(), greater<int>());
+        int con = co.size();
+        int chi = 0, coo = 0;
+        for (; chi < chn && coo < con;)
+        {
+            if (co[coo] >= ch[chi])
+            {
+                coo++;
+                chi++;
+            }
+            else
+            {
+                chi++;//看这个饼干 能否满足胃口更小的孩子能否 
+            }
+        }
+        return coo;//返回可满足孩子的饼干数量
+    }
+};
+
+```
 
