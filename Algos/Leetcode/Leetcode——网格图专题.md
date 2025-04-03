@@ -285,7 +285,7 @@ public:
                 }
             }
         }
-        //刷一遍0
+        //刷一遍0 0旁边的非0空间被dfs刷成6
         for(int i=0;i<m;i++)
         {
             for(int j=0;j<n;j++)
@@ -935,6 +935,38 @@ public:
 
 ### [1391. 检查网格中是否存在有效路径](https://leetcode.cn/problems/check-if-there-is-a-valid-path-in-a-grid/)
 
+给你一个 *m* x *n* 的网格 `grid`。网格里的每个单元都代表一条街道。`grid[i][j]` 的街道可以是：
+
+- **1** 表示连接左单元格和右单元格的街道。
+- **2** 表示连接上单元格和下单元格的街道。
+- **3** 表示连接左单元格和下单元格的街道。
+- **4** 表示连接右单元格和下单元格的街道。
+- **5** 表示连接左单元格和上单元格的街道。
+- **6** 表示连接右单元格和上单元格的街道。
+
+![img](assets/main.png)
+
+你最开始从左上角的单元格 `(0,0)` 开始出发，网格中的「有效路径」是指从左上方的单元格 `(0,0)` 开始、一直到右下方的 `(m-1,n-1)` 结束的路径。**该路径必须只沿着街道走**。
+
+**注意：**你 **不能** 变更街道。
+
+如果网格中存在有效的路径，则返回 `true`，否则返回 `false` 。
+
+ 
+
+**示例 1：**
+
+![img](assets/e1.png)
+
+```
+输入：grid = [[2,4,3],[6,5,2]]
+输出：true
+解释：如图所示，你可以从 (0, 0) 开始，访问网格中的所有单元格并到达 (m - 1, n - 1) 。
+```
+代码：
+
+https://leetcode.cn/problems/check-if-there-is-a-valid-path-in-a-grid/solutions/163822/cdfsjie-fa-rong-yi-li-jie-dai-ma-duan-zhu-shi-duo-/
+
 ```C++
 class Solution {
 public:
@@ -958,6 +990,7 @@ public:
         int dirs[4][2] = {{1,0},{0,1},{-1,0},{0,-1}}; ////0下 1右 2上 3左
         int m = grid.size();
         int n = grid[0].size();
+        //dir是当前块xy往哪个方向去
         auto dfs = [&](this auto&& dfs,int x,int y,int dir)->bool
         {
             //cout<<x<<"  "<<y<<endl;
@@ -970,10 +1003,12 @@ public:
             int curY = y+dirs[dir][1];
                 //cout<<"curxy"<<curX <<"  "<<curY<<endl;
             if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]<0)return false;
-            int curKind = grid[curX][curY];
+            int curKind = grid[curX][curY];//下一块
+            //下一块curX，curY 能否从dir来
             if(pipe[curKind][dir]>=0) 
             {
                 //cout<<"kind"<<curKind<<"    curxy"<<curX <<"  "<<curY<<"in"<<endl;
+                //pipe[curKind][dir] 下一块从dir来，去往哪个方向
                 if(dfs(curX,curY,pipe[curKind][dir]))res = true;
             }
             return res;
