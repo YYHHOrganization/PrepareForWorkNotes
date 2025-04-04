@@ -837,7 +837,7 @@ public:
 
 
 
-### [130. 被围绕的区域](https://leetcode.cn/problems/surrounded-regions/)
+### [130. 被围绕的区域](https://leetcode.cn/problems/surrounded-regions/)(注意本题有比较巧的写法)
 
 给你一个 `m x n` 的矩阵 `board` ，由若干字符 `'X'` 和 `'O'` 组成，**捕获** 所有 **被围绕的区域**：
 
@@ -933,7 +933,7 @@ public:
 
 
 
-### [1391. 检查网格中是否存在有效路径](https://leetcode.cn/problems/check-if-there-is-a-valid-path-in-a-grid/)
+### [1391. 检查网格中是否存在有效路径](https://leetcode.cn/problems/check-if-there-is-a-valid-path-in-a-grid/)(很难!极易做错!)
 
 给你一个 *m* x *n* 的网格 `grid`。网格里的每个单元都代表一条街道。`grid[i][j]` 的街道可以是：
 
@@ -1021,6 +1021,70 @@ public:
             {
                 if(dfs(0,0,pipe[kind][i]))return true;
                 grid[0][0]=kind;
+            }
+        }
+        return false;
+    }
+};
+```
+
+
+
+另一种能做对这道题的写法:
+
+```c++
+class Solution {
+public:
+    //patterns[i][d]表示i这种类型的grid,可以放在上一格的d方向上(也就是接受从d方向走过来), =-1表示不能过来,>=0则表示会拐到哪个方向
+    // 0:下 1:右 2:上 3:左
+    int patterns[7][4] = 
+    {  
+        {-1, -1, -1, -1},
+        {-1, 1, -1, 3},
+        {0, -1, 2, -1},
+        {-1, 0, 3, -1},
+        {-1, -1, 1, 0},
+        {3, 2, -1, -1},
+        {1, -1, -1, 2}
+    };
+    int dirs[4][2] = {1, 0, 0, 1,-1, 0,0,-1};
+    bool hasValidPath(vector<vector<int>>& grid) {
+        int m = grid.size();
+        int n = grid[0].size();
+        //dirs表示从哪里来的这个节点
+        auto dfs = [&](this auto&& dfs, int x, int y, int dir) -> bool
+        {
+            if(x==m-1 && y==n-1) return true;
+            if(grid[x][y]<0) return false; //遍历过了,不能再走
+            int curKind = grid[x][y];
+            grid[x][y] = -1; //相当于置为visited
+
+            bool flag = false;
+            int nextDir = patterns[curKind][dir]; //下一个能走的方向
+            if(nextDir>=0)
+            {
+                int curX = x + dirs[nextDir][0];
+                int curY = y + dirs[nextDir][1];
+                if(curX<0 || curY<0 ||curX>=m || curY>=n || grid[curX][curY]<0) return false;
+                if(patterns[grid[curX][curY]][nextDir]>=0) //说明可以由当前通过去
+                {
+                    flag = dfs(curX, curY, nextDir);
+                    if(flag) return true;
+                }
+            }
+            return false;
+        };
+
+        //看一下起点可以往哪个方向走
+        int startKind = grid[0][0];
+        //起点的可以有多个方向可以走
+        for(int index=0;index<4;index++)
+        {
+            if(patterns[startKind][index]>=0) 
+            {
+                bool flag = dfs(0, 0, index);
+                grid[0][0] = startKind;
+                if(flag) return true;
             }
         }
         return false;

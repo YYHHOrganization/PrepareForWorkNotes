@@ -538,6 +538,193 @@ public:
 
 
 
+### [2587. 重排数组以得到最大前缀分数](https://leetcode.cn/problems/rearrange-array-to-maximize-prefix-score/)
+
+> 给你一个下标从 **0** 开始的整数数组 `nums` 。你可以将 `nums` 中的元素按 **任意顺序** 重排（包括给定顺序）。
+>
+> 令 `prefix` 为一个数组，它包含了 `nums` 重新排列后的前缀和。换句话说，`prefix[i]` 是 `nums` 重新排列后下标从 `0` 到 `i` 的元素之和。`nums` 的 **分数** 是 `prefix` 数组中正整数的个数。
+>
+> 返回可以得到的最大分数。
+
+贪心思路的基本证明:
+
+对于一个负数来说，它后面的前缀和都会把这个负数加进去。
+
+由于要统计的是正数前缀和，那么把负数尽量放在后面，能统计到尽量多的正数前缀和。
+
+同时，绝对值小的负数应该排在负数的前面，尽量在前缀和减为负数前还能多统计一些正数。
+
+```c++
+class Solution {
+public:
+    int maxScore(vector<int>& nums) {
+        sort(nums.begin(), nums.end(), greater<int>());
+        int n = nums.size();
+        int cnt = 0;
+        long long sum = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(sum + nums[i] > 0)
+            {
+                cnt++;
+                sum += nums[i];
+            }
+            else break;
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+### [976. 三角形的最大周长](https://leetcode.cn/problems/largest-perimeter-triangle/)
+
+> 给定由一些正数（代表长度）组成的数组 `nums` ，返回 *由其中三个长度组成的、**面积不为零**的三角形的最大周长* 。如果不能形成任何面积不为零的三角形，返回 `0`。
+
+这道题如果从大到小排序完，然后三轮for循环找结果的话会爆超出时间限制，所以需要对算法进行优化。实际上，只要一轮for循环就可以解决了，代码和注释如下：
+
+```c++
+class Solution {
+public:
+    int largestPerimeter(vector<int>& nums) {
+        sort(nums.begin(), nums.end());
+        int n = nums.size();
+        //对于nums[i]来说,如果nums[i-1]+nums[i-2]<nums[i],那么前面的更不可能了,直接枚举下一个i即可
+        //否则,nums[i] + nums[i-1] + nums[i-2]就是要求解的值
+        for(int i=n-1;i>=2;i--)
+        {
+            if(nums[i-1] + nums[i-2] <= nums[i]) continue;
+            return nums[i] + nums[i-1] + nums[i-2];
+        }
+        return 0;
+    }
+};
+```
+
+
+
+### [1561. 你可以获得的最大硬币数目](https://leetcode.cn/problems/maximum-number-of-coins-you-can-get/)
+
+> 有 3n 堆数目不一的硬币，你和你的朋友们打算按以下方式分硬币：
+>
+> - 每一轮中，你将会选出 **任意** 3 堆硬币（不一定连续）。
+> - Alice 将会取走硬币数量最多的那一堆。
+> - 你将会取走硬币数量第二多的那一堆。
+> - Bob 将会取走最后一堆。
+> - 重复这个过程，直到没有更多硬币。
+>
+> 给你一个整数数组 `piles` ，其中 `piles[i]` 是第 `i` 堆中硬币的数目。
+>
+> 返回你可以获得的最大硬币数目。
+
+代码如下：
+```c++
+class Solution {
+public:
+    int maxCoins(vector<int>& piles) {
+        //让Bob亏麻了,同时不让Alice赢太多
+        sort(piles.begin(), piles.end());
+        int n = piles.size();
+        int ans = 0;
+        int left = 0, right = n - 2;
+        while(left < right)
+        {
+            ans += piles[right];
+            right -= 2;
+            left++;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### [3462. 提取至多 K 个元素的最大总和](https://leetcode.cn/problems/maximum-sum-with-at-most-k-elements/)
+
+> 给你一个大小为 `n x m` 的二维矩阵 `grid` ，以及一个长度为 `n` 的整数数组 `limits` ，和一个整数 `k` 。你的目标是从矩阵 `grid` 中提取出 **至多** `k` 个元素，并计算这些元素的最大总和，提取时需满足以下限制**：**
+>
+> - 从 `grid` 的第 `i` 行提取的元素数量不超过 `limits[i]` 。
+>
+> 返回最大总和。
+
+```c++
+class Solution {
+public:
+    long long maxSum(vector<vector<int>>& grid, vector<int>& limits, int k) {
+        //grid没有负数,因此肯定是选满k个最好
+        //每一行取limit这么多大的数(快速选择),然后在这里面取topk即可
+        int n = grid.size();
+        int m = grid[0].size();
+        int sum = accumulate(limits.begin(), limits.end(), 0);
+        vector<int> candidates(sum, 0);
+        int index = 0;
+        for(int row = 0;row < n;row++)
+        {
+            nth_element(grid[row].begin(), grid[row].begin() + limits[row] - 1, grid[row].end(), greater<int>());
+            for(int i=0;i<limits[row];i++)
+            {
+                candidates[index++] = grid[row][i];
+            }
+        }
+        sort(candidates.begin(), candidates.end(), greater<int>());
+        long long ans = 0;
+        for(int i=0;i<k;i++)
+        {
+            ans += (long long)candidates[i];
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### [3301. 高度互不相同的最大塔高和](https://leetcode.cn/problems/maximize-the-total-height-of-unique-towers/)
+
+> 给你一个数组 `maximumHeight` ，其中 `maximumHeight[i]` 表示第 `i` 座塔可以达到的 **最大** 高度。
+>
+> 你的任务是给每一座塔分别设置一个高度，使得：
+>
+> 1. 第 `i` 座塔的高度是一个正整数，且不超过 `maximumHeight[i]` 。
+> 2. 所有塔的高度互不相同。
+>
+> 请你返回设置完所有塔的高度后，可以达到的 **最大** 总高度。如果没有合法的设置，返回 `-1` 。
+
+```c++
+class Solution {
+public:
+    long long maximumTotalSum(vector<int>& maximumHeight) {
+        sort(maximumHeight.begin(), maximumHeight.end());
+        int mx = maximumHeight.back();
+        int n = maximumHeight.size();
+
+        int start = mx; //一开始分配的数
+        long long ans = 0;
+        //优先满足大的,不然后面只能越来越小,非常不划算
+        int index = n-1;
+        for(;index>=0;index--)
+        {
+            start = min(maximumHeight[index], start); 
+            if(start<=0) break;
+            ans += (long long)start;
+            start--; //每次start-1,保证下一次分配的时候一定比现在少1
+        }
+        if(index>=0) return -1; //分配不完,无法达成要求
+        return ans;
+    }
+};
+```
+
+
+
+### ==补充困难题：[1840. 最高建筑高度](https://leetcode.cn/problems/maximum-building-height/)==
+
+> 有点难了，后面再来做吧。
+
+
+
 
 
 ## §1.2 单序列配对

@@ -1,5 +1,7 @@
 # Leetcode——图论专题
 
+[分享丨【题单】图论算法（DFS/BFS/拓扑排序/最短路/最小生成树/二分图/基环树/欧拉路径）- 讨论 - 力扣（LeetCode）](https://leetcode.cn/discuss/post/3581143/fen-xiang-gun-ti-dan-tu-lun-suan-fa-dfsb-qyux/)
+
 # 一、基础遍历
 
 ## 1.DFS
@@ -521,7 +523,7 @@ public:
 
 
 
-### （7）[2192. 有向无环图中一个节点的所有祖先](https://leetcode.cn/problems/all-ancestors-of-a-node-in-a-directed-acyclic-graph/)
+### ==（7）[2192. 有向无环图中一个节点的所有祖先](https://leetcode.cn/problems/all-ancestors-of-a-node-in-a-directed-acyclic-graph/)==（未整理完）
 
 > 给你一个正整数 `n` ，它表示一个 **有向无环图** 中节点的数目，节点编号为 `0` 到 `n - 1` （包括两者）。
 >
@@ -530,3 +532,149 @@ public:
 > 请你返回一个数组 `answer`，其中 `answer[i]`是第 `i` 个节点的所有 **祖先** ，这些祖先节点 **升序** 排序。
 >
 > 如果 `u` 通过一系列边，能够到达 `v` ，那么我们称节点 `u` 是节点 `v` 的 **祖先** 节点。
+
+本题有两种基本的思路，分别是DFS和拓扑排序，详见链接中提交过的题解。
+
+
+
+### （8）==[3387. 两天自由外汇交易后的最大货币数](https://leetcode.cn/problems/maximize-amount-after-two-days-of-conversions/)==（未整理，这题比较烦，再说吧，0x3f的题解有个视频可以看看）
+
+
+
+### （9）[924. 尽量减少恶意软件的传播](https://leetcode.cn/problems/minimize-malware-spread/)
+
+题目的大概意思是说，找到一个连通块，需要满足连通块里最多只有一个被感染的软件（否则即使删除了，还有感染软件也会污染连通块内的软件），并且这个连通块还要尽可能地大。我们可以DFS每个被感染的且没有visited的节点，统计其能到达的节点数（如果遇到了另一个被感染的软件，则return 0，表示无法清除这个连通块的污染），找到最小值即可。
+
+```c++
+class Solution {
+public:
+    typedef pair<int, int> PII;
+    static bool compare(const PII& a, const PII& b)
+    {
+        if(a.second == b.second) return a.first<b.first;
+        return a.second > b.second;
+    }
+    int minMalwareSpread(vector<vector<int>>& graph, vector<int>& initial) {
+        //记录每个initial数组元素所能联通到的软件的数量(包括自己)
+        int n = graph.size();
+        //返回连通块的数量
+        vector<int> visited(n, 0); 
+        int m = initial.size();
+        unordered_set us(initial.begin(), initial.end()); //用于快速找是否是恶意软件
+        auto dfs = [&](this auto&& dfs, int cur, bool first) -> int
+        {
+            visited[cur] = 1;
+            int cnt = 1;
+            if(!first && us.contains(cur)) return 0; //不是第一次遇到恶意软件,则整个返回0
+            bool hasOtherBad = false;
+            for(int i=0;i<n;i++)
+            {
+                if(graph[cur][i]==1 && !visited[i]) //有联通的,并且没有访问过
+                {
+                    int res = dfs(i, false);
+                    if(res == 0) hasOtherBad = true;
+                    else cnt += res;
+                }
+            }
+            if(hasOtherBad) cnt = 0;
+            return cnt;
+        };
+        //遍历所有的initial中的元素,记录能够抵达的(包含自己)的软件的数量,放到vector里
+        vector<PII> vec(m); //first:索引,second:数量
+        for(int i=0;i<m;i++)
+        {
+            int x = initial[i];
+            if(visited[x])
+            {
+                vec[i] = make_pair(x, 0);
+                continue; //说明访问过,意味着与其他恶意软件相连了
+            }
+            int ans = dfs(x, true);
+            vec[i] = make_pair(x, ans);
+        }
+        //这题表述的有问题,如果找不到最大的话就返回initial里面最小的那个值(也就是最小的索引)
+        sort(vec.begin(), vec.end(), compare);
+        return vec[0].first;
+    }
+};
+```
+
+注：这篇题解里面的状态机思路值得学习一下：[924. 尽量减少恶意软件的传播 - 力扣（LeetCode）](https://leetcode.cn/problems/minimize-malware-spread/)。
+
+
+
+#### 方法2：并查集
+
+```c++
+struct UnionFind
+{
+    vector<int> fa;
+    vector<int> sz;
+    int cc;
+    UnionFind(int n): fa(n), sz(n, 1), cc(n)
+    {
+        iota(fa.begin(), fa.end(), 0);
+    }
+    int find(int u)
+    {
+        if(u!=fa[u])
+        {
+            fa[u] = find(fa[u]);
+        }
+        return fa[u];
+    }
+    bool isSame(int u, int v)
+    {
+        return find(u) == find(v);
+    }
+    void join(int from, int to)
+    {
+        from = find(from);
+        to = find(to);
+        if(from==to) return;
+        fa[from] = to;
+        sz[to] += sz[from];
+        cc--;
+    }
+};
+class Solution {
+public:
+    typedef pair<int, int> PII;
+    int minMalwareSpread(vector<vector<int>>& graph, vector<int>& initial) {
+        //用并查集应该会更加直观一些,有两个initial数组中的元素parent一样,则不考虑
+        int n = graph.size();
+        UnionFind uf(n);
+        for(int i=0;i<n;i++) //邻接矩阵,遍历一半即可
+        {
+            for(int j=0;j<=i;j++)
+            {
+                if(graph[i][j]==1)
+                    uf.join(i, j);
+            }
+        }
+        
+        int ans = n, mx = 0;
+        vector<int> cnt(n);
+        for (int x : initial) 
+        {
+            ++cnt[uf.find(x)];
+        }
+        for (int x : initial) 
+        {
+            int root = uf.find(x);
+            if (cnt[root] == 1) //一个集合里只有一个恶意软件,符合题意
+            {
+                int sz = uf.sz[root]; //集合里元素的数量
+                if (sz > mx || (sz == mx && ans > x)) //集合里元素数量更多,或者索引值更小(initial 数组里的更小的值)
+                {
+                    ans = x;
+                    mx = sz;
+                }
+            }
+        }
+        //ans默认是n,如果结束ans==n意味着没有被更新过
+        return ans == n ? *min_element(initial.begin(), initial.end()) : ans;
+    }
+};
+```
+
