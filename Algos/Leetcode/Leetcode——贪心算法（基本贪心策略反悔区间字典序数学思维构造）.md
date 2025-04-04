@@ -1007,3 +1007,591 @@ public:
 
 ```
 
+
+
+### [2037. 使每位学生都有座位的最少移动次数](https://leetcode.cn/problems/minimum-number-of-moves-to-seat-everyone/)
+
+一个房间里有 `n` 个 **空闲** 座位和 `n` 名 **站着的** 学生，房间用一个数轴表示。给你一个长度为 `n` 的数组 `seats` ，其中 `seats[i]` 是第 `i` 个座位的位置。同时给你一个长度为 `n` 的数组 `students` ，其中 `students[j]` 是第 `j` 位学生的位置。
+
+你可以执行以下操作任意次：
+
+- 增加或者减少第 `i` 位学生的位置，每次变化量为 `1` （也就是将第 `i` 位学生从位置 `x` 移动到 `x + 1` 或者 `x - 1`）
+
+请你返回使所有学生都有座位坐的 **最少移动次数** ，并确保没有两位学生的座位相同。
+
+请注意，初始时有可能有多个座位或者多位学生在 **同一** 位置。
+
+**示例 1：**
+
+```
+输入：seats = [3,1,5], students = [2,7,4]
+输出：4
+解释：学生移动方式如下：
+- 第一位学生从位置 2 移动到位置 1 ，移动 1 次。
+- 第二位学生从位置 7 移动到位置 5 ，移动 2 次。
+- 第三位学生从位置 4 移动到位置 3 ，移动 1 次。
+总共 1 + 2 + 1 = 4 次移动。
+```
+
+
+
+由于座位和学生数相同，一个萝卜一个坑，将座位和学生位置排序后，第 i 个学生可以对应第 i 个座位。
+
+由于交换任意两个学生对应的座位不会产生更少的移动次数（可以画一画），所以上述对应关系可以产生最少移动次数，累加位置之差即为答案。
+
+```C++
+class Solution {
+public:
+    int minMovesToSeat(vector<int>& seats, vector<int>& students) {
+        sort(seats.begin(),seats.end());
+        sort(students.begin(),students.end());
+        int res=0;
+        for(int i=0;i<seats.size();i++)
+        {
+            res+=abs(students[i]-seats[i]);
+        }
+        return res;
+    }
+};
+```
+
+由于在任何情况下，（排序后）交换两个学生的对应座位并不会使得答案更优
+
+<img src="assets/1672911161-Rbthsg-image.png" alt="image.png" style="zoom: 67%;" />
+
+
+
+
+
+
+
+### [2410. 运动员和训练师的最大匹配数](https://leetcode.cn/problems/maximum-matching-of-players-with-trainers/)
+
+给你一个下标从 **0** 开始的整数数组 `players` ，其中 `players[i]` 表示第 `i` 名运动员的 **能力** 值，同时给你一个下标从 **0** 开始的整数数组 `trainers` ，其中 `trainers[j]` 表示第 `j` 名训练师的 **训练能力值** 。
+
+如果第 `i` 名运动员的能力值 **小于等于** 第 `j` 名训练师的能力值，那么第 `i` 名运动员可以 **匹配** 第 `j` 名训练师。除此以外，每名运动员至多可以匹配一位训练师，每位训练师最多可以匹配一位运动员。
+
+请你返回满足上述要求 `players` 和 `trainers` 的 **最大** 匹配数。
+
+**示例 1：**
+
+```
+输入：players = [4,7,9], trainers = [8,2,5,8]
+输出：2
+解释：
+得到两个匹配的一种方案是：
+- players[0] 与 trainers[0] 匹配，因为 4 <= 8 。
+- players[1] 与 trainers[3] 匹配，因为 7 <= 8 。
+可以证明 2 是可以形成的最大匹配数。
+```
+
+
+
+写法1：
+
+```C++
+class Solution {
+public:
+    int matchPlayersAndTrainers(vector<int>& players, vector<int>& trainers) {
+        //最小运动员<= 最小训练师，可以
+        //else （最小运动员>最小训练师） 训练师++
+        sort(players.begin(),players.end());
+        sort(trainers.begin(),trainers.end());
+        int p=0,t=0;
+        int pn = players.size(),tn = trainers.size();
+        while(p<pn&&t<tn)
+        {
+            if(players[p]<=trainers[t])
+            {
+                p++;
+                t++;
+            }
+            else
+            {
+                t++;
+            }
+        }
+        return p;
+    }
+};
+```
+
+写法2：
+
+```C++
+class Solution {
+public:
+    int matchPlayersAndTrainers(vector<int>& players, vector<int>& trainers) {
+        //最小运动员<= 最小训练师，可以
+        //else （最小运动员>最小训练师） 训练师++
+        sort(players.begin(),players.end());
+        sort(trainers.begin(),trainers.end());
+        int p=0,t=0;
+        int pn = players.size(),tn = trainers.size();
+        while(p<pn&&t<tn)
+        {
+            if(players[p]>trainers[t])
+            {
+                t++;
+            }
+            else
+            {
+                p++;
+                t++;
+            }
+        }
+        return p;
+    }
+};
+```
+
+
+
+### [1433. 检查一个字符串是否可以打破另一个字符串](https://leetcode.cn/problems/check-if-a-string-can-break-another-string/)
+
+给你两个字符串 `s1` 和 `s2` ，它们长度相等，请你检查是否存在一个 `s1` 的排列可以打破 `s2` 的一个排列，或者是否存在一个 `s2` 的排列可以打破 `s1` 的一个排列。
+
+字符串 `x` 可以打破字符串 `y` （两者长度都为 `n` ）需满足对于所有 `i`（在 `0` 到 `n - 1` 之间）都有 `x[i] >= y[i]`（字典序意义下的顺序）。
+
+**示例 1：**
+
+```
+输入：s1 = "abc", s2 = "xya"
+输出：true
+解释："ayx" 是 s2="xya" 的一个排列，"abc" 是字符串 s1="abc" 的一个排列，且 "ayx" 可以打破 "abc" 。
+```
+
+
+
+不排序：
+
+https://leetcode.cn/problems/check-if-a-string-can-break-another-string/
+
+排序:
+
+```C++
+class Solution {
+public:
+    bool checkIfCanBreak(string s1, string s2) 
+    {
+        // s1 打破 s2
+        // s1 排列 
+        // s2 排列 
+        //if s1每个都>S2 可以
+
+        //或者反过来也可以
+        //或者每个都<=应该也可以
+
+        sort(s1.begin(),s1.end());
+        sort(s2.begin(),s2.end());
+        bool res1=true;
+        for(int i=0;i<s1.size();i++)
+        {
+            if(s1[i]<s2[i])
+            {
+                res1 = false;
+            }
+        }
+        if(res1)return res1;
+        for(int i=0;i<s1.size();i++)
+        {
+            if(s1[i]>s2[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+};
+```
+
+
+
+
+
+### [870. 优势洗牌](https://leetcode.cn/problems/advantage-shuffle/)
+
+给定两个长度相等的数组 `nums1` 和 `nums2`，`nums1` 相对于 `nums2` 的*优势*可以用满足 `nums1[i] > nums2[i]` 的索引 `i` 的数目来描述。
+
+返回 `nums1` 的 **任意** 排列，使其相对于 `nums2` 的优势最大化。
+
+**示例 1：**
+
+```
+输入：nums1 = [2,7,11,15], nums2 = [1,10,4,11]
+输出：[2,11,7,15]
+```
+
+**示例 2：**
+
+```
+输入：nums1 = [12,24,8,32], nums2 = [13,25,32,11]
+输出：[24,32,8,12]
+```
+代码：
+
+#### M1 ：推荐 较为简洁
+
+```C++
+class Solution {
+public:
+    vector<int> advantageCount(vector<int>& nums1, vector<int>& nums2) {
+        ranges::sort(nums1);
+
+        int n = nums1.size();
+        vector<int> idx(n);
+        ranges::iota(idx,0);
+        ranges::sort(idx,{},[&](int i){return nums2[i];});
+
+        vector<int> ans(n);
+        int left=0,right = n-1;
+        for(auto x:nums1)
+        {
+            if(x>nums2[idx[left]])
+            {
+                ans[idx[left]] = x;
+                left++;
+            }
+            else
+            {
+                ans[idx[right]] = x;
+                right--;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+![image-20250403211400134](assets/image-20250403211400134.png)
+
+DS注解释：
+
+>### **问题背景**
+>- **田忌赛马策略**：用己方下等马消耗对方上等马，然后剩余的马匹去赢取更多胜利。
+>- **本题目标**：将 `nums1` 重新排列，使得尽可能多的元素满足 `nums1[i] > nums2[i]`。
+>
+>---
+>
+>### **代码思路**
+>1. **排序 `nums1`**：从小到大排序，方便后续贪心匹配。
+>2. **处理 `nums2`**：由于 `nums2` 不能直接排序，创建一个索引数组 `idx`，并根据 `nums2` 的值对 `idx` 排序。这样可以通过 `idx` 间接知道 `nums2` 从小到大对应的原始位置。
+>3. **双指针贪心匹配**：
+>   - 用 `nums1` 中最小的马去匹配 `nums2` 中最小的马（如果可能赢）。
+>   - 否则，用这个最小的马去消耗 `nums2` 中最大的马，减少损失。
+>
+>---
+>
+>### **代码逐行解释**
+>```cpp
+>class Solution {
+>public:
+>    vector<int> advantageCount(vector<int>& nums1, vector<int>& nums2) {
+>        // 1. 将 nums1 从小到大排序
+>        ranges::sort(nums1);
+>
+>        int n = nums1.size();
+>        // 2. 创建一个索引数组 idx = [0, 1, 2, ..., n-1]
+>        vector<int> idx(n);
+>        ranges::iota(idx, 0); // 用 iota 填充 idx 为 0,1,2,...,n-1
+>
+>        // 3. 根据 nums2 的值对 idx 排序
+>        //    排序后，idx[0] 对应 nums2 中最小值的下标，idx[1] 对应第二小的下标，以此类推
+>        ranges::sort(idx, {}, [&](int i) { return nums2[i]; });
+>
+>        vector<int> ans(n); // 存储最终结果
+>        int left = 0, right = n - 1; // 双指针
+>
+>        // 4. 遍历排序后的 nums1 中的每个元素 x
+>        for (int x : nums1) {
+>            // 如果 x 能打败 nums2 当前最小的元素（对应 idx[left] 的位置）
+>            if (x > nums2[idx[left]]) {
+>                // 将 x 放在答案数组的 idx[left] 位置（即对应 nums2 的最小值位置）
+>                ans[idx[left]] = x;
+>                left++; // 左指针右移，处理下一个最小值
+>            } else {
+>                // 否则，用 x 去消耗 nums2 当前最大的元素（对应 idx[right] 的位置）
+>                ans[idx[right]] = x;
+>                right--; // 右指针左移，处理下一个最大值
+>            }
+>        }
+>        return ans;
+>    }
+>};
+>```
+>
+>---
+>
+>### **关键语法解释**
+>1. **`ranges::sort`**：
+>   - `ranges::sort(nums1)`：对 `nums1` 进行从小到大排序。
+>   - `ranges::sort(idx, {}, [&](int i) { return nums2[i]; })`：
+>     - 对 `idx` 数组排序，排序依据是 `nums2` 中对应位置的值。
+>     - `{}` 表示使用默认的比较器（即按返回的值升序排序）。
+>     - `[&](int i) { return nums2[i]; }` 是一个 lambda 函数，表示取 `nums2[i]` 作为排序依据。
+>
+>2. **`ranges::iota`**：
+>   - `ranges::iota(idx, 0)`：将 `idx` 数组填充为 `0, 1, 2, ..., n-1`。
+>
+>3. **双指针逻辑**：
+>   - `left` 指向 `nums2` 中当前最小的元素（对应 `idx[left]`）。
+>   - `right` 指向 `nums2` 中当前最大的元素（对应 `idx[right]`）。
+>   - 用 `nums1` 中最小的马（`x`）去匹配 `nums2` 中最小的马（如果能赢），否则去消耗最大的马。
+>
+>---
+>
+>### **复杂度分析**
+>- **时间复杂度**：O(n log n)，因为排序 `nums1` 和 `idx` 各需要 O(n log n) 时间。
+>- **空间复杂度**：O(n)，用于存储 `idx` 和 `ans`。
+>
+>---
+>
+>### **总结**
+>这段代码通过贪心策略和双指针技巧，将田忌赛马的经典问题转化为高效算法。核心思想是：
+>1. 让己方最弱的马去消耗对方最强的马（当无法赢时）。
+>2. 让己方较强的马去赢对方较弱的马（当可以赢时）。
+>
+>通过排序和索引数组，间接处理了 `nums2` 的顺序问题，最终得到一个满足条件的最优排列。
+
+#### M2: m
+
+```C++
+class Solution {
+public:
+    static bool cmp(const pair<int,int> &a,const pair<int,int> &b)
+    {
+        return a.first>b.first;
+    }
+    vector<int> advantageCount(vector<int>& nums1, vector<int>& nums2) {
+        //nums1 最好的 比较nums2
+        //nums2不满足，跳过
+        //15 11 7 2 /1 <,index>
+        //11 10 4 1 /2
+
+        //10 8 7 2 /1 <,index>
+        //11 10 9 1 /2
+        int i=0,j=0;
+        //记录index
+        int n = nums1.size(); 
+        vector<pair<int,int>> vec2;// <val,index> 值和在原数组的下标志
+        for(int i=0;i<n;i++)
+        {
+            vec2.emplace_back(nums2[i],i);
+        }
+        sort(nums1.begin(),nums1.end(),greater<int>());
+        sort(vec2.begin(),vec2.end(),cmp);
+        vector<int> res(n,0);
+        vector<int> cantNums2;//nums1无法匹配的nums2的下标，用于还原
+        while(i<n&&j<n)//
+        {
+            if(nums1[i]>vec2[j].first)
+            {
+                res[vec2[j].second] = nums1[i];//还原时使用vec2[j].second，即nums2的下标
+                i++;
+                j++;
+            }
+            else
+            {
+                //不可以的nums2 存起来
+                cantNums2.push_back(vec2[j].second);
+                j++;
+            }
+        }
+        //填剩下的
+        for(int k=0;k<cantNums2.size();k++)
+        {
+            res[cantNums2[k]] = nums1[i];
+            i++;
+        }
+        return res;
+    }
+};
+```
+
+更新：
+
+```C++
+class Solution {
+public:
+    static bool cmp(const pair<int,int> &a,const pair<int,int> &b)
+    {
+        return a.first>b.first;
+    }
+    vector<int> advantageCount(vector<int>& nums1, vector<int>& nums2) {
+        //nums1 最好的 比较nums2
+        //nums2不满足，拿nums1最拉的来消耗你最好的
+        int i=0,j=0;
+        //记录index
+        int n = nums1.size(); 
+        vector<pair<int,int>> vec2;// <val,index> 值和在原数组的下标志
+        for(int i=0;i<n;i++)
+        {
+            vec2.emplace_back(nums2[i],i);
+        }
+        sort(nums1.begin(),nums1.end(),greater<int>());
+        sort(vec2.begin(),vec2.end(),cmp);
+        vector<int> res(n,0);
+        vector<int> cantNums2;//nums1无法匹配的nums2的下标，用于还原
+        int right=n-1;
+        while(i<n&&j<n)//
+        {
+            if(nums1[i]>vec2[j].first)
+            {
+                res[vec2[j].second] = nums1[i];//还原时使用vec2[j].second，即nums2的下标
+                i++;
+                j++;
+            }
+            else
+            {
+                //【更改】如果比不过，拿1最下等马 来消耗2的最上等马
+                res[vec2[j].second] = nums1[right];
+                right--;
+                j++;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [826. 安排工作以达到最大收益](https://leetcode.cn/problems/most-profit-assigning-work/)
+
+你有 `n` 个工作和 `m` 个工人。给定三个数组： `difficulty`, `profit` 和 `worker` ，其中:
+
+- `difficulty[i]` 表示第 `i` 个工作的难度，`profit[i]` 表示第 `i` 个工作的收益。
+- `worker[i]` 是第 `i` 个工人的能力，即该工人只能完成难度小于等于 `worker[i]` 的工作。
+
+每个工人 **最多** 只能安排 **一个** 工作，但是一个工作可以 **完成多次** 。
+
+- 举个例子，如果 3 个工人都尝试完成一份报酬为 `$1` 的同样工作，那么总收益为 `$3` 。如果一个工人不能完成任何工作，他的收益为 `$0` 。
+
+返回 *在把工人分配到工作岗位后，我们所能获得的最大利润* 。
+
+**示例 1：**
+
+```
+输入: difficulty = [2,4,6,8,10], profit = [10,20,30,40,50], worker = [4,5,6,7]
+输出: 100 
+解释: 工人被分配的工作难度是 [4,4,6,6] ，分别获得 [20,20,30,30] 的收益。
+```
+代码：
+```C++
+class Solution {
+public:
+    int maxProfitAssignment(vector<int>& difficulty, vector<int>& profit, vector<int>& worker) {
+        //排序困难度，
+        //类似单调栈：一个一个push（类似），如果出现收益高于上一个的（难度低工资高的），那么pop栈中所有收益低的，入栈
+        //栈底开始就是收益最高的
+        //这样保证了 最难的一定是收益最大的，否则会直接pass掉（被比它简单钱又多的代替）
+        vector<pair<int,int>> work;
+        int n = difficulty.size();
+        for(int i=0;i<n;i++)
+        {
+            work.emplace_back(difficulty[i],profit[i]);
+        }
+        sort(work.begin(),work.end(),[](pair<int,int>& a,pair<int,int>& b)
+        {
+            return a.first>b.first;
+        });
+        vector<pair<int,int>> st;
+        for(int i=0;i<n;i++)
+        {
+            while(!st.empty()&&work[i].second>st.back().second)
+            {
+                st.pop_back();
+            }
+            st.push_back(work[i]);
+        }
+        //工人能力排序
+        sort(worker.begin(),worker.end(),greater<int>());
+        //下面变成 分发饼干
+        //最厉害的工人挑战最难的工作，做不了，做下一个工作
+        //第二厉害的工人从当前工作开始挑选
+        int wokeri=0,jobi=0;
+        int res=0;
+        while(wokeri<worker.size()&&jobi<st.size())
+        {
+            if(worker[wokeri]>=st[jobi].first)
+            {
+                wokeri++;
+                res+=st[jobi].second;
+            }
+            else
+            {
+                jobi++;
+            }
+        }
+
+        return res;
+    }
+};
+```
+
+法2：
+
+https://leetcode.cn/problems/most-profit-assigning-work/
+
+0X3f的更简洁，但是随便看了下没怎么懂他在干嘛，先不管了 后面有空可以看
+
+
+
+### [2449. 使数组相似的最少操作次数 ](https://leetcode.cn/problems/minimum-number-of-operations-to-make-arrays-similar/)2076
+
+给你两个正整数数组 `nums` 和 `target` ，两个数组长度相等。
+
+在一次操作中，你可以选择两个 **不同** 的下标 `i` 和 `j` ，其中 `0 <= i, j < nums.length` ，并且：
+
+- 令 `nums[i] = nums[i] + 2` 且
+- 令 `nums[j] = nums[j] - 2` 。
+
+如果两个数组中每个元素出现的频率相等，我们称两个数组是 **相似** 的。
+
+请你返回将 `nums` 变得与 `target` 相似的最少操作次数。测试数据保证 `nums` 一定能变得与 `target` 相似。
+
+**示例 1：**
+
+```
+输入：nums = [8,12,6], target = [2,14,10]
+输出：2
+解释：可以用两步操作将 nums 变得与 target 相似：
+- 选择 i = 0 和 j = 2 ，nums = [10,12,4] 。
+- 选择 i = 1 和 j = 2 ，nums = [10,14,2] 。
+2 次操作是最少需要的操作次数。
+```
+
+
+
+https://leetcode.cn/problems/minimum-number-of-operations-to-make-arrays-similar/solutions/1917413/by-endlesscheng-lusx/
+
+[视频讲解](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1ne4y1e7nu) 
+
+![image-20250403223226694](assets/image-20250403223226694.png)
+
+```C++
+class Solution {
+public:
+    void f(vector<int> &a)
+    {
+        for(auto &x:a)//引用
+        {
+            if(x%2) x=-x;
+        }
+        sort(a.begin(),a.end());
+    }
+    long long makeSimilar(vector<int>& nums, vector<int>& target) {
+        f(nums);
+        f(target);
+        long long res=0L;
+        for(int i=0;i<nums.size();i++)
+        {
+            res += abs(target[i]-nums[i]);
+        }
+        return res/4;
+    }
+};
+```
+
+
+
