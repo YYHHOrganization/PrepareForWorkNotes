@@ -725,6 +725,198 @@ public:
 
 
 
+### [945. 使数组唯一的最小增量](https://leetcode.cn/problems/minimum-increment-to-make-array-unique/)
+
+> 给你一个整数数组 `nums` 。每次 move 操作将会选择任意一个满足 `0 <= i < nums.length` 的下标 `i`，并将 `nums[i]` 递增 `1`。
+>
+> 返回使 `nums` 中的每个值都变成唯一的所需要的最少操作次数。
+>
+> 生成的测试用例保证答案在 32 位整数范围内。
+
+跟上一题有类似之处，代码如下：（思路就是尽量把小的数分给小的候选人）
+
+```c++
+class Solution {
+public:
+    int minIncrementForUnique(vector<int>& nums) {
+        //也就是用最小的操作次数让数组每个元素的值都不相等,跟之前的题目比较类似
+        sort(nums.begin(), nums.end());
+        int ans = 0; //32位整数范围内
+        int start = nums[0];
+        int n = nums.size();
+        for(int i=1;i<n;i++)
+        {
+            start = max(start + 1, nums[i]);
+            ans += (start - nums[i]);
+        }
+        return ans;
+        
+    }
+};
+```
+
+
+
+### [1846. 减小和重新排列数组后的最大元素](https://leetcode.cn/problems/maximum-element-after-decreasing-and-rearranging/)
+
+> 给你一个正整数数组 `arr` 。请你对 `arr` 执行一些操作（也可以不进行任何操作），使得数组满足以下条件：
+>
+> - `arr` 中 **第一个** 元素必须为 `1` 。
+> - 任意相邻两个元素的差的绝对值 **小于等于** `1` ，也就是说，对于任意的 `1 <= i < arr.length` （**数组下标从 0 开始**），都满足 `abs(arr[i] - arr[i - 1]) <= 1` 。`abs(x)` 为 `x` 的绝对值。
+>
+> 你可以执行以下 2 种操作任意次：
+>
+> - **减小** `arr` 中任意元素的值，使其变为一个 **更小的正整数** 。
+> - **重新排列** `arr` 中的元素，你可以以任意顺序重新排列。
+>
+> 请你返回执行以上操作后，在满足前文所述的条件下，`arr` 中可能的 **最大值** 。
+
+```c++
+class Solution {
+public:
+    int maximumElementAfterDecrementingAndRearranging(vector<int>& arr) {
+        //注意数组元素只能减少,每个元素都不可能增大
+        int n = arr.size();
+        sort(arr.begin(), arr.end());
+        int start = 1;
+        for(int i=1;i<n;i++)
+        {
+            start = min(start + 1, arr[i]); //尽量等于上一个+1,但是最高是arr[i]的值
+        }
+        return start;
+    }
+};
+```
+
+
+
+### [1647. 字符频次唯一的最小删除次数](https://leetcode.cn/problems/minimum-deletions-to-make-character-frequencies-unique/)
+
+> 如果字符串 `s` 中 **不存在** 两个不同字符 **频次** 相同的情况，就称 `s` 是 **优质字符串** 。
+>
+> 给你一个字符串 `s`，返回使 `s` 成为 **优质字符串** 需要删除的 **最小** 字符数。
+>
+> 字符串中字符的 **频次** 是该字符在字符串中的出现次数。例如，在字符串 `"aab"` 中，`'a'` 的频次是 `2`，而 `'b'` 的频次是 `1` 。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int minDeletions(string s) {
+        unordered_map<char, int> umap;
+        for(char c: s)
+        {
+            umap[c]++;
+        }
+        int n = umap.size();
+        vector<int> vec(n);
+        int index = 0;
+        for(auto& [k, v] : umap)
+        {
+            vec[index++] = v;
+        }
+        sort(vec.begin(), vec.end());
+        //此时已经按照词频从小到大排序了
+        
+        int ans = 0; //最少要删除的个数,从小到大并回退,和从大到小理论上结果是一致的,但从大到小比较好算
+        int start = vec[n-1];
+        for(int index = n-2;index>=0;index--)
+        {
+            start = min(start-1, vec[index]);
+            if(start<0) start = 0; //相当于此时需要全删掉了
+            ans += (vec[index]-start);
+        }
+        return ans;
+    }
+};
+```
+
+其实也可以用数组来替代哈希表，会快一些：
+```c++
+class Solution {
+public:
+    int minDeletions(string s) {
+        int n = 26;
+        vector<int> vec(26);
+        int index = 0;
+        for(char c: s)
+        {
+            vec[c-'a']++;
+        }
+        sort(vec.begin(), vec.end());
+        //此时已经按照词频从小到大排序了
+        
+        int ans = 0; //最少要删除的个数,从小到大并回退,和从大到小理论上结果是一致的,但从大到小比较好算
+        int start = vec[n-1];
+        for(int index = n-2;index>=0;index--)
+        {
+            start = min(start-1, vec[index]);
+            if(start<0) start = 0; //相当于此时需要全删掉了
+            ans += (vec[index]-start);
+        }
+        return ans;
+    }
+};
+```
+
+注：本题贪心的思路可以参考：[1647. 字符频次唯一的最小删除次数 - 力扣（LeetCode）](https://leetcode.cn/problems/minimum-deletions-to-make-character-frequencies-unique/solutions/2015660/by-stormsunshine-g9ov/).后面可以回头看看怎么对这件事进行直观证明。
+
+
+
+### 小结论
+
+对于使得每一项值都不相同的贪心题目，暂时有如下结论：
+
+- 如果是对每一项只能做增加的操作，就从小到大排序后从左到右遍历，`max(start+1, nums[i])`，对应945这道题；
+- 如果是对每一项只能做减少的操作，就从小到大排序后从右到左遍历，`min(start-1，nums[i])`.
+
+注：并不是所有都这样，因题目而异，但大部分可以做这种类型的思路尝试。
+
+
+
+### [2971. 找到最大周长的多边形](https://leetcode.cn/problems/find-polygon-with-the-largest-perimeter/)
+
+> 给你一个长度为 `n` 的 **正** 整数数组 `nums` 。
+>
+> **多边形** 指的是一个至少有 `3` 条边的封闭二维图形。多边形的 **最长边** 一定 **小于** 所有其他边长度之和。
+>
+> 如果你有 `k` （`k >= 3`）个 **正** 数 `a1`，`a2`，`a3`, ...，`ak` 满足 `a1 <= a2 <= a3 <= ... <= ak` **且** `a1 + a2 + a3 + ... + ak-1 > ak` ，那么 **一定** 存在一个 `k` 条边的多边形，每条边的长度分别为 `a1` ，`a2` ，`a3` ， ...，`ak` 。
+>
+> 一个多边形的 **周长** 指的是它所有边之和。
+>
+> 请你返回从 `nums` 中可以构造的 **多边形** 的 **最大周长** 。如果不能构造出任何多边形，请你返回 `-1` 。
+
+本题看起来是`976.三角形的最大周长`的进阶题目。
+
+```c++
+class Solution {
+public:
+    long long largestPerimeter(vector<int>& nums) {
+        //用前缀和进行优化
+        int n = nums.size();
+        sort(nums.begin(), nums.end());
+        vector<long long> prefix(n+1, 0);
+        for(int i=0;i<n;i++)
+        {
+            prefix[i+1] = prefix[i] + (long long)nums[i];
+        }
+        long long ans = -1;
+        for(int i = n-1;i>=2;i--) //最少得是三角形,所以i=2是最后需要遍历的
+        {
+            long long preSum = prefix[i];
+            if(preSum > nums[i]) //如果preSum<=nums[i],说明拼尽全力无法战胜
+            {
+                ans = max(ans, preSum + nums[i]);
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
 
 
 ## §1.2 单序列配对
@@ -1716,11 +1908,48 @@ public:
 };
 ```
 
+
+
+#### 方法2
+
 法2：
 
 https://leetcode.cn/problems/most-profit-assigning-work/
 
-0X3f的更简洁，但是随便看了下没怎么懂他在干嘛，先不管了 后面有空可以看
+思路如下:
+
+- 将worker进行排序，这样能力比较弱的工人就会在前面，如果一份工作当前的`worker[i]`可以完成，那么`worker[i+1]`一定能完成，也就是说，`worker[i+1]`至少应该可以带来`worker[i]`所带来的利润。只需要看`worker[i+1]`更高的那部分的difficulty是否会带来更高的利润即可，每个更厉害的worker都可以至少继承前面的利润值。
+
+代码如下：
+```c++
+class Solution {
+public:
+    int maxProfitAssignment(vector<int>& difficulty, vector<int>& profit, vector<int>& worker) {
+        int n = difficulty.size();
+        ranges::sort(worker);
+        vector<pair<int, int>> jobs(n);
+        for(int i=0;i<n;i++)
+        {
+            jobs[i] = make_pair(difficulty[i], profit[i]);
+        }
+        ranges::sort(jobs); //难度小的排在前面,每个worker把自己能力范围内的最大值补充一下
+        int maxProfit = 0;
+        int m = worker.size();
+        int ans = 0;
+        int jobIndex = 0;
+        for(int i=0;i<m;i++)
+        {
+            while(jobIndex<n && jobs[jobIndex].first<=worker[i]) //当前工人完全能胜任
+            {
+                maxProfit = max(maxProfit, jobs[jobIndex].second);
+                jobIndex++;
+            }
+            ans += maxProfit;
+        }
+        return ans;
+    }
+};
+```
 
 
 
@@ -1781,4 +2010,54 @@ public:
 ```
 
 
+
+### 补充题目：[2541. 使数组中所有元素相等的最小操作数 II](https://leetcode.cn/problems/minimum-operations-to-make-array-equal-ii/)（注意跟上一题做区分）
+
+> 给你两个整数数组 `nums1` 和 `nums2` ，两个数组长度都是 `n` ，再给你一个整数 `k` 。你可以对数组 `nums1` 进行以下操作：
+>
+> - 选择两个下标 `i` 和 `j` ，将 `nums1[i]` 增加 `k` ，将 `nums1[j]` 减少 `k` 。换言之，`nums1[i] = nums1[i] + k` 且 `nums1[j] = nums1[j] - k` 。
+>
+> 如果对于所有满足 `0 <= i < n` 都有 `num1[i] == nums2[i]` ，那么我们称 `nums1` **等于** `nums2` 。
+>
+> 请你返回使 `nums1` 等于 `nums2` 的 **最少** 操作数。如果没办法让它们相等，请你返回 `-1` 。
+
+上一题的条件是`“如果两个数组中每个元素出现的频率相等，我们称两个数组是 相似 的。”`其实相当于可以把两个数组重排，此时两个数组从小到大排序然后在算可以保证操作数是最少的。而本题其实并不能改变数组的次序，因此做法会有改变，但其实这道题的思路会对上一题起到辅佐效果。
+
+![image-20250404172944391](assets/image-20250404172944391.png)
+
+代码如下：
+```c++
+class Solution {
+public:
+    long long minOperations(vector<int>& nums1, vector<int>& nums2, int k) {
+        //本题跟上一题有所差别,不要理解混了,这道题不能修改次序
+        int n = nums1.size();
+        vector<int> diff(n);
+        long long sum = 0;
+        long long upZeroSum = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(k==0) //看下面的式子,k=0要特判,不然%k可能寄了
+            {
+                if(nums1[i]!=nums2[i]) return -1;
+            }
+            else
+            {
+                diff[i] = nums1[i] - nums2[i];
+                //diff[i]如果%k!=0,则根本没法变成0, return -1即可
+                if(diff[i] % k != 0) return -1;
+                sum += (long long) diff[i];
+                if(diff[i] > 0)
+                {
+                    upZeroSum += (long long) diff[i]; //记录diff>0的总和,如果最终合法的话,总和/k就是最少操作数
+                }
+            }
+        }
+        //sum不为0,没办法互相加减得到0
+        if(sum!=0) return -1;
+        if(k==0) return 0; //注意判断这种情况,k==0不能做/k操作
+        return upZeroSum / k;
+    }
+};
+```
 
