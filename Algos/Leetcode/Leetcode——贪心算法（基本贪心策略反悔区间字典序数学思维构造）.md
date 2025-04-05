@@ -679,6 +679,35 @@ public:
 };
 ```
 
+orY: 或者用`nth_element(allGridLimit.begin(),allGridLimit.begin()+k-1,allGridLimit.end(),greater<int>());`
+
+```C++
+class Solution {
+public:
+    //7
+    long long maxSum(vector<vector<int>>& grid, vector<int>& limits, int k) {
+        vector<int> allGridLimit;
+        if(k==0)return 0;
+        for(int i=0;i<grid.size();i++)
+        {
+            if(limits[i]==0)continue;
+            nth_element(grid[i].begin(),grid[i].begin()+limits[i]-1,grid[i].end(),greater<int>());
+            for(int j=0;j<limits[i];j++)
+            {
+                allGridLimit.emplace_back(grid[i][j]);
+            }
+        }
+        nth_element(allGridLimit.begin(),allGridLimit.begin()+k-1,allGridLimit.end(),greater<int>());
+        long long res=0;
+        for(int i=0;i<k;i++)
+        {
+            res += allGridLimit[i];
+        }
+        return res;
+    }
+};
+```
+
 
 
 ### [3301. 高度互不相同的最大塔高和](https://leetcode.cn/problems/maximize-the-total-height-of-unique-towers/)
@@ -707,7 +736,7 @@ public:
         for(;index>=0;index--)
         {
             start = min(maximumHeight[index], start); 
-            if(start<=0) break;
+            if(start<=0) break;//这里也可以直接return -1;
             ans += (long long)start;
             start--; //每次start-1,保证下一次分配的时候一定比现在少1
         }

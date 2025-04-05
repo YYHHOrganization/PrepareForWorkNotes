@@ -620,11 +620,17 @@ public:
 
 ### （8）==[3387. 两天自由外汇交易后的最大货币数](https://leetcode.cn/problems/maximize-amount-after-two-days-of-conversions/)==（未整理，这题比较烦，再说吧，0x3f的题解有个视频可以看看）
 
-
+这题好像在哪里整理过。（做过这题）
 
 ### （9）[924. 尽量减少恶意软件的传播](https://leetcode.cn/problems/minimize-malware-spread/)
 
 题目的大概意思是说，找到一个连通块，需要满足连通块里最多只有一个被感染的软件（否则即使删除了，还有感染软件也会污染连通块内的软件），并且这个连通块还要尽可能地大。我们可以DFS每个被感染的且没有visited的节点，统计其能到达的节点数（如果遇到了另一个被感染的软件，则return 0，表示无法清除这个连通块的污染），找到最小值即可。
+
+
+
+我们要找的是**只包含一个被感染节点的连通块**，并且这个连通块**越大越好**。
+
+#### 方法1：DFS
 
 ```c++
 class Solution {
@@ -680,11 +686,78 @@ public:
 };
 ```
 
+
+
+#### 方法2：DFS+状态机
+
 注：这篇题解里面的状态机思路值得学习一下：[924. 尽量减少恶意软件的传播 - 力扣（LeetCode）](https://leetcode.cn/problems/minimize-malware-spread/)。
 
+```C++
+class Solution {
+public:
+    int minMalwareSpread(vector<vector<int>>& graph, vector<int>& initial) {
+        //状态机： 无感染-1 -》 感染x -》感染大于1：-2 
+        //dfs 
+        int size =0;
+        int maxsize=0;
+        int n = graph.size();
+        vector<int> visited(n,0);
+        int node_id=-1;
+        //存放恶意软件
+        unordered_set<int> badUset(initial.begin(),initial.end());
+        int resIndex=-1;
+        //需要有->void  不然会错
+        auto dfs = [&](this auto&& dfs,int cur)->void
+        {
+            visited[cur] = 1;
+            size++;
+            if(node_id!=-2&&badUset.contains(cur))
+            {
+                node_id = node_id==-1?cur:-2;
+            }
+            for(int i=0;i<graph[cur].size();i++)
+            {
+                if(graph[cur][i] && !visited[i])//【!】graph[i][j]别忘
+                {
+                    dfs(i);
+                }
+            }
+        };
+        for(int i=0;i<initial.size();i++)
+        {
+            if(visited[initial[i]])continue;//【!】这句没有会错
+            node_id = -1;
+            size = 0;
+            dfs(initial[i]);
+            if(node_id >=0)//只有一个是坏的
+            {
+                if(size>maxsize)
+                {
+                    maxsize = size;
+                    resIndex = node_id;
+                }
+                else if(size ==maxsize)
+                {
+                    resIndex = min(resIndex,node_id);
+                }
+            }
+        }
+        if(resIndex == -1)
+        {
+            return *min_element(initial.begin(),initial.end());
+        }
+        return resIndex;
+    }
+};
+```
 
 
-#### 方法2：并查集
+
+
+
+#### 方法3：并查集
+
+推荐做法 这题并查集好写，而dfs更容易写错
 
 ```c++
 struct UnionFind
@@ -735,7 +808,7 @@ public:
         }
         
         int ans = n, mx = 0;
-        vector<int> cnt(n);
+        vector<int> cnt(n);//记录块中的恶意软件个数
         for (int x : initial) 
         {
             ++cnt[uf.find(x)];
@@ -758,4 +831,3 @@ public:
     }
 };
 ```
-

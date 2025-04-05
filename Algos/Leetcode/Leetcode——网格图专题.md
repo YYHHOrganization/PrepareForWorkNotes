@@ -1092,3 +1092,88 @@ public:
 };
 ```
 
+
+
+### [417. 太平洋大西洋水流问题](https://leetcode.cn/problems/pacific-atlantic-water-flow/)
+
+雨水只能从高的地方流向低的地方，求二维表格中哪些坐标的雨水既可以流入太平洋又可以流入大西洋。
+
+
+
+有一个 `m × n` 的矩形岛屿，与 **太平洋** 和 **大西洋** 相邻。 **“太平洋”** 处于大陆的左边界和上边界，而 **“大西洋”** 处于大陆的右边界和下边界。
+
+这个岛被分割成一个由若干方形单元格组成的网格。给定一个 `m x n` 的整数矩阵 `heights` ， `heights[r][c]` 表示坐标 `(r, c)` 上单元格 **高于海平面的高度** 。
+
+岛上雨水较多，如果相邻单元格的高度 **小于或等于** 当前单元格的高度，雨水可以直接向北、南、东、西流向相邻单元格。水可以从海洋附近的任何单元格流入海洋。
+
+返回网格坐标 `result` 的 **2D 列表** ，其中 `result[i] = [ri, ci]` 表示雨水从单元格 `(ri, ci)` 流动 **既可流向太平洋也可流向大西洋** 
+
+**示例 1：**
+
+![img](assets/waterflow-grid.jpg)
+
+```
+输入: heights = [[1,2,2,3,5],[3,2,3,4,4],[2,4,5,3,1],[6,7,1,4,5],[5,1,1,2,4]]
+输出: [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]
+```
+
+
+
+M：
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {
+        vector<vector<int>> res;
+        //反着侵蚀
+        //从海边往高处侵蚀。（理解为蒸汽 ）
+        //如果一直在上升就可以侵蚀
+        //最后看哪块是被两个都侵蚀了。
+        int m = heights.size();
+        int n = heights[0].size();
+        vector<vector<int>> visited(m,vector<int>(n,0));
+        //被太平洋=01 大西洋=10
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        // cout<<0b11<<endl;//3
+        auto dfs = [&](this auto&& dfs,int x,int y,int ocean)->void
+        {
+            if ((visited[x][y] >> ocean) & 1) return;//【1】第一个可能被访问过了
+            visited[x][y] |= (1<<ocean);//【】
+            if(visited[x][y] == 0b11)//0b11 = 3
+            {
+                res.push_back({x,y});//如果没写【1】 就会重复加入
+            }
+            for(int k=0;k<4;k++)
+            {
+                int curX = x+dirs[k][0];
+                int curY = y+dirs[k][1];
+                // 11 10
+                if(curX<0||curY<0||curX>=m||curY>=n||((visited[curX][curY]>>ocean)&1))continue;
+                if(heights[x][y]<=heights[curX][curY])
+                {
+                    dfs(curX,curY,ocean);
+                }
+            }
+        };
+        for(int i=0;i<m;i++)
+        {
+            // height[i][0] =大西洋
+            dfs(i,0,0);//1<<0 == 01
+            dfs(i,n-1,1);//1<1 == 10
+        }
+        for(int j=0;j<n;j++)
+        {
+            dfs(0,j,0);
+            dfs(m-1,j,1);
+        }
+        return res;
+    }
+};
+```
+
+
+
+图可以看：
+
+https://leetcode.cn/problems/pacific-atlantic-water-flow/solutions/754024/shui-wang-gao-chu-liu-by-xiaohu9527-xxsx/
