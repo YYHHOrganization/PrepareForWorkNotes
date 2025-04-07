@@ -1040,6 +1040,8 @@ public:
 };
 ```
 
+每次结束DFS之后,已经访问过的没环的节点会是2,在环内的节点会是1。
+
 
 
 #### （b）方法2：逆拓扑排序
@@ -1613,7 +1615,7 @@ public:
 
 （i）本题如果输入的是queries询问数组，每个询问包含两个节点node1和node2，此时要查询答案，要怎么做呢？
 
-> A：如果构成的树（没有环），则本题可以转换为求node1和node2的最近公共祖先。如果有环的话：
+> A：如果构成的树（没有环），则本题可以转换为求node1和node2的最近公共祖先LCA。如果有环的话：
 >
 > - node1和node2不在基环内，那还是求最近公共祖先
 > - 有一个在基环内，另一个不在，则取基环里面的那个点作为答案，也有可能取树枝与基环的交叉点作为答案，需要分类讨论；
@@ -1696,3 +1698,63 @@ public:
 > - 如果  vis_time[x] < start_time ，说明  x 是在之前的轮次被访问的。
 >
 > 还有一点：每个环的检测是独立的：无论从哪个节点开始遍历，只要进入一个环，一定会完整地走完整个环。
+
+
+
+#### 方法2:拓扑排序,剩下的就是环,判断环的大小
+
+```c++
+class Solution {
+public:
+    int longestCycle(vector<int>& edges) {
+        int n = edges.size();
+        vector<int> indegrees(n, 0);
+        for(int i=0;i<n;i++)
+        {
+            int to = edges[i];
+            if(to==-1) continue;
+            indegrees[to]++;
+        }
+        //做拓扑排序
+        queue<int> que;
+        for(int i=0;i<n;i++)
+        {
+            if(indegrees[i]==0) que.push(i);
+        }
+        while(!que.empty())
+        {
+            int cur = que.front();
+            que.pop();
+            int x = edges[cur];
+            if(x!=-1)
+            {
+                indegrees[x]--;
+                if(indegrees[x]==0)
+                {
+                    que.push(x);
+                }
+            }
+        }
+        int res = -1;
+        for(int i=0;i<n;i++)
+        {
+            if(indegrees[i]==1) //找到环的入口
+            {
+                int sum = 0;
+                int x = i;
+                while(indegrees[x]==1)
+                {
+                    indegrees[x] = 0;
+                    x = edges[x];
+                    sum++;
+                }
+                res = max(res, sum);
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
