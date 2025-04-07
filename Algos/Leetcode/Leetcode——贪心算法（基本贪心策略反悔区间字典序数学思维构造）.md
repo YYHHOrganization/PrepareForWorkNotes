@@ -944,7 +944,28 @@ public:
 };
 ```
 
+or：
 
+```C++
+class Solution {
+public:
+    long long largestPerimeter(vector<int>& nums) {
+        long long res=0;
+        long long totalSum = reduce(nums.begin(),nums.end(),0L);//必须要是0L 否则放不下
+
+        sort(nums.begin(),nums.end(),greater<int>());
+        for(int i=0;i<nums.size()-2;i++)
+        {
+            totalSum = totalSum-nums[i];
+            if(nums[i]<totalSum)
+            {
+                return (long long)(nums[i]+totalSum);
+            }
+        }
+        return -1;
+    }
+};
+```
 
 
 
@@ -1612,8 +1633,6 @@ public:
     }
 };
 ```
-
-
 
 
 

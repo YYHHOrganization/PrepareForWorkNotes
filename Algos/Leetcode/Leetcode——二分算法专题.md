@@ -662,9 +662,72 @@ public:
 
 
 
-## ==8.（思维扩展）[1287. 有序数组中出现次数超过25%的元素](https://leetcode.cn/problems/element-appearing-more-than-25-in-sorted-array/)==
+## 8.（思维扩展）[1287. 有序数组中出现次数超过25%的元素](https://leetcode.cn/problems/element-appearing-more-than-25-in-sorted-array/)
 
 用哈希可以做到O(n)的复杂度，能否降到`O(logn)`的复杂度呢？考虑二分查找。这题要极致优化的话两次二分，需要看一会题解，暂时性价比没有那么高，先去刷别的题目，回来再进行总结。
+
+
+
+给你一个非递减的 **有序** 整数数组，已知这个数组中恰好有一个整数，它的出现次数超过数组元素总数的 25%。
+
+请你找到并返回这个整数
+
+**示例：**
+
+```
+输入：arr = [1,2,2,6,6,6,6,7,10]
+输出：6
+```
+
+#### M1
+
+```C++
+class Solution {
+public:
+    int findSpecialInteger(vector<int>& arr) {
+        int n =arr.size();
+        for(int i=0;i<n-n/4;i++)
+        {
+            if(arr[i] == arr[i+n/4])
+            {
+                return arr[i];
+            }
+        }
+        return -1;
+    }
+};
+```
+
+#### M2:
+
+相当于把数组分成四个部分，每份占百分之25，然后这四份有三个公共的边界，由于题目要求元素个数会超出百分之25，所以一定会有超出的个数在边界上，那么只要检查三个边界上的元素即可
+
+ https://leetcode.cn/problems/element-appearing-more-than-25-in-sorted-array/solutions/101725/you-xu-shu-zu-zhong-chu-xian-ci-shu-chao-guo-25d-3/
+
+```C++
+class Solution {
+public:
+    //10-15
+    int findSpecialInteger(vector<int>& arr) {
+        int n =arr.size();
+        int span = n/4+1;
+        //第一个>=和 第一个>的
+        //1 2* 2 2 2 3*
+        for(int i=0;i<n;i+=span)
+        {
+            auto left = lower_bound(arr.begin(),arr.end(),arr[i]);
+            auto right = upper_bound(arr.begin(),arr.end(),arr[i]);
+            if(right-left>=span)
+            {
+                return arr[i];
+            }
+        }
+        return -1;
+    }
+};
+```
+
+
 
 
 

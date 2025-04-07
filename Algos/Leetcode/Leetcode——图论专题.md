@@ -933,3 +933,48 @@ public:
 > **有向图无法完成拓扑排序的唯一原因是图中存在有向环**。其他图的结构特性（如非连通性、孤立顶点等）均不影响拓扑排序的存在性。这一结论是图论中拓扑排序的核心性质之一。
 
 因此，本题就转变为了如何在有向图中判断是否有环，具体做法可以参考上面的题解。
+
+
+
+```C++
+class Solution {
+public:
+    //10
+    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+        //有环则不能完成
+        // 0  1  2
+        // 还没访问过0  访问过为1 其周围全部访问过 为2（不用再走这条路了）
+        //bi.push ai
+        vector<vector<int>> adj(numCourses);
+        for(int i=0;i<prerequisites.size();i++)
+        {
+            int a = prerequisites[i][0];
+            int b = prerequisites[i][1];
+            adj[b].push_back(a);
+        }
+        vector<int> visited(numCourses,0);
+        auto dfs = [&](this auto&& dfs,int i)->bool
+        {
+            if(visited[i]==2)return false;
+            if(visited[i]==1)return true;
+            visited[i]=1;
+            for(int j=0;j<adj[i].size();j++)
+            {
+                if(dfs(adj[i][j])==true)
+                {
+                    return true;
+                }
+            }
+            visited[i]=2;
+            return false;
+        };
+        for(int i=0;i<numCourses;i++)
+        {
+            if(dfs(i)==true)return false;
+        }
+        return true;
+
+    }
+};
+```
+

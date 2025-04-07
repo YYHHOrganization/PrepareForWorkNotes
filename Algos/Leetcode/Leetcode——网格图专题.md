@@ -1177,3 +1177,795 @@ public:
 图可以看：
 
 https://leetcode.cn/problems/pacific-atlantic-water-flow/solutions/754024/shui-wang-gao-chu-liu-by-xiaohu9527-xxsx/
+
+
+
+### [529. 扫雷游戏](https://leetcode.cn/problems/minesweeper/)
+
+让我们一起来玩扫雷游戏！
+
+给你一个大小为 `m x n` 二维字符矩阵 `board` ，表示扫雷游戏的盘面，其中：
+
+- `'M'` 代表一个 **未挖出的** 地雷，
+- `'E'` 代表一个 **未挖出的** 空方块，
+- `'B'` 代表没有相邻（上，下，左，右，和所有4个对角线）地雷的 **已挖出的** 空白方块，
+- **数字**（`'1'` 到 `'8'`）表示有多少地雷与这块 **已挖出的** 方块相邻，
+- `'X'` 则表示一个 **已挖出的** 地雷。
+
+给你一个整数数组 `click` ，其中 `click = [clickr, clickc]` 表示在所有 **未挖出的** 方块（`'M'` 或者 `'E'`）中的下一个点击位置（`clickr` 是行下标，`clickc` 是列下标）。
+
+根据以下规则，返回相应位置被点击后对应的盘面：
+
+1. 如果一个地雷（`'M'`）被挖出，游戏就结束了- 把它改为 `'X'` 。
+2. 如果一个 **没有相邻地雷** 的空方块（`'E'`）被挖出，修改它为（`'B'`），并且所有和其相邻的 **未挖出** 方块都应该被递归地揭露。
+3. 如果一个 **至少与一个地雷相邻** 的空方块（`'E'`）被挖出，修改它为数字（`'1'` 到 `'8'` ），表示相邻地雷的数量。
+4. 如果在此次点击中，若无更多方块可被揭露，则返回盘面。
+
+ 
+
+**示例 1：**
+
+![img](assets/untitled.jpeg)
+
+```
+输入：board = [["E","E","E","E","E"],["E","E","M","E","E"],["E","E","E","E","E"],["E","E","E","E","E"]], click = [3,0]
+输出：[["B","1","E","1","B"],["B","1","M","1","B"],["B","1","1","1","B"],["B","B","B","B","B"]]
+```
+
+
+
+```C++
+class Solution {
+public:
+    //[["E","E","E","E","E"],
+    // ["E","E","M","E","E"],
+    // ["E","E","E","E","E"],
+    // ["E","E","E","E","E"]]
+    vector<vector<char>> updateBoard(vector<vector<char>>& board, vector<int>& click) {
+        int dirs[8][2] = {{1,0},{-1,0},{0,1},{0,-1},{1,1},{1,-1},{-1,1},{-1,-1}};
+         int m = board.size();
+        int n =board[0].size();
+        vector<vector<int>> visited(m,vector<int>(n,0));
+        auto dfs = [&](this auto&& dfs,int x,int y)
+        {
+            if(board[x][y]=='M')
+            {
+                board[x][y] = 'X';
+                return;
+            }
+            if(visited[x][y])return;
+            visited[x][y]=1;
+            if(board[x][y] == 'E')board[x][y] = 'B';
+            int dig=0;
+            for(int i=0;i<8;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n)continue;
+                if(board[curX][curY]=='M')
+                {
+                    dig++;
+                    continue;
+                }
+                //不可以在这里进行dfs 因为如果周围有炸弹 就会直接结束递归
+            }
+            if(dig>0)
+            {
+                board[x][y] = (dig+'0');
+                return;
+            }
+            else
+            {
+                //周围没有炸弹才递归
+                for(int i=0;i<8;i++)
+                {
+                    int curX = x+dirs[i][0];
+                    int curY = y+dirs[i][1];
+                    if(curX<0||curY<0||curX>=m||curY>=n)continue;
+                    dfs(curX,curY);
+                }
+            }
+        };
+        //直接出发，直到到达炸弹，改值，并结束递归 
+        dfs(click[0],click[1]);
+        return board;
+    }
+};
+```
+
+
+
+# 二、网格图 BFS
+
+适用于需要计算最短距离（最短路）的题目。
+
+
+
+m 广度优先 ，先到达的一定更近，一般都不需要再被更新了。因此可以标记为visited，但不一定要开新的visited数组，可以将原来的数组 比如标记为-1等各种操作。否则重复访问很容易超时。
+
+### [1926. 迷宫中离入口最近的出口](https://leetcode.cn/problems/nearest-exit-from-entrance-in-maze/)
+
+给你一个 `m x n` 的迷宫矩阵 `maze` （**下标从 0 开始**），矩阵中有空格子（用 `'.'` 表示）和墙（用 `'+'` 表示）。同时给你迷宫的入口 `entrance` ，用 `entrance = [entrancerow, entrancecol]` 表示你一开始所在格子的行和列。
+
+每一步操作，你可以往 **上**，**下**，**左** 或者 **右** 移动一个格子。你不能进入墙所在的格子，你也不能离开迷宫。你的目标是找到离 `entrance` **最近** 的出口。**出口** 的含义是 `maze` **边界** 上的 **空格子**。`entrance` 格子 **不算** 出口。
+
+请你返回从 `entrance` 到最近出口的最短路径的 **步数** ，如果不存在这样的路径，请你返回 `-1` 。
+
+ 
+
+**示例 1：**
+
+![img](assets/nearest1-grid.jpg)
+
+```c++
+输入：maze = [["+","+",".","+"],[".",".",".","+"],["+","+","+","."]], entrance = [1,2]
+输出：1
+解释：总共有 3 个出口，分别位于 (1,0)，(0,2) 和 (2,3) 。
+一开始，你在入口格子 (1,2) 处。
+- 你可以往左移动 2 步到达 (1,0) 。
+- 你可以往上移动 1 步到达 (0,2) 。
+从入口处没法到达 (2,3) 。
+所以，最近的出口是 (0,2) ，距离为 1 步。
+```
+
+https://leetcode.cn/problems/nearest-exit-from-entrance-in-maze/solutions/869920/mi-gong-zhong-chi-ru-kou-zui-jin-de-chu-0ued5
+
+**在入队孩子以后，再将孩子标记 visited。可以避免超时。**
+**原因是，同一个孙子/女，可能被多个女/儿子 重复加入到队列中去。 导致做无用功。**
+
+会重复入队，一堆重复的放在队列后面，
+
+假设a 和 b相邻，c 和 b相邻
+
+```
+a c d
+  c d b
+    d b b
+```
+
+
+
+```C++
+class Solution {
+public:
+    int nearestExit(vector<vector<char>>& maze, vector<int>& entrance) {
+        //queue
+        queue<tuple<int,int,int>> que;
+        que.emplace(entrance[0],entrance[1],0);
+        maze[entrance[0]][entrance[1]] = '+';//关上门 从入口出去是不可以
+        int m = maze.size();
+        int n = maze[0].size();
+        vector<vector<int>> visited(m,vector<int>(n,0));
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        while(!que.empty())
+        {
+            auto [x,y,d] = que.front();
+            // visited[x][y] = 1; // 放在这里会超出内存 要放在 【1】
+            que.pop();
+            for(int i=0;i<4;i++)
+            {   
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||visited[curX][curY]||maze[curX][curY]=='+')continue;
+                //靠墙的 意味着是出口
+                if(curX==0||curX == m-1||curY ==0 ||curY==n-1)return d+1;
+                que.emplace(curX,curY,d+1);
+                visited[curX][curY] = 1;//【1】
+            }
+        }
+        return -1;
+    }
+};
+```
+
+
+
+直接全标记为'+' 省略visited（反正dfs根本不会走回头路）
+
+```C++
+class Solution {
+public:
+    int nearestExit(vector<vector<char>>& maze, vector<int>& entrance) {
+        //queue
+        queue<tuple<int,int,int>> que;
+        que.emplace(entrance[0],entrance[1],0);
+        maze[entrance[0]][entrance[1]] = '+';//关上门 从入口出去是不可以
+        int m = maze.size();
+        int n = maze[0].size();
+        // vector<vector<int>> visited(m,vector<int>(n,0));
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        while(!que.empty())
+        {
+            auto [x,y,d] = que.front();
+            que.pop();
+            for(int i=0;i<4;i++)
+            {   
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||maze[curX][curY]=='+')continue;
+                //靠墙的 意味着是出口
+                if(curX==0||curX == m-1||curY ==0 ||curY==n-1)return d+1;
+                maze[curX][curY] = '+';//【add】可以省略visited
+                que.emplace(curX,curY,d+1);
+                // visited[curX][curY] = 1;//【1】
+            }
+        }
+        return -1;
+    }
+};
+```
+
+
+
+不支持tuple的话 可以额外存一个类模拟tuple，或者二维数组或者一维数组（二维转一维index）
+
+https://leetcode.cn/problems/nearest-exit-from-entrance-in-maze/solutions/2938271/javapython3cbfsxi-dai-e-wai-xin-xi-de-zu-xmnf/
+
+或者类似之前层序遍历
+
+```C++
+dis++;//step
+int len = q.size();
+for(int i = 0; i < len; i++){
+	for 四个方向
+....
+```
+
+https://leetcode.cn/problems/nearest-exit-from-entrance-in-maze/solutions/3008910/bfs-pythonjavacti-jie-by-yfsilver-9zi0/
+
+
+
+### [1091. 二进制矩阵中的最短路径](https://leetcode.cn/problems/shortest-path-in-binary-matrix/)
+
+给你一个 `n x n` 的二进制矩阵 `grid` 中，返回矩阵中最短 **畅通路径** 的长度。如果不存在这样的路径，返回 `-1` 。
+
+二进制矩阵中的 畅通路径 是一条从 **左上角** 单元格（即，`(0, 0)`）到 右下角 单元格（即，`(n - 1, n - 1)`）的路径，该路径同时满足下述要求：
+
+- 路径途经的所有单元格的值都是 `0` 。
+- 路径中所有相邻的单元格应当在 **8 个方向之一** 上连通（即，相邻两单元之间彼此不同且共享一条边或者一个角）。
+
+**畅通路径的长度** 是该路径途经的单元格总数。
+
+ 
+
+**示例 1：**
+
+<img src="assets/example1_1.png" alt="img" style="zoom: 33%;" />
+
+```
+输入：grid = [[0,1],[1,0]]
+输出：2
+```
+代码：
+```C++
+class Solution {
+public:
+    int shortestPathBinaryMatrix(vector<vector<int>>& grid) {
+        int dirs[8][2] = {{0,1},{0,-1},{1,0},{-1,0},{1,1},{-1,1},{1,-1},{-1,-1}};
+        queue<tuple<int,int,int>> que;
+        if(grid[0][0]==1)return -1;
+        que.emplace(0,0,1);
+        grid[0][0] = 2;
+        int d=1;
+        int m = grid.size();
+        int n = grid[0].size();
+        while(!que.empty())
+        {
+            auto [x,y,d] = que.front();
+            que.pop();
+            if(x==m-1&&y==n-1)return d;
+            for(int i=0;i<8;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]!=0)continue;
+                que.emplace(curX,curY,d+1);
+                grid[curX][curY] = 2;//visited依旧是只能放在这里 否则会超时
+            }
+        }
+        return -1;
+    }
+};
+```
+
+
+
+
+
+### [1162. 地图分析](https://leetcode.cn/problems/as-far-from-land-as-possible/)
+
+你现在手里有一份大小为 `n x n` 的 网格 `grid`，上面的每个 单元格 都用 `0` 和 `1` 标记好了。其中 `0` 代表海洋，`1` 代表陆地。
+
+请你找出一个海洋单元格，这个海洋单元格到离它最近的陆地单元格的距离是最大的，并返回该距离。如果网格上只有陆地或者海洋，请返回 `-1`。
+
+我们这里说的距离是「曼哈顿距离」（ Manhattan Distance）：`(x0, y0)` 和 `(x1, y1)` 这两个单元格之间的距离是 `|x0 - x1| + |y0 - y1|` 。
+
+**示例 1：**
+
+**![img](assets/1336_ex1.jpeg)**
+
+```
+输入：grid = [[1,0,1],[0,0,0],[1,0,1]]
+输出：2
+解释： 
+海洋单元格 (1, 1) 和所有陆地单元格之间的距离都达到最大，最大距离为 2。
+```
+
+
+多源bfs
+
+（用迪杰斯特拉好像也可以做 没看）
+
+```C++
+class Solution {
+public:
+    int maxDistance(vector<vector<int>>& grid) {
+        //陆地出发，更新
+        //如果更小 更新 否则不更新
+        queue<pair<int,int>> que;
+        int m = grid.size();
+        int n = grid[0].size();
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        vector<vector<int>> dist(m,vector<int>(n,INT_MAX));//存储所有海洋的dist
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]==1)
+                {
+                    que.emplace(i,j); 
+                    dist[i][j] = 0;
+                }
+            }
+        }
+        int res=-1;
+        while(!que.empty())
+        {
+            auto [x,y] = que.front();
+            que.pop();
+            int d = dist[x][y];
+            for(int i=0;i<4;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n)continue;
+                if(dist[curX][curY]>d+1)//if(dist[curX][curY]==INT_MAX) 也可以 表示没被更新
+                {
+                    dist[curX][curY] = d+1;
+                    que.emplace(curX,curY);
+                    res = max(res,d+1);
+                }
+            }
+        }
+        return res<=0?-1:res;
+    }
+};
+```
+
+用 层序 的做法：
+
+https://leetcode.cn/problems/as-far-from-land-as-possible/solutions/3601096/duo-yuan-yan-du-you-xian-sou-suo-wen-ti-zdm7l/
+
+
+
+### [542. 01 矩阵](https://leetcode.cn/problems/01-matrix/)
+
+给定一个由 `0` 和 `1` 组成的矩阵 `mat` ，请输出一个大小相同的矩阵，其中每一个格子是 `mat` 中对应位置元素到最近的 `0` 的距离。
+
+两个相邻元素间的距离为 `1` 。
+
+**示例 1：**
+
+![img](assets/1626667201-NCWmuP-image.png)
+
+```
+输入：mat = [[0,0,0],[0,1,0],[0,0,0]]
+输出：[[0,0,0],[0,1,0],[0,0,0]]
+```
+
+
+
+多源bfs
+
+https://leetcode.cn/problems/01-matrix/solutions/202012/01ju-zhen-by-leetcode-solution/
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> updateMatrix(vector<vector<int>>& mat) {
+        //多源bfs  从所有0出发 如果更小 更新
+        int m=mat.size();
+        int n=mat[0].size();
+        vector<vector<int>> dist(m,vector<int>(n,INT_MAX));
+        queue<pair<int,int>> que;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(mat[i][j] == 0)
+                {
+                    que.emplace(i,j);
+                    dist[i][j] = 0;
+                }
+            }
+        }
+        int dirs[4][2] = {{0,1},{0,-1},{-1,0},{1,0}};
+        while(!que.empty())
+        {
+            auto [x,y] = que.front();
+            que.pop();
+            int d = dist[x][y];
+            for(int i=0;i<4;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||mat[curX][curY]!=1)continue;
+                if(dist[curX][curY]>d+1)
+                {
+                    dist[curX][curY] = d+1;
+                    que.emplace(curX,curY);
+                }
+            }
+        }
+        return dist;
+    }
+};
+```
+
+这题也可以用动规。
+
+
+
+### [994. 腐烂的橘子](https://leetcode.cn/problems/rotting-oranges/)
+
+在给定的 `m x n` 网格 `grid` 中，每个单元格可以有以下三个值之一：
+
+- 值 `0` 代表空单元格；
+- 值 `1` 代表新鲜橘子；
+- 值 `2` 代表腐烂的橘子。
+
+每分钟，腐烂的橘子 **周围 4 个方向上相邻** 的新鲜橘子都会腐烂。
+
+返回 *直到单元格中没有新鲜橘子为止所必须经过的最小分钟数。如果不可能，返回 `-1`* 。
+
+**示例 1：**
+
+**![img](assets/oranges.png)**
+
+```
+输入：grid = [[2,1,1],[1,1,0],[0,1,1]]
+输出：4
+```
+
+
+
+#### M1
+
+```C++
+class Solution {
+public://+5
+    int orangesRotting(vector<vector<int>>& grid) {
+        //从 腐烂的橘子开始 bfs 总数 = 原来的所有新鲜橘子
+        queue<pair<int,int>> que;
+        int m = grid.size(),n=grid[0].size();
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        int fresh=0;//新鲜的橘子数量
+        vector<vector<int>> time(m,vector<int>(n,INT_MAX));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j] == 2)
+                {
+                    que.emplace(i,j);
+                    time[i][j]=0;
+                }
+                else if(grid[i][j]==1)
+                {
+                    fresh++;
+                }
+            }
+        }
+        while(!que.empty())
+        {
+            auto [x,y] = que.front();
+            que.pop();
+            int d = time[x][y];
+            for(int i=0;i<4;i++)
+            {
+                int curX = x+dirs[i][0];
+                int curY = y+dirs[i][1];
+                if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]!=1)continue;
+                if(time[curX][curY]>d+1)
+                {
+                    fresh--;
+                    time[curX][curY] =d+1;
+                    que.emplace(curX,curY);
+                    if(fresh==0)return d+1;
+                }   
+            }
+        }
+        return fresh==0?0: -1;
+    }
+};
+```
+
+
+
+#### M2 这题更推荐这个("层序")
+
+实际上前面几个题目用这个可能也更好
+
+```C++
+class Solution {
+public://+5
+    int orangesRotting(vector<vector<int>>& grid) {
+        //从 腐烂的橘子开始 bfs 总数 = 原来的所有新鲜橘子
+        queue<pair<int,int>> que;
+        int m = grid.size(),n=grid[0].size();
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        int fresh=0;//新鲜的橘子数量
+
+        //用“层序”方法替代这个数组
+        // vector<vector<int>> time(m,vector<int>(n,INT_MAX));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j] == 2)
+                {
+                    que.emplace(i,j);
+                }
+                else if(grid[i][j]==1)
+                {
+                    fresh++;
+                }
+            }
+        }
+        int timeMin=0;
+        while(fresh&&!que.empty())//
+        {
+            int sz = que.size();
+            timeMin++;// 经过一分钟！
+            for(int k=0;k<sz;k++) // 遍历当前层！
+            {
+                //处理当前层所有的橘子！
+                auto [x,y] = que.front();
+                que.pop();
+                for(int i=0;i<4;i++)
+                {
+                    int curX = x+dirs[i][0];
+                    int curY = y+dirs[i][1];
+                    if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]!=1)continue;
+                    grid[curX][curY]=2;//没有time数组 需要将其变为腐烂 相当于visited
+                    fresh--;
+                    que.emplace(curX,curY);
+                    if(fresh==0)return timeMin;
+                }
+            }
+            
+        }
+        return fresh==0?timeMin: -1;
+    }
+};
+```
+
+
+
+### [1765. 地图中的最高点](https://leetcode.cn/problems/map-of-highest-peak/)
+
+给你一个大小为 `m x n` 的整数矩阵 `isWater` ，它代表了一个由 **陆地** 和 **水域** 单元格组成的地图。
+
+- 如果 `isWater[i][j] == 0` ，格子 `(i, j)` 是一个 **陆地** 格子。
+- 如果 `isWater[i][j] == 1` ，格子 `(i, j)` 是一个 **水域** 格子。
+
+你需要按照如下规则给每个单元格安排高度：
+
+- 每个格子的高度都必须是非负的。
+- 如果一个格子是 **水域** ，那么它的高度必须为 `0` 。
+- 任意相邻的格子高度差 **至多** 为 `1` 。当两个格子在正东、南、西、北方向上相互紧挨着，就称它们为相邻的格子。（也就是说它们有一条公共边）
+
+找到一种安排高度的方案，使得矩阵中的最高高度值 **最大** 。
+
+请你返回一个大小为 `m x n` 的整数矩阵 `height` ，其中 `height[i][j]` 是格子 `(i, j)` 的高度。如果有多种解法，请返回 **任意一个** 。
+
+**示例 1：**
+
+**![img](assets/screenshot-2021-01-11-at-82045-am-1743930482769-15.png)**
+
+```
+输入：isWater = [[0,1],[0,0]]
+输出：[[1,0],[2,1]]
+解释：上图展示了给各个格子安排的高度。
+蓝色格子是水域格，绿色格子是陆地格。
+```
+
+
+
+广度优先 ，先到达的一定更近，一般都不需要再被更新了。因此可以标记为visited，但不一定要开新的visited数组，可以将原来的数组 比如标记为-1等各种操作。否则重复访问很容易超时
+
+#### M1
+
+这题其实不是求最高 那么其实也可以不需要层序
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> highestPeak(vector<vector<int>>& isWater) {
+        queue<pair<int,int>> que;
+        int m = isWater.size();
+        int n = isWater[0].size();
+        vector<vector<int>> heights(m,vector<int>(n,-1));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(isWater[i][j])
+                {
+                    heights[i][j] = 0;
+                    que.emplace(i,j);
+                }
+            }
+        }
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        while(!que.empty())
+        {
+            int sz = que.size();
+            for(int i=0;i<sz;i++)
+            {
+                auto [x,y] = que.front();
+                que.pop();
+                for(int j=0;j<4;j++)
+                {
+                    int curX = x+dirs[j][0];
+                    int curY = y+dirs[j][1];
+                    if(curX<0||curY<0||curX>=m||curY>=n||heights[curX][curY]!=-1)continue;
+                    heights[curX][curY] = heights[x][y]+1;//
+                    que.emplace(curX,curY);
+                }
+            }
+        }
+        return heights;
+    }
+};
+```
+
+
+
+#### M2：层序
+
+```C++
+class Solution {
+public:
+    vector<vector<int>> highestPeak(vector<vector<int>>& isWater) {
+        int ans=0;
+        queue<pair<int,int>> que;
+        int m = isWater.size();
+        int n = isWater[0].size();
+        vector<vector<int>> heights(m,vector<int>(n,-1));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(isWater[i][j])
+                {
+                    heights[i][j] = 0;
+                    que.emplace(i,j);
+                }
+            }
+        }
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        while(!que.empty())
+        {
+            int sz = que.size();
+            ans++;
+            for(int i=0;i<sz;i++)
+            {
+                auto [x,y] = que.front();
+                que.pop();
+                for(int j=0;j<4;j++)
+                {
+                    int curX = x+dirs[j][0];
+                    int curY = y+dirs[j][1];
+                    //heights[curX][curY]!=-1 广度优先 ，先到达的一定更近，不需要再被更新了。	 	
+                    if(curX<0||curY<0||curX>=m||curY>=n||heights[curX][curY]!=-1)continue;
+                    heights[curX][curY] = ans;
+                    que.emplace(curX,curY);
+                }
+            }
+        }
+        return heights;
+
+    }
+};
+```
+
+
+
+### [934. 最短的桥](https://leetcode.cn/problems/shortest-bridge/)
+
+给你一个大小为 `n x n` 的二元矩阵 `grid` ，其中 `1` 表示陆地，`0` 表示水域。
+
+**岛** 是由四面相连的 `1` 形成的一个最大组，即不会与非组内的任何其他 `1` 相连。`grid` 中 **恰好存在两座岛** 。
+
+你可以将任意数量的 `0` 变为 `1` ，以使两座岛连接起来，变成 **一座岛** 。
+
+返回必须翻转的 `0` 的最小数目。
+
+**示例 1：**
+
+```
+输入：grid = [[0,1],[1,0]]
+输出：1
+```
+
+
+
+```C++
+class Solution {
+public:
+    int shortestBridge(vector<vector<int>>& grid) {
+        //把其中1个填成2，然后去找1的
+        int m = grid.size();
+        int n = grid[0].size();
+        int dirs[4][2] = {{0,1},{0,-1},{1,0},{-1,0}};
+        queue<pair<int,int>> que;
+        auto dfs = [&](this auto&& dfs,int x,int y)->void
+        {
+            grid[x][y] = 2;
+            que.emplace(x,y);
+            for(int i=0;i<4;i++)
+            {
+                int x1 =x+dirs[i][0];
+                int y1 =y+dirs[i][1];
+                if(x1<0||y1<0||x1>=m||y1>=n||grid[x1][y1]!=1)continue;
+                dfs(x1,y1);
+            }
+        };
+        bool over = false;
+        for(int i=0;i<m&&!over;i++)
+        {
+            for(int j=0;j<n&&!over;j++)
+            {
+                if(grid[i][j]==1)
+                {
+                    dfs(i,j);//填写为2
+                    over = true;
+                    break;
+                }
+            }
+        }
+        int ans=0;
+        //去寻找距离1的
+        while(!que.empty())
+        {
+            ans++;
+            int sz = que.size();
+            for(int k=0;k<sz;k++)
+            {
+                auto [x,y] = que.front();
+                que.pop();
+                for(int i=0;i<4;i++)
+                {
+                    int x1 =x+dirs[i][0];
+                    int y1 =y+dirs[i][1];
+                    if(x1<0||y1<0||x1>=m||y1>=n||grid[x1][y1]==2)continue;
+                    if(grid[x1][y1]==1)
+                    {
+                        return ans-1;
+                    }
+                    //==0
+                    if(grid[x1][y1]==0)
+                    {
+                        grid[x1][y1]=-1; // 需要标记是否被访问过，不然会重复标记，会超时
+                        que.emplace(x1,y1);
+                    }
+                }
+            }
+        }
+        return 0;
+
+    }
+};
+```
+

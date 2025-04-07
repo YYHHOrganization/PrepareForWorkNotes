@@ -2737,6 +2737,16 @@ public:
 
 注释版本：
 
+1、return
+
+2、可返回记忆化
+
+3、继续dfs
+
+​		3.1、up
+
+​		...
+
 ```cpp
 class Solution {
     const int MOD = 1e9 + 7;  // 模数，用于结果取模
@@ -3032,6 +3042,80 @@ public:
 ```
 
 
+
+### [1742. 盒子中小球的最大数量](https://leetcode.cn/problems/maximum-number-of-balls-in-a-box/)
+
+你在一家生产小球的玩具厂工作，有 `n` 个小球，编号从 `lowLimit` 开始，到 `highLimit` 结束（包括 `lowLimit` 和 `highLimit` ，即 `n == highLimit - lowLimit + 1`）。另有无限数量的盒子，编号从 `1` 到 `infinity` 。
+
+你的工作是将每个小球放入盒子中，其中盒子的编号应当等于小球编号上每位数字的和。例如，编号 `321` 的小球应当放入编号 `3 + 2 + 1 = 6` 的盒子，而编号 `10` 的小球应当放入编号 `1 + 0 = 1` 的盒子。
+
+给你两个整数 `lowLimit` 和 `highLimit` ，返回放有最多小球的盒子中的小球数量*。*如果有多个盒子都满足放有最多小球，只需返回其中任一盒子的小球数量。
+
+ 
+
+**示例 1：**
+
+```
+输入：lowLimit = 1, highLimit = 10
+输出：2
+解释：
+盒子编号：1 2 3 4 5 6 7 8 9 10 11 ...
+小球数量：2 1 1 1 1 1 1 1 1 0  0  ...
+编号 1 的盒子放有最多小球，小球数量为 2 。
+```
+
+
+
+使用V2.0
+
+https://leetcode.cn/problems/maximum-number-of-balls-in-a-box/solutions/3073112/san-chong-fang-fa-bao-li-mei-ju-qian-zhu-kze9/
+
+```C++
+class Solution {
+public:
+    int countBalls(int lowLimit, int highLimit) {
+        string high_s = to_string(highLimit);
+        int n = high_s.size();
+        int m = high_s[0]-'0' + (n-1)*9;
+        
+        string low_s = to_string(lowLimit);
+        low_s = string(n-low_s.size(),'0')+low_s;//!!!!
+        
+        vector<vector<int>> dp(n,vector<int>(m+1,-1));
+        auto dfs = [&](this auto &&dfs ,int i,int sum,bool lowlimit,bool highlimit)->int
+        {
+            if(i==n) return sum==0;
+            if(!lowlimit&&!highlimit&&dp[i][sum]!=-1)return dp[i][sum];
+            int lo = lowlimit?low_s[i]-'0':0;
+            int hi = highlimit?high_s[i]-'0':9;
+            int res=0;
+            for(int d=lo;d<=min(sum,hi);d++)//min(sum,hi)!!!
+            {
+                res+=dfs(i+1,sum-d,lowlimit&&d==lo,highlimit&&d==hi);
+            }
+            if(!lowlimit&&!highlimit)dp[i][sum] = res;
+            return res;
+        };
+
+        int maxRes=0;
+        for(int i=1;i<=m;i++)
+        {
+            maxRes = max(maxRes,dfs(0,i,true,true));
+        }
+        return maxRes;
+    }
+};
+```
+
+
+
+` low_s = string(n-low_s.size(),'0')+low_s;//!!!!`    需要补充前导0. 
+
+比如 high 12345， low 8
+
+这时候变成  low_s[i] 可能已经越界了，但是c++没报错而已
+
+应该是 00008
 
 # 十二、树形 DP
 
