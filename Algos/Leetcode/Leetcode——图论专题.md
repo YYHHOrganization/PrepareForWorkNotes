@@ -833,6 +833,15 @@ public:
 ```
 
 
+
+####　思考题：
+
+> 如果改成移除 2 个节点呢？改成移除 *k* 个节点呢？
+
+移除k个节点的话，可以在算出联通块的大小和被感染的个数之后采用0-1背包的作法。将连通块大小看成价值，每个块里面的感染个数是重量，而k就是背包的总重量。因为每个连通块的感染数要么全部移除，要么全部保留。
+
+
+
 ### （10）[2101. 引爆最多的炸弹](https://leetcode.cn/problems/detonate-the-maximum-bombs/)
 
 > 给你一个炸弹列表。一个炸弹的 **爆炸范围** 定义为以炸弹为圆心的一个圆。
@@ -932,6 +941,7 @@ public:
 > ### 总结
 > **有向图无法完成拓扑排序的唯一原因是图中存在有向环**。其他图的结构特性（如非连通性、孤立顶点等）均不影响拓扑排序的存在性。这一结论是图论中拓扑排序的核心性质之一。
 
+<<<<<<< HEAD
 因此，本题就转变为了如何在有向图中判断是否有环，具体做法可以参考上面的题解。
 
 
@@ -974,7 +984,824 @@ public:
         }
         return true;
 
+=======
+因此，本题就转变为了如何在有向图中判断是否有环，具体做法可以参考上面的题解。代码如下（**注：下一题的三色标记法感觉会更加容易理解一些**）:
+
+```c++
+class Solution {
+public:
+    bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+        //无法完成拓扑排序,只有可能是有环,用三色标记法判断是否会有环
+        //step 1:根据prerequisites构建邻接表
+        vector<vector<int>> graph(numCourses);
+        for(auto& p: prerequisites)
+        {
+            int from = p[1];
+            int to = p[0];
+            graph[from].emplace_back(to);
+        }
+        //step 2:写dfs的代码,用于后面三色标记法判断是否有环
+        vector<int> visited(numCourses, 0); //0表示没有访问过,-1表示正在堆栈里,-2表示结束访问
+        //dfs = true 表示有环,false表示没有环
+        auto dfs = [&](this auto&& dfs, int cur) -> bool
+        {
+            if(visited[cur]==-2) return false; //这个节点彻底访问完了,没环
+            visited[cur] = -1; //正在访问
+            int sz = graph[cur].size();
+            bool hasCircle = false;
+            for(int i=0;i<sz;i++)
+            {
+                int nxt = graph[cur][i];
+                if(visited[nxt]==-1 || dfs(nxt)) //访问了正在访问的,
+                {
+                    hasCircle = true;
+                }
+            }
+            visited[cur] = -2; //访问完毕
+            return hasCircle;
+        };
+        //step 3:遍历所有的节点,检查是否有环
+        for(int i=0;i<numCourses;i++)
+        {
+            if(visited[i]==0)
+            {
+                bool res = dfs(i);
+                if(res) return false;
+            }
+        }
+        return true;
+>>>>>>> ca59958f1c3adaec9166200d72ad8445ae53d302
     }
 };
 ```
 
+
+
+
+### （12）[802. 找到最终的安全状态](https://leetcode.cn/problems/find-eventual-safe-states/)
+
+写了一版有各种问题，看一下官方的题解吧：[802. 找到最终的安全状态 - 力扣（LeetCode）](https://leetcode.cn/problems/find-eventual-safe-states/)。
+
+> 务必注意DFS的各种情况，能否提前return之类的。
+
+#### （a）方法1：三色标记法判断是否有环
+
+本题代码如下：
+
+```c++
+class Solution {
+public:
+    vector<int> eventualSafeNodes(vector<vector<int>>& graph) {
+        int n = graph.size();
+        vector<int> colors(n, 0); //1表示正在访问,2表示访问过了
+        //true表示有环,false表示没有环,注意在判断的过程中如果遇到了环则直接一路返回,不修改color的状态,这样后面的节点遍历到colors>0的节点就会知道是否是安全的了
+        auto dfs = [&](this auto&& dfs, int cur) -> bool
+        {
+            if(colors[cur]>0)
+            {
+                return colors[cur]==1; 
+            }
+            colors[cur] = 1; //先认为是不安全的,或者理解成是在栈里面的
+            int sz = graph[cur].size();
+            for(int i=0;i<sz;i++)
+            {
+                if(dfs(graph[cur][i])) //说明有环
+                {
+                    return true; //提前返回,这里不需要全遍历完,因为会有colors数组保留节点的状态,这样一路上的节点都会被保持为1的情况,即不安全
+                }
+            }
+            colors[cur] = 2;
+            return false;
+        };
+        vector<int> res;
+        for(int i=0;i<n;i++)
+        {
+            if(!dfs(i)) //说明没有环或者说已经被标记成了安全节点
+            {
+                res.push_back(i);
+            }
+        }
+        return res;
+    }
+};
+```
+
+每次结束DFS之后,已经访问过的没环的节点会是2,在环内的节点会是1。
+
+
+
+#### （b）方法2：逆拓扑排序
+
+> 根据题意，**若一个节点没有出边，则该节点是安全的；若一个节点出边相连的点都是安全的，则该节点也是安全的。**
+>
+> 根据这一性质，我们可以将图中所有边反向，得到一个反图，然后在反图上运行拓扑排序。
+>
+> 具体来说，首先得到反图 rg 及其入度数组 inDeg。将所有入度为 0 的点加入队列，然后不断取出队首元素，将其出边相连的点的入度减一，若该点入度减一后为 0，则将该点加入队列，如此循环直至队列为空。循环结束后，所有入度为 0 的节点均为安全的。我们遍历入度数组，并将入度为 0 的点加入答案列表。
+>
+
+拓扑排序的话记录的是入度为0的点，因此对于反图来说正好是出度为0的点，即为所求。将反图进行拓扑排序之后，所有入度为0的点（相当于原图出度为0）即为所求。
+
+代码如下：
+```c++
+class Solution {
+public:
+    vector<int> eventualSafeNodes(vector<vector<int>>& graph) {
+        //环也可以用拓扑排序来做
+        //step 1:求反图
+        int n = graph.size();
+        vector<vector<int>> rg(n);
+        vector<int> indegrees(n, 0);
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<(int)graph[i].size();j++)
+            {
+                int from = graph[i][j];
+                int to = i;
+                rg[from].emplace_back(to);
+                indegrees[to]++;
+            }
+        }
+        queue<int> que;
+        for(int i=0;i<n;i++)
+        {
+            if(indegrees[i]==0) que.push(i);
+        }
+        while(!que.empty())
+        {
+            int cur = que.front();
+            que.pop();
+            for(int i=0;i<rg[cur].size();i++)
+            {
+                indegrees[rg[cur][i]]--;
+                if(indegrees[rg[cur][i]]==0) //所有入度为0的点都是不会成环的点
+                {
+                    que.push(rg[cur][i]);
+                }
+            }
+        }
+        vector<int> res;
+        for(int i=0;i<n;i++)
+        {
+            if(indegrees[i]==0) res.emplace_back(i);
+        }
+        return res;
+    }
+};
+```
+
+
+
+## 2.BFS基础
+
+### （1）[3243. 新增道路查询后的最短距离 I](https://leetcode.cn/problems/shortest-distance-after-road-addition-queries-i/)
+
+之前做这道题的代码比较怪，有点Dijkstra那个感觉，但又不是，如果要写BFS的话还是写的正统一些，如下：
+
+```c++
+class Solution {
+public:
+    vector<int> shortestDistanceAfterQueries(int n, vector<vector<int>>& queries) {
+        //有向图,直接放弃并查集
+        //BFS可以求最短路,暴力每个查询都做一次BFS.为了防止visited数组每次要刷一遍,可以认为visited[i]=step的才是本轮访问过的
+        vector<int> visited(n, -1); //一开始是-1,第step轮被访问的会被刷成step
+        //先建图
+        vector<vector<int>> graph(n);
+        for(int i=0;i<n-1;i++)
+        {
+            int from = i;
+            int to = i+1;
+            graph[from].push_back(to);
+        }
+        auto bfs = [&](int start, int end, int step)
+        {
+            //BFS,用队列来做
+            queue<int> que;
+            que.push(start);
+            int totalStep = 0;
+            while(!que.empty())
+            {
+                int size = que.size();
+                totalStep+=1; //新走了一步
+                while(size--)
+                {
+                    int cur = que.front();
+                    que.pop();
+                    int sz = graph[cur].size();
+                    for(int idx = 0;idx<sz;idx++)
+                    {
+                        int nxt = graph[cur][idx];
+                        if(nxt == end) return totalStep;
+                        if(visited[nxt]!=step) 
+                        {
+                            visited[nxt] = step;
+                            que.push(nxt);
+                        }
+                    }
+                }
+            }
+            return totalStep; //根据题意,本题能够保证可达
+        };
+        int m = queries.size();
+        vector<int> res(m);
+        for(int i=0;i<m;i++)
+        {
+            int addFrom = queries[i][0];
+            int addTo = queries[i][1];
+            graph[addFrom].push_back(addTo);
+            int step = bfs(0, n-1, i); //最后一个参数是step
+            res[i] = step;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （2）[1129. 颜色交替的最短路径](https://leetcode.cn/problems/shortest-path-with-alternating-colors/)
+
+以下代码写的可能比较冗长，也可以参考这篇题解：[1129. 颜色交替的最短路径 - 力扣（LeetCode）](https://leetcode.cn/problems/shortest-path-with-alternating-colors/solutions/2087881/python3javacgo-yi-ti-yi-jie-bfsqing-xi-t-ag0i/)
+
+```c++
+class Solution {
+public:
+    vector<int> shortestAlternatingPaths(int n, vector<vector<int>>& redEdges, vector<vector<int>>& blueEdges) {
+        //建图,把红边和蓝边都放进去
+        vector<vector<vector<int>>> graph(2, vector<vector<int>>(n)); //2表示红和蓝,后面一个维度则是每个顶点
+        for(int i=0;i<redEdges.size();i++)
+        {
+            int from = redEdges[i][0];
+            int to = redEdges[i][1];
+            graph[0][from].push_back(to);
+        }
+        for(int i=0;i<blueEdges.size();i++)
+        {
+            int from = blueEdges[i][0];
+            int to = blueEdges[i][1];
+            graph[1][from].push_back(to);
+        }
+        //bfs
+        vector<vector<int>> visited(2, vector<int>(n, 0));
+        queue<pair<int, int>> que; //first是红蓝属性,second则是节点
+        //把起点相关的边的放入队列中
+        for(int i=0;i<graph[0][0].size();i++) //红色边
+        {
+            que.push(make_pair(0, graph[0][0][i])); 
+        }
+        for(int i=0;i<graph[1][0].size();i++)
+        {
+            que.push(make_pair(1, graph[1][0][i]));
+        }
+        visited[0][0] = 1;
+        visited[1][0] = 1;
+        int step = 0;
+        //一开始,队列里应该有连接起点的所有红蓝边
+        vector<int> res(n, 0x3f3f3f);
+        res[0] = 0; //起点是0,一定可达
+        while(!que.empty())
+        {
+            int queSize = que.size();
+            step += 1;
+            while(queSize--)
+            {
+                auto p = que.front();
+                que.pop();
+                int color = p.first; //颜色
+                res[p.second] = min(res[p.second], step);
+                for(int idx = 0; idx<graph[1-color][p.second].size();idx++)
+                {
+                    int nxt = graph[1-color][p.second][idx]; //下一个节点
+                    if(!visited[1-color][nxt])
+                    {
+                        visited[1-color][nxt] = 1;
+                        que.push(make_pair(1-color, nxt));
+                    }
+                }
+            }
+        }
+        for(int i=0;i<n;i++)
+        {
+            if(res[i]==0x3f3f3f) res[i] = -1; //表明不可达
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （3）[1298. 你能从盒子里获得的最大糖果数](https://leetcode.cn/problems/maximum-candies-you-can-get-from-boxes/)
+
+”最大“比较迷惑人，其实就是把所有能开的都开了，如果没有钥匙的也没关系，等到有钥匙了就放入到队列当中。需要用`visited`数组防止多次遍历到同一个盒子以重复计算。代码如下：
+
+> 坑点：这题没说太清楚，有钥匙且是盒子里面的盒子，才能开启，如果不是封装在盒子里的盒子，那拿到钥匙也不能开。
+
+```c++
+class Solution {
+public:
+    int maxCandies(vector<int>& status, vector<int>& candies, vector<vector<int>>& keys, vector<vector<int>>& containedBoxes, vector<int>& initialBoxes) {
+        //放一个queue里面,类似于BFS,把新解锁的放入queue当中,同时每次拿出来一个值的时候都累加糖果数
+        int n = candies.size();
+        vector<int> hasBoxes(n, 0); //存放每个盒子的获得情况
+        vector<int> hasKeys(n, 0); //存放所有的钥匙的拥有情况
+        vector<int> visited(n, 0); //盒子访问过
+        queue<int> que;
+        //一开始只能遍历打开的箱子
+        for(int i=0;i<initialBoxes.size();i++)
+        {
+            if(status[initialBoxes[i]]==1) 
+            {
+                visited[initialBoxes[i]] = 1;
+                que.push(initialBoxes[i]); 
+            }
+            else
+            {
+                hasBoxes[initialBoxes[i]] = 1;
+            }
+        }
+        int ans = 0;
+        while(!que.empty())
+        {
+            int cur = que.front();
+            que.pop();
+            ans += candies[cur];
+            //把containedBox里面的盒子中的已经开的收集一下,然后认为已经拥有了
+            for(int c: containedBoxes[cur])
+            {
+                if(!visited[c])
+                {
+                    if(status[c]==1) //盒子现在是开的,可以直接开掉
+                    {
+                        visited[c] = 1;
+                        que.push(c);
+                    }
+                    else //盒子现在没开,算还没解决的盒子
+                    {
+                        hasBoxes[c] = 1; 
+                    }
+                }
+                
+            }
+            //然后遍历所有的钥匙,看看能不能解决还没开的盒子
+            for(int k:keys[cur])
+            {
+                hasKeys[k] = 1; //拥有了新的钥匙
+            }
+            for(int k=0;k<n;k++) //遍历所有钥匙,1000是顶得住的
+            {
+                if(visited[k]) continue;
+                if(hasKeys[k]==1 && hasBoxes[k]==1) //有钥匙并且现在的盒子还没开
+                {
+                    //问题已经解决,visited[k]置为1,反正后面不会访问了,hasKeys和hasBoxes是否置为0不重要
+                    visited[k] = 1;
+                    que.push(k);
+                }
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+## 3.拓扑排序
+
+### （1）前置题目——[1557. 可以到达所有点的最少点数目](https://leetcode.cn/problems/minimum-number-of-vertices-to-reach-all-nodes/)
+
+> 给你一个 **有向无环图** ， `n` 个节点编号为 `0` 到 `n-1` ，以及一个边数组 `edges` ，其中 `edges[i] = [fromi, toi]` 表示一条从点 `fromi` 到点 `toi` 的有向边。
+>
+> 找到最小的点集使得从这些点出发能到达图中所有点。题目保证解存在且唯一。
+>
+> 你可以以任意顺序返回这些节点编号。
+
+代码如下：
+```c++
+class Solution {
+public:
+    vector<int> findSmallestSetOfVertices(int n, vector<vector<int>>& edges) {
+        //转化为求入度为0的点,
+        //思考:入度不为0,意味着一定有别的节点可以通到当前节点,肯定不是遍历这一片区域的"起点"
+        vector<int> indegrees(n, 0);
+        int m = edges.size();
+        for(int i=0;i<m;i++)
+        {
+            int to = edges[i][1];
+            indegrees[to]++;
+        }
+        vector<int> res;
+        for(int i=0;i<n;i++)
+        {
+            if(indegrees[i]==0) res.emplace_back(i);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （2）[210. 课程表 II](https://leetcode.cn/problems/course-schedule-ii/)
+
+> 现在你总共有 `numCourses` 门课需要选，记为 `0` 到 `numCourses - 1`。给你一个数组 `prerequisites` ，其中 `prerequisites[i] = [ai, bi]` ，表示在选修课程 `ai` 前 **必须** 先选修 `bi` 。
+>
+> - 例如，想要学习课程 `0` ，你需要先完成课程 `1` ，我们用一个匹配来表示：`[0,1]` 。
+>
+> 返回你为了学完所有课程所安排的学习顺序。可能会有多个正确的顺序，你只要返回 **任意一种** 就可以了。如果不可能完成所有课程，返回 **一个空数组** 。
+
+拓扑排序的板子题。代码如下：
+```c++
+class Solution {
+public:
+    vector<int> findOrder(int numCourses, vector<vector<int>>& prerequisites) {
+        //添加题目要求:输出拓扑排序的结果
+        vector<vector<int>> graph(numCourses);
+        vector<int> indegrees(numCourses, 0);
+        for(int i=0;i<prerequisites.size();i++)
+        {
+            int from = prerequisites[i][1];
+            int to = prerequisites[i][0];
+            graph[from].push_back(to);
+            indegrees[to]++;
+        }
+        queue<int> que;
+        for(int i=0;i<numCourses;i++)
+        {
+            if(indegrees[i]==0) que.push(i);
+        }
+        vector<int> res;
+        while(!que.empty())
+        {
+            int cur = que.front();
+            que.pop();
+            res.push_back(cur);
+            for(int idx=0;idx<graph[cur].size();idx++)
+            {
+                int nxt = graph[cur][idx];
+                indegrees[nxt]--;
+                if(indegrees[nxt]==0)
+                {
+                    que.push(nxt);
+                }
+            }
+        }
+        if(res.size()!=numCourses) return {};
+        return res;
+    }
+};
+```
+
+
+
+### （3）[1462. 课程表 IV](https://leetcode.cn/problems/course-schedule-iv/)
+
+> 你总共需要上 `numCourses` 门课，课程编号依次为 `0` 到 `numCourses-1` 。你会得到一个数组 `prerequisite` ，其中 `prerequisites[i] = [ai, bi]` 表示如果你想选 `bi` 课程，你 **必须** 先选 `ai` 课程。
+>
+> - 有的课会有直接的先修课程，比如如果想上课程 `1` ，你必须先上课程 `0` ，那么会以 `[0,1]` 数对的形式给出先修课程数对。
+>
+> 先决条件也可以是 **间接** 的。如果课程 `a` 是课程 `b` 的先决条件，课程 `b` 是课程 `c` 的先决条件，那么课程 `a` 就是课程 `c` 的先决条件。
+>
+> 你也得到一个数组 `queries` ，其中 `queries[j] = [uj, vj]`。对于第 `j` 个查询，您应该回答课程 `uj` 是否是课程 `vj` 的先决条件。
+>
+> 返回一个布尔数组 `answer` ，其中 `answer[j]` 是第 `j` 个查询的答案。
+
+首先，思考一个问题：能不能预先算出一种拓扑排序的结果，然后看一下query中的a和b在这个拓扑排序结果中的前后次序来判断是否是先决条件呢？
+
+- 结论1：**如果a确实是b的先决条件，那么在任何正确的拓扑排序结果中，a应该都位于b的前面。**
+- 结论2：但是上面的思路是错误的，因为假如a和b并没有路径依赖，那么无法通过拓扑排序得到正确的结果，比如：
+
+> **例子**：考虑一个图中有三个节点 **a**、**b**、**c**，其中 **a → c** 和 **b → c**（**a** 和 **b** 之间无依赖）。可能的拓扑排序为：
+>
+> - 排序1：**a → b → c**（此时 **a** 在 **b** 前）。
+> - 排序2：**b → a → c**（此时 **a** 在 **b** 后）。
+>
+> 如果根据排序1判断 **a** 是 **b** 的前置节点（错误结论），就会导致误判，因为 **a** 和 **b** 实际上没有依赖关系。
+
+因此，本题如果要用拓扑排序做的话，比较暴力一些，需要维护一个matrix，记录所有的先决条件情况，这样在做查询的时候查表即可。
+
+代码如下（注意更新的逻辑，**这个表的构建是一个难点，需要注意一下**）：
+
+```c++
+class Solution {
+public:
+    vector<bool> checkIfPrerequisite(int numCourses, vector<vector<int>>& prerequisites, vector<vector<int>>& queries) {
+        vector<int> indegrees(numCourses, 0);
+        vector<vector<int>> check(numCourses, vector<int>(numCourses, 0)); //一开始互相都不是前置课程,因为numCourses最多为100,是够的
+        queue<int> que;
+        vector<vector<int>> graph(numCourses);
+        for(int i=0;i<prerequisites.size();i++)
+        {
+            int from = prerequisites[i][0];
+            int to = prerequisites[i][1];
+            graph[from].emplace_back(to);
+            indegrees[to]++;
+        }
+        for(int i=0;i<numCourses;i++)
+        {
+            if(indegrees[i]==0) que.push(i);
+        }
+        while(!que.empty())
+        {
+            int cur = que.front();
+            que.pop();
+            for(int nxt: graph[cur]) //所有相邻的课程
+            {
+                check[cur][nxt] = 1; //表明cur是nxt是先修课程
+                for(int i=0;i<numCourses;i++) //更新课程依赖关系
+                {
+                    //更新其他课程针对nxt的先修情况
+                    check[i][nxt] |= check[i][cur]; //这样的话,如果i是cur的先修课程,那么i就是nxt的先修课程;反之依旧成立,并且逻辑是|=
+                }
+                indegrees[nxt]--;
+                if(indegrees[nxt]==0)
+                {
+                    que.push(nxt);
+                }
+            }
+        }
+        int m = queries.size();
+        vector<bool> res(m, 0);
+        for(int i=0;i<m;i++)
+        {
+            int u = queries[i][0];
+            int v = queries[i][1];
+            res[i] = check[u][v];
+        }
+        return res;
+    }
+};
+```
+
+
+
+# 二、基环树
+
+先阅读这一篇：[2127. 参加会议的最多员工数 - 力扣（LeetCode）](https://leetcode.cn/problems/maximum-employees-to-be-invited-to-a-meeting/solutions/1187830/nei-xiang-ji-huan-shu-tuo-bu-pai-xu-fen-c1i1b/)
+
+### （1）[2359. 找到离给定两个节点最近的节点](https://leetcode.cn/problems/find-closest-node-to-given-two-nodes/)
+
+> 给你一个 `n` 个节点的 **有向图** ，节点编号为 `0` 到 `n - 1` ，每个节点 **至多** 有一条出边。
+>
+> 有向图用大小为 `n` 下标从 **0** 开始的数组 `edges` 表示，表示节点 `i` 有一条有向边指向 `edges[i]` 。如果节点 `i` 没有出边，那么 `edges[i] == -1` 。
+>
+> 同时给你两个节点 `node1` 和 `node2` 。
+>
+> 请你返回一个从 `node1` 和 `node2` 都能到达节点的编号，使节点 `node1` 和节点 `node2` 到这个节点的距离 **较大值最小化**。如果有多个答案，请返回 **最小** 的节点编号。如果答案不存在，返回 `-1` 。
+>
+> 注意 `edges` 可能包含环。
+
+这道题目要求解的为：
+
+- 令`dist1[i]`为node1到每个节点i的距离，`dist2[i]`为node2到每个节点i的距离，对于每个i来说，要求解`d = max(dist1[i], dist2[i])`,而题目要求的就是所有d当中的最小值。
+
+首先，我们可以用两轮BFS来计算，代码如下：
+
+> 使用BFS来做的话，可以把所有距离初始化为INT_MAX，这样不可达的区域的距离不会被更新，自然在取min的时候不会取到，详细见下面的代码。
+
+```c++
+class Solution {
+public:
+    int closestMeetingNode(vector<int>& edges, int node1, int node2) {
+        int n = edges.size();
+        
+        //把结果赋值到dist里面
+        auto bfs = [&](int start, vector<int>& dist, vector<int>& visited) -> void 
+        {
+            visited[start] = 1;
+            dist[start] = 0;
+            queue<int> que;
+            que.push(start);
+            int step = 0;
+            while(!que.empty())
+            {
+                int sz = que.size();
+                step++;
+                while(sz--)
+                {
+                    int cur = que.front();
+                    que.pop();
+                    if(edges[cur]!=-1 && !visited[edges[cur]])
+                    {
+                        visited[edges[cur]] = 1;
+                        dist[edges[cur]] = step;
+                        que.push(edges[cur]);
+                    }
+                }
+            }
+        };
+
+        vector<int> visited(n, 0); //防止环
+        vector<int> dist1(n, INT_MAX);
+        vector<int> dist2(n, INT_MAX); //初始化为比较大的值
+        bfs(node1, dist1, visited);
+        std::fill(visited.begin(), visited.end(), 0);
+        bfs(node2, dist2, visited);
+        int mx = INT_MAX;
+        int ans = -1;
+        for(int i=0;i<n;i++)
+        {
+            if(dist1[i]<INT_MAX && dist2[i]<INT_MAX) //可达,距离得是合法值
+            {
+                int d = max(dist1[i], dist2[i]);
+                if(d<mx)
+                {
+                    mx = d;
+                    ans = i;
+                }
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### （a）方法2：基于基环树的性质
+
+注意题目的”每个节点 **至多** 有一条出边“，这也就意味着每个连通块中最多有一个环，此时就可以用简单的循环来求出距离数组。代码如下：
+
+```c++
+class Solution {
+public:
+    int closestMeetingNode(vector<int>& edges, int node1, int node2) {
+        int n = edges.size();
+
+        auto calculate = [&](int start)
+        {
+            vector<int> dist(n, n); //初始值设置为n,基环树的性质,dist不会超过n
+            int x = start;
+            for(int d = 0; x >= 0 && dist[x] == n; x = edges[x])
+            {
+                dist[x] = d++;
+            }
+            return dist;
+        };
+
+        auto dist1 = calculate(node1);
+        auto dist2 = calculate(node2);
+        int mn = n, idx = -1;
+        for(int i=0;i<n;i++)
+        {
+            int d = max(dist1[i], dist2[i]);
+            if(d<mn)
+            {
+                mn = d;
+                idx = i;
+            }
+        }
+        return idx;
+    }
+};
+```
+
+
+
+#### （b）思考题
+
+（i）本题如果输入的是queries询问数组，每个询问包含两个节点node1和node2，此时要查询答案，要怎么做呢？
+
+> A：如果构成的树（没有环），则本题可以转换为求node1和node2的最近公共祖先LCA。如果有环的话：
+>
+> - node1和node2不在基环内，那还是求最近公共祖先
+> - 有一个在基环内，另一个不在，则取基环里面的那个点作为答案，也有可能取树枝与基环的交叉点作为答案，需要分类讨论；
+> - 如果两个都在基环内，那最小化的最大距离就是这两个点之间的距离，要取的是后面的那个点即可。
+
+（ii）如果输入的不只是两个点，而是k个点，怎么做？
+
+> A：
+>
+> - 如果都在树上，则还是LCA；
+>
+> - 都在基环上，可以二分找d，让每个点走d步，如果移动的范围存在交集，则可以减少d尝试；否则需要增加d的值。
+>
+> 具体可以看这个视频：[基环树【力扣周赛 304】LeetCode_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Ba411N78j/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)
+
+
+
+### （2）[2360. 图中的最长环](https://leetcode.cn/problems/longest-cycle-in-a-graph/)（难题！思路要搞清楚）
+
+> 给你一个 `n` 个节点的 **有向图** ，节点编号为 `0` 到 `n - 1` ，其中每个节点 **至多** 有一条出边。
+>
+> 图用一个大小为 `n` 下标从 **0** 开始的数组 `edges` 表示，节点 `i` 到节点 `edges[i]` 之间有一条有向边。如果节点 `i` 没有出边，那么 `edges[i] == -1` 。
+>
+> 请你返回图中的 **最长** 环，如果没有任何环，请返回 `-1` 。
+>
+> 一个环指的是起点和终点是 **同一个** 节点的路径。
+
+![image-20250406202136039](assets/image-20250406202136039.png)
+
+采用时间戳算法来做，有一个全局的curTime，表明当前的时间戳。每次遍历到一个节点的时候，首先记录此时开始的时间startTime，然后对路径上的每个节点x，判断是否有访问过：
+
+- 如果没有访问过x（即`vis_time[x]==0`），则记录初次访问x的时间为curTime，然后把curTime++，并令`x=edges[x]`跳转到下一个节点；
+- 如果已经访问过x（即`vis_time[x]>0`），则有可能是因为遍历到了访问过的点，或者是成环了。如果是因为成环导致再一次访问x，则`vis_time[x]`会>=本轮开始的时间startTime，此时环的长度就是`curTime - vis_time[x]`,跟现有的res求最大值即可求解出最大环的长度。
+
+根据题意，如果图中没有任何环，则返回-1。
+
+`本题思路不是很好想的清楚`。代码如下：
+
+```c++
+class Solution {
+public:
+    int longestCycle(vector<int>& edges) {
+        int n = edges.size();
+        vector<int> vis_time(n, 0); //0表示没有访问过
+        int curTime = 1;
+        int res = -1;
+        //假设在整张图(操场)上跑步
+        for(int i=0;i<n;i++) //从i=0开始访问
+        {
+            int startTime = curTime; //用来判断是否有环
+            int x = i; //这个点作为起始点
+            while(x>=0 && vis_time[x]==0) //还没有访问过,则可以访问
+            {
+                vis_time[x] = curTime;
+                curTime++;
+                x = edges[x]; //跳转到下一个位置
+            }
+            //退出上面的循环,可能是因为x<0,也可能是因为走到了一个遍历过的点
+            if(x>=0 && vis_time[x]>0) //此时的点访问过
+            {
+                //如果有环,则一定是本轮访问的,初次访问时间vis_time一定会>=startTime
+                if(vis_time[x]>=startTime)
+                {
+                    res = max(res, curTime - vis_time[x]); //后者即为当前环的长度
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+本题的总结：
+
+> 一般人思考会访问每个点都重新用1去计时算。但是 关键点： cur_time 是全局递增的时间戳。
+>
+>  vis_time[x] 记录的是节点  x 的首次访问时间：
+>
+> - 如果  vis_time[x] >= start_time ，说明  x 是在当前轮次被首次访问的。
+> - 如果  vis_time[x] < start_time ，说明  x 是在之前的轮次被访问的。
+>
+> 还有一点：每个环的检测是独立的：无论从哪个节点开始遍历，只要进入一个环，一定会完整地走完整个环。
+
+
+
+#### 方法2:拓扑排序,剩下的就是环,判断环的大小
+
+```c++
+class Solution {
+public:
+    int longestCycle(vector<int>& edges) {
+        int n = edges.size();
+        vector<int> indegrees(n, 0);
+        for(int i=0;i<n;i++)
+        {
+            int to = edges[i];
+            if(to==-1) continue;
+            indegrees[to]++;
+        }
+        //做拓扑排序
+        queue<int> que;
+        for(int i=0;i<n;i++)
+        {
+            if(indegrees[i]==0) que.push(i);
+        }
+        while(!que.empty())
+        {
+            int cur = que.front();
+            que.pop();
+            int x = edges[cur];
+            if(x!=-1)
+            {
+                indegrees[x]--;
+                if(indegrees[x]==0)
+                {
+                    que.push(x);
+                }
+            }
+        }
+        int res = -1;
+        for(int i=0;i<n;i++)
+        {
+            if(indegrees[i]==1) //找到环的入口
+            {
+                int sum = 0;
+                int x = i;
+                while(indegrees[x]==1)
+                {
+                    indegrees[x] = 0;
+                    x = edges[x];
+                    sum++;
+                }
+                res = max(res, sum);
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+>>>>>>> ca59958f1c3adaec9166200d72ad8445ae53d302

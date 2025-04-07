@@ -18,3 +18,24 @@
 
 [207. 课程表](https://leetcode.cn/problems/course-schedule/)
 
+
+
+# 2025.4.6
+
+[802. 找到最终的安全状态](https://leetcode.cn/problems/find-eventual-safe-states/)：两种做法：三色标记法 & 逆拓扑排序法
+
+[3243. 新增道路查询后的最短距离 I](https://leetcode.cn/problems/shortest-distance-after-road-addition-queries-i/)， BFS （还有一种DP的写法，但还没看，后面再说）
+
+[1129. 颜色交替的最短路径](https://leetcode.cn/problems/shortest-path-with-alternating-colors/)
+
+[1298. 你能从盒子里获得的最大糖果数](https://leetcode.cn/problems/maximum-candies-you-can-get-from-boxes/)
+
+[1557. 可以到达所有点的最少点数目](https://leetcode.cn/problems/minimum-number-of-vertices-to-reach-all-nodes/)
+
+[210. 课程表 II](https://leetcode.cn/problems/course-schedule-ii/)
+
+[1462. 课程表 IV](https://leetcode.cn/problems/course-schedule-iv/)
+
+[2359. 找到离给定两个节点最近的节点](https://leetcode.cn/problems/find-closest-node-to-given-two-nodes/)
+
+[2360. 图中的最长环](https://leetcode.cn/problems/longest-cycle-in-a-graph/)
