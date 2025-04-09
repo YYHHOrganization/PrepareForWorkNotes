@@ -1030,7 +1030,6 @@ public:
             }
         }
         return true;
->>>>>>> ca59958f1c3adaec9166200d72ad8445ae53d302
     }
 };
 ```
@@ -1290,6 +1289,76 @@ public:
 
 
 
+Y：
+
+```C++
+class Solution {
+public:
+    //10 ++ 
+    vector<int> shortestAlternatingPaths(int n, vector<vector<int>>& redEdges, vector<vector<int>>& blueEdges) {
+        //记录 红色图 和 蓝色图
+        //记录 当前节点dist 最后 从红色来 和从蓝色来 的情况
+        vector<vector<int>> redAdj(n);
+        vector<vector<int>> blueAdj(n);
+        for(auto &v:redEdges)
+        {
+            //0->1
+            redAdj[v[0]].emplace_back(v[1]);
+        }
+        for(auto &v:blueEdges)
+        {
+            blueAdj[v[0]].emplace_back(v[1]);
+        }
+        vector<int> redD(n,-1);
+        vector<int> blueD(n,-1);
+        queue<pair<int,int>> que;//存放当前节点 及其来的颜色 <节点index,0red 1blue>
+        que.emplace(0,0);
+        que.emplace(0,1);
+        redD[0]=0;
+        blueD[0]=0;
+        int step=0;
+        vector<int> ans(n,0x3f3f3f);
+        while(!que.empty())
+        {
+            step++;
+            int sz = que.size();
+            for(int i=0;i<sz;i++)
+            {
+                auto [idx,color] = que.front();
+                que.pop();
+                ans[idx] = min(ans[idx],step-1);
+                if(color==0)
+                {
+                    for(auto k:blueAdj[idx])
+                    {
+                        if(blueD[k]!=-1)continue;
+                        blueD[k] = step;
+                        que.emplace(k,1);
+                    }
+                }
+                else
+                {
+                    for(auto k:redAdj[idx])
+                    {
+                        if(redD[k]!=-1)continue;
+                        redD[k] = step;
+                        que.emplace(k,0);
+                    }
+                }
+            }
+        }
+       
+        for(int i=0;i<n;i++)
+        {
+            if(ans[i]==0x3f3f3f)ans[i] = -1;
+        }
+        return ans;
+    }
+};
+```
+
+
+
 ### （3）[1298. 你能从盒子里获得的最大糖果数](https://leetcode.cn/problems/maximum-candies-you-can-get-from-boxes/)
 
 ”最大“比较迷惑人，其实就是把所有能开的都开了，如果没有钥匙的也没关系，等到有钥匙了就放入到队列当中。需要用`visited`数组防止多次遍历到同一个盒子以重复计算。代码如下：
@@ -1359,6 +1428,65 @@ public:
             }
         }
         return ans;
+    }
+};
+```
+
+
+
+Y
+
+```C++
+class Solution {
+public:
+    int maxCandies(vector<int>& status, vector<int>& candies, vector<vector<int>>& keys, vector<vector<int>>& containedBoxes, vector<int>& initialBoxes) {
+        queue<int> que;//存储当前所有可以打开的箱子
+        int n = status.size();
+        vector<int> holdBox(n,0);//拥有的箱子
+        //0没访问过 也没有 -1表示访问过了 1表示拥有 还没访问
+        //初始 查看初始给的箱子能否打开，可以的话就打开
+        //将当前拥有箱子且states =1（打开） 入队列
+        //打开一个箱子，获得钥匙 ，与箱子 
+
+        //查看所有箱子 是否上锁，是否有钥匙，如果有 且没访问过，就（开锁并）放入队列
+        for(auto boxi:initialBoxes)
+        {
+            if(status[boxi]==1)
+            {
+                que.push(boxi);
+                holdBox[boxi] = -1;//访问过了
+            }
+            else
+            {
+                holdBox[boxi] = 1;
+            }
+        }
+        int candi=0;
+        while(!que.empty())
+        {
+            int boxi = que.front();
+            que.pop();
+            candi += candies[boxi];
+            //holdBox[boxi] = -1;//不可以放这里 ，应该是放入que后就立刻visited  否则会重复放 糖果会变多
+            for(auto i:keys[boxi])
+            {
+                status[i] = 1;
+            }
+            for(auto j:containedBoxes[boxi])
+            {
+                if(holdBox[j]!=-1)holdBox[j]=1;
+            }
+            for(int k=0;k<n;k++)
+            {
+                if(holdBox[k]==1&&status[k]==1)
+                {
+                    // cout<<k<<" ";
+                    que.push(k);
+                    holdBox[k] = -1;//访问过了
+                }
+            }
+        }
+        return candi;
     }
 };
 ```
@@ -1747,6 +1875,44 @@ public:
 
 
 
+Y：
+
+<img src="assets/image-20250408111837497.png" alt="image-20250408111837497" style="zoom:50%;" />
+
+```C++
+class Solution {
+public:
+    int longestCycle(vector<int>& edges) {
+        //时间戳
+        int n = edges.size();
+        vector<int> visTime(n,-1);
+        int currTime=1;//1
+        int circleNum=-1;
+        for(int i=0;i<n;i++)
+        {
+            int startTime = currTime;
+            int x=i;
+            while(x!=-1&&visTime[x]==-1)
+            {
+                visTime[x] = currTime;//v[0] = 0 //v[3] = 1 //v[2] = 2 //v[4] = 3
+                currTime++;//1 //2 //3 //4
+                x = edges[x];//3 //2 //4 //3
+            }
+            if(x!=-1&&visTime[x]>=startTime)
+            {
+                int tmpCircleNum = currTime-visTime[x]; // 4-v[3] = 4-1= 3
+                circleNum = max(tmpCircleNum,circleNum);
+            }
+        }
+        return circleNum;
+    }
+};
+```
+
+
+
+
+
 #### 方法2:拓扑排序,剩下的就是环,判断环的大小
 
 ```c++
@@ -1803,5 +1969,3 @@ public:
 ```
 
 
-
->>>>>>> ca59958f1c3adaec9166200d72ad8445ae53d302

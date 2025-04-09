@@ -2645,6 +2645,368 @@ public:
 
 > 个人理解，掌握滚动数组的方法应该是够了，基本上不可能被卡空间，而优化为一维并不简单，可能改坏掉，因此最多用滚动数组优化即可。
 
+# 五、划分型 DP
+
+## §5.1 判定能否划分
+一般定义 f[i] 表示长为 i 的前缀 a[:i] 能否划分。
+
+枚举最后一个子数组的左端点 L，从 f[L] 转移到 f[i]，并考虑 a[L:i] 是否满足要求。
+
+### [2369. 检查数组是否存在有效划分](https://leetcode.cn/problems/check-if-there-is-a-valid-partition-for-the-array/)
+
+给你一个下标从 **0** 开始的整数数组 `nums` ，你必须将数组划分为一个或多个 **连续** 子数组。
+
+如果获得的这些子数组中每个都能满足下述条件 **之一** ，则可以称其为数组的一种 **有效** 划分：
+
+1. 子数组 **恰** 由 `2` 个相等元素组成，例如，子数组 `[2,2]` 。
+2. 子数组 **恰** 由 `3` 个相等元素组成，例如，子数组 `[4,4,4]` 。
+3. 子数组 **恰** 由 `3` 个连续递增元素组成，并且相邻元素之间的差值为 `1` 。例如，子数组 `[3,4,5]` ，但是子数组 `[1,3,5]` 不符合要求。
+
+如果数组 **至少** 存在一种有效划分，返回 `true` ，否则，返回 `false` 。
+
+**示例 1：**
+
+```
+输入：nums = [4,4,4,5,6]
+输出：true
+解释：数组可以划分成子数组 [4,4] 和 [4,5,6] 。
+这是一种有效划分，所以返回 true 。
+```
+
+
+
+https://leetcode.cn/problems/check-if-there-is-a-valid-partition-for-the-array/solutions/1728735/by-endlesscheng-8y73/
+
+![image-20250408154935344](assets/image-20250408154935344.png)
+
+```C++
+class Solution {
+public:
+    //10 ++ 12+
+    bool validPartition(vector<int>& nums) {
+        //dp[i] |= 
+        //same dp[i-2]
+        //same dp[i-3]
+        //递增 dp[i-3] 
+        int n = nums.size();
+        vector<int> dp(n+1,0);
+        dp[0] = 1;
+        //4 4 4 5 6 
+        for(int i=1;i<n;i++)
+        {
+            if(nums[i]==nums[i-1])
+            {
+                dp[i+1] |= dp[i-1];
+                if(i-2>=0)
+                {
+                    if(nums[i-1]==nums[i-2])
+                        dp[i+1] |= dp[i-2];// dp[i] |= dp[i-3];
+                }
+            }
+            if(i-2>=0)
+            {
+                if(nums[i] == nums[i-1]+1&&nums[i-1]==nums[i-2]+1)
+                {
+                    //dp[i]|=dp[i-3]
+                    dp[i+1]|= dp[i-2];
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+or
+
+```C++
+class Solution {
+public:
+    //10 ++ 12+
+    bool validPartition(vector<int>& nums) {
+        //dp[i] |= 
+        //same dp[i-2]
+        //same dp[i-3]
+        //递增 dp[i-3] 
+        int n = nums.size();
+        vector<int> dp(n+1,0);
+        dp[0] = 1;
+        //4 4 4 5 6 
+        for(int i=1;i<n;i++)
+        {
+            if(
+            (dp[i-1]&&nums[i]==nums[i-1]) ||
+            (i-2>=0&& dp[i-2]&& ((nums[i-1]==nums[i-2])||
+                                (nums[i] == nums[i-1]+1&&nums[i-1]==nums[i-2]+1)))
+            )
+            {
+                dp[i+1] = 1;
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+OR:
+
+```C++
+class Solution {
+public:
+    bool validPartition(vector<int>& nums) {
+        // dp[i] 
+        // nums[i] == nums[i-1]&&dp[i-2]  dp[i] = 1
+        // i>=3&&nums[i-1] == nums[i-2]&&dp[i-3] dp[i]=1
+        // i>=3&&nums[i]==nums[i-1]+1&&.. &&dp[i-3] dp[i]=1
+
+        // dp[-1] = 1
+        int n = nums.size();
+        vector<int> dp(n+1,0);
+        dp[0]=1;
+        for(int i=1;i<n ;i++)
+        {
+            bool flag1 = (dp[i-1]&&nums[i]==nums[i-1]);
+            bool flag2 = (i>=2&&dp[i-2]&&(nums[i]==nums[i-1])&&(nums[i-1]==nums[i-2]));
+            bool flag3 = (i>=2&&dp[i-2]&&(nums[i]==nums[i-1]+1)&&(nums[i-1]==nums[i-2]+1));
+            if(flag1||flag2||flag3)dp[i+1] = 1;
+        }
+        return dp[n];
+    }
+};
+```
+
+
+
+### [139. 单词拆分](https://leetcode.cn/problems/word-break/)
+
+给你一个字符串 `s` 和一个字符串列表 `wordDict` 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 `s` 则返回 `true`。
+
+**注意：**不要求字典中出现的单词全部都使用，并且字典中的单词可以重复使用。
+
+ 
+
+**示例 1：**
+
+```
+输入: s = "leetcode", wordDict = ["leet", "code"]
+输出: true
+解释: 返回 true 因为 "leetcode" 可以由 "leet" 和 "code" 拼接成。
+```
+
+
+
+https://leetcode.cn/problems/word-break/
+
+![image-20250408162618171](assets/image-20250408162618171.png)
+
+```C++
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+        unordered_set<string> uset(wordDict.begin(),wordDict.end());
+        int max_len = ranges::max(wordDict,{},&string::length).length();
+        int sn = s.size();
+        int wn = wordDict.size();
+        vector<int> dp(sn+1,0);
+        dp[0]=1;
+        for(int i=0;i<=sn;i++)
+        {
+            for(int j=i-1;j>=max(i-max_len,0);j--)//j-i 如果超过了最大字符 直接结束 [max!!]
+            {
+                if(dp[j]&&uset.contains(s.substr(j,i-j)))
+                {
+                    dp[i] = dp[j];
+                    break; //有一个符合要求的就可以提前推出了      
+                }
+            }
+        }
+        return dp[sn];
+    }
+};
+```
+
+>1、`dp[i]`表示前i个，genshinImpactGood，
+>
+>```
+>genshin I mpact G ood
+>	  ( j )   ( i )
+>```
+>
+>2、
+>
+>`int max_len = ranges::max(wordDict, {}, &string::length).length();` 
+>
+>使用了C++20的Ranges库语法，其作用是计算`wordDict`中最长字符串的长度。
+>
+>- **`&string::length`**：投影函数（Projection），对每个元素调用`length()`方法，取其返回值进行比较。
+>
+>忘了的话正常写也一样：
+>
+>```C++
+>//int max_len = ranges::max(wordDict,{},&string::length).length();
+>int max_len = 0;
+>for (const auto& word : wordDict) 
+>{
+>   if (word.length() > max_len) 
+>   {
+>       max_len = word.length();
+>   }
+>}
+>```
+
+
+
+## §5.2 最优划分
+计算最少（最多）可以划分出多少段、最优划分得分等。
+
+一般定义 f[i] 表示长为 i 的前缀 a[:i] 在题目约束下，分割出的最少（最多）子数组个数（或者定义成分割方案数）。
+
+枚举最后一个子数组的左端点 L，从 f[L] 转移到 f[i]，并考虑 a[L:i] 对最优解的影响。
+
+
+
+### [132. 分割回文串 II](https://leetcode.cn/problems/palindrome-partitioning-ii/)
+
+困难
+
+给你一个字符串 `s`，请你将 `s` 分割成一些子串，使每个子串都是回文串。
+
+返回符合要求的 **最少分割次数** 。
+
+**示例 1：**
+
+```
+输入：s = "aab"
+输出：1
+解释：只需一次分割就可将 s 分割成 ["aa","b"] 这样两个回文子串。
+```
+
+#### 优化前
+
+```C++
+class Solution {
+public:
+    int minCut(string s) 
+    {
+        //dp[i] 最少分割次数
+        //某区间是回文串，dp[i] = min(dp[i],dp[i-len]+1)
+        int n = s.size();
+        vector<int> dp(n+1,0);//dp[0]=0 dp[1] = 1 dp[2]=2
+        ranges::iota(dp,0);
+        //a a b
+        auto isPalindrome = [&](int left,int right)->bool
+        {
+            while(left<right)
+            {
+                if(s[left]!=s[right])
+                    return false;
+                left++;
+                right--;
+            }
+            return true;
+        };
+        for(int i=0;i<n;i++) // i 是右边界
+        {
+            for(int j=0;j<=i;j++)// j 是左边界
+            {
+                if(isPalindrome(j,i))// 检查 s[j:i] 是否是回文
+                {
+                    dp[i+1] = min(dp[i+1],dp[j]+1);// 更新 dp[i + 1]
+                }
+            }
+        }
+        return dp[n]-1;// 返回最小切割次数
+    }
+};
+
+```
+
+#### 优化后1
+
+```C++
+class Solution {
+public:
+    int minCut(string s) 
+    {
+        //dp[i] 最少分割次数
+        //某区间是回文串，dp[i] = min(dp[i],dp[i-len]+1)
+        int n = s.size();
+        vector<int> dp(n+1,INT_MAX);//dp[0]=0 dp[1] = 1 dp[2]=2
+        dp[0]=-1;
+        dp[1]=0;// 单个字母 a/ b/  // 这个不用也行
+        //a a b a v v a
+        //a a b a v v*a+
+        //a a b a v*v+a
+        //a a b a*v v a+
+        vector<vector<int>> isPalindrome(n,vector<int>(n,true));
+        for(int l = n-2;l>=0;l--)
+        {
+            for(int r = l+1;r<n;r++)
+            {
+                isPalindrome[l][r] = (s[l]==s[r]&&isPalindrome[l+1][r-1]);
+            }
+        }
+        for(int r=0;r<n;r++) // r 是右边界
+        {
+            for(int l=0;l<=r;l++)// l 是左边界
+            {
+                if(isPalindrome[l][r])// 检查 s[l:r] 是否是回文
+                {
+                    dp[r+1] = min(dp[r+1],dp[l]+1);// 更新 dp[r + 1]
+                }
+            }
+        }
+        return dp[n];// 返回最小切割次数
+    }
+};
+```
+
+n不加1版本：dp[i] 表示以下标i为结尾的 推荐！
+
+https://leetcode.cn/problems/palindrome-partitioning-ii/solutions/3588633/jiao-ni-yi-bu-bu-si-kao-dpcong-ji-yi-hua-bnlb/
+
+```C++
+class Solution {
+public:
+    int minCut(string s) 
+    {
+        //dp[i] 最少分割次数
+        //某区间是回文串，dp[i] = min(dp[i],dp[i-len]+1)
+        int n = s.size();
+        vector<int> dp(n,0);//dp[0]=0 dp[1] = 1 dp[2]=2
+        //ranges::iota(dp,0);//改
+        //a a b a v v a
+        //a a b a v v*a+
+        //a a b a v*v+a
+        //a a b a*v v a+
+        vector<vector<int>> isPalindrome(n,vector<int>(n,true));
+        for(int l = n-2;l>=0;l--)
+        {
+            for(int r = l+1;r<n;r++)
+            {
+                isPalindrome[l][r] = (s[l]==s[r]&&isPalindrome[l+1][r-1]);
+            }
+        }
+        for(int r=0;r<n;r++) // r 是右边界
+        {
+            if(isPalindrome[0][r])continue;// 已是回文串，无需分割(不加1版本需要特判 否则l<0)
+            int res = INT_MAX;//改
+            for(int l=1;l<=r;l++)// l 是左边界
+            {
+                if(isPalindrome[l][r])// 检查 s[l:r] 是否是回文
+                {
+                    res = min(res,dp[l-1]+1);// 更新 dp[r + 1] //改
+                }
+            }
+            dp[r] = res;//改
+        }
+        return dp[n-1];// 返回最小切割次数 //改
+    }
+};
+```
+
+
+
 
 
 # 十、数位 DP
@@ -2688,7 +3050,7 @@ public:
 
 
 
-V1.0
+#### v1.0 
 
 ```C++
 class Solution {
@@ -2867,6 +3229,46 @@ public:
 >
 >
 >具体涉及到auto，function等的语法可以看 D:\PGPostgraduate\githubNotePrepareForWork\PrepareForWorkNotes\Algos\Leetcode\C++ 特殊语法 C++ 新特性 刷题时候遇到的.md
+
+
+
+#### v2.0 推荐
+
+```C++
+class Solution {
+public:
+    //10 ++
+    int count(string num1, string num2, int min_sum, int max_sum) {
+        //1001  8888
+        //20 30
+        //12*
+        //30*
+        //i,sum
+        int MOD = 1e9+7;
+        int n = num2.size();
+        int m = num2[0]-'0'+(n-1)*9;
+        num1 = string(n-num1.size(),'0')+num1;//【补前导0!!!】
+        vector<vector<int>> dp(n,vector<int>(m,-1));
+        auto dfs = [&](this auto&&dfs,int i,int sum,bool low_limit,bool high_limit)->int
+        {
+            if(sum>max_sum)return 0;
+            if(i==n) return (sum>=min_sum);
+            if(!high_limit&&!low_limit&&dp[i][sum]!=-1)return dp[i][sum];
+
+            int hi = high_limit? num2[i]-'0':9;
+            int lo = low_limit?num1[i]-'0':0;
+            int res=0;
+            for(int d=lo;d<=hi;d++)
+            {
+                res = (res+dfs(i+1,sum+d,low_limit&&d==lo,high_limit&&d==hi))%MOD;
+            }
+            if(!high_limit&&!low_limit)dp[i][sum] = res;
+            return res%MOD;
+        };
+        return dfs(0,0,true,true);
+    }
+};
+```
 
 
 
