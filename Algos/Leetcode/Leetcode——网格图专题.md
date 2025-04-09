@@ -1469,6 +1469,48 @@ public:
 };
 ```
 
+如果使用每扩一圈就step+=1的写法,则代码如下(**推荐写法：把判断是否到终点的判断放到从队列中拿出点的地方，如果在四个/八个方向判断的逻辑中判断是否抵达终点，对于图的size=1的情况可能不好判断。**):
+
+```c++
+class Solution {
+public:
+    typedef pair<int, int> PII;
+    int dirs[8][2] = {1,0,0,1,-1,0,0,-1,1,1,1,-1,-1,1,-1,-1};
+    int shortestPathBinaryMatrix(vector<vector<int>>& grid) {
+        int n = grid.size();
+        //走完的节点设置为2,当作是visited
+        queue<PII> que;
+        if(grid[0][0] != 0) return -1;
+        grid[0][0] = 2; //访问过了,相当于visited数组
+        que.emplace(0,0);
+        int step = 0;
+        while(!que.empty())
+        {
+            int sz = que.size();
+            step++;
+            while(sz--)
+            {
+                auto cur = que.front();
+                que.pop();
+                if(cur.first==n-1 && cur.second==n-1) return step; //从队列拿出来的时候再做处理,对边界情况的考虑会少一些
+                for(int d=0;d<8;d++)
+                {
+                    int nxtX = cur.first + dirs[d][0];
+                    int nxtY = cur.second + dirs[d][1];
+                    if(nxtX<0 || nxtY<0 || nxtX>=n || nxtY>=n) continue;
+                    if(grid[nxtX][nxtY]==0)
+                    {
+                        grid[nxtX][nxtY] = 2;
+                        que.emplace(nxtX, nxtY);
+                    } 
+                }
+            }
+        }
+        return -1;
+    }
+};
+```
+
 
 
 

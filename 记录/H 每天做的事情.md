@@ -39,3 +39,22 @@
 [2359. 找到离给定两个节点最近的节点](https://leetcode.cn/problems/find-closest-node-to-given-two-nodes/)
 
 [2360. 图中的最长环](https://leetcode.cn/problems/longest-cycle-in-a-graph/)
+
+
+
+# 2025.4.8
+
+[2115. 从给定原材料中找到所有可以做出的菜](https://leetcode.cn/problems/find-all-possible-recipes-from-given-supplies/)
+
+[851. 喧闹和富有](https://leetcode.cn/problems/loud-and-rich/)，注意本题的比较快的拓扑排序做法。
+
+[310. 最小高度树](https://leetcode.cn/problems/minimum-height-trees/)
+
+[684. 冗余连接](https://leetcode.cn/problems/redundant-connection/)
+
+【[685. 冗余连接 II](https://leetcode.cn/problems/redundant-connection-ii/)（后面再说，困难题，还没做和看答案）】
+
+[743. 网络延迟时间](https://leetcode.cn/problems/network-delay-time/)
+
+
+
