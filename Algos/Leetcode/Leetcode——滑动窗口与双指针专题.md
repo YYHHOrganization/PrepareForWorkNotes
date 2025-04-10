@@ -114,7 +114,6 @@ public:
             if(sum>=thresholdSum)res+=1;//判断一下总的sum,因为现在是3个元素
             //3、delete
             sum-=arr[i-k+1];//扣掉一个元素 回到2个元素
-
         }
         return res;
     }
@@ -572,6 +571,151 @@ public:
 ## ==9.[220. 存在重复元素 III](https://leetcode.cn/problems/contains-duplicate-iii/)（困难，还没做）==
 
 
+
+## 进阶
+
+### [3439. 重新安排会议得到最多空余时间 I](https://leetcode.cn/problems/reschedule-meetings-for-maximum-free-time-i/)
+
+给你一个整数 `eventTime` 表示一个活动的总时长，这个活动开始于 `t = 0` ，结束于 `t = eventTime` 。
+
+同时给你两个长度为 `n` 的整数数组 `startTime` 和 `endTime` 。它们表示这次活动中 `n` 个时间 **没有重叠** 的会议，其中第 `i` 个会议的时间为 `[startTime[i], endTime[i]]` 。
+
+你可以重新安排 **至多** `k` 个会议，安排的规则是将会议时间平移，且保持原来的 **会议时长** ，你的目的是移动会议后 **最大化** 相邻两个会议之间的 **最长** 连续空余时间。
+
+移动前后所有会议之间的 **相对** 顺序需要保持不变，而且会议时间也需要保持互不重叠。
+
+请你返回重新安排会议以后，可以得到的 **最大** 空余时间。
+
+**注意**，会议 **不能** 安排到整个活动的时间以外。
+
+**示例 1：**
+
+**输入：**eventTime = 5, k = 1, startTime = [1,3], endTime = [2,5]
+
+**输出：**2
+
+**解释：**
+
+![img](assets/example0_rescheduled.png)
+
+将 `[1, 2]` 的会议安排到 `[2, 3]` ，得到空余时间 `[0, 2]` 。
+
+
+
+https://leetcode.cn/problems/reschedule-meetings-for-maximum-free-time-i/solutions/3061619/zhuan-huan-cheng-ding-chang-hua-dong-chu-1kg1/
+
+![lc3439.png](assets/1738458316-BLfZXa-lc3439.png)
+
+看示例 1，把会议区间 [1,2] 移动到 [0,1] 或者 [2,3]，会产生空余时间段 [1,3] 或者 [0,2]，相当于把两个**相邻**的长为 1 空余时间段 [0,1] 和 [2,3] **合并**成一个更大的长为 1+1=2 的空余时间段。
+
+题目要求会议之间的相对顺序需要保持不变，这意味着我们只能合并相邻的空余时间段，所以重新安排至多 *k* 个会议等价于如下问题：
+
+- 给你 *n*+1 个空余时间段，合并其中 *k*+1 个**连续**的空余时间段，得到的最大长度是多少？
+
+这可以用**定长滑动窗口**解决，原理见[【套路】教你解决定长滑窗！适用于所有定长滑窗题目！](https://leetcode.cn/problems/maximum-number-of-vowels-in-a-substring-of-given-length/solutions/2809359/tao-lu-jiao-ni-jie-jue-ding-chang-hua-ch-fzfo/)
+
+
+
+(也可以不用数组存remain 不过存了更清晰就是了)
+
+```C++
+class Solution {
+public:
+    int maxFreeTime(int eventTime, int k, vector<int>& startTime, vector<int>& endTime) {
+        // 移动1块= 合并2连续空余时间
+        // 移动2块= 合并3连续空余空间
+        // 1,2  3,5
+        int start = 0;
+        int end=0;
+        int n = startTime.size();
+        vector<int> remainTime;
+        for(int i=0;i<n;i++)
+        {
+            end = startTime[i];
+            remainTime.emplace_back(end-start);
+            // if(start<end) // 错误 实际上是0也要放入 0表示这两个会议时间挨一起了不能移动
+            // {
+            //     remainTime.emplace_back(end-start);
+            // }
+            start = endTime[i];
+        }
+        if(eventTime-start>0) // 特判最终情况
+            remainTime.emplace_back(eventTime-start);
+        int tmp=0;
+        int maxRes=0;
+        k=k+1;
+        for(int r=0;r<remainTime.size();r++)
+        {
+            //in
+            tmp += remainTime[r];
+            //update
+            // if(r<k-1)continue;//特殊 放下面 
+            maxRes = max(maxRes,tmp);
+            if(r-k+1<0)continue;
+            //out
+            tmp-= remainTime[r-k+1];
+        }
+        return maxRes;
+    }
+};
+```
+
+
+
+### [2134. 最少交换次数来组合所有的 1 II](https://leetcode.cn/problems/minimum-swaps-to-group-all-1s-together-ii/)
+
+**交换** 定义为选中一个数组中的两个 **互不相同** 的位置并交换二者的值。
+
+**环形** 数组是一个数组，可以认为 **第一个** 元素和 **最后一个** 元素 **相邻** 。
+
+给你一个 **二进制环形** 数组 `nums` ，返回在 **任意位置** 将数组中的所有 `1` 聚集在一起需要的最少交换次数。
+
+**示例 1：**
+
+```C++
+输入：nums = [0,1,0,1,1,0,0]
+输出：1
+解释：这里列出一些能够将所有 1 聚集在一起的方案：
+[0,0,1,1,1,0,0] 交换 1 次。
+[0,1,1,1,0,0,0] 交换 1 次。
+[1,1,0,0,0,0,1] 交换 2 次（利用数组的环形特性）。
+无法在交换 0 次的情况下将数组中的所有 1 聚集在一起。
+因此，需要的最少交换次数为 1 。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int minSwaps(vector<int>& nums) {
+        //定长滑动窗口中 1的个数最多的情况（or 0最少的情况）
+        //定长 长为1的个数
+        int numOf1=0;
+        int n = nums.size();
+        int k=0;
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==1)
+                k++;
+        }
+        int tmp=0;
+        int minRes=k;
+        //0的个数
+        for(int r=0;r<n+k;r++)
+        {
+            //in
+            tmp += (nums[r%n]==0);
+            //update
+            if(r-k+1<0)continue;
+            minRes = min(tmp,minRes);
+            //out
+            tmp -= (nums[(r-k+1 +n)%n]==0);
+        }
+        return minRes;
+    }
+};
+```
 
 
 

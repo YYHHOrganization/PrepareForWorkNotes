@@ -387,3 +387,98 @@ public:
 ## §1.2 删除节点
 
 [视频讲解【基础算法精讲 08】](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1VP4y1Q71e%2F)
+
+
+
+### [203. 移除链表元素](https://leetcode.cn/problems/remove-linked-list-elements/)
+
+给你一个链表的头节点 `head` 和一个整数 `val` ，请你删除链表中所有满足 `Node.val == val` 的节点，并返回 **新的头节点** 。
+
+ 
+
+**示例 1：**
+
+![img](assets/removelinked-list.jpg)
+
+```
+输入：head = [1,2,6,3,4,5,6], val = 6
+输出：[1,2,3,4,5]
+```
+
+
+
+```C++
+class Solution {
+public:
+    ListNode* removeElements(ListNode* head, int val) {
+        ListNode* pl = new ListNode(0,head);// p left
+        ListNode *p=head;
+        ListNode *dummy = pl;
+        while(p)
+        {
+            if(p->val == val)
+            {
+                pl->next = p->next;
+                delete p;
+                p=pl->next;
+            }
+            else
+            {
+                pl=pl->next;
+                p=p->next;
+            }
+        }
+        return dummy->next;
+    }
+};
+```
+
+
+
+### [3217. 从链表中移除在数组中存在的节点](https://leetcode.cn/problems/delete-nodes-from-linked-list-present-in-array/)
+
+给你一个整数数组 `nums` 和一个链表的头节点 `head`。从链表中**移除**所有存在于 `nums` 中的节点后，返回修改后的链表的头节点。
+
+ 
+
+**示例 1：**
+
+**输入：** nums = [1,2,3], head = [1,2,3,4,5]
+
+**输出：** [4,5]
+
+**解释：**
+
+**![img](assets/linkedlistexample0.png)**
+
+移除数值为 1, 2 和 3 的节点。
+
+
+
+```C++
+class Solution {
+public:
+    ListNode* modifiedList(vector<int>& nums, ListNode* head) {
+        unordered_set<int> uset(nums.begin(),nums.end());
+        ListNode* p = head;
+        ListNode* dummy = new ListNode(0,head);
+        ListNode *pl = dummy;
+        while(p)
+        {
+            if(uset.contains(p->val))
+            {
+                pl->next = p->next;
+                //delete p // 注意力扣会在 modifiedList 调用结束后回收所有节点，自己手动删除反而不行
+                p = pl->next;
+            }
+            else
+            {
+                pl=pl->next;
+                p=p->next;
+            }
+        }
+        return dummy->next;
+    }
+};
+```
+

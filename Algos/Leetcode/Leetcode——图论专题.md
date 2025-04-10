@@ -1,4 +1,4 @@
-# Leetcode——图论专题
+#  Leetcode——图论专题
 
 [分享丨【题单】图论算法（DFS/BFS/拓扑排序/最短路/最小生成树/二分图/基环树/欧拉路径）- 讨论 - 力扣（LeetCode）](https://leetcode.cn/discuss/post/3581143/fen-xiang-gun-ti-dan-tu-lun-suan-fa-dfsb-qyux/)
 
@@ -1824,6 +1824,7 @@ public:
             que.pop();
             for(int y: graph[x])
             {
+                //【要放在这！不管是否入度为0 只要去掉一根线就需要更新一下】
                 if(quiet[ans[x]]<quiet[ans[y]]) //传过来的那个节点richer值更小
                 {
                     ans[y] = ans[x];
@@ -2314,7 +2315,7 @@ public:
             if(uf.isSame(a, b)) //会成环,其实直接return也可以，因为对于后面来说，前面已经成环不合法了，因此必须删除这条边
             {
                 index = i;
-                continue;
+                continue;//也可直接return
             }
             else
             {
@@ -2344,7 +2345,7 @@ public:
 
 ## 1.单源最短路——Dijkstra
 
-### （1）[743. 网络延迟时间](https://leetcode.cn/problems/network-delay-time/)
+### （1）[743. 网络延迟时间](https://leetcode.cn/problems/network-delay-time/) :cat:
 
 #### （a）邻接矩阵的写法——朴素Dijkstra算法
 
@@ -2414,8 +2415,8 @@ public:
             graph[t[0]-1].emplace_back(t[1]-1, t[2]);
         }
         //小顶堆,堆顶是比较小的元素
-        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
-        vector<int> dist(n, INT_MAX / 2);
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;// dist[index],index
+        vector<int> dist(n, INT_MAX / 2); // 堆只能拿到最大的，但是更新的时候，我们要更新不止是最大的那个值
         dist[k-1] = 0;
         pq.emplace(0, k-1); //把起点放进去
         while(!pq.empty())
