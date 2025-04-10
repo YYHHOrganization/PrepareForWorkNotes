@@ -58,3 +58,7 @@
 
 
 
+# 2025.4.10
+
+[3341. 到达最后一个房间的最少时间 I](https://leetcode.cn/problems/find-minimum-time-to-reach-last-room-i/)
+

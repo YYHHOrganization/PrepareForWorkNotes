@@ -2465,3 +2465,88 @@ public:
 > 请你返回到达房间 `(n - 1, m - 1)` 所需要的 **最少** 时间。
 >
 > 如果两个房间有一条公共边（可以是水平的也可以是竖直的），那么我们称这两个房间是 **相邻** 的。
+
+一般来说，暂时只需要记忆一个使用邻接表+优先队列的Dijkstra算法即可。本题代码如下：
+```c++
+class Solution {
+public:
+    int dirs[4][2] = {1,0,-1,0,0,1,0,-1};
+    int minTimeToReach(vector<vector<int>>& moveTime) {
+        //从(i,j)走到(x,y)
+        //dist[x][y] = max(moveTime[x][y], dist[i][j]) + time; 这道题的time就是1,维护dist的最小值
+        priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq; //小顶堆
+        int n = moveTime.size();
+        int m = moveTime[0].size();
+        vector<vector<int>> dist(n, vector<int>(m, INT_MAX / 2));
+        dist[0][0] = 0;
+        pq.emplace(0, 0, 0); //pq: dist,x,y
+        int time = 1;
+        while(!pq.empty())
+        {
+            auto [d,x,y] = pq.top();
+            pq.pop();
+            if(d>dist[x][y]) continue;
+            if(x==n-1 && y==m-1) return dist[x][y];
+            for(int d=0;d<4;d++)
+            {
+                int nxtX = x + dirs[d][0];
+                int nxtY = y + dirs[d][1];
+                if(nxtX<0 || nxtY<0 || nxtX>=n || nxtY>=m) continue;
+                int nDist = max(moveTime[nxtX][nxtY], dist[x][y]) + time; //更新移动到nxtX, nxtY处的最小时间
+                if(nDist < dist[nxtX][nxtY])
+                {
+                    dist[nxtX][nxtY] = nDist; //别忘了更新!
+                    pq.emplace(nDist, nxtX, nxtY);
+                }
+            }
+        }
+        return dist[n-1][m-1];
+    }
+};
+```
+
+
+
+### （3）[3342. 到达最后一个房间的最少时间 II](https://leetcode.cn/problems/find-minimum-time-to-reach-last-room-ii/)
+
+> 在上一道题的基础上加的条件是：在 **相邻** 房间之间移动需要的时间为：第一次花费 1 秒，第二次花费 2 秒，第三次花费 1 秒，第四次花费 2 秒……如此 **往复** 。
+
+思考一下国际象棋的棋盘，在初始位置 i=0，j=0，i+j=0，每移动一步都会导致(i+j)%2的值在0和1之间反复跳，因此移动的时间可以认为当(curx+cury)%2==0时，移动到next位置需要花费1秒；否则移动到next位置需要花费2秒，于是代码只需要在上一题的基础上改动一点（重点看的是step的变化）：
+
+```c
+class Solution {
+public:
+    int dirs[4][2] = {1,0,-1,0,0,1,0,-1};
+    int minTimeToReach(vector<vector<int>>& moveTime) {
+        //Dijkstra
+        //假设当前是(i,j),下一个坐标是(x,y),则有
+        //dist[x][y] = max(dist[i][j], moveTime[x][y]) + time,其中对于time,if((i+j)%2==0) time=1;else time=2
+        int n = moveTime.size();
+        int m = moveTime[0].size();
+        vector<vector<int>> dist(n, vector<int>(m, INT_MAX / 2));
+        priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<>> pq;
+        dist[0][0] = 0;
+        pq.emplace(0,0,0);
+        while(!pq.empty())
+        {
+            auto [d,x,y] = pq.top();
+            pq.pop();
+            if(d>dist[x][y]) continue;
+            if(x==n-1 && y==m-1) return dist[x][y];
+            for(int d=0;d<4;d++)
+            {
+                int nxtX = x + dirs[d][0];
+                int nxtY = y + dirs[d][1];
+                if(nxtX<0 || nxtY<0 ||nxtX>=n || nxtY>=m) continue;
+                int time = ((x+y)%2) + 1;
+                int curD = max(dist[x][y], moveTime[nxtX][nxtY]) + time;
+                if(curD < dist[nxtX][nxtY])
+                {
+                    dist[nxtX][nxtY] = curD;
+                    pq.emplace(curD, nxtX, nxtY); 
+                }
+            }
+        }
+        return dist[n-1][m-1];
+    }
+};
