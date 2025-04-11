@@ -1090,6 +1090,101 @@ public:
 
 
 
+#### 从前中后序遍历看这道题
+
+参考：[验证二叉搜索树【基础算法精讲 11】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV14G411P7C1/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)
+
+#### （1）前序遍历
+
+<img src="assets/image-20250411111402466.png" alt="image-20250411111402466" style="zoom:67%;" />
+
+在传下去的时候，依据节点值更新范围，判断是否有效并传回来，此时遍历顺序为“根，左，右”，为前序遍历，代码如下：
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    //需要在(left, right)中才是有效的
+    bool dfs(TreeNode* root, long long left, long long right)
+    {
+        if(root==nullptr) return true;
+        long long x = root->val;
+        if(x<=left || x>=right) return false;
+        return dfs(root->left, left, x) && dfs(root->right, x, right);
+    }
+    bool isValidBST(TreeNode* root) {
+        //前序遍历的方法
+        bool res = dfs(root, (long long)INT_MIN - 10, (long long)INT_MAX + 10); //节点值本身可能是INT_MAX或者INT_MIN,所以用long long吧
+        return res;
+    }
+};
+```
+
+
+
+#### （2）中序遍历
+
+二叉搜索树的中序遍历一定是递增序列，因此可以利用中序遍历来进行判断。
+
+```c++
+class Solution {
+public:
+    long long pre = (long long) INT_MIN - 10;
+    bool isValidBST(TreeNode* root) {
+        //中序遍历,判断是否为递增序列
+        if(root==nullptr) return true;
+        bool l = isValidBST(root->left);
+        if(!l) return false;
+        if(root->val <= pre) return false;
+        pre = root->val;
+        return isValidBST(root->right);
+    }
+};
+```
+
+
+
+#### （3）后序遍历
+
+找到左子树的最小值和最大值，右子树的最小值和最大值，根节点需要>左子树的最大值，同时<右子树的最小值才是合理的，这其实是一种**自底向上**的判断思路，对于掌握DP来说也很关键。至于为什么不能只是维护左边的最大值和右边的最小值，可以参考这个视频有解释：[验证二叉搜索树【基础算法精讲 11】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV14G411P7C1/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    typedef long long ll;
+    ll mn = (ll)INT_MIN - 10;
+    ll mx = (ll)INT_MAX + 10;
+
+    pair<ll, ll> dfs(TreeNode* root)
+    {
+        if(root==nullptr) return make_pair(mx, mn); //[1]
+        auto [lmin, lmax] = dfs(root->left);
+        auto [rmin, rmax] = dfs(root->right);
+        long long x = root->val;
+        if(x<=lmax || x>=rmin) return make_pair(mn, mx);//对于空节点,观察返回的[1]的情况,不会进到这个if判断里面,return make_pair(mn, mx)就会一路返回上去,最终拿到不是二叉搜索树的结果
+        return make_pair(min(x, lmin), max(x, rmax));
+    } 
+    bool isValidBST(TreeNode* root) {
+        auto [left, right] = dfs(root);
+        return right != mx;
+    }
+};
+```
+
+
+
 ### [105. 从前序与中序遍历序列构造二叉树](https://leetcode.cn/problems/construct-binary-tree-from-preorder-and-inorder-traversal/)  :kissing_cat:
 
 参考官方题解的视频
