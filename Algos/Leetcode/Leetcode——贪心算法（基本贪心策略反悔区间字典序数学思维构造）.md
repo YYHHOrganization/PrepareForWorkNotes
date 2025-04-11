@@ -969,6 +969,126 @@ public:
 
 
 
+### [2178. 拆分成最多数目的正偶数之和](https://leetcode.cn/problems/maximum-split-of-positive-even-integers/)
+
+> 给你一个整数 `finalSum` 。请你将它拆分成若干个 **互不相同** 的正偶数之和，且拆分出来的正偶数数目 **最多** 。
+>
+> - 比方说，给你 `finalSum = 12` ，那么这些拆分是 **符合要求** 的（互不相同的正偶数且和为 `finalSum`）：`(2 + 10)` ，`(2 + 4 + 6)` 和 `(4 + 8)` 。它们中，`(2 + 4 + 6)` 包含最多数目的整数。注意 `finalSum` 不能拆分成 `(2 + 2 + 4 + 4)` ，因为拆分出来的整数必须互不相同。
+>
+> 请你返回一个整数数组，表示将整数拆分成 **最多** 数目的正偶数数组。如果没有办法将 `finalSum` 进行拆分，请你返回一个 **空** 数组。你可以按 **任意** 顺序返回这些整数。
+
+```c++
+class Solution {
+public:
+    vector<long long> maximumEvenSplit(long long finalSum) {
+        //2+4+6+8+...这么拆分
+        //至少奇数是不可能的
+        vector<long long> res;
+        if(finalSum % 2==1) return res;
+        long long curSum = 0;
+        long long curval = 2; //2,4,6
+        while(curSum < finalSum)
+        {
+            long long remain = finalSum - curSum;
+            if(remain < curval + curval + 2) //剩下的放不下两个数了,直接把remain放进去,然后结束
+            {
+                res.emplace_back(remain);
+                break;
+            }
+            curSum += curval;
+            res.emplace_back(curval);
+            curval += 2;
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [2567. 修改两个元素的最小分数](https://leetcode.cn/problems/minimum-score-by-changing-two-elements/)
+
+```c++
+class Solution {
+public:
+    int minimizeSum(vector<int>& nums) {
+        //数组中都是>0的数,最小得分比较好办,肯定可以造出一个0,跟最大值或者最小值拼就可以了
+        sort(nums.begin(), nums.end());
+        int n = nums.size();
+        //最大得分,有三种情况:把最大的两个数改成倒数第三个大的数,把最小的两个数改成第三个小的数,以及最大最小各变换一个
+        int res1 = nums[n-1] - nums[2];
+        int res2 = nums[n-3] - nums[0];
+        int res3 = nums[n-2] - nums[1];
+        return min({res1, res2, res3});
+        
+    }
+};
+```
+
+> 具体的题解可以看这篇:[2567. 修改两个元素的最小分数 - 力扣（LeetCode）](https://leetcode.cn/problems/minimum-score-by-changing-two-elements/solutions/2119454/nao-jin-ji-zhuan-wan-by-endlesscheng-9l4m/)
+
+
+
+### [1509. 三次操作后最大值与最小值的最小差](https://leetcode.cn/problems/minimum-difference-between-largest-and-smallest-value-in-three-moves/)
+
+跟上一题比较像，思考和具体的代码如下：
+
+```c++
+class Solution {
+public:
+    int minDifference(vector<int>& nums) {
+        sort(nums.begin(), nums.end());
+        int n = nums.size();
+        if(n<=4) return 0;
+        //1.小的这边改三个 2.大的那边改三个 3.小的改2个,大的改1个 4.小的改1个,大的改2个
+        int res1 = nums[n-1] - nums[3];
+        int res2 = nums[n-4] - nums[0];
+        int res3 = nums[n-2] - nums[2];
+        int res4 = nums[n-3] - nums[1];
+        //cout<<res1<<" "<<res2<<" "<<res3<<" "<<res4<<endl;
+        return min({res1, res2, res3, res4});
+    }
+};
+```
+
+
+
+### [3397. 执行操作后不同元素的最大数量](https://leetcode.cn/problems/maximum-number-of-distinct-elements-after-operations/)（有难度！）
+
+>  给你一个整数数组 `nums` 和一个整数 `k`。
+>
+> 你可以对数组中的每个元素 **最多** 执行 **一次** 以下操作：
+>
+> - 将一个在范围 `[-k, k]` 内的整数加到该元素上。
+>
+> 返回执行这些操作后，`nums` 中可能拥有的不同元素的 **最大** 数量。
+
+贪心做法可以参考：[3397. 执行操作后不同元素的最大数量 - 力扣（LeetCode）](https://leetcode.cn/problems/maximum-number-of-distinct-elements-after-operations/solutions/3027034/cong-xiao-dao-da-tan-xin-pythonjavacgo-b-n023/)。这题还是比较有难度的。核心思路在于让每个人尽可能地往左站，代码如下：
+```c++
+class Solution {
+public:
+    int maxDistinctElements(vector<int>& nums, int k) {
+        sort(nums.begin(), nums.end());
+        int ans = 0;
+        int pre = INT_MIN;
+        for(int x: nums)
+        {
+            x = clamp(pre+1, x-k, x+k); //尽量往左站,pre+1试试,但不能超过当前的范围,不能就算了,能的话尽量+1,
+            if(x>pre)
+            {
+                ans++;
+                pre = x;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+
+
 ## §1.2 单序列配对
 
 同上，从最小/最大的元素开始贪心。
