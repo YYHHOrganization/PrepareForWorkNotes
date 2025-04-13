@@ -2506,6 +2506,16 @@ public:
 };
 ```
 
+> Q：请问在s1[i]!=s2[j]时，为什么不用考虑删除s1[i]与s2[j]，即考虑 dp[i-1,j-1]？
+>
+> A：dp[i,j]表示**使第一个字符串前i个字符和第二个字符串前j个字符相等所需要删除字符的ASCII码的最小值。**
+>
+> 假设dp[i-1,j-1]是A，dp[i-1,j]是B，dp[i,j-1]是C，dp[i,j]是D，s1[i]是x，s2[j]是y；
+>
+> 则 B<=A+y 且 D<=B+x；
+>
+> 则 D-A<=x+y；（B+D<=A+B+x+y）=> D<=A+x+y，也就是说A+x+y本身就不可能比D更小了，不会作为最小值。**这里如果做多了题应该会有更好的感悟，但其实这类题本身就具备一定的套路。**
+
 
 
 ### （4）[72. 编辑距离](https://leetcode.cn/problems/edit-distance/)
@@ -2644,6 +2654,73 @@ public:
 ```
 
 > 个人理解，掌握滚动数组的方法应该是够了，基本上不可能被卡空间，而优化为一维并不简单，可能改坏掉，因此最多用滚动数组优化即可。
+
+
+
+### （5）[1035. 不相交的线](https://leetcode.cn/problems/uncrossed-lines/)
+
+直接用滚动数组做优化了：
+
+```c++
+class Solution {
+public:
+    int maxUncrossedLines(vector<int>& nums1, vector<int>& nums2) {
+       //通过类似于LCS的做法,可以自然而然实现"不相交"的线的特点
+       int m = nums1.size();
+       int n = nums2.size();
+       //dp[i][j]表示nums1的截止到索引i的部分,和nums2的截止到索引j的部分的可以绘制的最大连线数
+        //if(nums1[i]==nums2[j]) dp[i][j] = dp[i-1][j-1] + 1; 
+        //else dp[i][j] = max(dp[i-1][j], dp[i][j-1]) 
+        //dp[-1][x] = dp[x][-1] = 0; //默认连线数是0
+        vector<vector<int>> dp(2, vector<int>(n+1));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(nums1[i]==nums2[j]) dp[(i+1)%2][j+1] = dp[i%2][j] + 1;
+                else dp[(i+1)%2][j+1] = max(dp[i%2][j+1], dp[(i+1)%2][j]);
+            }
+        }
+        return dp[m%2][n];
+    }
+};
+```
+
+
+
+### （6）[1458. 两个子序列的最大点积](https://leetcode.cn/problems/max-dot-product-of-two-subsequences/)
+
+> 给你两个数组 `nums1` 和 `nums2` 。
+>
+> 请你返回 `nums1` 和 `nums2` 中两个长度相同的 **非空** 子序列的最大点积。
+>
+> 数组的非空子序列是通过删除原数组中某些元素（可能一个也不删除）后剩余数字组成的序列，但不能改变数字间相对顺序。比方说，`[2,3,5]` 是 `[1,2,3,4,5]` 的一个子序列而 `[1,5,3]` 不是。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int maxDotProduct(vector<int>& nums1, vector<int>& nums2) {
+        //note:长度相同且非空
+        //dp[i][j]表示nums1[0..i]和nums2[0..j]的长度相同的非空子序列的最大点积
+        int m = nums1.size();
+        int n = nums2.size();
+        vector<vector<int>> dp(m+1, vector<int>(n+1, INT_MIN / 2));
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                dp[i+1][j+1] = max({nums1[i]*nums2[j], dp[i][j] + nums1[i]*nums2[j], dp[i+1][j], dp[i][j+1]}); //(1)至少得选当前这对(选了当前这对) (2)选当前这对和前面的最大结果 (3)(4) 不选:往前看一下最大值情况
+                //注意,由于初值我们设置的INT_MIN / 2,因此对于一开始来说一定会进行选择(毕竟不选对应INT_MIN,取max取不到)
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
+
 
 # 五、划分型 DP
 
