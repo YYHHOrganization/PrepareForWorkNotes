@@ -76,3 +76,7 @@ https://leetcode.cn/problems/find-minimum-time-to-reach-last-room-ii/description
 
 # 2025.4.13
 
+[718. 最长重复子数组](https://leetcode.cn/problems/maximum-length-of-repeated-subarray/)
+
+[3290. 最高乘法得分](https://leetcode.cn/problems/maximum-multiplication-score/)
+
