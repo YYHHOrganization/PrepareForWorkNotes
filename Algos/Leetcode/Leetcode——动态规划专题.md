@@ -3519,6 +3519,114 @@ public:
 
 应该是 00008
 
+### [233. 数字 1 的个数](https://leetcode.cn/problems/number-of-digit-one/)
+
+困难
+
+给定一个整数 `n`，计算所有小于等于 `n` 的非负整数中数字 `1` 出现的个数。
+
+**示例 1：**
+
+```
+输入：n = 13
+输出：6
+```
+
+**示例 2：**
+
+```
+输入：n = 0
+输出：0
+```
+
+
+
+#### M1:数位DP
+
+![image-20250411185057881](assets/image-20250411185057881.png)
+
+```C++
+class Solution {
+public:
+    int countDigitOne(int n) {
+        // 8888
+        // 32**
+        // 22**
+        // 10**
+        // 91**
+        // num1 1的个数
+        string s = to_string(n);
+        int m = s.size();
+        // dp[i][oneCnt] 表示在前 i 位数字中，1 的个数为 oneCnt 的情况下的结果
+        vector<vector<int>> dp(m,vector<int>(m+1,-1));
+        auto dfs = [&](this auto &&dfs,int i,bool is_limit,int oneCnt)->int
+        {
+            // 所有位处理完毕，返回当前数的1的个数.假设上限是999，这个数字最多是111-> oneCnt3
+            if(i==m)return oneCnt; 
+            if(!is_limit&&dp[i][oneCnt]!=-1)return dp[i][oneCnt];
+            int up = is_limit?s[i]-'0':9;
+            int res=0;
+            for(int d=0;d<=up;d++)// 枚举要填入的数字 d
+            {
+                //oneCnt+ 【(d==1)】 如果当前要填入1，那么1的个数 oneCnt+1
+                res += dfs(i+1,is_limit&&d==up,oneCnt+ (d==1));
+            }
+            if(!is_limit) dp[i][oneCnt] = res;
+            return res;
+        };
+        return dfs(0,true,0);
+    }
+};
+```
+
+
+
+#### M2：数学
+
+请看：https://leetcode.cn/problems/number-of-digit-one/solutions/2362053/233-shu-zi-1-de-ge-shu-qing-xi-tu-jie-by-pgb1/
+
+<img src="assets/image-20250411190900927.png" alt="image-20250411190900927" style="zoom:80%;" />
+
+下图中，表示 上限n的十位是0的情况下，所有小于n的数字中，十位是1的个数
+
+0010--2219 ： 00**1**0   00**1**1  00**1**2  00**1**3 .....  22**1**0  22**1**1 22**1**2 ...22**1**9
+
+其实就是 000 --- 229
+
+<img src="assets/image-20250411190915318.png" alt="image-20250411190915318" style="zoom:80%;" />
+
+```C++
+class Solution {
+public:
+    int countDigitOne(int n) {
+        long long digit = 1;//1!!
+        int low = 0, high = n/10, cur = n%10, res=0;
+        while(high!=0 || cur !=0)
+        {
+            if(cur==0) res+= high*digit;
+            else if(cur==1) res+= high*digit + low +1;
+            else res+= (high+1) * digit;
+
+            low += cur*digit;
+            cur = high%10;
+            high/=10;
+            digit*=10;
+        }
+        return res;
+    }
+};
+```
+
+
+
+`while(high!=0 || cur !=0)`需要判断cur !=0 因为看以下最后的时候 high=0，但是cur！=0  需要继续算
+
+<img src="assets/image-20250413151502622.png" alt="image-20250413151502622" style="zoom:60%;" />
+
+
+
+
+
 # 十二、树形 DP
 
 注：可能有同学觉得树形 DP 没有重复访问同一个状态（重叠子问题），并不能算作 DP，而是算作普通的递归。这么说也有一定道理，不过考虑到思维方式和 DP 是一样的自底向上，所以仍然叫做树形 DP。此外，如果是自顶向下的递归做法，是存在重叠子问题的，一般要结合记忆化搜索实现。

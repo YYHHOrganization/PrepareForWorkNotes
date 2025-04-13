@@ -482,3 +482,207 @@ public:
 };
 ```
 
+
+
+### [83. 删除排序链表中的重复元素](https://leetcode.cn/problems/remove-duplicates-from-sorted-list/)
+
+简单
+
+给定一个已排序的链表的头 `head` ， *删除所有重复的元素，使每个元素只出现一次* 。返回 *已排序的链表* 。
+
+ 
+
+**示例 1：**
+
+![img](https://assets.leetcode.com/uploads/2021/01/04/list1.jpg)
+
+```
+输入：head = [1,1,2]
+输出：[1,2]
+```
+
+
+
+```C++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        if(head==nullptr||head->next==nullptr)return head;
+        ListNode *pl = head;
+        ListNode *p = head->next;
+        while(p)
+        {
+            if(pl->val == p->val)
+            {
+                pl->next = p->next;
+                p = pl->next;
+            }
+            else
+            {
+                pl=pl->next;
+                p=p->next;
+            }
+        }
+        return head;
+    }
+};
+```
+
+
+
+### [82. 删除排序链表中的重复元素 II](https://leetcode.cn/problems/remove-duplicates-from-sorted-list-ii/)
+
+给定一个已排序的链表的头 `head` ， *删除原始链表中所有重复数字的节点，只留下不同的数字* 。返回 *已排序的链表* 。
+
+ 
+
+**示例 1：**
+
+![img](assets/linkedlist1.jpg)
+
+```
+输入：head = [1,2,3,3,4,4,5]
+输出：[1,2,5]
+```
+
+
+
+```C++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        if(head==nullptr||head->next==nullptr)return head;
+        ListNode *dummy = new ListNode(0,head);
+        ListNode *pl=dummy, *p = head;
+        ListNode *pr = head->next;
+        while(pr)
+        {
+            if(p->val==pr->val)
+            {
+                while(pr&&p->val==pr->val)
+                {
+                    pr=pr->next;
+                }
+                pl->next = pr;
+                p=pr;
+                if(pr)pr=pr->next;
+            }
+            else
+            {
+                pl=pl->next;
+                p=p->next;
+                pr = pr->next;
+            }
+            
+        }
+        return dummy->next;
+    }
+};
+```
+
+
+
+### [237. 删除链表中的节点](https://leetcode.cn/problems/delete-node-in-a-linked-list/)
+
+> 说人话 只给你node 没给你head 让你删除这个节点
+
+有一个单链表的 `head`，我们想删除它其中的一个节点 `node`。
+
+给你一个需要删除的节点 `node` 。你将 **无法访问** 第一个节点 `head`。
+
+链表的所有值都是 **唯一的**，并且保证给定的节点 `node` 不是链表中的最后一个节点。
+
+删除给定的节点。注意，删除节点并不是指从内存中删除它。这里的意思是：
+
+- 给定节点的值不应该存在于链表中。
+- 链表中的节点数应该减少 1。
+- `node` 前面的所有值顺序相同。
+- `node` 后面的所有值顺序相同。
+
+**自定义测试：**
+
+- 对于输入，你应该提供整个链表 `head` 和要给出的节点 `node`。`node` 不应该是链表的最后一个节点，而应该是链表中的一个实际节点。
+- 我们将构建链表，并将节点传递给你的函数。
+- 输出将是调用你函数后的整个链表。
+
+**示例 1：**
+
+![img](assets/node1.jpg)
+
+```
+输入：head = [4,5,1,9], node = 5
+输出：[4,1,9]
+解释：指定链表中值为 5 的第二个节点，那么在调用了你的函数之后，该链表应变为 4 -> 1 -> 9
+```
+
+
+
+```C++
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    void deleteNode(ListNode* node) {
+        //说人话 只给你node 没给你head 让你删除这个节点
+        
+        //跟后一个节点的值交换，删除后一个（因为保证了不是链表的最后一个节点）
+        ListNode *right = node->next;
+        // 4 n5 r1 9-> 4 n1 r1 9 -> 4 n1 9
+        node->val = right -> val;
+        node->next = right->next;
+    }
+};
+```
+
+OR
+
+```C++
+class Solution {
+public:
+    void deleteNode(ListNode* node) {
+        //说人话 只给你node 没给你head 让你删除这个节点
+        //跟后一个节点的值交换，删除后一个（因为保证了不是链表的最后一个节点）
+        node->val = node->next -> val;
+        node->next = node->next->next;
+    }
+};
+```
+
+
+
+- [1669. 合并两个链表](https://leetcode.cn/problems/merge-in-between-linked-lists/)
+- [2487. 从链表中移除节点](https://leetcode.cn/problems/remove-nodes-from-linked-list/)
+
+
+
+## §1.10 综合应用
+
+- [707. 设计链表](https://leetcode.cn/problems/design-linked-list/)
+- [146. LRU 缓存](https://leetcode.cn/problems/lru-cache/)
+- [460. LFU 缓存](https://leetcode.cn/problems/lfu-cache/)

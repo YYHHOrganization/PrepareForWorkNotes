@@ -2538,7 +2538,7 @@ public:
                 int nxtX = x + dirs[d][0];
                 int nxtY = y + dirs[d][1];
                 if(nxtX<0 || nxtY<0 ||nxtX>=n || nxtY>=m) continue;
-                int time = ((x+y)%2) + 1;
+                int time = ((x+y)%2) + 1; // int time = ((nxtX+nxtY)%2==0)+1; 也对
                 int curD = max(dist[x][y], moveTime[nxtX][nxtY]) + time;
                 if(curD < dist[nxtX][nxtY])
                 {
@@ -2550,3 +2550,5 @@ public:
         return dist[n-1][m-1];
     }
 };
+
+```
