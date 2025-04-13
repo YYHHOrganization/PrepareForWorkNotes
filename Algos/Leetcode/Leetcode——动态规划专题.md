@@ -3702,6 +3702,74 @@ public:
 
 
 
+### [面试题 17.06. 2出现的次数](https://leetcode.cn/problems/number-of-2s-in-range-lcci/)
+
+> 编写一个方法，计算从 0 到 n (含 n) 中数字 2 出现的次数。
+>
+> **示例：**
+>
+> ```
+> 输入：25
+> 输出：9
+> 解释：(2, 12, 20, 21, 22, 23, 24, 25)(注意 22 应该算作两次)
+> ```
+>
+> 提示：
+>
+> - `n <= 10^9`
+
+跟上一题基本一样，首先是数位DP的做法：
+
+```c++
+class Solution {
+public:
+    int numberOf2sInRange(int n) {
+        string s = to_string(n);
+        int m = s.size();
+        vector<vector<int>> dp(m, vector<int>(m+1, -1));
+        auto dfs = [&](this auto&& dfs, int i, int cnt, bool is_limit) -> long long
+        {
+            if(i==m) return cnt;
+            if(!is_limit && dp[i][cnt]>=0) return dp[i][cnt];
+            int hi = is_limit? s[i]-'0' : 9;
+            long long ans = 0;
+            for(int d=0;d<=hi;d++)
+            {
+                ans += dfs(i+1, cnt+(d==2), is_limit&&d==hi);
+            }
+            if(!is_limit) dp[i][cnt] = ans;
+            return ans;
+        };
+        return dfs(0, 0, true);
+    }
+};
+```
+
+接着是数学的方法，也与上一题是一致的：
+
+```c++
+class Solution {
+public:
+    int numberOf2sInRange(int n) {
+        long long ans = 0, high = n / 10, low = 0, digit = 1, cur = n % 10;
+        while(high || cur)
+        {
+            if(cur<2) ans += high * digit;
+            else if(cur==2) ans += (high * digit + low + 1);
+            else ans += (high+1) * digit;
+
+            low = cur * digit + low;
+            digit *= 10;
+            cur = high % 10;
+            high /= 10;
+        }
+        return ans;
+    }
+};
+```
+
+
+
 
 
 # 十二、树形 DP
