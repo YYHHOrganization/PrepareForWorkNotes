@@ -1101,6 +1101,109 @@ public:
 
 
 
+### [3457. 吃披萨](https://leetcode.cn/problems/eat-pizzas/)
+
+本题可以使用**交换论证法**来做贪心性质的证明，具体可以看这篇讲解：[网格图 DP【力扣周赛 437】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1pmAGegEcw/?t=4m&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)。代码如下：
+
+```c++
+class Solution {
+public:
+    long long maxWeight(vector<int>& pizzas) {
+        int n = pizzas.size();
+        int total = n / 4;
+        int odd = (total + 1) / 2; //奇数天
+        int even = total - odd; //偶数天
+        sort(pizzas.begin(), pizzas.end(),greater<int>());
+        
+        long long ans = 0;
+        for(int i=0;i<odd;i++)
+        {
+            ans += (long long) pizzas[i];
+        }
+        int start = odd + 1;
+        while(even--)
+        {
+            ans += (long long) pizzas[start];
+            start += 2;
+        }
+        return ans;
+    }
+};
+```
+
+> 结论，先吃最大的奇数天，然后隔一个吃偶数天，可以获得最大的体重。
+
+
+
+### [LCP 40. 心算挑战](https://leetcode.cn/problems/uOAnQW/)（也比较难）
+
+> 「力扣挑战赛」心算项目的挑战比赛中，要求选手从 `N` 张卡牌中选出 `cnt` 张卡牌，若这 `cnt` 张卡牌数字总和为偶数，则选手成绩「有效」且得分为 `cnt` 张卡牌数字总和。 给定数组 `cards` 和 `cnt`，其中 `cards[i]` 表示第 `i` 张卡牌上的数字。 请帮参赛选手计算最大的有效得分。若不存在获取有效得分的卡牌方案，则返回 0。
+
+具体思路：
+
+- 首先，将数组从大到小排序，取前面的cnt个数。
+- 如果累加的和sum是偶数，则直接返回，为最大有效值；
+- 如果累加的和sum是奇数，则有两种策略：
+  - （1）把前面cnt个数中最小的偶数换成后面n-cnt个数中最大的奇数
+  - （2）把前面cnt个数中最小的奇数换成后面n-cnt个数中最大的偶数
+
+针对上面的两种策略，有代码书写上的技巧。可以发现：
+
+- 一种情况一定是将（自身）换成（后面与自身不同奇偶性的数），另一种则是将（自身前面与自身奇偶性不同的数）换成（后面与自身奇偶性相同的数）
+
+有了以上的策略之后，就可以开始写代码了：
+
+```c++
+class Solution {
+public:
+    int maximumScore(vector<int>& cards, int cnt) {
+        sort(cards.begin(), cards.end(), greater<int>());
+        int n = cards.size();
+        int sum = 0;
+        for(int i=0;i<cnt;i++)
+        {
+            sum += cards[i];
+        }
+        if(sum%2==0) return sum;
+        //sum是奇数,需要进行replace操作(找到x后面第一个跟x奇偶性不同的数)
+        auto replace_sum = [&](int x) -> int
+        {
+            for(int index = cnt; index < n; index++)
+            {
+                if((x%2)!=(cards[index]%2))
+                {
+                    return sum - x + cards[index]; //x被替换后的总和
+                }
+            }
+            return INT_MIN; //这种情况下不存在解
+        };
+        int x = cards[cnt - 1]; //最后一个选的数,一定是一种考虑情况
+        int replace_x = replace_sum(x);
+        //第二种情况,找到前面选的数中最小的跟x奇偶性不同的数,做替换
+        int replace_y = INT_MIN;
+        for(int i=cnt-2;i>=0;i--)
+        {
+            if((cards[i]%2) != (x%2))
+            {
+                replace_y = replace_sum(cards[i]);
+                break;
+            }
+        }
+        int ans = max(replace_x, replace_y);
+        if(ans==INT_MIN) return 0;
+        return ans;
+    }
+};
+```
+
+
+
+### ==[1262. 可被三整除的最大和](https://leetcode.cn/problems/greatest-sum-divisible-by-three/)==
+
+
+
+
+
 ## §1.2 单序列配对
 
 同上，从最小/最大的元素开始贪心。
