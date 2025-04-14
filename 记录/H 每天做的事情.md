@@ -78,5 +78,15 @@ https://leetcode.cn/problems/find-minimum-time-to-reach-last-room-ii/description
 
 [718. 最长重复子数组](https://leetcode.cn/problems/maximum-length-of-repeated-subarray/)
 
+# 2025.4.14
+
 [3290. 最高乘法得分](https://leetcode.cn/problems/maximum-multiplication-score/)
+
+[115. 不同的子序列](https://leetcode.cn/problems/distinct-subsequences/)
+
+[97. 交错字符串](https://leetcode.cn/problems/interleaving-string/)
+
+[2826. 将三个组排序](https://leetcode.cn/problems/sorting-three-groups/)
+
+[1671. 得到山形数组的最少删除次数](https://leetcode.cn/problems/minimum-number-of-removals-to-make-mountain-array/)
 
