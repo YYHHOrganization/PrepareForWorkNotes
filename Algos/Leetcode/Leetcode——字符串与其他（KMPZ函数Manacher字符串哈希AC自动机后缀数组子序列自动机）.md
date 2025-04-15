@@ -579,68 +579,95 @@ public:
 
 # 其他
 
+## 数据结构综合应用 
 
 
-## 链表
 
-### [61. 旋转链表](https://leetcode.cn/problems/rotate-list/)
+### [380. O(1) 时间插入、删除和获取随机元素](https://leetcode.cn/problems/insert-delete-getrandom-o1/)
 
-给你一个链表的头节点 `head` ，旋转链表，将链表每个节点向右移动 `k` 个位置。
+实现`RandomizedSet` 类：
+
+- `RandomizedSet()` 初始化 `RandomizedSet` 对象
+- `bool insert(int val)` 当元素 `val` 不存在时，向集合中插入该项，并返回 `true` ；否则，返回 `false` 。
+- `bool remove(int val)` 当元素 `val` 存在时，从集合中移除该项，并返回 `true` ；否则，返回 `false` 。
+- `int getRandom()` 随机返回现有集合中的一项（测试用例保证调用此方法时集合中至少存在一个元素）。每个元素应该有 **相同的概率** 被返回。
+
+你必须实现类的所有函数，并满足每个函数的 **平均** 时间复杂度为 `O(1)` 。
+
+**示例：**
+
+```c++
+输入
+["RandomizedSet", "insert", "remove", "insert", "getRandom", "remove", "insert", "getRandom"]
+[[], [1], [2], [2], [], [1], [2], []]
+输出
+[null, true, false, true, 2, true, false, 2]
+
+解释
+RandomizedSet randomizedSet = new RandomizedSet();
+randomizedSet.insert(1); // 向集合中插入 1 。返回 true 表示 1 被成功地插入。
+randomizedSet.remove(2); // 返回 false ，表示集合中不存在 2 。
+randomizedSet.insert(2); // 向集合中插入 2 。返回 true 。集合现在包含 [1,2] 。
+randomizedSet.getRandom(); // getRandom 应随机返回 1 或 2 。
+randomizedSet.remove(1); // 从集合中移除 1 ，返回 true 。集合现在包含 [2] 。
+randomizedSet.insert(2); // 2 已在集合中，所以返回 false 。
+randomizedSet.getRandom(); // 由于 2 是集合中唯一的数字，getRandom 总是返回 2 。
+```
 
  
 
-**示例 1：**
+哈希表+变长数组
 
-![img](assets/rotate1.jpg)
+具体题解请看：
 
-```
-输入：head = [1,2,3,4,5], k = 2
-输出：[4,5,1,2,3]
-```
-
-
-
-这题有很多方法可以做 也都能写出
-
-M1：快慢指针
-
-M2：闭合为环
-思路及算法
-
-记给定链表的长度为 n，注意到当向右移动的次数 k≥n 时，我们仅需要向右移动 kmodn 次即可。因为每 n 次移动都会让链表变为原状。这样我们可以知道，新链表的最后一个节点为原链表的第 (n−1)−(kmodn) 个节点（从 0 开始计数）。
-
-这样，我们可以先将给定的链表连接成环，然后将指定位置断开。
-
-具体代码中，我们首先计算出链表的长度 n，并找到该链表的末尾节点，将其与头节点相连。这样就得到了闭合为环的链表。然后我们找到新链表的最后一个节点（即原链表的第 (n−1)−(kmodn) 个节点），将当前闭合为环的链表断开，即可得到我们所需要的结果。
-
-特别地，当链表长度不大于 1，或者 k 为 n 的倍数时，新链表将与原链表相同，我们无需进行任何处理。
-链接：https://leetcode.cn/problems/rotate-list/solutions/681812/xuan-zhuan-lian-biao-by-leetcode-solutio-woq1/
+https://leetcode.cn/problems/insert-delete-getrandom-o1/solutions/1411578/o1-shi-jian-cha-ru-shan-chu-he-huo-qu-su-rlz2/
 
 ```C++
-class Solution {
+class RandomizedSet {
 public:
-    ListNode* rotateRight(ListNode* head, int k) {
-        if(k==0||head==nullptr||head->next==nullptr)return head;
-        ListNode* end = head;
-        int n=1;
-        while(end->next)
-        {
-            end = end->next;
-            n++;
-        }
-        end->next = head;//1 2 3 4 5 1 2...
-        k = n-k%n;//5-5%2 = 3// 
-        ListNode* p = end;
-        for(int i=0;i<k;i++)
-        {
-            p=p->next;
-        }
-        ListNode* res = p->next;
-        p->next = nullptr;
-        return res;
+    vector<int> nums;
+    unordered_map<int,int> umap; //值和在vector中的index
+    RandomizedSet() {
+        srand((unsigned)time(NULL));//这句话写不写都行
     }
-};	
+    
+    bool insert(int val) {
+        if(!umap.contains(val))
+        {
+            nums.emplace_back(val);
+            umap[val] = nums.size()-1;
+            return true; 
+        }   
+        else
+        {
+            return false;
+        }
+    }
+    
+    bool remove(int val) {
+        if(umap.contains(val))
+        {
+            //与最后一个交换
+            int last = nums.back();
+            int valIndex= umap[val];
+            nums[valIndex] = last;
+            umap[last] = valIndex;
+            umap.erase(val); //这句不要写在前面,因为只有一个元素的话,last就是它自己,写在umap[last] = valIndex;这句前面会导致删除后又加回来,造成错误
+            nums.pop_back();
+
+            return true;
+        }
+        return false;
+    }
+    
+    int getRandom() {
+        int randomIdx = rand()%nums.size();
+        return nums[randomIdx];
+    }
+};
 ```
+
+
 
 
 

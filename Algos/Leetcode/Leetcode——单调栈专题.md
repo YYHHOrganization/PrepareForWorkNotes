@@ -870,3 +870,58 @@ public:
 };
 ```
 
+
+
+# 最小字典序
+
+### [402. 移掉 K 位数字](https://leetcode.cn/problems/remove-k-digits/)
+
+给你一个以字符串表示的非负整数 `num` 和一个整数 `k` ，移除这个数中的 `k` 位数字，使得剩下的数字最小。请你以字符串形式返回这个最小的数字。
+
+**示例 1 ：**
+
+```
+输入：num = "1432219", k = 3
+输出："1219"
+解释：移除掉三个数字 4, 3, 和 2 形成一个新的最小的数字 1219 。
+```
+
+
+
+```C++
+class Solution {
+public:
+    string removeKdigits(string num, int k) {
+        int n = num.size();
+        string stk;//也可以用vector模拟
+        for(int i=0;i<n;i++)
+        {
+            while(k&&!stk.empty() && num[i]<stk.back())
+            {
+                stk.pop_back();
+                k--;
+            }
+            stk.push_back(num[i]);
+        }
+        for(;k>0;k--) // 剩余的记得pop
+        {
+            stk.pop_back();
+        }
+        string res;
+        int j=0;
+        while(stk[j]=='0')
+        {
+            j++;
+        }
+        for(int i=j;i<stk.size();i++)
+        {
+            res.push_back(stk[i]);
+        }
+        if(res.size()==0)return "0";
+        return res;
+    }
+};
+```
+
+
+

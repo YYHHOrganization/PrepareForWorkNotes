@@ -61,7 +61,14 @@ int lower_bound(vector<int>& nums, int target) //求解第一个>=target的索�
     }
 ```
 
-
+>1、`while(left<=right)` 需要等号，否则 相等（指向同一个数）情况将不会进入判断
+>
+>2、可以使用库函数`lower_bound`函数表示第一个>=的
+>
+>3、其他情况都可以转换：
+>
+> 	1)  如  [第一个>t 的 ] 等价于  [第一个>=（t+1）的 ]
+> 	2)  如  [最后一个<=t 的 ] 等价于  [第一个>=（t+1）-1 的 ]   
 
 ## 2.[35. 搜索插入位置](https://leetcode.cn/problems/search-insert-position/)
 
@@ -119,6 +126,66 @@ public:
 
 
 
+## [744. 寻找比目标字母大的最小字母](https://leetcode.cn/problems/find-smallest-letter-greater-than-target/)
+
+给你一个字符数组 `letters`，该数组按**非递减顺序**排序，以及一个字符 `target`。`letters` 里**至少有两个不同**的字符。
+
+返回 `letters` 中大于 `target` 的最小的字符。如果不存在这样的字符，则返回 `letters` 的第一个字符。
+
+**示例 1：**
+
+```
+输入: letters = ["c", "f", "j"]，target = "a"
+输出: "c"
+解释：letters 中字典上比 'a' 大的最小字符是 'c'。
+```
+
+
+
+```C++
+class Solution {
+public: 
+    char nextGreatestLetter(vector<char>& letters, char target) {
+        int n = letters.size();
+        int l = 0,r = n-1;
+        //第一个>（t）的 ---- 第一个>=（t+1）
+        int index = lower_bound(letters.begin(),letters.end(),target+1)-letters.begin();
+        if(index>=n)return letters[0];
+        return letters[index];
+    }
+};
+```
+
+
+
+```C++
+class Solution {
+public: 
+    char nextGreatestLetter(vector<char>& letters, char target) {
+        int n = letters.size();
+        int l = 0,r = n-1;
+        //第一个>（t）的 ---- 第一个>=（t+1）
+        //1 2 3 4 6
+        while(l<=r) //[!]
+        {
+            int mid = ((l+r)>>1);
+            if(letters[mid]<(target+1))
+            {
+                l = mid+1;
+            }
+            else
+            {
+                r=mid-1;
+            }
+        }
+        if(l>=n)return letters[0];
+        return letters[l];
+    }
+};
+```
+
+
+
 # 二、进阶
 
 部分题目需要先排序，然后在有序数组上二分查找。
@@ -160,6 +227,188 @@ public:
 
 
 
+## [1385. 两个数组间的距离值](https://leetcode.cn/problems/find-the-distance-value-between-two-arrays/)
+
+给你两个整数数组 `arr1` ， `arr2` 和一个整数 `d` ，请你返回两个数组之间的 **距离值** 。
+
+「**距离值**」 定义为符合此距离要求的元素数目：对于元素 `arr1[i]` ，不存在任何元素 `arr2[j]` 满足 `|arr1[i]-arr2[j]| <= d` 。
+
+
+
+https://leetcode.cn/problems/find-the-distance-value-between-two-arrays/solutions/3010185/liang-chong-fang-fa-er-fen-cha-zhao-san-15u9b/
+
+![image-20250404192605707](assets/image-20250404192605707.png)
+
+:large_blue_circle: :blue inside [x-d,x+d]
+
+:purple_heart:purple >x+d
+
+<img src="assets/image-20250404192541287.png" alt="image-20250404192541287" style="zoom:50%;" />
+
+```C++
+class Solution {
+public:
+    //10
+    int low_bound(vector<int> &arr,int target)
+    {
+        int l = 0;
+        int r = arr.size()-1;
+        while(l<=r)
+        {
+            int mid = ((l+r)>>1);
+            if(arr[mid]<target)
+            {
+                l = mid+1;
+            }
+            else
+            {
+                r=mid-1;
+            }
+        }
+        return l;
+    }
+    int findTheDistanceValue(vector<int>& arr1, vector<int>& arr2, int d) {
+        //n
+        // arr2[i] - num > d
+        //
+        // arr1 寻找arr2中距离num最近的元素 看是不是>d
+        // 第一个>=num的和其左边的
+        int n = arr2.size();
+        sort(arr2.begin(),arr2.end());
+        int cnt=0;
+        for(int i=0;i<arr1.size();i++)
+        {
+            int num = arr1[i];
+            int index = low_bound(arr2,num-d);
+            //int index = lower_bound(arr2.begin(),arr2.end(),num-d)-arr2.begin(); //use this is ok too
+            if(arr2[index]>num+d||index>=n)
+            {
+                cnt++;
+            }
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+## [2389. 和有限的最长子序列](https://leetcode.cn/problems/longest-subsequence-with-limited-sum/)
+
+给你一个长度为 `n` 的整数数组 `nums` ，和一个长度为 `m` 的整数数组 `queries` 。
+
+返回一个长度为 `m` 的数组 `answer` ，其中 `answer[i]` 是 `nums` 中 元素之和小于等于 `queries[i]` 的 **子序列** 的 **最大** 长度 。
+
+**子序列** 是由一个数组删除某些元素（也可以不删除）但不改变剩余元素顺序得到的一个数组。
+
+**示例 1：**
+
+```
+输入：nums = [4,5,2,1], queries = [3,10,21]
+输出：[2,3,4]
+解释：queries 对应的 answer 如下：
+- 子序列 [2,1] 的和小于或等于 3 。可以证明满足题目要求的子序列的最大长度是 2 ，所以 answer[0] = 2 。
+- 子序列 [4,5,1] 的和小于或等于 10 。可以证明满足题目要求的子序列的最大长度是 3 ，所以 answer[1] = 3 。
+- 子序列 [4,5,2,1] 的和小于或等于 21 。可以证明满足题目要求的子序列的最大长度是 4 ，所以 answer[2] = 4 。
+```
+
+
+
+ [最后一个<=t 的 ] 等价于  [第一个>=（t+1）-1 的 ]   
+
+```C++
+class Solution {
+public:
+    vector<int> answerQueries(vector<int>& nums, vector<int>& queries) {
+        sort(nums.begin(),nums.end());
+        int n = nums.size();
+        vector<int> preSum(n,0);
+        partial_sum(nums.begin(),nums.end(),preSum.begin());
+        int qn = queries.size();
+        vector<int> res(qn,0);
+        //last  <=t
+        //equals:
+        //first >=(t+1) -1
+        for(int i=0;i<qn;i++)
+        {
+            int index = lower_bound(preSum.begin(),preSum.end(),queries[i]+1)-preSum.begin();
+            //index-1 ,but we need len.so index-1+1=index
+            res[i] = index;
+        }
+        return res;
+    }
+};
+```
+
+
+
+## ==[1170. 比较字符串最小字母出现频次](https://leetcode.cn/problems/compare-strings-by-frequency-of-the-smallest-character/)==
+
+ the timu hard to read ,give up
+
+
+
+### [2080. 区间内查询数字的频率](https://leetcode.cn/problems/range-frequency-queries/)
+
+请你设计一个数据结构，它能求出给定子数组内一个给定值的 **频率** 。
+
+子数组中一个值的 **频率** 指的是这个子数组中这个值的出现次数。
+
+请你实现 `RangeFreqQuery` 类：
+
+- `RangeFreqQuery(int[] arr)` 用下标从 **0** 开始的整数数组 `arr` 构造一个类的实例。
+- `int query(int left, int right, int value)` 返回子数组 `arr[left...right]` 中 `value` 的 **频率** 。
+
+一个 **子数组** 指的是数组中一段连续的元素。`arr[left...right]` 指的是 `nums` 中包含下标 `left` 和 `right` **在内** 的中间一段连续元素。
+
+**示例 1：**
+
+```
+输入：
+["RangeFreqQuery", "query", "query"]
+[[[12, 33, 4, 56, 22, 2, 34, 33, 22, 12, 34, 56]], [1, 2, 4], [0, 11, 33]]
+输出：
+[null, 1, 2]
+
+解释：
+RangeFreqQuery rangeFreqQuery = new RangeFreqQuery([12, 33, 4, 56, 22, 2, 34, 33, 22, 12, 34, 56]);
+rangeFreqQuery.query(1, 2, 4); // 返回 1 。4 在子数组 [33, 4] 中出现 1 次。
+rangeFreqQuery.query(0, 11, 33); // 返回 2 。33 在整个子数组中出现 2 次。
+```
+
+ 
+
+https://leetcode.cn/problems/range-frequency-queries/
+
+![image-20250404203844207](assets/image-20250404203844207.png)
+
+```C++
+class RangeFreqQuery {
+    unordered_map<int,vector<int>> umap;
+public:
+    RangeFreqQuery(vector<int>& arr) {
+        for(int i=0;i<arr.size();i++)
+        {
+            umap[arr[i]].push_back(i);
+        }
+    }
+    
+    int query(int left, int right, int value) {
+        // 不推荐写 a = pos[value]，如果 value 不在 pos 中会插入 value
+        auto it = umap.find(value);
+        if(it == umap.end())return 0;
+        // vector<int> vec = umap[value];//no!!
+        //!!!这里只能取引用，写成：vector a = it->second;会超时
+        vector<int> &vec = it->second;
+        int num =upper_bound(vec.begin(),vec.end(),right)-
+         lower_bound(vec.begin(),vec.end(),left);
+        return num;
+    }
+};
+```
+
+
+
 ## 2.[2563. 统计公平数对的数目](https://leetcode.cn/problems/count-the-number-of-fair-pairs/)
 
 ```c++
@@ -182,6 +431,25 @@ public:
 
 
 ## 3.[275. H 指数 II](https://leetcode.cn/problems/h-index-ii/)
+
+给你一个整数数组 `citations` ，其中 `citations[i]` 表示研究者的第 `i` 篇论文被引用的次数，`citations` 已经按照 **升序排列** 。计算并返回该研究者的 h 指数。
+
+[h 指数的定义](https://baike.baidu.com/item/h-index/3991452?fr=aladdin)：h 代表“高引用次数”（high citations），一名科研人员的 `h` 指数是指他（她）的 （`n` 篇论文中）**至少** 有 `h` 篇论文分别被引用了**至少** `h` 次。
+
+请你设计并实现对数时间复杂度的算法解决此问题。
+
+ 
+
+**示例 1：**
+
+```
+输入：citations = [0,1,3,5,6]
+输出：3
+解释：给定数组表示研究者总共有 5 篇论文，每篇论文相应的被引用了 0, 1, 3, 5, 6 次。
+     由于研究者有3篇论文每篇 至少 被引用了 3 次，其余两篇论文每篇被引用 不多于 3 次，所以她的 h 指数是 3 。
+```
+
+
 
 本题会比较绕一些，需要考虑好二分的条件是什么。
 
@@ -206,6 +474,38 @@ public:
         //因为citations[i]是单调不减的,同时n-i+1随着i的增加是减小的,因此满足符合要求的索引后面的值都符合要求
         int hIn = lower_bound(citations);
         return hIn;
+    }
+};
+```
+
+4/4
+
+```C++
+class Solution {
+public:
+    int hIndex(vector<int>& citations) 
+    {
+        // 0 1 3 5 6 citations[i]
+        // 5 4 3 2 1 n-i
+        // 0 1 2 3 4  index  //size/n=5
+        // citations[i]>=n-i
+        // f f t t t
+        //first true
+        int n = citations.size();
+        int l=0,r=n-1;
+        while(l<=r)
+        {
+            int mid = ((l+r)>>1);
+            if(citations[mid]>=n-mid)
+            {
+                r=mid-1;
+            }
+            else
+            {
+                l=mid+1;
+            }
+        }    
+        return n-l;   
     }
 };
 ```
@@ -362,9 +662,72 @@ public:
 
 
 
-## ==8.（思维扩展）[1287. 有序数组中出现次数超过25%的元素](https://leetcode.cn/problems/element-appearing-more-than-25-in-sorted-array/)==
+## 8.（思维扩展）[1287. 有序数组中出现次数超过25%的元素](https://leetcode.cn/problems/element-appearing-more-than-25-in-sorted-array/)
 
 用哈希可以做到O(n)的复杂度，能否降到`O(logn)`的复杂度呢？考虑二分查找。这题要极致优化的话两次二分，需要看一会题解，暂时性价比没有那么高，先去刷别的题目，回来再进行总结。
+
+
+
+给你一个非递减的 **有序** 整数数组，已知这个数组中恰好有一个整数，它的出现次数超过数组元素总数的 25%。
+
+请你找到并返回这个整数
+
+**示例：**
+
+```
+输入：arr = [1,2,2,6,6,6,6,7,10]
+输出：6
+```
+
+#### M1
+
+```C++
+class Solution {
+public:
+    int findSpecialInteger(vector<int>& arr) {
+        int n =arr.size();
+        for(int i=0;i<n-n/4;i++)
+        {
+            if(arr[i] == arr[i+n/4])
+            {
+                return arr[i];
+            }
+        }
+        return -1;
+    }
+};
+```
+
+#### M2:
+
+相当于把数组分成四个部分，每份占百分之25，然后这四份有三个公共的边界，由于题目要求元素个数会超出百分之25，所以一定会有超出的个数在边界上，那么只要检查三个边界上的元素即可
+
+ https://leetcode.cn/problems/element-appearing-more-than-25-in-sorted-array/solutions/101725/you-xu-shu-zu-zhong-chu-xian-ci-shu-chao-guo-25d-3/
+
+```C++
+class Solution {
+public:
+    //10-15
+    int findSpecialInteger(vector<int>& arr) {
+        int n =arr.size();
+        int span = n/4+1;
+        //第一个>=和 第一个>的
+        //1 2* 2 2 2 3*
+        for(int i=0;i<n;i+=span)
+        {
+            auto left = lower_bound(arr.begin(),arr.end(),arr[i]);
+            auto right = upper_bound(arr.begin(),arr.end(),arr[i]);
+            if(right-left>=span)
+            {
+                return arr[i];
+            }
+        }
+        return -1;
+    }
+};
+```
+
+
 
 
 
