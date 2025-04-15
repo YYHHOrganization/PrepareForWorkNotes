@@ -71,3 +71,33 @@ https://leetcode.cn/problems/find-minimum-time-to-reach-last-room-ii/description
 [1509. 三次操作后最大值与最小值的最小差](https://leetcode.cn/problems/minimum-difference-between-largest-and-smallest-value-in-three-moves/)
 
 [3397. 执行操作后不同元素的最大数量](https://leetcode.cn/problems/maximum-number-of-distinct-elements-after-operations/)
+
+
+
+# 2025.4.13
+
+[718. 最长重复子数组](https://leetcode.cn/problems/maximum-length-of-repeated-subarray/)
+
+# 2025.4.14
+
+LCS:
+
+[3290. 最高乘法得分](https://leetcode.cn/problems/maximum-multiplication-score/)
+
+[115. 不同的子序列](https://leetcode.cn/problems/distinct-subsequences/)
+
+[97. 交错字符串](https://leetcode.cn/problems/interleaving-string/)
+
+LIS:
+
+[2826. 将三个组排序](https://leetcode.cn/problems/sorting-three-groups/)
+
+[1671. 得到山形数组的最少删除次数](https://leetcode.cn/problems/minimum-number-of-removals-to-make-mountain-array/)
+
+双指针:
+
+[LCP 28. 采购方案](https://leetcode.cn/problems/4xy4Wx/)
+
+没做:
+
+[1577. 数的平方等于两数乘积的方法数](https://leetcode.cn/problems/number-of-ways-where-square-of-number-is-equal-to-product-of-two-numbers/)

@@ -2722,6 +2722,436 @@ public:
 
 
 
+### （7）思维扩展——[718. 最长重复子数组](https://leetcode.cn/problems/maximum-length-of-repeated-subarray/)
+
+> 给两个整数数组 `nums1` 和 `nums2` ，返回 *两个数组中 **公共的** 、长度最长的子数组的长度* 。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums1 = [1,2,3,2,1], nums2 = [3,2,1,4,7]
+> 输出：3
+> 解释：长度最长的公共子数组是 [3,2,1] 。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums1 = [0,0,0,0,0], nums2 = [0,0,0,0,0]
+> 输出：5
+> ```
+
+本题与前面题目的区别在于，求的是**子数组**而不是**子序列**，意味着选择应该是连续的，如果不选当前的话，不能从前面的dp状态转移过来（因为**必须连续选**），此时只能是重新算。代码如下：
+
+> 请务必注意：对于滚动数组更新的情况，要把所有情况更新的值显式写出来（比如本题，不相等的情况是0，但如果滚动数组不显式更新的话，）
+
+```c++
+class Solution {
+public:
+    int findLength(vector<int>& nums1, vector<int>& nums2) {
+        //设dp[i][j]是nums1[0...i]和nums2[0...j]的最长公共子数组长度
+        //if(nums1[i]==nums2[j]) dp[i][j] = dp[i-1][j-1] + 1;
+        //else dp[i][j] = 0; //不能选了,不能让选择断掉,必须连续选,不然就放弃
+        int m = nums1.size();
+        int n = nums2.size();
+        vector<vector<int>> dp(2, vector<int>(n+1, 0));
+        int res = 0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(nums1[i]==nums2[j])
+                {
+                    dp[(i+1)%2][j+1] = dp[i%2][j] + 1;
+                    res = max(res, dp[(i+1)%2][j+1]);
+                }
+                else
+                {
+                    dp[(i+1)%2][j+1] = 0; //注意,如果使用滚动数组来优化的话必须显式令dp值为0,避免二维滚动的时候造成dirty的值,这一点务必注意.
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （8）[3290. 最高乘法得分](https://leetcode.cn/problems/maximum-multiplication-score/)
+
+> 给你一个大小为 4 的整数数组 `a` 和一个大小 **至少**为 4 的整数数组 `b`。
+>
+> 你需要从数组 `b` 中选择四个下标 `i0`, `i1`, `i2`, 和 `i3`，并满足 `i0 < i1 < i2 < i3`。你的得分将是 `a[0] * b[i0] + a[1] * b[i1] + a[2] * b[i2] + a[3] * b[i3]` 的值。
+>
+> 返回你能够获得的 **最大** 得分。
+
+```c++
+class Solution {
+public:
+    long long maxScore(vector<int>& a, vector<int>& b) {
+        //dp[i][j]表示考虑b[0...i]对应到a[0...j]的最大得分(a只有4个数)
+        int n = b.size();
+        vector<vector<long long>> dp(n+1, vector<long long>(5, 0));
+        //用回溯去考虑会比较好: dfs(i, j) = max(dfs(i-1, j-1) + a[j] * b[i], dfs(i-1, j)) 选或不选,会带来不同的子问题
+        //注意初始值的问题,dfs(i, -1) = 0(什么都没匹配), dfs(-1, j>=0) = -inf(不合法的情况,b什么都没选,居然选了a的数) 
+        for(int j=1;j<=4;j++) dp[0][j] = LLONG_MIN / 2; //不合法的情况,保证取max的时候不会取到,注意LLONG_MIN这个宏定义
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<4;j++)
+            {
+                dp[i+1][j+1] = max(dp[i][j] + (long long)a[j] * b[i], dp[i][j+1]);
+            }
+        }
+        return dp[n][4];
+    }
+};
+```
+
+
+
+### （9）[115. 不同的子序列](https://leetcode.cn/problems/distinct-subsequences/)
+
+给你两个字符串 `s` 和 `t` ，统计并返回在 `s` 的 **子序列** 中 `t` 出现的个数，结果需要对 109 + 7 取模。
+
+> 牢记：**“动态规划有「选或不选」和「枚举选哪个」两种基本思考方式。子序列相邻无关一般是「选或不选」，子序列相邻相关（例如 LIS 问题）一般是「枚举选哪个」。本题用到的是「选或不选」，或者说「删或不删」。”**
+
+```c++
+class Solution {
+public:
+    int numDistinct(string s, string t) {
+        const int MOD = 1e9+7;
+        int m = s.size();
+        int n = t.size();
+        //考虑dp:dp[i][j]表示s[0...i]的子序列中t[0...j]出现的个数
+        //从s串的最后开始考虑, 考虑是否删除s[i]:
+        //  (1)删除s[i]: 解决的问题变为dfs(i-1, j)
+        //  (2)不删除s[i](前提是s[i]==t[j]): 解决的问题变为dfs(i-1, j-1)
+        //  上述两种情况互斥,s[i]==t[j]的情况需要考虑(1)(2); 不相等的情况只能考虑(1)
+        //if(s[i]==t[j]) dp[i][j] = dp[i-1][j-1] + dp[i-1][j];
+        //else dp[i][j] = dp[i-1][j] 
+        //dfs(i, -1) = 1,表示有几种方法可以从s中得到空串,答案是1,即删除s中的所有字母
+        //if i<j : dfs(i, j) = 0,因为不能得到比s[..i]还长的子序列
+        vector<vector<long long>> dp(m+1, vector<long long>(n+1, 0));
+        for(int i=0;i<=m;i++) dp[i][0] = 1;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(s[i]==t[j]) dp[i+1][j+1] = (dp[i][j] + dp[i][j+1])%MOD;
+                else dp[i+1][j+1] = dp[i][j+1] % MOD;
+            }
+        }
+        // for(int i=0;i<=m;i++)
+        // {
+        //     for(int j=0;j<=n;j++)
+        //         cout<<dp[i][j]<<" ";
+        //     cout<<endl;
+        // }
+        return dp[m][n] % MOD;
+    }
+};
+```
+
+
+
+### （10）[97. 交错字符串](https://leetcode.cn/problems/interleaving-string/)
+
+> 给定三个字符串 `s1`、`s2`、`s3`，请你帮忙验证 `s3` 是否是由 `s1` 和 `s2` **交错** 组成的。
+
+```c++
+class Solution {
+public:
+    bool isInterleave(string s1, string s2, string s3) {
+        //选哪个,dp[i][j]表示s1[0...i]和s2[0...j]能否凑成s3[0...i+j+1]
+        //if(s3[i+j+1]==s1[i]) dfs(i, j) |= dfs(i-1, j); //可能是由s1前面组成的
+        //if(s3[i+j+1]==s2[j]) dfs(i, j) |= dfs(i, j-1); //可能是由s2前面组成的
+        //注意:dfs(-1, j), dfs(i, -1)单独赋值
+        //dfs(-1, -1) = 1;
+        int n1 = s1.size(), n2 = s2.size(), n3 = s3.size();
+        if(n3 != n1 + n2) return false;
+        vector<vector<int>> dp(n1+1, vector<int>(n2+1, 0));
+        dp[0][0] = 1;
+        for(int i=0;i<n1;i++) //看一下没有s2,只靠s1可以坚持到哪里
+        {
+            if(s1[i]==s3[i]) dp[i+1][0] = 1;
+            else break;
+        }
+        for(int j=0;j<n2;j++) //看一下没有s1,只靠s2可以坚持到哪里
+        {
+            if(s2[j]==s3[j]) dp[0][j+1] = 1;
+            else break;
+        }
+        for(int i=0;i<n1;i++)
+        {
+            for(int j=0;j<n2;j++)
+            {
+                if(s3[i+j+1] == s1[i]) dp[i+1][j+1] |= dp[i][j+1];
+                if(s3[i+j+1] == s2[j]) dp[i+1][j+1] |= dp[i+1][j];
+                //cout<<dp[i+1][j+1]<<" ";
+            }
+            //cout<<endl;
+        }
+        return dp[n1][n2];
+    }
+};
+```
+
+**进阶：**您能否仅使用 `O(s2.length)` 额外的内存空间来解决它?
+
+> 其实进阶的部分就是问能否将上面的代码进行优化？降低空间复杂度，降为一维。
+
+为了方便理解，在一轮学习的时候就不降维了，重点是理解思想。
+
+
+
+## 2.最长递增子序列（LIS）
+
+做法有很多：
+
+- 枚举选哪个。（见讲解）
+- 贪心+二分。（见讲解）
+- 计算 a 和把 a 排序后的数组 sortedA 的最长公共子序列。（用 LCS 求 LIS），这种做法要有印象，感觉后面有的题可能会用到。
+- 数据结构优化。（见 2407 题）
+
+讲解视频：[最长递增子序列【基础算法精讲 20】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ub411Q7sB/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)
+
+
+
+### （1）板子题：LIS
+
+#### （a）DP做法
+
+```c++
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        //先用dp的方法做,dp[i]表示以nums[i]为结尾的最长严格递增子序列的长度,res记录总的最长
+        int n = nums.size();
+        vector<int> dp(n, 1); //最起码是1
+        int res = 1;
+        for(int i=1;i<n;i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                if(nums[i]>nums[j]) //nums[i]更大,可以更新dp
+                {
+                    dp[i] = max(dp[i], dp[j]+1);
+                    res = max(res, dp[i]);
+                }
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+#### （b）贪心+二分
+
+```c++
+class Solution {
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        //有点贪心的意思
+        //维护一个数组,存放"尽可能小的值",同时该数组不会删除后面的元素,最终返回数组长度即为所求
+        vector<int> res;
+        for(int i=0;i<nums.size();i++)
+        {
+            if(res.size()==0 || nums[i] > res.back()) //要严格大于末尾数字,不然构成的序列不对
+            {
+                res.emplace_back(nums[i]);
+            }
+            else //二分找到合适的位置,替换(找到第一个>=nums[i]的值,替换为nums[i],用lower_bound)
+            {
+                int index = lower_bound(res.begin(), res.end(), nums[i])-res.begin();
+                res[index] = nums[i];
+            }
+        }
+        return res.size();
+    }
+};
+```
+
+补充：如果要求非严格递增的子序列，则lower_bound改成upper_bound即可。
+
+
+
+### （2）[2826. 将三个组排序](https://leetcode.cn/problems/sorting-three-groups/)
+
+> 给你一个整数数组 `nums` 。`nums` 的每个元素是 1，2 或 3。在每次操作中，你可以删除 `nums` 中的一个元素。返回使 nums 成为 **非递减** 顺序所需操作数的 **最小值**。
+
+#### （a）DP做法
+
+与上一题LIS基本一致，只不过改成了非严格递增，因此相等的也是可以考虑进来的。
+
+```c++
+class Solution {
+public:
+    int minimumOperations(vector<int>& nums) {
+        //最长非递减子序列的长度
+        int n = nums.size();
+        vector<int> dp(n, 1); //至少是1
+        int res = 1;
+        for(int i=0; i<n; i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                if(nums[j] <= nums[i]) //可以从这个状态转过来
+                {
+                    dp[i] = max(dp[i], dp[j] + 1);
+                }
+                res = max(res, dp[i]);
+            }
+        }
+        return n - res;
+    }
+};
+```
+
+
+
+#### （b）贪心+二分
+
+同样与上一题类似，g[i-1]记录长度为i的子序列的最小结尾元素（根据贪心的性质，要保持尾元素尽量的小，才可能会让结果更好）。由于本题是非严格递增，因此要找第一个>当前值的位置做替换（如果当前值>=g数组的末尾值，则插入到数组当中）。
+
+代码如下：
+```c++
+class Solution {
+public:
+    int minimumOperations(vector<int>& nums) {
+        vector<int> res;
+        int n = nums.size();
+        for(int num: nums)
+        {
+            if(res.empty() || num >= res.back())
+            {
+                res.emplace_back(num);
+            }
+            else
+            {
+                int index = upper_bound(res.begin(), res.end(), num) - res.begin();
+                res[index] = num;
+            }
+        }
+        return n - (int)res.size();
+    }
+};
+```
+
+
+
+### （3）[1671. 得到山形数组的最少删除次数](https://leetcode.cn/problems/minimum-number-of-removals-to-make-mountain-array/)
+
+思路如下:
+```c++
+class Solution {
+public:
+    int minimumMountainRemovals(vector<int>& nums) {
+        //求以每个元素为结尾的递增子序列的最长长度,以及从后往前遍历,求出以每个元素为结尾的递增子序列的最长长度,然后求出每个index的前缀和后缀dp数组的值的和,取最大值即可
+        int n = nums.size();
+        vector<int> prefix(n, 1); //本题要严格递增
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                if(nums[j] < nums[i])
+                {
+                    prefix[i] = max(prefix[i], prefix[j] + 1);
+                }
+            }
+        }
+        vector<int> suffix(n, 1); //从后往前遍历,求以某个元素为结尾的最长递增子序列
+        for(int i=n-1;i>=0;i--)
+        {
+            for(int j=n-1;j>i;j--)
+            {
+                if(nums[j]<nums[i])
+                {
+                    suffix[i] = max(suffix[i], suffix[j] + 1);
+                }
+            }
+        }
+        int res = 0;
+        //计算最长的山形数组的长度
+        for(int i=0;i<n;i++)
+        {
+            if(prefix[i] != 1 && suffix[i] != 1)
+            {
+                res = max(res, prefix[i] + suffix[i] - 1); //prefix[i]和suffix[i]多算了一遍i,因此需要-1,前后必须有元素,不然不算山峰
+            }
+        }
+        return n - res;
+    }
+};
+```
+
+求解prefix和suffix的时候也可以用前面贪心+二分的思路求出g数组,其中g[i]表示长度为i+1的最长递增子序列，对于新的num来说，更新g数组前，对应的以num为结尾的最长递增子序列的长度就是其二分查找替换的那个位置。此时时间复杂度可以将为O（n），代码如下：
+```c++
+class Solution {
+public:
+    int minimumMountainRemovals(vector<int>& nums) {
+        //求以每个元素为结尾的递增子序列的最长长度,以及从后往前遍历,求出以每个元素为结尾的递增子序列的最长长度,然后求出每个index的前缀和后缀dp数组的值的和,取最大值即可
+        int n = nums.size();
+        vector<int> prefix(n, 1); //本题要严格递增
+        vector<int> suffix(n, 1); //从后往前遍历,求以某个元素为结尾的最长递增子序列
+        vector<int> g1;
+        vector<int> g2;
+        for(int i=0;i<n;i++)
+        {
+            if(g1.empty() || nums[i] > g1.back())
+            {
+                g1.emplace_back(nums[i]);
+                prefix[i] = g1.size();
+            }
+            else //找到第一个>=nums[i]的值,进行替换
+            {
+                int index = lower_bound(g1.begin(), g1.end(), nums[i]) - g1.begin();
+                g1[index] = nums[i];
+                prefix[i] = index + 1;
+            }
+        }
+        for(int i=n-1;i>=0;i--)
+        {
+            if(g2.empty() || nums[i] > g2.back())
+            {
+                g2.emplace_back(nums[i]);
+                suffix[i] = g2.size();
+            }
+            else //找到第一个>=nums[i]的值,进行替换
+            {
+                int index = lower_bound(g2.begin(), g2.end(), nums[i]) - g2.begin();
+                g2[index] = nums[i];
+                suffix[i] = index + 1;
+            }
+        }
+        int res = 0;
+        //计算最长的山形数组的长度
+        for(int i=0;i<n;i++)
+        {
+            if(prefix[i] != 1 && suffix[i] != 1)
+            {
+                res = max(res, prefix[i] + suffix[i] - 1); //prefix[i]和suffix[i]多算了一遍i,因此需要-1,前后必须有元素,不然不算山峰
+            }
+        }
+        return n - res;
+    }
+};
+```
+
+
+
+### ==（4）[1964. 找出到每个位置为止最长的有效障碍赛跑路线](https://leetcode.cn/problems/find-the-longest-valid-obstacle-course-at-each-position/)==
+
+
+
+
+
+
+
 # 五、划分型 DP
 
 ## §5.1 判定能否划分
@@ -4446,6 +4876,74 @@ public:
 `while(high!=0 || cur !=0)`需要判断cur !=0 因为看以下最后的时候 high=0，但是cur！=0  需要继续算
 
 <img src="assets/image-20250413151502622.png" alt="image-20250413151502622" style="zoom:60%;" />
+
+
+
+### [面试题 17.06. 2出现的次数](https://leetcode.cn/problems/number-of-2s-in-range-lcci/)
+
+> 编写一个方法，计算从 0 到 n (含 n) 中数字 2 出现的次数。
+>
+> **示例：**
+>
+> ```
+> 输入：25
+> 输出：9
+> 解释：(2, 12, 20, 21, 22, 23, 24, 25)(注意 22 应该算作两次)
+> ```
+>
+> 提示：
+>
+> - `n <= 10^9`
+
+跟上一题基本一样，首先是数位DP的做法：
+
+```c++
+class Solution {
+public:
+    int numberOf2sInRange(int n) {
+        string s = to_string(n);
+        int m = s.size();
+        vector<vector<int>> dp(m, vector<int>(m+1, -1));
+        auto dfs = [&](this auto&& dfs, int i, int cnt, bool is_limit) -> long long
+        {
+            if(i==m) return cnt;
+            if(!is_limit && dp[i][cnt]>=0) return dp[i][cnt];
+            int hi = is_limit? s[i]-'0' : 9;
+            long long ans = 0;
+            for(int d=0;d<=hi;d++)
+            {
+                ans += dfs(i+1, cnt+(d==2), is_limit&&d==hi);
+            }
+            if(!is_limit) dp[i][cnt] = ans;
+            return ans;
+        };
+        return dfs(0, 0, true);
+    }
+};
+```
+
+接着是数学的方法，也与上一题是一致的：
+
+```c++
+class Solution {
+public:
+    int numberOf2sInRange(int n) {
+        long long ans = 0, high = n / 10, low = 0, digit = 1, cur = n % 10;
+        while(high || cur)
+        {
+            if(cur<2) ans += high * digit;
+            else if(cur==2) ans += (high * digit + low + 1);
+            else ans += (high+1) * digit;
+
+            low = cur * digit + low;
+            digit *= 10;
+            cur = high % 10;
+            high /= 10;
+        }
+        return ans;
+    }
+};
+```
 
 
 

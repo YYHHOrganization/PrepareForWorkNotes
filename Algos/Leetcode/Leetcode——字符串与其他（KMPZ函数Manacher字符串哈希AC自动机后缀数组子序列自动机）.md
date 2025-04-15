@@ -652,7 +652,7 @@ public:
             int valIndex= umap[val];
             nums[valIndex] = last;
             umap[last] = valIndex;
-            umap.erase(val);
+            umap.erase(val); //这句不要写在前面,因为只有一个元素的话,last就是它自己,写在umap[last] = valIndex;这句前面会导致删除后又加回来,造成错误
             nums.pop_back();
 
             return true;
