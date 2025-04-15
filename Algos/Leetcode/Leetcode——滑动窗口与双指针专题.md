@@ -719,6 +719,17 @@ public:
 
 
 
+### [1297. 子串的最大出现次数](https://leetcode.cn/problems/maximum-number-of-occurrences-of-a-substring/)
+
+> 给你一个字符串 `s` ，请你返回满足以下条件且出现次数最大的 **任意** 子串的出现次数：
+>
+> - 子串中不同字母的数目必须小于等于 `maxLetters` 。
+> - 子串的长度必须大于等于 `minSize` 且小于等于 `maxSize` 。
+
+
+
+
+
 # 二、不定长滑动窗口
 
 个人理解，做题目的时候需要考虑好数组中数的范围，比如是否有负数，有0，这种情况下单纯的`while(sum>=target)`可能会失效，有时需要加上`while(sum>=target && l<=r)`做进一步判断。
@@ -2329,9 +2340,50 @@ public:
 
 
 
-### ==（11）[LCP 28. 采购方案](https://leetcode.cn/problems/4xy4Wx/)==（回顾的时候做一下，跟前面题一样）
+### （11）[LCP 28. 采购方案](https://leetcode.cn/problems/4xy4Wx/)
 
-跟上一道题目一样，暂时就先不做了。
+跟上一道题目一样，答案如下：
+
+```c++
+class Solution {
+public:
+    int purchasePlans(vector<int>& nums, int target) {
+        const int MOD = 1e9+7;
+        int n = nums.size();
+        sort(nums.begin(), nums.end());
+        int left = 0, right = n-1;
+        long long ans = 0;
+        while(left<right)
+        {
+            if(nums[left] + nums[right] > target) right--; //注意双指针的while循环不要写while了，不然容易写错，用if来维护指针的移动即可，保证每次移动一格，不容易写出错。
+            else
+            {
+                //此时nums[left] + nums[right] <= target(前提是right>=0),
+                int sz = right - left; //这些都可以和右指针组成合适的结果
+                ans = (ans + sz) % MOD;
+                left++;
+            }
+        }
+        return ans%MOD;
+    }
+};
+```
+
+如果while循环里面套while，需要这么写：
+
+```c++
+while(left<right)
+{
+    while(right>=0 && nums[left] + nums[right] > target) right--;
+    //此时nums[left] + nums[right] <= target(前提是right>=0),
+    if(left>=right) break; //注意这句
+    int sz = right - left; //这些都可以和右指针组成合适的结果
+    ans = (ans + sz) % MOD;
+    left++;
+}
+```
+
+实际上，写起来容易出错，因此还是建议在双指针外层的while循环里面写if，不要写while，**保证一次指针移动一格，不容易出问题。**
 
 
 
@@ -2585,4 +2637,21 @@ public:
     }
 };
 ```
+
+
+
+### （18）[1577. 数的平方等于两数乘积的方法数](https://leetcode.cn/problems/number-of-ways-where-square-of-number-is-equal-to-product-of-two-numbers/)
+
+> 给你两个整数数组 `nums1` 和 `nums2` ，请你返回根据以下规则形成的三元组的数目（类型 1 和类型 2 ）：
+>
+> - 类型 1：三元组 `(i, j, k)` ，如果 `nums1[i]^2 == nums2[j] * nums2[k]` 其中 `0 <= i < nums1.length` 且 `0 <= j < k < nums2.length`
+> - 类型 2：三元组 `(i, j, k)` ，如果 `nums2[i]^2 == nums1[j] * nums1[k]` 其中 `0 <= i < nums2.length` 且 `0 <= j < k < nums1.length`
+
+
+
+
+
+## 2.同向双指针
+
+两个指针的移动方向相同（都向右，或者都向左）。
 
