@@ -3046,6 +3046,106 @@ public:
 
 ### （3）[1671. 得到山形数组的最少删除次数](https://leetcode.cn/problems/minimum-number-of-removals-to-make-mountain-array/)
 
+思路如下:
+```c++
+class Solution {
+public:
+    int minimumMountainRemovals(vector<int>& nums) {
+        //求以每个元素为结尾的递增子序列的最长长度,以及从后往前遍历,求出以每个元素为结尾的递增子序列的最长长度,然后求出每个index的前缀和后缀dp数组的值的和,取最大值即可
+        int n = nums.size();
+        vector<int> prefix(n, 1); //本题要严格递增
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<i;j++)
+            {
+                if(nums[j] < nums[i])
+                {
+                    prefix[i] = max(prefix[i], prefix[j] + 1);
+                }
+            }
+        }
+        vector<int> suffix(n, 1); //从后往前遍历,求以某个元素为结尾的最长递增子序列
+        for(int i=n-1;i>=0;i--)
+        {
+            for(int j=n-1;j>i;j--)
+            {
+                if(nums[j]<nums[i])
+                {
+                    suffix[i] = max(suffix[i], suffix[j] + 1);
+                }
+            }
+        }
+        int res = 0;
+        //计算最长的山形数组的长度
+        for(int i=0;i<n;i++)
+        {
+            if(prefix[i] != 1 && suffix[i] != 1)
+            {
+                res = max(res, prefix[i] + suffix[i] - 1); //prefix[i]和suffix[i]多算了一遍i,因此需要-1,前后必须有元素,不然不算山峰
+            }
+        }
+        return n - res;
+    }
+};
+```
+
+求解prefix和suffix的时候也可以用前面贪心+二分的思路求出g数组,其中g[i]表示长度为i+1的最长递增子序列，对于新的num来说，更新g数组前，对应的以num为结尾的最长递增子序列的长度就是其二分查找替换的那个位置。此时时间复杂度可以将为O（n），代码如下：
+```c++
+class Solution {
+public:
+    int minimumMountainRemovals(vector<int>& nums) {
+        //求以每个元素为结尾的递增子序列的最长长度,以及从后往前遍历,求出以每个元素为结尾的递增子序列的最长长度,然后求出每个index的前缀和后缀dp数组的值的和,取最大值即可
+        int n = nums.size();
+        vector<int> prefix(n, 1); //本题要严格递增
+        vector<int> suffix(n, 1); //从后往前遍历,求以某个元素为结尾的最长递增子序列
+        vector<int> g1;
+        vector<int> g2;
+        for(int i=0;i<n;i++)
+        {
+            if(g1.empty() || nums[i] > g1.back())
+            {
+                g1.emplace_back(nums[i]);
+                prefix[i] = g1.size();
+            }
+            else //找到第一个>=nums[i]的值,进行替换
+            {
+                int index = lower_bound(g1.begin(), g1.end(), nums[i]) - g1.begin();
+                g1[index] = nums[i];
+                prefix[i] = index + 1;
+            }
+        }
+        for(int i=n-1;i>=0;i--)
+        {
+            if(g2.empty() || nums[i] > g2.back())
+            {
+                g2.emplace_back(nums[i]);
+                suffix[i] = g2.size();
+            }
+            else //找到第一个>=nums[i]的值,进行替换
+            {
+                int index = lower_bound(g2.begin(), g2.end(), nums[i]) - g2.begin();
+                g2[index] = nums[i];
+                suffix[i] = index + 1;
+            }
+        }
+        int res = 0;
+        //计算最长的山形数组的长度
+        for(int i=0;i<n;i++)
+        {
+            if(prefix[i] != 1 && suffix[i] != 1)
+            {
+                res = max(res, prefix[i] + suffix[i] - 1); //prefix[i]和suffix[i]多算了一遍i,因此需要-1,前后必须有元素,不然不算山峰
+            }
+        }
+        return n - res;
+    }
+};
+```
+
+
+
+### ==（4）[1964. 找出到每个位置为止最长的有效障碍赛跑路线](https://leetcode.cn/problems/find-the-longest-valid-obstacle-course-at-each-position/)==
+
 
 
 
