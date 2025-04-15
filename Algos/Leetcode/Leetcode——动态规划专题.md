@@ -2575,7 +2575,7 @@ public:
         int m = word1.size();
         int n = word2.size();
         vector<vector<int>> dp(m+1, vector<int>(n+1));
-        for(int i=1;i<=m;i++) dp[i][0] = i;
+        for(int i=1;i<=m;i++) dp[i][0] = i;//等价于for(int i=0;i<m;i++) dp[i+1][0] = i+1;
         for(int j=1;j<=n;j++) dp[0][j] = j;
         for(int i=0;i<m;i++)
         {
@@ -3081,6 +3081,753 @@ public:
     }
 };
 ```
+
+
+
+### [2707. 字符串中的额外字符](https://leetcode.cn/problems/extra-characters-in-a-string/)
+
+```C++
+class Solution {
+public:
+    int minExtraChar(string s, vector<string>& dictionary) {
+        //dp[k] 表示将字符串前 k 个字符（即 s[0..k-1]）进行最优分割后，剩下的额外字符的最小数量。
+        unordered_set<string> dic(dictionary.begin(),dictionary.end());
+        int n = s.size();
+        vector<int> dp(n+1,0);
+        for(int i=0;i<n;i++)
+        {
+            dp[i+1] = dp[i]+1;//跳过这个字符
+            for(int j=0;j<=i;j++)//j<=i ！
+            {
+                //遍历所有可能的子字符串终点 j（0 ≤ j ≤ i），如果子字符串 s[j..i] 在字典中，则更新最小值：
+                if(dic.contains(s.substr(j,i-j+1)))//i-j+1 ！（其实是（i+1）-j）
+                {
+                    dp[i+1] = min(dp[j],dp[i+1]);
+                }
+            }
+        }
+        return dp[n];
+    }
+};
+```
+
+
+
+>​	
+>
+>在动态规划中，这段代码的目的是遍历所有可能的分割点 `j`，以找到最优解。以下是对问题的详细解释和示例：
+>
+>### **为什么 `j` 的范围包括 `j <= i`？**
+>- **原因**：`j` 表示子字符串的起始位置。当 `j = i` 时，子字符串的长度为 `1`（即字符 `s[i]`）。如果该字符存在于字典中，则可以作为一个有效分割，此时 `dp[i+1]` 可以继承 `dp[i]` 的值（因为 `j=i` 对应前 `i` 个字符的结果）。
+>- **示例**：  
+>  假设 `s = "a"`，字典为 `["a"]`。当 `i=0` 时，`j` 的范围是 `0 ≤ j ≤ 0`。此时子字符串 `s.substr(0,1) = "a"` 在字典中，因此 `dp[1] = dp[0] = 0`（剩余字符数最小）。
+>
+>### **为什么子字符串长度是 `i-j+1`？**
+>- **原因**：`s.substr(j, length)` 中的 `length` 表示从 `j` 开始截取的字符数。从 `j` 到 `i`（包含 `i`）共有 `i-j+1` 个字符。
+>- **示例**：  
+>  若 `j=2`，`i=4`，则子字符串为 `s[2]` 到 `s[4]`，共 `4-2+1 = 3` 个字符。
+>
+>### **示例分析**
+>假设 `s = "leetscode"`，字典为 `["leet", "code"]`：
+>- **当 `i=3`（字符 `'t'`）时**，`j` 的范围是 `0 ≤ j ≤ 3`：
+>  - `j=0`：子字符串 `s[0..3] = "leet"` 在字典中，因此 `dp[4] = min(dp[0], 当前值)` → `0`。
+>  - 其他 `j` 值可能不匹配字典，不影响最终结果。
+>- **当 `i=8`（字符 `'e'`）时**，`j=5`：
+>  - 子字符串 `s[5..8] = "code"` 在字典中，因此 `dp[9] = dp[5]`。若 `dp[5]` 的值较小，则剩余字符数更少。
+>- 假设 `s = "leetscode"`，我们在某个时刻 `i = 8`（即字符 `e` 的位置），我们希望检查从 `0` 到 `8` 的所有子字符串。
+>  - 当 `j = 0` 时，`s.substr(0, 8 - 0 + 1)` 取的是 `"leetscode"`。
+>  - 当 `j = 1` 时，`s.substr(1, 8 - 1 + 1)` 取的是 `"eetscode"`。
+>  - 当 `j = 2` 时，`s.substr(2, 8 - 2 + 1)` 取的是 `"etscode"`。
+>  - 当 `j = 3` 时，`s.substr(3, 8 - 3 + 1)` 取的是 `"tscode"`。
+>  - 当 `j = 4` 时，`s.substr(4, 8 - 4 + 1)` 取的是 `"scode"`。
+>  - 当 `j = 5` 时，`s.substr(5, 8 - 5 + 1)` 取的是 `"code"`。
+>  - 当 `j = 6` 时，`s.substr(6, 8 - 6 + 1)` 取的是 `"ode"`。
+>  - 当 `j = 7` 时，`s.substr(7, 8 - 7 + 1)` 取的是 `"de"`。
+>  - 当 `j = 8` 时，`s.substr(8, 8 - 8 + 1)` 取的是 `"e"`。
+>
+>### **总结**
+>- **`j <= i`** 是为了处理当前字符单独成词的情况。
+>- **`i-j+1`** 确保正确截取从 `j` 到 `i` 的子字符串长度。
+>
+>通过这种方式，代码能够覆盖所有可能的分割点，确保找到剩余字符最少的策略。
+
+
+
+### [3196. 最大化子数组的总成本](https://leetcode.cn/problems/maximize-total-cost-of-alternating-subarrays/)
+
+给你一个长度为 `n` 的整数数组 `nums`。
+
+子数组 `nums[l..r]`（其中 `0 <= l <= r < n`）的 **成本** 定义为：
+
+```
+cost(l, r) = nums[l] - nums[l + 1] + ... + nums[r] * (−1)r − l
+```
+
+你的任务是将 `nums` 分割成若干子数组，使得所有子数组的成本之和 **最大化**，并确保每个元素 **正好** 属于一个子数组。
+
+具体来说，如果 `nums` 被分割成 `k` 个子数组，且分割点为索引 `i1, i2, ..., ik − 1`（其中 `0 <= i1 < i2 < ... < ik - 1 < n - 1`），则总成本为：
+
+```
+cost(0, i1) + cost(i1 + 1, i2) + ... + cost(ik − 1 + 1, n − 1)
+```
+
+返回在最优分割方式下的子数组成本之和的最大值。
+
+**注意：**如果 `nums` 没有被分割，即 `k = 1`，则总成本即为 `cost(0, n - 1)`。
+
+ 
+
+**示例 1：**
+
+**输入：** nums = [1,-2,3,4]
+
+**输出：** 10
+
+**解释：**
+
+一种总成本最大化的方法是将 `[1, -2, 3, 4]` 分割成子数组 `[1, -2, 3]` 和 `[4]`。总成本为 `(1 + 2 + 3) + 4 = 10`。
+
+
+
+解答：
+
+https://leetcode.cn/problems/maximize-total-cost-of-alternating-subarrays/solutions/2819339/zhuang-tai-ji-dpcong-ji-yi-hua-sou-suo-d-mtr9/
+
+![image-20250413224823105](assets/image-20250413224823105.png)
+
+![image-20250413224845494](assets/image-20250413224845494.png)
+
+
+
+```C++
+class Solution {
+public:
+    long long maximumTotalCost(vector<int>& nums) {
+        // 1
+        // 1,-2
+        // 1-(-2)
+        // dp[i]  以自己为结尾 最大成本
+        // 自己单独， dp[i-1] + nums[i]
+        // 和前面1个连着 dp[i-2] + nums[i-1]-nums[i] 
+        //dp[0] = nums[0]
+        //dp[1-2] = dp[-1] =0
+
+        int n = nums.size();
+        vector<long long> dp(n+1);
+        dp[1] = nums[0];
+        for(int i=1;i<n;i++)
+        {
+            dp[i+1] = max(dp[i] + nums[i] , dp[i-1] + nums[i-1] - nums[i]);
+        }
+        return dp[n];
+
+    }
+};
+```
+
+
+
+### [2767. 将字符串分割为最少的美丽子字符串](https://leetcode.cn/problems/partition-string-into-minimum-beautiful-substrings/)
+
+给你一个二进制字符串 `s` ，你需要将字符串分割成一个或者多个 **子字符串** ，使每个子字符串都是 **美丽** 的。
+
+如果一个字符串满足以下条件，我们称它是 **美丽** 的：
+
+- 它不包含前导 0 。
+- 它是 `5` 的幂的 **二进制** 表示。
+
+请你返回分割后的子字符串的 **最少** 数目。如果无法将字符串 `s` 分割成美丽子字符串，请你返回 `-1` 。
+
+子字符串是一个字符串中一段连续的字符序列。
+
+**示例 1：**
+
+```
+输入：s = "1011"
+输出：2
+解释：我们可以将输入字符串分成 ["101", "1"] 。
+- 字符串 "101" 不包含前导 0 ，且它是整数 51 = 5 的二进制表示。
+- 字符串 "1" 不包含前导 0 ，且它是整数 50 = 1 的二进制表示。
+最少可以将 s 分成 2 个美丽子字符串。
+```
+
+
+
+#### M1 
+
+```C++
+class Solution {
+public:
+    int minimumBeautifulSubstrings(string s) {
+        //dp[i] 0-i 能被划分的最少数目
+        //move dp[i+1]   0-i 能被划分的最少数目
+        //if [j,i] 
+        //move dp[i+1] = dp[j] + 1
+        int n = s.size();
+        vector<int> dp(n+1,INT_MAX/2);
+        dp[0] = 0;
+        auto isBeauty = [&](string s1)->bool
+        {
+            int num=0;
+            if(s1[0]=='0')return false;
+            for(int i=0;i<s1.size();i++)
+            {
+                num = num*2 + (s1[i]-'0');
+            }
+            if(num==0)return false;
+            return 15625%num==0;
+            //5^6 = 15625 < 2^15 < 5^7 = 78125。
+            //所以当且仅有15625 % int(s[i,...,i + x]) == 0 才是5的幂。
+        };
+        //1011
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<=i;j++)
+            {
+                string substr = s.substr(j,i-j+1);
+                //cout<<substr<<" isBeauty(substr):"<<isBeauty(substr)<<endl;
+                if(isBeauty(substr))
+                {
+                    dp[i+1] = min(dp[j]+1,dp[i+1]);
+                }
+            }
+        }
+        return dp[n]==INT_MAX/2?-1:dp[n];
+
+    }
+};
+```
+
+
+
+#### M2 预计算
+
+```C++
+unordered_set<int> uset ;
+int init = []()
+{
+    int upper = (int)pow(2,15);
+    for(int i=1;i<=upper;i*=5)
+    {
+        uset.insert(i);
+    }
+    return 0;
+}();//在 lambda 表达式后面直接跟 ()，表示定义后立即执行。
+class Solution {
+public:
+    int minimumBeautifulSubstrings(string s) {
+        //dp[i] 0-i 能被划分的最少数目
+        //move dp[i+1]   0-i 能被划分的最少数目
+        //if [j,i] 
+        //move dp[i+1] = dp[j] + 1
+        int n = s.size();
+        vector<int> dp(n+1,INT_MAX/2);
+        dp[0] = 0;
+        auto isBeauty = [&](string s1)->bool
+        {
+            int num=0;
+            if(s1[0]=='0')return false;
+            for(int i=0;i<s1.size();i++)
+            {
+                num = num*2 + (s1[i]-'0');
+            }
+            return uset.contains(num);
+        };
+        //1011
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<=i;j++)
+            {
+                string substr = s.substr(j,i-j+1);
+                //cout<<substr<<" isBeauty(substr):"<<isBeauty(substr)<<endl;
+                if(isBeauty(substr))
+                {
+                    dp[i+1] = min(dp[j]+1,dp[i+1]);
+                }
+            }
+        }
+        return dp[n]==INT_MAX/2?-1:dp[n];
+
+    }
+};
+```
+
+实际上记忆化递归可能会更快
+
+https://leetcode.cn/problems/partition-string-into-minimum-beautiful-substrings/solutions/2336485/on2-ji-yi-hua-sou-suo-dao-di-tui-by-endl-99lb/
+
+`num = num + (int)pow(2,c);`
+
+
+
+# 六、状态机 DP
+
+一般定义 *f* [*i*] [*j*] 表示前缀 *a*[:*i*] 在状态 *j* 下的最优值。*j* 一般很小。
+
+## §6.1 买卖股票
+
+
+
+## 股票问题系列
+
+### [121. 买卖股票的最佳时机](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock/)
+
+> 给定一个数组 `prices` ，它的第 `i` 个元素 `prices[i]` 表示一支给定股票第 `i` 天的价格。
+>
+> 你只能选择 **某一天** 买入这只股票，并选择在 **未来的某一个不同的日子** 卖出该股票。设计一个算法来计算你所能获取的最大利润。
+>
+> 返回你可以从这笔交易中获取的最大利润。如果你不能获取任何利润，返回 `0` 。
+>
+> 
+>
+> **示例 1：**
+>
+> ```
+> 输入：[7,1,5,3,6,4]
+> 输出：5
+> 解释：在第 2 天（股票价格 = 1）的时候买入，在第 5 天（股票价格 = 6）的时候卖出，最大利润 = 6-1 = 5 。
+> 注意利润不能是 7-1 = 6, 因为卖出价格需要大于买入价格；同时，你不能在买入前卖出股票。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：prices = [7,6,4,3,1]
+> 输出：0
+> 解释：在这种情况下, 没有交易完成, 所以最大利润为 0。
+> ```
+>
+> 
+>
+> **提示：**
+>
+> - `1 <= prices.length <= 105`
+> - `0 <= prices[i] <= 104`
+
+这道题目可以用一些贪心的思路来做，维护左侧的最小值minValue，同时在遍历数组的时候更新res的值（比较`prices[i]-minValue`会不会更大）。
+
+代码如下：
+
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        //可以选择完全不买
+        int res = 0;
+        int minValue = INT_MAX;
+        for(int price:prices)
+        {
+            if(price < minValue) minValue = price;
+            res = max(res, price - minValue);
+        }
+        return res;
+    }
+};
+```
+
+
+
+推荐先完成：[122. 买卖股票的最佳时机 II](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)（状态机DP的经典题目，题解可以看[买卖股票的最佳时机【基础算法精讲 21】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1ho4y1W7QK/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)）。
+
+### [122. 买卖股票的最佳时机 II](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-ii/)
+
+> 给你一个整数数组 `prices` ，其中 `prices[i]` 表示某支股票第 `i` 天的价格。
+>
+> 在每一天，你可以决定是否购买和/或出售股票。你在任何时候 **最多** 只能持有 **一股** 股票。你也可以先购买，然后在 **同一天** 出售。
+>
+> 返回 *你能获得的 **最大** 利润* 。
+
+
+
+<img src="assets/image-20250414113452951.png" alt="image-20250414113452951" style="zoom:50%;" />
+
+> 该题的代码如下：
+>
+> ```c++
+> class Solution {
+> public:
+> int maxProfit(vector<int>& prices) 
+> {
+>     int n = prices.size();
+>     //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
+>     int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
+>     //dp[0][1] = -INT_MAX;
+>     for(int i=0;i<n;i++)
+>     {
+>         // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
+>         // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
+>         int f = f1;
+>         f1 = max(f1, f2 + prices[i]);
+>         f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
+>     }
+>     //return dp[n][0];
+>     return f1;
+> }
+> };
+> ```
+
+
+
+### [309. 买卖股票的最佳时机含冷冻期](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-cooldown/)
+
+> 给定一个整数数组`prices`，其中第 `prices[i]` 表示第 `*i*` 天的股票价格 。
+>
+> 设计一个算法计算出最大利润。在满足以下约束条件下，你可以尽可能地完成更多的交易（多次买卖一支股票）:
+>
+> - 卖出股票后，你无法在第二天买入股票 (即冷冻期为 1 天)。
+>
+> **注意：**你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+>
+> 
+>
+> **示例 1:**
+>
+> ```
+> 输入: prices = [1,2,3,0,2]
+> 输出: 3 
+> 解释: 对应的交易状态为: [买入, 卖出, 冷冻期, 买入, 卖出]
+> ```
+>
+> **示例 2:**
+>
+> ```
+> 输入: prices = [1]
+> 输出: 0
+> ```
+>
+> 
+>
+> **提示：**
+>
+> - `1 <= prices.length <= 5000`
+> - `0 <= prices[i] <= 1000`
+
+
+
+<img src="assets/image-20250414113425987.png" alt="image-20250414113425987" style="zoom:50%;" />
+
+做完上面的题目之后，接下来就可以来看这道带有冷冻期的题目了。这道题目与122唯一的区别就是冷冻期，即卖出股票的第二天是不能够买入股票的，这就很像`打家劫舍`这道题目，因此只要把未持有->持有的状态机变换（即购买了）的dp改成从i-2的地方转移过来的即可（买入的情况，不能是前一天直接过来），代码如下：
+
+```c++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        //f[-2,0]=0, 不持有股票的时候利润都是0
+        //f(i, 0) = max(f(i-1,0), f(i-1,1)+prices[i]);
+        //f(i, 1) = max(f(i-1, 1), f(i-2, 0)-prices[i]); 前一天不能有卖出操作,买入只能从i-2转移过来
+        int n = prices.size();
+        vector<vector<int>> dp(n+2, vector<int>(2));
+        dp[1][1] = -INT_MAX; //统一把dp[i]的下标索引+2, 这个相当于原来的dp[-1][1] 
+        for(int i=0;i<n;i++)
+        {
+            dp[i+2][0] = max(dp[i+1][0], dp[i+1][1] + prices[i]);
+            dp[i+2][1] = max(dp[i+1][1], dp[i][0] - prices[i]);
+        }
+        return dp[n+1][0]; //不持有赚的更多
+```
+
+题目要求是“卖出股票后，你无法在第二天买入股票 (即冷冻期为 1 天)。”，因此只需要f(i, 1) = max(f(i-1, 1), f(i-2, 0)-prices[i]); 打家劫舍 ，f(i, 0)不需要打家劫舍
+
+
+
+以下的这段解释感觉还是比较有用的：
+
+
+![image-20250314164054742](assets/image-20250314164054742.png)
+
+
+
+### [714. 买卖股票的最佳时机含手续费](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/)
+
+给定一个整数数组 `prices`，其中 `prices[i]`表示第 `i` 天的股票价格 ；整数 `fee` 代表了交易股票的手续费用。
+
+你可以无限次地完成交易，但是你每笔交易都需要付手续费。如果你已经购买了一个股票，在卖出它之前你就不能再继续购买股票了。
+
+返回获得利润的最大值。
+
+**注意：**这里的一笔交易指买入持有并卖出股票的整个过程，每笔交易你只需要为支付一次手续费。 
+
+**示例 1：**
+
+```
+输入：prices = [1, 3, 2, 8, 4, 9], fee = 2
+输出：8
+解释：能够达到的最大利润:  
+在此处买入 prices[0] = 1
+在此处卖出 prices[3] = 8
+在此处买入 prices[4] = 4
+在此处卖出 prices[5] = 9
+总利润: ((8 - 1) - 2) + ((9 - 4) - 2) = 8
+```
+
+
+
+```C++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices, int fee) {
+        // 买付
+        //dp[i][0] 第i天没有股票的最大收益
+        //dp[i][1] 第i天持有股票的最大收益
+        //dp[i][0] = max(dp[i-1][0],dp[i-1][1]+prices[i]);
+        //dp[i][1] = max(dp[i-1][1],dp[i-1][0]-prices[i]-fee);
+        //dp[-1][1] = INT_MIN/2;
+        int f1 = INT_MIN/2,f0=0;
+        int n = prices.size();
+        for(int i=0;i<n;i++)
+        {
+            f0 = max(f0,f1+prices[i]);
+            f1 = max(f1,f0-prices[i]-fee);
+        }
+        return f0;
+    }
+};
+```
+
+
+
+### （1）[188. 买卖股票的最佳时机 IV](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iv/)
+
+> 给你一个整数数组 `prices` 和一个整数 `k` ，其中 `prices[i]` 是某支给定的股票在第 `i` 天的价格。
+>
+> 设计一个算法来计算你所能获取的最大利润。你最多可以完成 `k` 笔交易。也就是说，你最多可以买 `k` 次，卖 `k` 次。
+>
+> **注意：**你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+
+
+
+<img src="assets/image-20250414161600772.png" alt="image-20250414161600772" style="zoom:50%;" />
+
+这里假设“购买”操作为增加一笔交易，那么其实只需要在前面的二维dp中再增加一维，记录已经完成的交易数。状态转移方程和边界条件如下：（不考虑索引越界的情况）
+
+```c++
+//dp[i][j][k] 表示截止到第i天，最多完成了j次交易的情况下，k=0表示未持有股票，k=1表示持有股票；
+dp[i][j][0] = max(dp[i-1][j][0], dp[i-1][j][1]+price[i]); //(1)不处理， （2）卖出（根据前面的做法卖出不算新的交易，只有买入算新的交易）
+dp[i][j][1] = max(dp[i-1][j][1], dp[i-1][j-1][0]-price[i]); //(1)不处理， （2）买入
+//边界条件
+//（1）j<0，交易数是负的，此时是-inf；
+//（2）dp[-1][j][0]，表示一开始之前未持有股票，此时为0
+//（3）dp[-1][j][1]，表示一开始之前持有股票，不合理，此时为-inf。
+//为了防止越界的问题，把i和j都往后移动一位，在本题当中i整体后移，j索引不变，但计算的dp问题变成了dp[n][k+1][0],n表示i往后移动了一位，k+1则是在计算中把j+1，原来j=-1的边界条件变成了j=0的边界条件。
+```
+
+有了以上的基础，代码如下：
+
+```c++
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+        int n = prices.size();
+        //开一个三维的dp
+        vector<vector<vector<int>>> dp(n+1, vector<vector<int>>(k+2, vector<int>(2,-0x3f3f3f))); //可能有减法,防止越界
+        //想好为0的初值情况即可
+        for(int j=1;j<=k+1;j++) //j也偏移了一位,从1开始
+        {
+            dp[0][j][0] = 0;
+        }
+        //开始dp
+        for(int i=0;i<n;i++)
+        {
+            for(int j=1;j<=k+1;j++)
+            {
+                dp[i+1][j][0] = max(dp[i][j][0], dp[i][j][1] + prices[i]);
+                dp[i+1][j][1] = max(dp[i][j][1], dp[i][j-1][0] - prices[i]);
+            }
+        }
+        return dp[n][k+1][0];
+    }
+}
+```
+
+能够发现，`dp[i+1]`永远依赖于`dp[i]`，那么能否降维呢？可以，但需要注意遍历的顺序，假设我们直接这样改：
+
+```c++
+for(int i=0;i<n;i++)
+{
+    for(int j=1;j<=k+1;j++)
+    {
+        dp[j][0] = max(dp[j][0], dp[j][1] + prices[i]);
+        dp[j][1] = max(dp[j][1], dp[j-1][0] - prices[i]);
+    }
+}
+```
+
+那么会出现遍历到后面的`dp[j][0]`的时候，前面的j已经被改掉了（在原始增加一维`i`的情况下，整个改动都是基于上一轮的数组的，不涉及这个问题），因此`j`需要倒序进行修改（此事在背包问题中亦有记载）。总的降维结果修改如下：
+
+```c++
+class Solution {
+public:
+    int maxProfit(int k, vector<int>& prices) {
+        int n = prices.size();
+        //开一个三维的dp
+        vector<vector<int>> dp(k+2, vector<int>(2,-0x3f3f3f)); //可能有减法,防止越界
+        //想好为0的初值情况即可
+        for(int j=1;j<=k+1;j++) //j也偏移了一位,从1开始
+        {
+            dp[j][0] = 0;
+        }
+        //开始dp
+        for(int i=0;i<n;i++)
+        {
+            for(int j=k+1;j>=1;j--)
+            {
+                dp[j][0] = max(dp[j][0], dp[j][1] + prices[i]);
+                dp[j][1] = max(dp[j][1], dp[j-1][0] - prices[i]);
+            }
+        }
+        return dp[k+1][0];
+
+```
+
+>注意 ：这题目中，k共有0-k一共k+1个状态。
+>
+>例如k=3，则有0不买，买1，买2，买3，一种四种状态，但是我们要加1位防止越界，因此是k+2；
+
+
+
+### [123. 买卖股票的最佳时机 III](https://leetcode.cn/problems/best-time-to-buy-and-sell-stock-iii/)
+
+给定一个数组，它的第 `i` 个元素是一支给定的股票在第 `i` 天的价格。
+
+设计一个算法来计算你所能获取的最大利润。你最多可以完成 **两笔** 交易。
+
+**注意：**你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。
+
+ 
+
+**示例 1:**
+
+```
+输入：prices = [3,3,5,0,0,3,1,4]
+输出：6
+解释：在第 4 天（股票价格 = 0）的时候买入，在第 6 天（股票价格 = 3）的时候卖出，这笔交易所能获得利润 = 3-0 = 3 。
+     随后，在第 7 天（股票价格 = 1）的时候买入，在第 8 天 （股票价格 = 4）的时候卖出，这笔交易所能获得利润 = 4-1 = 3 。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) 
+    {
+        //dp[i][j][0] i天j笔交易 手上没股票
+        //dp[i][j][1] i天j笔交易 手上有股票
+        //买算交易
+        //dp[i][j][0] = max(dp[i-1][j][0],dp[i-1][j][1]+prices[i]);
+        //dp[i][j][1] = max(dp[i-1][j][1],dp[i-1][j-1][0]-prices[i]);
+        //dp[-1][k][1] = INT_MIN/2
+        vector<vector<int>> dp(3,vector<int>(2,0));
+        int k=2;
+        for(int j=0;j<k;j++) dp[j+1][1] = INT_MIN/2;
+        int n = prices.size();
+        for(int i=0;i<n;i++)
+        {
+            for(int j=k-1;j>=0;j--)
+            {
+                dp[j+1][0] = max(dp[j+1][0],dp[j+1][1]+prices[i]);
+                dp[j+1][1] = max(dp[j+1][1],dp[j][0]-prices[i]);
+            }
+        }
+        return dp[k][0];
+    }
+};
+```
+
+
+
+## §6.2 基础
+
+### [3259. 超级饮料的最大强化能量](https://leetcode.cn/problems/maximum-energy-boost-from-two-drinks/)
+
+来自未来的体育科学家给你两个整数数组 `energyDrinkA` 和 `energyDrinkB`，数组长度都等于 `n`。这两个数组分别代表 A、B 两种不同能量饮料每小时所能提供的强化能量。
+
+你需要每小时饮用一种能量饮料来 **最大化** 你的总强化能量。然而，如果从一种能量饮料切换到另一种，你需要等待一小时来梳理身体的能量体系（在那个小时里你将不会获得任何强化能量）。
+
+返回在接下来的 `n` 小时内你能获得的 **最大** 总强化能量。
+
+**注意** 你可以选择从饮用任意一种能量饮料开始。
+
+**示例 1：**
+
+**输入：**energyDrinkA = [1,3,1], energyDrinkB = [3,1,1]
+
+**输出：**5
+
+**解释：**
+
+要想获得 5 点强化能量，需要选择只饮用能量饮料 A（或者只饮用 B）。
+
+```C++
+class Solution {
+public:
+    long long maxEnergyBoost(vector<int>& energyDrinkA, vector<int>& energyDrinkB) {
+        //A->A
+        //A->1H->B
+        //|      |
+        //A<-1H<-B
+        //dp[i][0] i时间 / 喝A最大总能量
+       
+        // dp[i][0] = max(dp[i-1][0],dp[i-2][1])+energyDrinkA[i];
+        // dp[i][1] = max(dp[i-1][1],dp[i-2][0])+energyDrinkB[i];
+        //dp[-1][0] = 0
+        //dp[-2][0] = 0
+        //dp[-1][1] = 0
+        //dp[-2][1] = 0
+        int n = energyDrinkA.size();
+        vector<vector<long long>> dp(n+2,vector<long long>(2,0));
+
+        for(int i=0;i<n;i++)
+        {
+            dp[i+2][0] = max(dp[i+1][0],dp[i][1])+energyDrinkA[i];
+            dp[i+2][1] = max(dp[i+1][1],dp[i][0])+energyDrinkB[i];
+        }
+        return max(dp[n+1][0],dp[n+1][1]);
+    }
+};
+```
+
+（联系 152 题）
+
+
+
+### [2708. 一个小组的最大实力值](https://leetcode.cn/problems/maximum-strength-of-a-group/)
+
+给你一个下标从 **0** 开始的整数数组 `nums` ，它表示一个班级中所有学生在一次考试中的成绩。老师想选出一部分同学组成一个 **非空** 小组，且这个小组的 **实力值** 最大，如果这个小组里的学生下标为 `i0`, `i1`, `i2`, ... , `ik` ，那么这个小组的实力值定义为 `nums[i0] * nums[i1] * nums[i2] * ... * nums[ik]` 。
+
+请你返回老师创建的小组能得到的最大实力值为多少。
+
+**示例 1：**
+
+```
+输入：nums = [3,-1,-5,2,5,-9]
+输出：1350
+解释：一种构成最大实力值小组的方案是选择下标为 [0,2,3,4,5] 的学生。实力值为 3 * (-5) * 2 * 5 * (-9) = 1350 ，这是可以得到的最大实力值。
+```
+
+```C++
+class Solution {
+public:
+    long long maxStrength(vector<int>& nums) {
+        int n = nums.size();
+        long long mx = nums[0], mn = nums[0];
+        for(int i=1;i<n;i++)
+        {
+            long long x = nums[i];
+            long long tmpMn = mn;
+            mn = min({mn,x,mn*x,   mx*x});
+            mx = max({mx,x,tmpMn*x,mx*x});
+        }
+        return mx;
+    }
+};	
+```
+
+
+
+方法2：贪心
+
+https://leetcode.cn/problems/maximum-strength-of-a-group/solutions/2896423/yi-ge-xiao-zu-de-zui-da-shi-li-zhi-by-le-o3nd/
 
 
 

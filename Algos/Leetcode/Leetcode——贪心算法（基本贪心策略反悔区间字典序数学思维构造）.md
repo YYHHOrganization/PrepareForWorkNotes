@@ -1172,7 +1172,7 @@ public:
             {
                 if((x%2)!=(cards[index]%2))
                 {
-                    return sum - x + cards[index]; //x被替换后的总和
+                    return sum - x + cards[index]; //x被替换后的总和 //① 👇
                 }
             }
             return INT_MIN; //这种情况下不存在解
@@ -1196,11 +1196,19 @@ public:
 };
 ```
 
+>👆①
+>
+>```C++
+>return sum - x + cards[index];
+>不可以写为
+>sum = sum -x +cards[i];
+>return sum;
+>因为改变了sum  而我们用lambda[&]引用捕获 会错误
+>```
+
 
 
 ### ==[1262. 可被三整除的最大和](https://leetcode.cn/problems/greatest-sum-divisible-by-three/)==
-
-
 
 
 
