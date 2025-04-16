@@ -3876,23 +3876,23 @@ public:
 > ```c++
 > class Solution {
 > public:
-> int maxProfit(vector<int>& prices) 
-> {
->     int n = prices.size();
->     //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
->     int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
->     //dp[0][1] = -INT_MAX;
->     for(int i=0;i<n;i++)
+>     int maxProfit(vector<int>& prices) 
 >     {
->         // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
->         // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
->         int f = f1;
->         f1 = max(f1, f2 + prices[i]);
->         f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
+>         int n = prices.size();
+>         //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
+>         int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
+>         //dp[0][1] = -INT_MAX;
+>         for(int i=0;i<n;i++)
+>         {
+>             // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
+>             // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
+>             int f = f1;
+>             f1 = max(f1, f2 + prices[i]);
+>             f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
+>         }
+>         //return dp[n][0];
+>         return f1;
 >     }
->     //return dp[n][0];
->     return f1;
-> }
 > };
 > ```
 
@@ -3996,18 +3996,21 @@ public:
 class Solution {
 public:
     int maxProfit(vector<int>& prices, int fee) {
-        // 买付
-        //dp[i][0] 第i天没有股票的最大收益
-        //dp[i][1] 第i天持有股票的最大收益
-        //dp[i][0] = max(dp[i-1][0],dp[i-1][1]+prices[i]);
-        //dp[i][1] = max(dp[i-1][1],dp[i-1][0]-prices[i]-fee);
-        //dp[-1][1] = INT_MIN/2;
-        int f1 = INT_MIN/2,f0=0;
         int n = prices.size();
+        //认为购买股票需要手续费
+        //vector<vector<int>> dp(n+1, vector<int>(2, 0));
+        int f0 = 0, f1 = -0x3f3f3f;
+        //dp[-1][0] = 0, dp[-1][1] = INT_MIN;
+        //dp[i][0] = max(dp[i-1][0], dp[i-1][1]+prices[i]);
+        //dp[i][1] = max(dp[i-1][1], dp[i-1][0]-prices[i]-fee);
+        //dp[0][1] = -0x3f3f3f;
         for(int i=0;i<n;i++)
         {
-            f0 = max(f0,f1+prices[i]);
-            f1 = max(f1,f0-prices[i]-fee);
+            // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
+            // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]-fee);
+            int tmpf0 = f0; //这样写,可以保证dp[i][0]用的是上一轮的值,防止出问题
+            f0 = max(f0, f1+prices[i]);
+            f1 = max(f1, tmpf0-prices[i]-fee);
         }
         return f0;
     }
