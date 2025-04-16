@@ -3990,144 +3990,6 @@ public:
 
 
 
-# 前后缀分解
-
-### [238. 除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
-
-给你一个整数数组 `nums`，返回 数组 `answer` ，其中 `answer[i]` 等于 `nums` 中除 `nums[i]` 之外其余各元素的乘积 。
-
-题目数据 **保证** 数组 `nums`之中任意元素的全部前缀元素和后缀的乘积都在 **32 位** 整数范围内。
-
-请 **不要使用除法，**且在 `O(n)` 时间复杂度内完成此题。
-
-**示例 1:**
-
-```
-输入: nums = [1,2,3,4]
-输出: [24,12,8,6]
-```
-
-**示例 2:**
-
-```
-输入: nums = [-1,1,0,-3,3]
-输出: [0,0,9,0,0]
-```
-
-
-
-灵茶山艾府放进动规里
-
-题解：
-
-**https://leetcode.cn/problems/product-of-array-except-self/solutions/2783788/qian-hou-zhui-fen-jie-fu-ti-dan-pythonja-86r1/?envType=problem-list-v2&envId=2cktkvj**
-
-
-
-#### 优化前 M 普通前后缀乘积
-
-不推荐
-
-```C++
-class Solution {
-public:
-    vector<int> productExceptSelf(vector<int>& nums) {
-        // 整个乘起来 除以 ni 题目不让用
-        //记录前缀乘积和后缀乘积，乘起来
-        int n=nums.size();
-        vector<int> prefixProduct(n+2,1);
-        vector<int> suffixProduct(n+2,1);
-        // 1 2  3  4
-        // 1 2  6 24
-        // 1 24 12 4
-        //01 2  3  4
-        for(int i=0,j=n+1;i<n;i++,j--)
-        {
-            prefixProduct[i+1] = prefixProduct[i]*nums[i];
-            suffixProduct[j-1] = suffixProduct[j]*nums[j-2];
-        }
-        vector<int> res(n,0);
-
-        for(int i=0;i<n;i++)
-        {
-            res[i] = prefixProduct[i]*suffixProduct[i+2];
-        }
-        return res;
-    }
-};
-```
-
-另一种写法
-
-```C++
-class Solution {
-public:
-    vector<int> productExceptSelf(vector<int>& nums) {
-        // 整个乘起来 除以 ni 题目不让用
-        //记录前缀乘积和后缀乘积，乘起来
-        int n=nums.size();
-        // 1 2  3  4
-        //   1  2  6  前缀乘积
-        //24 12 4	  后缀乘积
-        // 0  1 2 3 下标
-        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
-        //并没有做偏移 下标是对应的 没有+1
-        vector<int> prefixProduct(n,1);
-        for(int i=1;i<n;i++)
-        {
-            prefixProduct[i] = prefixProduct[i-1]*nums[i-1];
-        }
-        vector<int> suffixProduct(n,1);
-        for(int i=n-2;i>=0;i--)//-2
-        {
-            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
-        }
-        
-        vector<int> res(n,0);
-        for(int i=0;i<n;i++)
-        {
-            res[i] = prefixProduct[i]*suffixProduct[i];
-        }
-        return res;
-    }
-};
-```
-
-#### 优化：不使用额外空间
-
-```C++
-class Solution {
-public:
-    vector<int> productExceptSelf(vector<int>& nums) {
-        // 整个乘起来 除以 ni 题目不让用
-        //记录前缀乘积和后缀乘积，乘起来
-        int n=nums.size();
-        // 1 2  3  4
-        //   1  2  6  前缀乘积
-        //24 12 4	  后缀乘积
-        // 0  1 2 3 下标
-        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
-        vector<int> suffixProduct(n,1);//不用+1
-        for(int i=n-2;i>=0;i--)
-        {
-            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
-        }
-        int preProduct =1;
-        for(int i=0;i<n;i++)
-        {
-            // 此时 pre 为 nums[0] 到 nums[i-1] 的乘积，直接乘到 suf[i] 中
-            suffixProduct[i] = suffixProduct[i] * preProduct;
-            preProduct*=nums[i];
-        }
-        return suffixProduct;
-    }
-};
-```
-
-
-
-------
-
 
 
 ## 股票问题系列
@@ -4378,6 +4240,144 @@ public:
 >注意 ：这题目中，k共有0-k一共k+1个状态。
 >
 >例如k=3，则有0不买，买1，买2，买3，一种四种状态，但是我们要加1位防止越界，因此是k+2；
+
+# 前后缀分解
+
+### [238. 除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
+
+给你一个整数数组 `nums`，返回 数组 `answer` ，其中 `answer[i]` 等于 `nums` 中除 `nums[i]` 之外其余各元素的乘积 。
+
+题目数据 **保证** 数组 `nums`之中任意元素的全部前缀元素和后缀的乘积都在 **32 位** 整数范围内。
+
+请 **不要使用除法，**且在 `O(n)` 时间复杂度内完成此题。
+
+**示例 1:**
+
+```
+输入: nums = [1,2,3,4]
+输出: [24,12,8,6]
+```
+
+**示例 2:**
+
+```
+输入: nums = [-1,1,0,-3,3]
+输出: [0,0,9,0,0]
+```
+
+
+
+灵茶山艾府放进动规里
+
+题解：
+
+**https://leetcode.cn/problems/product-of-array-except-self/solutions/2783788/qian-hou-zhui-fen-jie-fu-ti-dan-pythonja-86r1/?envType=problem-list-v2&envId=2cktkvj**
+
+
+
+#### 优化前 M 普通前后缀乘积
+
+不推荐
+
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        vector<int> prefixProduct(n+2,1);
+        vector<int> suffixProduct(n+2,1);
+        // 1 2  3  4
+        // 1 2  6 24
+        // 1 24 12 4
+        //01 2  3  4
+        for(int i=0,j=n+1;i<n;i++,j--)
+        {
+            prefixProduct[i+1] = prefixProduct[i]*nums[i];
+            suffixProduct[j-1] = suffixProduct[j]*nums[j-2];
+        }
+        vector<int> res(n,0);
+
+        for(int i=0;i<n;i++)
+        {
+            res[i] = prefixProduct[i]*suffixProduct[i+2];
+        }
+        return res;
+    }
+};
+```
+
+另一种写法
+
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        // 1 2  3  4
+        //   1  2  6  前缀乘积
+        //24 12 4	  后缀乘积
+        // 0  1 2 3 下标
+        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
+        //并没有做偏移 下标是对应的 没有+1
+        vector<int> prefixProduct(n,1);
+        for(int i=1;i<n;i++)
+        {
+            prefixProduct[i] = prefixProduct[i-1]*nums[i-1];
+        }
+        vector<int> suffixProduct(n,1);
+        for(int i=n-2;i>=0;i--)//-2
+        {
+            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
+        }
+        
+        vector<int> res(n,0);
+        for(int i=0;i<n;i++)
+        {
+            res[i] = prefixProduct[i]*suffixProduct[i];
+        }
+        return res;
+    }
+};
+```
+
+#### 优化：不使用额外空间
+
+```C++
+class Solution {
+public:
+    vector<int> productExceptSelf(vector<int>& nums) {
+        // 整个乘起来 除以 ni 题目不让用
+        //记录前缀乘积和后缀乘积，乘起来
+        int n=nums.size();
+        // 1 2  3  4
+        //   1  2  6  前缀乘积
+        //24 12 4	  后缀乘积
+        // 0  1 2 3 下标
+        //定义 pre[i] 表示从 nums[0] 到 nums[i−1] 的乘积。 也就是前缀乘积并不需要乘最后一个数字
+        vector<int> suffixProduct(n,1);//不用+1
+        for(int i=n-2;i>=0;i--)
+        {
+            suffixProduct[i] = suffixProduct[i+1]*nums[i+1];
+        }
+        int preProduct =1;
+        for(int i=0;i<n;i++)
+        {
+            // 此时 pre 为 nums[0] 到 nums[i-1] 的乘积，直接乘到 suf[i] 中
+            suffixProduct[i] = suffixProduct[i] * preProduct;
+            preProduct*=nums[i];
+        }
+        return suffixProduct;
+    }
+};
+```
+
+
+
+------
 
 
 
