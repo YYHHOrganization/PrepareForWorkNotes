@@ -330,7 +330,9 @@ This method is particularly effective in filling in missing information and gene
 | **Tri-MipRF** [FKYT∗22]  | 使用三平面表示和多分辨率特征，提高了3D重建的细节和效率。     |
 | **PlenOctrees** [SSN∗22] | 结合三平面表示和八叉树结构，实现了高效的神经渲染和3D重建。   |
 
-> 补充一些Triplane的相关内容：
+> 补充一些Triplane的相关内容：https://zhuanlan.zhihu.com/p/661156248
+>
+> The main idea behind this method is to decompose a 3D volume into three orthogonal planes (e.g., XY, XZ, and YZ planes) and represent the features of the 3D shape on these planes. ==todo：还没认真看这种方法，如果有必要学习的话可以补充进来。==
 
 
 
@@ -493,6 +495,14 @@ DMTet的介绍。
 > 4. **结合传统方法与深度学习**：使用工具（如ZBrush、Blender）或研究（如Neural Mesh Optimization）优化网格。
 >
 > 希望这些信息对你有所帮助！如果你有更多问题，欢迎继续讨论！
+
+
+
+## 4.Generation Methods
+
+### （1）前置视频资料学习推荐
+
+
 
 
 
