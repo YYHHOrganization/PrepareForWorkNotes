@@ -2655,3 +2655,212 @@ public:
 
 两个指针的移动方向相同（都向右，或者都向左）。
 
+
+
+## 6.分组循环
+
+适用场景：按照题目要求，数组会被分割成若干组，每一组的判断/处理逻辑是相同的。
+
+核心思想：
+
+- 外层循环负责遍历组之前的准备工作（记录开始位置），和遍历组之后的统计工作（更新答案最大值）。
+- 内层循环负责遍历组，找出这一组最远在哪结束。
+
+这个写法的好处是，各个逻辑块分工明确，也不需要特判最后一组（易错点）。以我的经验，这个写法是所有写法中最不容易出 bug 的，推荐大家记住。
+
+
+
+### （1）[2760. 最长奇偶子数组](https://leetcode.cn/problems/longest-even-odd-subarray-with-threshold/)
+
+> 给你一个下标从 **0** 开始的整数数组 `nums` 和一个整数 `threshold` 。
+>
+> 请你从 `nums` 的子数组中找出以下标 `l` 开头、下标 `r` 结尾 `(0 <= l <= r < nums.length)` 且满足以下条件的 **最长子数组** ：
+>
+> - `nums[l] % 2 == 0`
+> - 对于范围 `[l, r - 1]` 内的所有下标 `i` ，`nums[i] % 2 != nums[i + 1] % 2`
+> - 对于范围 `[l, r]` 内的所有下标 `i` ，`nums[i] <= threshold`
+>
+> 以整数形式返回满足题目要求的最长子数组的长度。
+>
+> **注意：子数组** 是数组中的一个连续非空元素序列。
+
+选一个最长连续子数组，满足子数组元素依次是偶数，奇数，偶数，奇数，……，且元素值均不超过 *threshold*。
+
+> 分组循环
+>
+> - 适用场景：按照题目要求，数组会被分割成若干组，且每一组的判断/处理逻辑是一样的。
+>
+> 核心思想：
+>
+> - 外层循环负责遍历组之前的准备工作（记录开始位置），和遍历组之后的统计工作（更新答案最大值）。
+> - 内层循环负责遍历组，找出这一组最远在哪结束。
+>
+> 这个写法的好处是，各个逻辑块分工明确，也不需要特判最后一组（易错点）。以我的经验，这个写法是所有写法中最不容易出 bug 的，推荐大家记住。
+
+时间复杂度是O(n)。
+
+本题的代码如下：
+
+```c++
+class Solution {
+public:
+    int longestAlternatingSubarray(vector<int>& nums, int threshold) {
+        int i = 0; //目前在序列中的索引
+        int ans = 0; //记录最长子数组的长度
+        int n = nums.size();
+        while(i < n)
+        {
+            if(nums[i]%2 || nums[i]>threshold) //跟双指针专题一样,为了怕写错,while里面就别写while了 
+            {
+                i++;
+                continue; 
+            }
+            int start = i;
+            i++; //从后一个数开始判断
+            while(i<n && nums[i]<=threshold && nums[i]%2 != nums[i-1]%2)
+            {
+                i++; //继续往后走,直到不符合题意,i=n或者序列不符合,i指向不符合的位置
+            }
+            ans = max(ans, i-start);
+        }
+        return ans;
+    }
+};
+```
+
+
+
+一般来说，分组循环大概的代码如下，可以通过多多练习来让自己熟练起来。
+
+```c++
+n = len(nums)
+i = 0
+while i < n:
+    start = i
+    while i < n and ...:
+        i += 1
+    # 从 start 到 i-1 是一组
+    # 下一组从 i 开始，无需 i += 1
+```
+
+
+
+### （2）[1446. 连续字符](https://leetcode.cn/problems/consecutive-characters/)
+
+> 给你一个字符串 `s` ，字符串的**「能量」**定义为：只包含一种字符的最长非空子字符串的长度。
+>
+> 请你返回字符串 `s` 的 **能量**。
+
+分组循环，相当于每一组内都是一些相等的字符串，代码应当和上一题差不多，如下：
+
+```c++
+class Solution {
+public:
+    int maxPower(string s) {
+        int n = s.size();
+        int ans = 0;
+        int i = 0;
+        while(i<n)
+        {
+            int start = i;
+            i++; //往后移动一个,并且和前面的做对比
+            while(i<n && s[i]==s[i-1])
+            {
+                i++;
+            }
+            //要么i==n,要么不相等,此时更新值
+            ans = max(ans, i-start);
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### （3）[1869. 哪种连续子字符串更长](https://leetcode.cn/problems/longer-contiguous-segments-of-ones-than-zeros/)
+
+```c++
+class Solution {
+public:
+    int maxSize(string& s, char target)
+    {
+        //找最长的target多长
+        int n = s.size();
+        int ans = 0;
+        int i = 0;
+        while(i<n)
+        {
+            if(s[i]!=target) //值不相等,则继续往后走
+            {
+                i++; 
+                continue;
+            }
+            int start = i; //i此时指向的是一个==target的值
+            i++;
+            while(i<n && s[i]==target) //值相等
+            {
+                i++;
+            }
+            ans = max(ans, i-start);
+        }
+        return ans;
+    }
+    bool checkZeroOnes(string s) {
+        int one = maxSize(s, '1');
+        int zero = maxSize(s, '0');
+        return one > zero;
+    }
+};
+```
+
+这样需要遍历两遍，也可以只遍历一遍，代码如下：
+
+```c++
+class Solution {
+public:
+    bool checkZeroOnes(string s) {
+        int n = s.size();
+        array<int, 2> cnts{}; //cnt[0]存0的最多个数,cnt[1]存1的最多个数
+        int i = 0;
+        while(i<n)
+        {
+            int start = i;
+            i++;
+            while(i<n && s[i]==s[start])
+            {
+                i++;
+            }
+            cnts[s[start]-'0'] = max(cnts[s[start]-'0'], i-start);
+        }
+        return cnts[1] > cnts[0];
+    }
+};
+```
+
+
+
+### （4）[2414. 最长的字母序连续子字符串的长度](https://leetcode.cn/problems/length-of-the-longest-alphabetical-continuous-substring/)
+
+```c++
+class Solution {
+public:
+    int longestContinuousSubstring(string s) {
+        int n = s.size();
+        int ans = 0;
+        int i = 0;
+        while(i < n)
+        {
+            int start = i;
+            i++;
+            while(i<n && s[i]==s[i-1]+1)
+            {
+                i++;
+            }
+            ans = max(ans, i-start);
+        }
+        return ans;
+    }
+};
+```
+
