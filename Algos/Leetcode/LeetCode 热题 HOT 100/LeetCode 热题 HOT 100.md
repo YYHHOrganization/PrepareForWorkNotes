@@ -5949,7 +5949,7 @@ https://leetcode.cn/problems/longest-palindromic-substring/solutions/2958179/mo-
 
 ```c++
 这时我们知道RL[i]至少不会小于RL[j]，并且已经知道了部分的以i为中心的回文串，于是可以令RL[i]=RL[j] 为起始半径。
-又因为(j + i) / 2 = pos ==> j = 2*pos - i 得到 RL[i]=RL[2*pos - i]。
+又因为 (j + i) / 2 = pos ==> j = 2*pos - i 得到 RL[i]=RL[2*pos - i]。
 ```
 
 

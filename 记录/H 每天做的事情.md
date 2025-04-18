@@ -101,3 +101,17 @@ LIS:
 没做:
 
 [1577. 数的平方等于两数乘积的方法数](https://leetcode.cn/problems/number-of-ways-where-square-of-number-is-equal-to-product-of-two-numbers/)
+
+
+
+# 2025.4.16
+
+1. 整理并复习一部分滑动窗口的题目，整理到板子文件夹当中
+
+2. 分组循环的题目：
+
+[2760. 最长奇偶子数组](https://leetcode.cn/problems/longest-even-odd-subarray-with-threshold/)
+
+[1446. 连续字符](https://leetcode.cn/problems/consecutive-characters/)
+
+[1869. 哪种连续子字符串更长](https://leetcode.cn/problems/longer-contiguous-segments-of-ones-than-zeros/)

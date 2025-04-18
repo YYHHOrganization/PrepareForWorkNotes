@@ -4,6 +4,12 @@
 
 DP题单:[分享丨【题单】动态规划（入门/背包/状态机/划分/区间/状压/数位/树形/数据结构优化）- 讨论 - 力扣（LeetCode）](https://leetcode.cn/discuss/post/3581838/fen-xiang-gun-ti-dan-dong-tai-gui-hua-ru-007o/)
 
+:recycle: 有挑战的题 ，复习的时候可以考虑做一下这些标志的题目
+
+:memo:    模板
+
+:eye: 值得看
+
 # 一、入门dp
 
 ## 1.爬楼梯
@@ -164,9 +170,14 @@ public:
 
 
 
-## 2.打家劫舍
+## 2.打家劫舍 
 
-### （1）[198. 打家劫舍](https://leetcode.cn/problems/house-robber/)
+答疑
+问：在 1:1 翻译的过程中，如何根据记忆化搜索，确定递推数组（DP 数组）的大小？为什么有时候要开 n+1 大小的数组，有时候要开 n+2 大小的数组？
+
+答：看记忆化搜索的参数的范围（最小值和最大值）。例如 i 最小是 −1（递归边界也算），最大是 n−1（递归入口），那么一共有 n+1 个不同的 i，就需要开 n+1 大小的 DP 数组。如果 i 最小是 −2，最大是 n−1，一共有 n+2 个不同的 i，就需要开 n+2 大小的 DP 数组。
+
+### （1）[198. 打家劫舍](https://leetcode.cn/problems/house-robber/) :memo:    
 
 > 你是一个专业的小偷，计划偷窃沿街的房屋。每间房内都藏有一定的现金，影响你偷窃的唯一制约因素就是相邻的房屋装有相互连通的防盗系统，**如果两间相邻的房屋在同一晚上被小偷闯入，系统会自动报警**。
 >
@@ -297,7 +308,7 @@ public:
 
 
 
-### （5）[3186. 施咒的最大总伤害](https://leetcode.cn/problems/maximum-total-damage-with-spell-casting/)
+### （5）[3186. 施咒的最大总伤害](https://leetcode.cn/problems/maximum-total-damage-with-spell-casting/) :recycle:
 
 > 一个魔法师有许多不同的咒语。
 >
@@ -350,7 +361,7 @@ public:
 
 
 
-### （6）思维扩展：[2140. 解决智力问题](https://leetcode.cn/problems/solving-questions-with-brainpower/)
+### （6）思维扩展：[2140. 解决智力问题](https://leetcode.cn/problems/solving-questions-with-brainpower/) :recycle:
 
 > 给你一个下标从 **0** 开始的二维整数数组 `questions` ，其中 `questions[i] = [pointsi, brainpoweri]` 。
 >
@@ -371,7 +382,7 @@ public:
 
 #### （a）自己尝试——错误，踩坑，初见杀
 
-
+错误：
 
 先尝试写一下状态转移方程，假设`dp[i]`表示考虑到第`i`个问题（`i`的下标从0开始），则有做这道题或者不做这道题两种方案：
 
@@ -468,7 +479,21 @@ public:
 - 定义状态 `f[i]` 表示以 `a[i]` 结尾的最大子数组和，不和 `i` 左边拼起来就是 `f[i]=a[i]`，和`i` 左边拼起来就是 `f[i]=f[i−1]+a[i]`，取最大值就得到了状态转移方程 `f[i]=max(f[i−1],0)+a[i]`，答案为 max(f)(因为不确定最大值是以哪个索引为结尾的，所以要维护中间过程中的max值)。这个做法也叫做 `Kadane` 算法。
 - 用前缀和解决。
 
-### （1）[53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/)——DP法
+### （1）[53. 最大子数组和](https://leetcode.cn/problems/maximum-subarray/)——DP法 :memo:
+
+给你一个整数数组 `nums` ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。
+
+**子数组**是数组中的一个连续部分。
+
+**示例 1：**
+
+```
+输入：nums = [-2,1,-3,4,-1,2,1,-5,4]
+输出：6
+解释：连续子数组 [4,-1,2,1] 的和最大，为 6 。
+```
+
+ 
 
 算是一个正常的板子题，代码如下：
 ```c++
@@ -516,7 +541,253 @@ public:
 
 
 
-### （3）
+### （3）[1191. K 次串联后最大子数组之和](https://leetcode.cn/problems/k-concatenation-maximum-sum/) :cat:
+
+给定一个整数数组 `arr` 和一个整数 `k` ，通过重复 `k` 次来修改数组。
+
+例如，如果 `arr = [1, 2]` ， `k = 3` ，那么修改后的数组将是 `[1, 2, 1, 2, 1, 2]` 。
+
+返回修改后的数组中的最大的子数组之和。注意，子数组长度可以是 `0`，在这种情况下它的总和也是 `0`。
+
+由于 **结果可能会很大**，需要返回的 `109 + 7` 的 **模** 。
+
+**示例 1：**
+
+```
+输入：arr = [1,2], k = 3
+输出：9
+```
+
+
+
+<img src="assets/image-20250416204405499.png" alt="image-20250416204405499" style="zoom: 67%;" />
+
+下图可以看作 起点段和终点段放一起求最大子段和，再考虑中间的段之和是否大于0，来连接起点和终点，也可以通过再下面那图理解
+
+<img src="assets/image-20250416204422452.png" alt="image-20250416204422452" style="zoom: 80%;" />
+
+```C++
+class Solution {
+public:
+    int kConcatenationMaxSum(vector<int>& arr, int k) {
+        int n = arr.size();
+        long long sum=0;
+        long long dp=0;
+        long long res1=0; // res1 是1个数组的最大子数组和
+        long long res2=0;// res2 是2个数组相连的最大子数组和
+        const int MOD = 1e9+7;
+        for(int i=0;i<n*2;i++)
+        {
+            
+            //dp = llmax(dp,0L)+arr[i%n];
+            if(dp>0)dp = dp+arr[i%n];
+            else dp = arr[i%n];
+            res2 = max(res2,dp);
+            if(i<n) 
+            {
+                sum += arr[i%n];
+                res1 = max(res1,dp);
+            }
+        }
+        
+        if(k==1)return res1%MOD;
+        else if(k==2 || sum<=0) return res2%MOD;
+        else return (sum*(k-1)+res1)%MOD;;
+    }
+};
+```
+
+
+
+### [918. 环形子数组的最大和](https://leetcode.cn/problems/maximum-sum-circular-subarray/) :eye:
+
+给定一个长度为 `n` 的**环形整数数组** `nums` ，返回 *`nums` 的非空 **子数组** 的最大可能和* 。
+
+**环形数组** 意味着数组的末端将会与开头相连呈环状。形式上， `nums[i]` 的下一个元素是 `nums[(i + 1) % n]` ， `nums[i]` 的前一个元素是 `nums[(i - 1 + n) % n]` 。
+
+**子数组** 最多只能包含固定缓冲区 `nums` 中的每个元素一次。形式上，对于子数组 `nums[i], nums[i + 1], ..., nums[j]` ，不存在 `i <= k1, k2 <= j` 其中 `k1 % n == k2 % n` 。
+
+**示例 1：**
+
+```
+输入：nums = [1,-2,3,-2]
+输出：3
+解释：从子数组 [3] 得到最大和 3
+```
+
+
+
+<img src="assets/image-20250416212411085.png" alt="image-20250416212411085" style="zoom:67%;" />
+
+<img src="assets/image-20250416212426848.png" alt="image-20250416212426848" style="zoom:80%;" />
+
+```C++
+class Solution {
+public:
+    int maxSubarraySumCircular(vector<int>& nums) {
+        //计算最小子数组和 与 最大子数组和
+        int mndp=INT_MAX/2,mxdp=INT_MIN/2;
+        int mn=INT_MAX/2,mx=INT_MIN/2;
+        int n = nums.size();
+        int sum=0;
+        for(int i=0;i<n;i++)
+        {
+            mndp = min(mndp,0) + nums[i];
+            mn = min(mn,mndp);
+            mxdp = max(mxdp,0) + nums[i];
+            mx = max(mx,mxdp);
+            sum += nums[i];
+        }
+        // -2 0 0 -3
+        if(mn == sum) return mx; // -3 -2 -3
+        return max(mx,sum-mn);
+    }
+};
+```
+
+初始化也可以:
+
+```C++
+int max_s = INT_MIN; // 最大子数组和，不能为空
+int min_s = 0;       // 最小子数组和，可以为空
+int max_f = 0, min_f = 0, sum = 0;
+```
+
+
+
+### [2321. 拼接数组的最大分数](https://leetcode.cn/problems/maximum-score-of-spliced-array/)
+
+困难
+
+给你两个下标从 **0** 开始的整数数组 `nums1` 和 `nums2` ，长度都是 `n` 。
+
+你可以选择两个整数 `left` 和 `right` ，其中 `0 <= left <= right < n` ，接着 **交换** 两个子数组 `nums1[left...right]` 和 `nums2[left...right]` 。
+
+- 例如，设 `nums1 = [1,2,3,4,5]` 和 `nums2 = [11,12,13,14,15]` ，整数选择 `left = 1` 和 `right = 2`，那么 `nums1` 会变为 `[1,***12\*,\*13\***,4,5]` 而 `nums2` 会变为 `[11,***2,3***,14,15]` 。
+
+你可以选择执行上述操作 **一次** 或不执行任何操作。
+
+数组的 **分数** 取 `sum(nums1)` 和 `sum(nums2)` 中的最大值，其中 `sum(arr)` 是数组 `arr` 中所有元素之和。
+
+返回 **可能的最大分数** 。
+
+**子数组** 是数组中连续的一个元素序列。`arr[left...right]` 表示子数组包含 `nums` 中下标 `left` 和 `right` 之间的元素**（含** 下标 `left` 和 `right` 对应元素**）**。
+
+**示例 1：**
+
+```
+输入：nums1 = [60,60,60], nums2 = [10,90,10]
+输出：210
+解释：选择 left = 1 和 right = 1 ，得到 nums1 = [60,90,60] 和 nums2 = [10,60,10] 。
+分数为 max(sum(nums1), sum(nums2)) = max(210, 80) = 210 。
+```
+
+
+
+解答：
+
+```C++
+class Solution {
+public:
+    int maximumsSplicedArray(vector<int>& nums1, vector<int>& nums2) {
+        // s = s1+s2
+        // ns1 = a1+a2 + a3 + (b4+b5+..) +
+        // ns1 = a1+a2 + a3 + (a4+a5+..) - (a4+a5+..)+ (b4+b5+..)+
+        // ns1 = a1+a2 + a3 + (a4+a5+..) - (a4+a5+..)+ (b4+b5+..)+
+        // ns1 = a1+a2 + a3 + (a4+a5+..) + (b4-a4+ b5-a5+..)+ a10+a11
+        // ns2 = s2 + (a.-b.)
+        int n = nums1.size();
+        int mx2=INT_MIN/2,mx1=INT_MIN/2;
+        int mx2dp=INT_MIN/2,mx1dp=INT_MIN/2; 
+        int sum1=0,sum2=0;
+        for(int i=0;i<n;i++)
+        {
+            int tmp = nums2[i]-nums1[i];
+            mx1dp = max(0,mx1dp)+tmp;
+            mx1 = max(mx1dp,mx1);
+            mx2dp = max(0,mx2dp)-tmp;//-
+            mx2 = max(mx2dp,mx2);
+
+            sum1 += nums1[i];
+            sum2+=nums2[i];
+        }
+        return max(sum1 + mx1,sum2+mx2);
+
+    }
+};
+```
+
+**https://leetcode.cn/problems/maximum-score-of-spliced-array/solutions/1626030/by-endlesscheng-fm8l/**
+
+**https://www.bilibili.com/video/BV1pW4y1r7xs/?vd_source=f2def4aba42c7ed69fc648e1a2029c7b**
+
+设 $s_1 = \sum_i num_{s1}[i]$。
+
+交换 [left, right] 范围内的元素后，对于 nums'_1 有
+
+$$\sum_i num_{s'}[i] = s_1 - (num_{s1}[left] + ... + num_{s1}[right]) + (num_{s2}[left] + ... + num_{s2}[right])$$
+合并相同下标，等号右侧变形为
+
+$$s_1 + (num_{s2}[left] - num_{s1}[left]) + ... + (num_{s2}[right] - num_{s1}[right])$$
+
+设 $diff[i] = num_{s2}[i] - num_{s1}[i]$，上式变为
+
+$$s_1 + diff[left] + ... + diff[right]$$
+
+$s_1$已知且不变，所以最后数值取决于$ diff[left] + ... + diff[right]$ 
+
+而$ diff[left] + ... + diff[right]$ 这玩意，求最大值，不就是求diff数组的子数组和么
+
+为了最大化上式，我们需要最大化 diff 数组的 53. 最大子数组和 。注意子数组可以为空，所以初始化 maxSum = 0。
+
+对于 nums2 也同理，求这两者的最大值，即为答案。
+
+
+
+### [152. 乘积最大子数组](https://leetcode.cn/problems/maximum-product-subarray/)
+
+中等
+
+给你一个整数数组 `nums` ，请你找出数组中乘积最大的非空连续 
+
+子数组
+
+（该子数组中至少包含一个数字），并返回该子数组所对应的乘积。
+
+测试用例的答案是一个 **32-位** 整数。
+
+**示例 1:**
+
+```
+输入: nums = [2,3,-2,4]
+输出: 6
+解释: 子数组 [2,3] 有最大乘积 6。
+```
+
+https://leetcode.cn/problems/maximum-product-subarray/solutions/7561/hua-jie-suan-fa-152-cheng-ji-zui-da-zi-xu-lie-by-g/
+
+https://leetcode.cn/problems/maximum-product-subarray/solutions/250015/cheng-ji-zui-da-zi-shu-zu-by-leetcode-solution/
+
+```C++
+class Solution {
+public:
+    int maxProduct(vector<int>& nums) {
+        int mn = nums[0],mx = nums[0];
+        int mndp = nums[0],mxdp = nums[0];
+        int n = nums.size();
+        for(int i=1;i<n;i++)
+        {
+            int x = nums[i];
+            int tmpMndp = mndp;
+            mndp = min({mndp*x,x,mxdp*x});
+            mn = min(mndp,mn);
+            mxdp = max({mxdp*x,x,tmpMndp*x}); 
+            mx = max(mxdp,mx);
+        }
+        return mx;
+    }
+};
+```
 
 
 
@@ -524,9 +795,25 @@ public:
 
 对于一些二维 DP（例如背包、最长公共子序列），如果把 DP 矩阵画出来，其实状态转移可以视作在网格图上的移动。所以在学习相对更抽象的二维 DP 之前，做一些形象的网格图 DP 会让后续的学习更轻松（比如 0-1 背包的空间优化写法为什么要倒序遍历）。
 
-### 1.基础
+网格图DP 可以单独先给第一行 第一列做初始化 （不是所有 或者也不一定要这么做 看题目），也可以边界外赋值为非法值等和赋值起点
+
+## 1.基础
 
 ### （1）[64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/)
+
+给定一个包含非负整数的 `*m* x *n*` 网格 `grid` ，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
+
+**说明：**每次只能向下或者向右移动一步。
+
+**示例 1：**
+
+![img](assets/minpath.jpg)
+
+```
+输入：grid = [[1,3,1],[1,5,1],[4,2,1]]
+输出：7
+解释：因为路径 1→3→1→1→1 的总和最小。
+```
 
 ```c++
 class Solution {
@@ -553,7 +840,22 @@ public:
 
 
 
-### （2）不同路径
+### （2）[62. 不同路径](https://leetcode.cn/problems/unique-paths/)
+
+一个机器人位于一个 `m x n` 网格的左上角 （起始点在下图中标记为 “Start” ）。
+
+机器人每次只能向下或者向右移动一步。机器人试图达到网格的右下角（在下图中标记为 “Finish” ）。
+
+问总共有多少条不同的路径？
+
+**示例 1：**
+
+![img](assets/1697422740-adxmsI-image.png)
+
+```
+输入：m = 3, n = 7
+输出：28
+```
 
 ```c++
 class Solution {
@@ -579,6 +881,8 @@ public:
 ### （3）[63. 不同路径 II](https://leetcode.cn/problems/unique-paths-ii/)
 
 也是从左上角走到右下角，但区别在于本题中有障碍物，需要做障碍物的对应判断。
+
+返回机器人能够到达右下角的不同路径数量。
 
 > 本题的要点是在于dp数组初始值的设定，注意考虑好左上角是障碍物的情况，此时第一行和第一列应该都是0.因此赋值逻辑应该写作把第一行和第一列截止到第一个障碍物之前的都设置为`dp[0][0]`（务必注意！每次都写错，不能赋值为1，否则左上角即为障碍物的情况考虑不到）
 
@@ -613,6 +917,23 @@ public:
 
 
 ### （4）[120. 三角形最小路径和](https://leetcode.cn/problems/triangle/)
+
+给定一个三角形 `triangle` ，找出自顶向下的最小路径和。
+
+每一步只能移动到下一行中相邻的结点上。**相邻的结点** 在这里指的是 **下标** 与 **上一层结点下标** 相同或者等于 **上一层结点下标 + 1** 的两个结点。也就是说，如果正位于当前行的下标 `i` ，那么下一步可以移动到下一行的下标 `i` 或 `i + 1` 。
+
+**示例 1：**
+
+```
+输入：triangle = [[2],[3,4],[6,5,7],[4,1,8,3]]
+输出：11
+解释：如下面简图所示：
+   2
+  3 4
+ 6 5 7
+4 1 8 3
+自顶向下的最小路径和为 11（即，2 + 3 + 5 + 1 = 11）。
+```
 
 > 心得体会：这种二维网格图的dp题，遇到`i-1`，`j-1`不太好像前面的题一样整体把dp数组往右移一位（边界条件会有一点麻烦），所以一般就用`dp[i][j]`来表示与原数组`grid[i][j]`有关的信息，然后手动管理好可能会越界的情况。
 
@@ -649,6 +970,28 @@ public:
 
 
 ### （5）[2684. 矩阵中移动的最大次数](https://leetcode.cn/problems/maximum-number-of-moves-in-a-grid/)（整理一个DFS做法，有需要再看）
+
+给你一个下标从 **0** 开始、大小为 `m x n` 的矩阵 `grid` ，矩阵由若干 **正** 整数组成。
+
+你可以从矩阵第一列中的 **任一** 单元格出发，按以下方式遍历 `grid` ：
+
+- 从单元格 `(row, col)` 可以移动到 `(row - 1, col + 1)`、`(row, col + 1)` 和 `(row + 1, col + 1)` 三个单元格中任一满足值 **严格** 大于当前单元格的单元格。
+
+返回你在矩阵中能够 **移动** 的 **最大** 次数。
+
+**示例 1：**
+
+![img](assets/yetgriddrawio-10.png)
+
+```
+输入：grid = [[2,4,3,5],[5,4,9,3],[3,4,2,11],[10,9,13,15]]
+输出：3
+解释：可以从单元格 (0, 0) 开始并且按下面的路径移动：
+- (0, 0) -> (0, 1).
+- (0, 1) -> (1, 2).
+- (1, 2) -> (2, 3).
+可以证明这是能够移动的最大次数。
+```
 
 这道题目用dp做有一点邪门，在提交记录当中可以看到，这里补充一种DFS的做法，有需要可以复习一下。
 
@@ -753,6 +1096,24 @@ public:
 
 ### （7）[1594. 矩阵的最大非负积](https://leetcode.cn/problems/maximum-non-negative-product-in-a-matrix/)
 
+给你一个大小为 `m x n` 的矩阵 `grid` 。最初，你位于左上角 `(0, 0)` ，每一步，你可以在矩阵中 **向右** 或 **向下** 移动。
+
+在从左上角 `(0, 0)` 开始到右下角 `(m - 1, n - 1)` 结束的所有路径中，找出具有 **最大非负积** 的路径。路径的积是沿路径访问的单元格中所有整数的乘积。
+
+返回 **最大非负积** 对 **`109 + 7`** **取余** 的结果。如果最大积为 **负数** ，则返回 `-1` 。
+
+**注意，**取余是在得到最大积之后执行的。
+
+**示例 1：**
+
+![img](assets/product1.jpg)
+
+```
+输入：grid = [[-1,-2,-3],[-2,-3,-3],[-3,-3,-2]]
+输出：-1
+解释：从 (0, 0) 到 (2, 2) 的路径中无法得到非负积，所以返回 -1 。
+```
+
 在前面的题目中，有遇到过求最大绝对值的题目，思路是维护一个最大值和一个最小值，当遇到负数的时候交换最大值和最小值（对本题来说，不要交换dp，而是在状态转移方程的时候交换逻辑），本题也可以用类似的思路来做。最终代码如下：
 ```c++
 class Solution {
@@ -801,6 +1162,90 @@ public:
     }
 };
 ```
+
+
+
+## **思维扩展**：
+
+### [1824. 最少侧跳次数 ](https://leetcode.cn/problems/minimum-sideway-jumps/) 
+
+给你一个长度为 `n` 的 **3 跑道道路** ，它总共包含 `n + 1` 个 **点** ，编号为 `0` 到 `n` 。一只青蛙从 `0` 号点第二条跑道 **出发** ，它想要跳到点 `n` 处。然而道路上可能有一些障碍。
+
+给你一个长度为 `n + 1` 的数组 `obstacles` ，其中 `obstacles[i]` （**取值范围从 0 到 3**）表示在点 `i` 处的 `obstacles[i]` 跑道上有一个障碍。如果 `obstacles[i] == 0` ，那么点 `i` 处没有障碍。任何一个点的三条跑道中 **最多有一个** 障碍。
+
+- 比方说，如果 `obstacles[2] == 1` ，那么说明在点 2 处跑道 1 有障碍。
+
+这只青蛙从点 `i` 跳到点 `i + 1` 且跑道不变的前提是点 `i + 1` 的同一跑道上没有障碍。为了躲避障碍，这只青蛙也可以在 **同一个** 点处 **侧跳** 到 **另外一条** 跑道（这两条跑道可以不相邻），但前提是跳过去的跑道该点处没有障碍。
+
+- 比方说，这只青蛙可以从点 3 处的跑道 3 跳到点 3 处的跑道 1 。
+
+这只青蛙从点 0 处跑道 `2` 出发，并想到达点 `n` 处的 **任一跑道** ，请你返回 **最少侧跳次数** 。
+
+**注意**：点 `0` 处和点 `n` 处的任一跑道都不会有障碍。
+
+**示例 1：**
+
+![img](assets/ic234-q3-ex1.png)
+
+```C++
+输入：obstacles = [0,1,2,3,0]
+输出：2 
+解释：最优方案如上图箭头所示。总共有 2 次侧跳（红色箭头）。
+注意，这只青蛙只有当侧跳时才可以跳过障碍（如上图点 2 处所示）。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int minSideJumps(vector<int>& obstacles) {
+        int n = obstacles.size();//
+        // dp[i][j] 到这个点的最少侧跳次数  i是行 j是列
+        //if(!<zhangai) dp[i][j] = min dp[i-1][j]+1,dp[i+1][j]+1,dp[i][j-1] ,dp[i+2][j]+1 ,dp[i-2][j]+1
+        vector<vector<int>> dp(5,vector<int>(n,0x3f3f3f));
+        dp[1][0] = 1,dp[2][0] = 0,dp[3][0] =1;//青蛙从 0 号点第二条跑道 出发
+        //先计算能正常直走的， 再算被跳过来的！！！！
+        //dfs(i,j) = dfs(i-1,j)+1,dfs(i+1,j)+1,dfs(i+2,j)+1,dfs(i-2,j)+1,dfs(i,j-1)//直走
+        for(int j=1;j<n;j++)
+        {
+            //从左边来
+            for(int i=1;i<=3;i++)
+            {
+                if(obstacles[j]!=i)
+                {
+                    dp[i][j] = dp[i][j-1];
+                } 
+                // cout<<i<<"* "<<j<<" "<<  dp[i][j]<<endl;
+            }
+            //从上下来
+            for(int i=1;i<=3;i++)
+            {
+                if(obstacles[j]!=i)
+                {
+                    //dp[i][j] = min dp[i-1][j]+1,dp[i+1][j]+1,dp[i+2][j]+1 ,dp[i-2][j]+1
+                    dp[i][j] =  min({dp[i][j],dp[i-1][j]+1,dp[i+1][j]+1});
+                    if(i+2<5)
+                    {
+                        dp[i][j] =  min(dp[i][j],dp[i+2][j]+1);
+                    }
+                    else if(i-2>=0)
+                    {
+                        dp[i][j] =  min(dp[i][j],dp[i-2][j]+1);
+                    }
+                } 
+                // cout<<i<<" "<<j<<" "<<  dp[i][j]<<endl;
+            }
+            
+        }
+        return min({dp[1][n-1],dp[2][n-1],dp[3][n-1]});
+    }
+};
+```
+
+bfs啥的也行
+
+dp也有别的做法
 
 
 
@@ -964,7 +1409,7 @@ public:
 
 
 
-### （10）[174. 地下城游戏](https://leetcode.cn/problems/dungeon-game/)
+### （10）[174. 地下城游戏](https://leetcode.cn/problems/dungeon-game/) :recycle:
 
 省流：左上角为起点，右下角为终点，骑士只能往右或者往下走，初始健康值为x，每一格（包括起点和终点）可能为正数表示加血，负数表示扣血，如果血量<=0立刻死亡。问：能够到达右下角且不死亡的最小的初始健康值x是多少？
 
@@ -2812,6 +3257,34 @@ public:
 
 
 
+如果i 表示a,  j表示b:
+
+```C++
+class Solution {
+public:
+    long long maxScore(vector<int>& a, vector<int>& b) {
+        //dp[i][j] 代表 a[0-i] b[0-j]能够获得的最大得分
+        //dp[i][j] = dp[i-1][j-1] + a[i]*b[j] , dp[i][j-1]
+        //dp[-1][-1] =0 , dp[x][-1]=INT_MIN/2
+        int an = a.size();
+        int bn = b.size();
+        vector<vector<long long>> dp(an+1,vector<long long>(bn+1,0));
+        for(int i=0;i<an;i++) dp[i+1][0] = LLONG_MIN/2; // i+1!!!!!!!!
+        dp[0][0] = 0;
+        for(int i=0;i<an;i++)
+        {
+            for(int j=0;j<bn;j++)
+            {
+                dp[i+1][j+1] = max(dp[i][j] + (long long)a[i]*b[j],dp[i+1][j]);
+            }
+        }
+        return dp[an][bn]==LLONG_MIN/2?-1:dp[an][bn];
+    }
+};
+```
+
+
+
 ### （9）[115. 不同的子序列](https://leetcode.cn/problems/distinct-subsequences/)
 
 给你两个字符串 `s` 和 `t` ，统计并返回在 `s` 的 **子序列** 中 `t` 出现的个数，结果需要对 109 + 7 取模。
@@ -2830,7 +3303,7 @@ public:
         //  (1)删除s[i]: 解决的问题变为dfs(i-1, j)
         //  (2)不删除s[i](前提是s[i]==t[j]): 解决的问题变为dfs(i-1, j-1)
         //  上述两种情况互斥,s[i]==t[j]的情况需要考虑(1)(2); 不相等的情况只能考虑(1)
-        //if(s[i]==t[j]) dp[i][j] = dp[i-1][j-1] + dp[i-1][j];
+        //if(s[i]==t[j]) dp[i][j] = dp[i-1][j-1] + dp[i-1][j];//!!!【 + dp[i-1][j]】
         //else dp[i][j] = dp[i-1][j] 
         //dfs(i, -1) = 1,表示有几种方法可以从s中得到空串,答案是1,即删除s中的所有字母
         //if i<j : dfs(i, j) = 0,因为不能得到比s[..i]还长的子序列
@@ -2921,6 +3394,8 @@ public:
 
 
 ### （1）板子题：LIS
+
+[300. 最长递增子序列](https://leetcode.cn/problems/longest-increasing-subsequence/)
 
 #### （a）DP做法
 
@@ -3876,23 +4351,23 @@ public:
 > ```c++
 > class Solution {
 > public:
-> int maxProfit(vector<int>& prices) 
-> {
->     int n = prices.size();
->     //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
->     int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
->     //dp[0][1] = -INT_MAX;
->     for(int i=0;i<n;i++)
+>     int maxProfit(vector<int>& prices) 
 >     {
->         // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
->         // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
->         int f = f1;
->         f1 = max(f1, f2 + prices[i]);
->         f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
+>         int n = prices.size();
+>         //vector<vector<int>> dp(n+1, vector<int>(2)); //其实用两个值也可以
+>         int f1=0, f2=-INT_MAX; //f1表示未持有态,f2表示持有态 
+>         //dp[0][1] = -INT_MAX;
+>         for(int i=0;i<n;i++)
+>         {
+>             // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
+>             // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]);
+>             int f = f1;
+>             f1 = max(f1, f2 + prices[i]);
+>             f2 = max(f2, f - prices[i]); //用f记录原始f1值,不然可能会覆盖掉
+>         }
+>         //return dp[n][0];
+>         return f1;
 >     }
->     //return dp[n][0];
->     return f1;
-> }
 > };
 > ```
 
@@ -3996,18 +4471,21 @@ public:
 class Solution {
 public:
     int maxProfit(vector<int>& prices, int fee) {
-        // 买付
-        //dp[i][0] 第i天没有股票的最大收益
-        //dp[i][1] 第i天持有股票的最大收益
-        //dp[i][0] = max(dp[i-1][0],dp[i-1][1]+prices[i]);
-        //dp[i][1] = max(dp[i-1][1],dp[i-1][0]-prices[i]-fee);
-        //dp[-1][1] = INT_MIN/2;
-        int f1 = INT_MIN/2,f0=0;
         int n = prices.size();
+        //认为购买股票需要手续费
+        //vector<vector<int>> dp(n+1, vector<int>(2, 0));
+        int f0 = 0, f1 = -0x3f3f3f;
+        //dp[-1][0] = 0, dp[-1][1] = INT_MIN;
+        //dp[i][0] = max(dp[i-1][0], dp[i-1][1]+prices[i]);
+        //dp[i][1] = max(dp[i-1][1], dp[i-1][0]-prices[i]-fee);
+        //dp[0][1] = -0x3f3f3f;
         for(int i=0;i<n;i++)
         {
-            f0 = max(f0,f1+prices[i]);
-            f1 = max(f1,f0-prices[i]-fee);
+            // dp[i+1][0] = max(dp[i][0], dp[i][1]+prices[i]);
+            // dp[i+1][1] = max(dp[i][1], dp[i][0]-prices[i]-fee);
+            int tmpf0 = f0; //这样写,可以保证dp[i][0]用的是上一轮的值,防止出问题
+            f0 = max(f0, f1+prices[i]);
+            f1 = max(f1, tmpf0-prices[i]-fee);
         }
         return f0;
     }
@@ -4217,8 +4695,6 @@ public:
 };
 ```
 
-（联系 152 题）
-
 
 
 ### [2708. 一个小组的最大实力值](https://leetcode.cn/problems/maximum-strength-of-a-group/)
@@ -4253,7 +4729,7 @@ public:
 };	
 ```
 
-
+（联系 152 题）
 
 方法2：贪心
 
