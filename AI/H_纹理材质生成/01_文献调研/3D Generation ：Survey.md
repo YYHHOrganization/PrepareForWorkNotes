@@ -330,7 +330,9 @@ This method is particularly effective in filling in missing information and gene
 | **Tri-MipRF** [FKYT∗22]  | 使用三平面表示和多分辨率特征，提高了3D重建的细节和效率。     |
 | **PlenOctrees** [SSN∗22] | 结合三平面表示和八叉树结构，实现了高效的神经渲染和3D重建。   |
 
-> 补充一些Triplane的相关内容：
+> 补充一些Triplane的相关内容：https://zhuanlan.zhihu.com/p/661156248
+>
+> The main idea behind this method is to decompose a 3D volume into three orthogonal planes (e.g., XY, XZ, and YZ planes) and represent the features of the 3D shape on these planes. ==todo：还没认真看这种方法，如果有必要学习的话可以补充进来。==
 
 
 
@@ -493,6 +495,58 @@ DMTet的介绍。
 > 4. **结合传统方法与深度学习**：使用工具（如ZBrush、Blender）或研究（如Neural Mesh Optimization）优化网格。
 >
 > 希望这些信息对你有所帮助！如果你有更多问题，欢迎继续讨论！
+
+
+
+## 4.Generation Methods
+
+### （1）前置视频资料学习推荐
+
+#### （a）AIGC-3D（==这个视频看不太懂，后面再说吧==）
+
+https://www.bilibili.com/video/BV19h4y1M7aW/?spm_id_from=333.337.search-card.all.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99
+
+> 内容总结：
+>
+> 那今天给大家分享的是一个很大的题目, 叫做AIGC 3D, 然后也是借了一下AIGC这个概念, 然后讲一讲这个目前从这个零样本, 或者是从图像, 从文本来生成3d内容的这样一个事情, 然后我的主要会分为四个章节, 第一部分就是应用前景, 第二章数据会偏数学角度来讲一下现在概率视角下的一些生成模型的一些简介, 然后第三章就是讲一些具体的工作, 就是text image to 3d, 然后第四章就是总结一下这个未来的一些工作。
+>
+> ## 以下为第二章的内容——概率视角下的一些生成模型
+>
+> 接下来讲一下现在概率视角下的一个生成模型, 如果关注生成模型的话, 肯定会了解这样一个图（参考链接：https://lilianweng.github.io/posts/2021-07-11-diffusion-models/）：
+>
+> ![image-20250418100600220](./assets/image-20250418100600220.png)
+>
+> Flow-based models会在接下来进行介绍。另外还有一些概念：比如Score Function, Score Matching, Score Distillation Sampling, SDE, ODE......
+>
+> ### (1)生成模型的定义和核心问题，分类
+>
+> ![image-20250418101305771](./assets/image-20250418101305771.png)
+>
+> 关于分类：
+>
+> - 第一种叫做likelihood-based model, 就是自然的基于自然函数估计的这样一个model
+> - 第二种就是这个energy based model, 基于能量能量模型的
+> - 第三个就是这个score-based model, 基于得分的, 基于分数模型的。
+>
+> #### （a）likelihood-based model
+>
+> 基于似然估计的方法, 然后他的目的就是说, 我在学习一个为我观测的样本分布, 能够分配它更高可能性的一个模型, 就是极大似然估计，机器学习最先接触就是一个概念。
+>
+> 补充：==极大似然估计：==https://www.zhihu.com/question/24124998/answer/1547063354
+>
+> ![image-20250418102334927](./assets/image-20250418102334927.png)
+>
+> $p(x)$的真实分布是我们非常难以估计的, 那么可以考虑一些影响该分布的, 一些隐变量。举个例子，西瓜为什么这么甜, 它有可能是这个天气原因造成的, 那么我们把天气作为一个隐变量啊, 只不过这里的这里的隐变量z, 它是一个非常抽象的, 但它可能代表的是天气这种因素。ok我们见过一个z, 那么p(x)整体它就能写成这样一种积分的形式, 相当于对他一个联合分布, 对dz的这样一个一个积分, 就得到这样一个p(x)的分布。
+>
+> 接着复习一下上图中的贝叶斯公式，这里的$p(x)$是真实分布，$p(z|x)$是后验分布，表示得到了一些观测数据之后，要如何修正z（因变量）。$p(x|z)$叫做似然，$p(z)$是一个先验分布，比如西瓜为什么甜的问题中（我们估计其可能会跟天气有关），$p(z)$指的就是天气分布。
+
+
+
+#### ==（b）Games Webinar==
+
+视频链接：https://www.bilibili.com/video/BV1wT4y1879Y/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99
+
+
 
 
 
