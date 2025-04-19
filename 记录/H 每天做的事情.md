@@ -115,3 +115,40 @@ LIS:
 [1446. 连续字符](https://leetcode.cn/problems/consecutive-characters/)
 
 [1869. 哪种连续子字符串更长](https://leetcode.cn/problems/longer-contiguous-segments-of-ones-than-zeros/)
+
+
+
+# 2025.4.17
+
+1.继续整理并复习一部分滑动窗口的题目,整理到板子文件夹当中
+
+[1234. 替换子串得到平衡字符串](https://leetcode.cn/problems/replace-the-substring-for-balanced-string/)
+
+[674. 最长连续递增序列](https://leetcode.cn/problems/longest-continuous-increasing-subsequence/)
+
+[1957. 删除字符使字符串变好](https://leetcode.cn/problems/delete-characters-to-make-fancy-string/)
+
+[3456. 找出长度为 K 的特殊子字符串](https://leetcode.cn/problems/find-special-substring-of-length-k/)
+
+贪心：
+
+[3402. 使每一列严格递增的最少操作次数](https://leetcode.cn/problems/minimum-operations-to-make-columns-strictly-increasing/)
+
+[3191. 使二进制数组全部等于 1 的最少操作次数 I](https://leetcode.cn/problems/minimum-operations-to-make-binary-array-elements-equal-to-one-i/)
+
+[1827. 最少操作使数组递增](https://leetcode.cn/problems/minimum-operations-to-make-the-array-increasing/)
+
+[2027. 转换字符串的最少操作次数](https://leetcode.cn/problems/minimum-moves-to-convert-string/)
+
+
+
+# 2025.4.18
+
+复习题：
+
+[1358. 包含所有三种字符的子字符串数目](https://leetcode.cn/problems/number-of-substrings-containing-all-three-characters/)
+
+[2537. 统计好子数组的数目](https://leetcode.cn/problems/count-the-number-of-good-subarrays/)
+
+数据结构板子中的新增题目
+

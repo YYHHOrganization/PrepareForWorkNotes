@@ -1504,9 +1504,32 @@ public:
 >
 > 原文链接：https://blog.csdn.net/HappyRocking/article/details/83619392
 
-### ==（3）[1234. 替换子串得到平衡字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/replace-the-substring-for-balanced-string/)==
 
-首先这题要理解清楚题意，不能随便替换，而是**只能替换一个连续的子串。**==这题暂时有点难，先不看了，等后面题刷的足够多了再回来看。==
+
+### （3）[1234. 替换子串得到平衡字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/replace-the-substring-for-balanced-string/)
+
+首先这题要理解清楚题意，不能随便替换，而是**只能替换一个连续的子串。**同时本题是待替换子串的最短长度，没有说替换次数最少，别想太多。
+
+> 有一个只含有 `'Q', 'W', 'E', 'R'` 四种字符，且长度为 `n` 的字符串。
+>
+> 假如在该字符串中，这四个字符都恰好出现 `n/4` 次，那么它就是一个「平衡字符串」。
+>
+>  
+>
+> 给你一个这样的字符串 `s`，请通过「替换一个子串」的方式，使原字符串 `s` 变成一个「平衡字符串」。
+>
+> 你可以用和「待替换子串」长度相同的 **任何** 其他字符串来完成替换。
+>
+> 请返回待替换子串的最小可能长度。
+>
+> 如果原字符串自身就是一个平衡字符串，则返回 `0`。
+
+这题的思维难度还是比较大的，可以参考这篇题解：[1234. 替换子串得到平衡字符串 - 力扣（LeetCode）](https://leetcode.cn/problems/replace-the-substring-for-balanced-string/solutions/2108358/tong-xiang-shuang-zhi-zhen-hua-dong-chua-z7tu/)。要点就在于，替换窗口之外的每个元素数量都要小于等于n/4，才是可以替换的，否则就要扩张窗口（思考一下：假设窗口外的某个元素数量>n/4，那么无论怎么替换窗口内的元素，都无法让该元素的总数量达到n/4），因此只有窗口内所有元素的数量都<=n/4，才是合法的，符合求最短/最小的类型。代码如下：
+
+```c++
+```
+
+
 
 
 
@@ -2854,6 +2877,93 @@ public:
             int start = i;
             i++;
             while(i<n && s[i]==s[i-1]+1)
+            {
+                i++;
+            }
+            ans = max(ans, i-start);
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### （5）[3456. 找出长度为 K 的特殊子字符串](https://leetcode.cn/problems/find-special-substring-of-length-k/)
+
+```c++
+class Solution {
+public:
+    bool hasSpecialSubstring(string s, int k) {
+        int i = 0;
+        int n = s.size();
+        while(i<n)
+        {
+            int start = i;
+            i++;
+            while(i<n && s[i]==s[i-1])
+            {
+                i++;
+            }
+            //i==n 或者和前面一个不相等
+            if(i-start==k) return true;
+        }
+        return false;
+    }
+};
+```
+
+
+
+### （6）[1957. 删除字符使字符串变好](https://leetcode.cn/problems/delete-characters-to-make-fancy-string/)
+
+> 一个字符串如果没有 **三个连续** 相同字符，那么它就是一个 **好字符串** 。
+>
+> 给你一个字符串 `s` ，请你从 `s` 删除 **最少** 的字符，使它变成一个 **好字符串** 。
+>
+> 请你返回删除后的字符串。题目数据保证答案总是 **唯一的** 。
+
+```c++
+class Solution {
+public:
+    string makeFancyString(string s) {
+        //把所有>=3个连续的字符都变为2个
+        int n = s.size();
+        string res; //答案
+        int i = 0;
+        while(i<n)
+        {
+            int start = i;
+            i++;
+            while(i<n && s[i]==s[start])
+            {
+                i++;
+            }
+            //i-start即为这段的长度,i指到了一个不合法的位置
+            int len = min(2, i-start);
+            for(int j=1;j<=len;j++) res.push_back(s[start]);
+        }
+        return res;
+    }
+};
+```
+
+
+
+### （7）[674. 最长连续递增序列](https://leetcode.cn/problems/longest-continuous-increasing-subsequence/)
+
+```c++
+class Solution {
+public:
+    int findLengthOfLCIS(vector<int>& nums) {
+        int n = nums.size();
+        int ans = 1;
+        int i = 0;
+        while(i<n)
+        {
+            int start = i;
+            i++;
+            while(i<n && nums[i]>nums[i-1])
             {
                 i++;
             }
