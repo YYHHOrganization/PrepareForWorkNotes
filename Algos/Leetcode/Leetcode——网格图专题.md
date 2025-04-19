@@ -152,10 +152,10 @@ public:
 > ```
 > 输入：
 > [
->   [0,2,1,0],
->   [0,1,0,1],
->   [1,1,0,1],
->   [0,1,0,1]
+>       [0,2,1,0],
+>       [0,1,0,1],
+>       [1,1,0,1],
+>       [0,1,0,1]
 > ]
 > 输出： [1,2,4]
 > ```
@@ -242,7 +242,7 @@ public:
 > - `1 <= grid[i].length <= 500`
 > - `grid[i][j]` 仅可能为 `"0"～"5"`
 
-这道题目考察的是不在周围一圈（因为认为周围一圈和走廊相邻），且不和0相邻的主题空间的最大面积。一种做法是先把周围一圈和所有0周围四个方向的主题空间全部变成0，然后再找地图中剩下的不是0的主题空间，并统计最大大小即可。
+这道题目考察的是不在周围一圈（因为认为周围一圈和走廊相邻），且不和0相邻的主题空间的最大面积。一种做法是先把周围一圈（周围的主题空间）和所有0周围四个方向的主题空间全部变成6，然后再找地图中剩下的不是0和6的主题空间，并统计最大大小即可。
 
 代码如下（各种特判的做法）：
 ```c++
@@ -255,7 +255,7 @@ public:
         //遍历过的都改成0,同时统计一下个数
         auto dfs = [&](this auto&& dfs, int x, int y, char thisnum)->int
         {
-            grid[x][y] = '6'; //0?
+            grid[x][y] = '6'; 
             //visited[x][y]=1;
             int cnt = 1;
             for(int d=0;d<4;d++)
@@ -933,7 +933,7 @@ public:
 
 
 
-### [1391. 检查网格中是否存在有效路径](https://leetcode.cn/problems/check-if-there-is-a-valid-path-in-a-grid/)(很难!极易做错!)
+### [1391. 检查网格中是否存在有效路径](https://leetcode.cn/problems/check-if-there-is-a-valid-path-in-a-grid/)(很难!极易做错!) :recycle:
 
 给你一个 *m* x *n* 的网格 `grid`。网格里的每个单元都代表一条街道。`grid[i][j]` 的街道可以是：
 
@@ -993,21 +993,19 @@ public:
         //dir是当前块xy往哪个方向去
         auto dfs = [&](this auto&& dfs,int x,int y,int dir)->bool
         {
-            //cout<<x<<"  "<<y<<endl;
             if(grid[x][y]<0)return false;
             grid[x][y] = -1;
             if(x==m-1&&y==n-1)return true;
-            // int Kind = grid[x][y];
             bool res=false;
+            //不需要走四个方向，因为从哪里来到哪里去已经唯一确定了
+            //往这个方向走
             int curX = x+dirs[dir][0];
             int curY = y+dirs[dir][1];
-                //cout<<"curxy"<<curX <<"  "<<curY<<endl;
             if(curX<0||curY<0||curX>=m||curY>=n||grid[curX][curY]<0)return false;
-            int curKind = grid[curX][curY];//下一块
+            int curKind = grid[curX][curY];//下一块  走到下一块
             //下一块curX，curY 能否从dir来
             if(pipe[curKind][dir]>=0) 
             {
-                //cout<<"kind"<<curKind<<"    curxy"<<curX <<"  "<<curY<<"in"<<endl;
                 //pipe[curKind][dir] 下一块从dir来，去往哪个方向
                 if(dfs(curX,curY,pipe[curKind][dir]))res = true;
             }
@@ -1173,7 +1171,7 @@ public:
 };
 ```
 
-
+用两个二维数组也行 更简单
 
 图可以看：
 
@@ -1202,11 +1200,9 @@ https://leetcode.cn/problems/pacific-atlantic-water-flow/solutions/754024/shui-w
 3. 如果一个 **至少与一个地雷相邻** 的空方块（`'E'`）被挖出，修改它为数字（`'1'` 到 `'8'` ），表示相邻地雷的数量。
 4. 如果在此次点击中，若无更多方块可被揭露，则返回盘面。
 
- 
-
 **示例 1：**
 
-![img](assets/untitled.jpeg)
+<img src="assets/untitled.jpeg" alt="img" style="zoom:50%;" />
 
 ```
 输入：board = [["E","E","E","E","E"],["E","E","M","E","E"],["E","E","E","E","E"],["E","E","E","E","E"]], click = [3,0]
@@ -1942,7 +1938,29 @@ public:
 输出：1
 ```
 
+```C++
+//  0 1 
+//  1 0 
+```
 
+**示例 2：**
+
+```
+输入：grid = [[1,1,1,1,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,1,1,1,1]]
+输出：1
+```
+
+```C++
+//[1,1,1,1,1],
+//[0,0,0,0,0],
+//[1,0,1,0,1],
+//[1,0,0,0,1],
+//[1,1,1,1,1]]
+```
+
+
+
+DFS将其中一座岛变为2，BFS找另一座岛的1
 
 ```C++
 class Solution {
