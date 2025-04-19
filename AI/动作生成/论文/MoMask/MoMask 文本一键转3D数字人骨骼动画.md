@@ -261,6 +261,10 @@ AttributeError: module 'numpy' has no attribute 'float'. `np.float` was a deprec
 
 #### 结果
 
+下面这些可能是直接用的
+
+https://huggingface.co/spaces/MeYourHint/MoMask
+
 A person is running on a treadmill.
 
 效果不错

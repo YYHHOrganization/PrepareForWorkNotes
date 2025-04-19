@@ -417,7 +417,7 @@ public:
 
 
 
-### （2）[951. 翻转等价二叉树](https://leetcode.cn/problems/flip-equivalent-binary-trees/)
+### （2）[951. 翻转等价二叉树](https://leetcode.cn/problems/flip-equivalent-binary-trees/) :eye:
 
 > 我们可以为二叉树 **T** 定义一个 **翻转操作** ，如下所示：选择任意节点，然后交换它的左子树和右子树。
 >
@@ -425,7 +425,7 @@ public:
 >
 > 这些树由根节点 `root1` 和 `root2` 给出。如果两个二叉树是否是*翻转 等价* 的函数，则返回 `true` ，否则返回 `false` 。
 
-只要思考好可能的各种情况，答案应该就呼之欲出了。对于`bool flipEquiv(TreeNode* root1, TreeNode* root2)`提供的两个根节点而言，其实相当于可翻可不翻：
+只要思考好可能的各种情况，答案应该就呼之欲出了。对于`bool flipEquiv(TreeNode* root1, TreeNode* root2)`提供的两个根节点而言，其实**相当于可翻可不翻**：
 
 - （1）如果不翻，则`flipEquiv(root1->left, root2->left) && flipEquiv(root1->right, root2->right);`
 - （2）如果翻，则`flipEquiv(root1->left, root2->right) && flipEquiv(root1->right, root2->left);`
@@ -577,8 +577,6 @@ public:
 
 
 
-
-
 ### (6)[508. 出现次数最多的子树元素和](https://leetcode.cn/problems/most-frequent-subtree-sum/)
 
 > 给你一个二叉树的根结点 `root` ，请返回出现次数最多的子树元素和。如果有多个元素出现的次数相同，返回所有出现次数最多的子树元素和（不限顺序）。
@@ -664,3 +662,36 @@ public:
 我们可以找出所有的节点对，并记录他们的V值，最后只要排序即可。于是问题转换为了如何判断是一个合理的子孙对？
 
 依旧是思考如何拆解为递归的问题。一个根节点和其左孩子和右孩子分别构成节点对（前提是存在），然后递归即可。
+
+```C++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    int res;
+    void dfs(TreeNode* root,int mn,int mx)
+    {
+        if(root == nullptr)return;
+        mn = min(root->val,mn);
+        mx = max(root->val,mx);
+        res = max(res,mx-mn);
+        dfs(root->left,mn,mx);
+        dfs(root->right,mn,mx);
+    }
+    int maxAncestorDiff(TreeNode* root) {
+        res =  INT_MIN;
+        dfs(root,INT_MAX,INT_MIN);
+        return res;
+    }
+};
+```
+
