@@ -354,6 +354,20 @@ public:
 
 ### [1338. 数组大小减半](https://leetcode.cn/problems/reduce-array-size-to-the-half/)
 
+给你一个整数数组 `arr`。你可以从中选出一个整数集合，并删除这些整数在数组中的每次出现。
+
+返回 **至少** 能删除数组中的一半整数的整数集合的最小大小。
+
+**示例 1：**
+
+```
+输入：arr = [3,3,3,3,5,5,5,2,2,7]
+输出：2
+解释：选择 {3,7} 使得结果数组为 [5,5,5,2,2]、长度为 5（原数组长度的一半）。
+大小为 2 的可行集合有 {3,5},{3,2},{5,2}。
+选择 {2,7} 是不可行的，它的结果数组为 [3,3,3,3,5,5,5]，新数组长度大于原数组的二分之一。
+```
+
 ```c++
 typedef pair<int, int> PII;
 struct compare
@@ -392,6 +406,28 @@ public:
 
 ### [1710. 卡车上的最大单元数](https://leetcode.cn/problems/maximum-units-on-a-truck/)
 
+请你将一些箱子装在 **一辆卡车** 上。给你一个二维数组 `boxTypes` ，其中 `boxTypes[i] = [numberOfBoxesi, numberOfUnitsPerBoxi]` ：
+
+- `numberOfBoxesi` 是类型 `i` 的箱子的数量。
+- `numberOfUnitsPerBoxi` 是类型 `i` 每个箱子可以装载的单元数量。
+
+整数 `truckSize` 表示卡车上可以装载 **箱子** 的 **最大数量** 。只要箱子数量不超过 `truckSize` ，你就可以选择任意箱子装到卡车上。
+
+返回卡车可以装载 **单元** 的 **最大** 总数*。*
+
+**示例 1：**
+
+```
+输入：boxTypes = [[1,3],[2,2],[3,1]], truckSize = 4
+输出：8
+解释：箱子的情况如下：
+- 1 个第一类的箱子，里面含 3 个单元。
+- 2 个第二类的箱子，每个里面含 2 个单元。
+- 3 个第三类的箱子，每个里面含 1 个单元。
+可以选择第一类和第二类的所有箱子，以及第三类的一个箱子。
+单元总数 = (1 * 3) + (2 * 2) + (1 * 1) = 8
+```
+
 ```c++
 class Solution {
 public:
@@ -425,7 +461,7 @@ public:
 
 
 
-### [3075. 幸福值最大化的选择方案](https://leetcode.cn/problems/maximize-happiness-of-selected-children/)
+### [3075. 幸福值最大化的选择方案](https://leetcode.cn/problems/maximize-happiness-of-selected-children/) :eye:
 给你一个长度为 `n` 的数组 `happiness` ，以及一个 **正整数** `k` 。
 
 `n` 个孩子站成一队，其中第 `i` 个孩子的 **幸福值** 是 `happiness[i]` 。你计划组织 `k` 轮筛选从这 `n` 个孩子中选出 `k` 个孩子。
@@ -447,6 +483,16 @@ public:
 代码：
 
 > [划分型 DP 的套路【力扣周赛 388】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1Xr421J77b/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99),证明在这个视频的前4分钟。
+>
+> 首先，应当选 happiness 中最大的 k 的数。
+>
+> 这些数要按照什么顺序选呢？
+>
+> 由于小的数减成 0 就不再减少了，优先选大的更好。
+>
+> 比如 2,1,1，如果按照 1,1,2 的顺序选，答案为 1+0+0=1。但按照 2,1,1 的顺序选，答案为 2+0+0=2 更优。
+>
+> m类似说 反正我最终要造成的伤害是一样的，但是如果有的人先死了我对其造成的伤害就会没有，我造成的总伤害就减少了
 
 ```c++
 class Solution {
@@ -545,6 +591,16 @@ public:
 > 令 `prefix` 为一个数组，它包含了 `nums` 重新排列后的前缀和。换句话说，`prefix[i]` 是 `nums` 重新排列后下标从 `0` 到 `i` 的元素之和。`nums` 的 **分数** 是 `prefix` 数组中正整数的个数。
 >
 > 返回可以得到的最大分数。
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [2,-1,0,1,-3,3,-3]
+> 输出：6
+> 解释：数组重排为 nums = [2,3,1,-1,-3,0,-3] 。
+> prefix = [2,5,6,5,2,2,-1] ，分数为 6 。
+> 可以证明 6 是能够得到的最大分数。
+> ```
 
 贪心思路的基本证明:
 
@@ -648,6 +704,17 @@ public:
 > - 从 `grid` 的第 `i` 行提取的元素数量不超过 `limits[i]` 。
 >
 > 返回最大总和。
+>
+> **示例 1：**
+>
+> **输入：**grid = [[1,2],[3,4]], limits = [1,2], k = 2
+>
+> **输出：**7
+>
+> **解释：**
+>
+> - 从第 2 行提取至多 2 个元素，取出 4 和 3 。
+> - 至多提取 2 个元素时的最大总和 `4 + 3 = 7` 。
 
 ```c++
 class Solution {
@@ -684,7 +751,6 @@ orY: 或者用`nth_element(allGridLimit.begin(),allGridLimit.begin()+k-1,allGrid
 ```C++
 class Solution {
 public:
-    //7
     long long maxSum(vector<vector<int>>& grid, vector<int>& limits, int k) {
         vector<int> allGridLimit;
         if(k==0)return 0;
@@ -697,7 +763,7 @@ public:
                 allGridLimit.emplace_back(grid[i][j]);
             }
         }
-        nth_element(allGridLimit.begin(),allGridLimit.begin()+k-1,allGridLimit.end(),greater<int>());
+        nth_element(allGridLimit.begin(),allGridLimit.begin()+k-1,allGridLimit.end(),greater<int>());//
         long long res=0;
         for(int i=0;i<k;i++)
         {
@@ -904,7 +970,7 @@ public:
 
 
 
-### [2971. 找到最大周长的多边形](https://leetcode.cn/problems/find-polygon-with-the-largest-perimeter/)
+### [2971. 找到最大周长的多边形](https://leetcode.cn/problems/find-polygon-with-the-largest-perimeter/)  :eye:
 
 > 给你一个长度为 `n` 的 **正** 整数数组 `nums` 。
 >
@@ -1006,7 +1072,27 @@ public:
 
 
 
-### [2567. 修改两个元素的最小分数](https://leetcode.cn/problems/minimum-score-by-changing-two-elements/)
+### [2567. 修改两个元素的最小分数](https://leetcode.cn/problems/minimum-score-by-changing-two-elements/) :eye:
+
+给你一个下标从 **0** 开始的整数数组 `nums` 。
+
+- `nums` 的 **最小** 得分是满足 `0 <= i < j < nums.length` 的 `|nums[i] - nums[j]|` 的最小值。
+- `nums`的 **最大** 得分是满足 `0 <= i < j < nums.length` 的 `|nums[i] - nums[j]|` 的最大值。
+- `nums` 的分数是 **最大** 得分与 **最小** 得分的和。
+
+我们的目标是最小化 `nums` 的分数。你 **最多** 可以修改 `nums` 中 **2** 个元素的值。
+
+请你返回修改 `nums` 中 **至多两个** 元素的值后，可以得到的 **最小分数** 。
+
+`|x|` 表示 `x` 的绝对值。
+
+**示例 1：**
+
+```
+输入：nums = [1,4,3]
+输出：0
+解释：将 nums[1] 和 nums[2] 的值改为 1 ，nums 变为 [1,1,1] 。|nums[i] - nums[j]| 的值永远为 0 ，所以我们返回 0 + 0 = 0 。
+```
 
 ```c++
 class Solution {
@@ -1031,6 +1117,24 @@ public:
 
 ### [1509. 三次操作后最大值与最小值的最小差](https://leetcode.cn/problems/minimum-difference-between-largest-and-smallest-value-in-three-moves/)
 
+给你一个数组 `nums` 。
+
+每次操作你可以选择 `nums` 中的任意一个元素并将它改成 **任意值** 。
+
+在 **执行最多三次移动后** ，返回 `nums` 中最大值与最小值的最小差值。
+
+**示例 1：**
+
+```
+输入：nums = [5,3,2,4]
+输出：0
+解释：我们最多可以走 3 步。
+第一步，将 2 变为 3 。 nums 变成 [5,3,3,4] 。
+第二步，将 4 改为 3 。 nums 变成 [5,3,3,3] 。
+第三步，将 5 改为 3 。 nums 变成 [3,3,3,3] 。
+执行 3 次移动后，最小值和最大值之间的差值为 3 - 3 = 0 。
+```
+
 跟上一题比较像，思考和具体的代码如下：
 
 ```c++
@@ -1053,7 +1157,7 @@ public:
 
 
 
-### [3397. 执行操作后不同元素的最大数量](https://leetcode.cn/problems/maximum-number-of-distinct-elements-after-operations/)（有难度！）
+### [3397. 执行操作后不同元素的最大数量](https://leetcode.cn/problems/maximum-number-of-distinct-elements-after-operations/)（有难度！） :recycle:
 
 >  给你一个整数数组 `nums` 和一个整数 `k`。
 >
@@ -1103,6 +1207,30 @@ public:
 
 ### [3457. 吃披萨](https://leetcode.cn/problems/eat-pizzas/)
 
+给你一个长度为 `n` 的整数数组 `pizzas`，其中 `pizzas[i]` 表示第 `i` 个披萨的重量。每天你会吃 **恰好** 4 个披萨。由于你的新陈代谢能力惊人，当你吃重量为 `W`、`X`、`Y` 和 `Z` 的披萨（其中 `W <= X <= Y <= Z`）时，你只会增加 1 个披萨的重量！体重增加规则如下：
+
+- 在 **奇数天**（按 **1 开始计数**）你会增加 `Z` 的重量。
+- 在 **偶数天**，你会增加 `Y` 的重量。
+
+请你设计吃掉 **所有** 披萨的最优方案，并计算你可以增加的 **最大** 总重量。
+
+**注意：**保证 `n` 是 4 的倍数，并且每个披萨只吃一次。
+
+**示例 1：**
+
+**输入：** pizzas = [1,2,3,4,5,6,7,8]
+
+**输出：** 14
+
+**解释：**
+
+- 第 1 天，你吃掉下标为 `[1, 2, 4, 7] = [2, 3, 5, 8]` 的披萨。你增加的重量为 8。
+- 第 2 天，你吃掉下标为 `[0, 3, 5, 6] = [1, 4, 6, 7]` 的披萨。你增加的重量为 6。
+
+吃掉所有披萨后，你增加的总重量为 `8 + 6 = 14`。
+
+
+
 本题可以使用**交换论证法**来做贪心性质的证明，具体可以看这篇讲解：[网格图 DP【力扣周赛 437】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV1pmAGegEcw/?t=4m&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99)。代码如下：
 
 ```c++
@@ -1135,7 +1263,7 @@ public:
 
 
 
-### [LCP 40. 心算挑战](https://leetcode.cn/problems/uOAnQW/)（也比较难）
+### [LCP 40. 心算挑战](https://leetcode.cn/problems/uOAnQW/)（也比较难） :recycle:
 
 > 「力扣挑战赛」心算项目的挑战比赛中，要求选手从 `N` 张卡牌中选出 `cnt` 张卡牌，若这 `cnt` 张卡牌数字总和为偶数，则选手成绩「有效」且得分为 `cnt` 张卡牌数字总和。 给定数组 `cards` 和 `cnt`，其中 `cards[i]` 表示第 `i` 张卡牌上的数字。 请帮参赛选手计算最大的有效得分。若不存在获取有效得分的卡牌方案，则返回 0。
 
@@ -1502,8 +1630,8 @@ public:
         //1 1 1 2 3 3 5 nums
         sort(nums.begin(),nums.end());
         int n =nums.size();
-        int f=n-2;
-        int k=n-1;
+        int f=n-2;//nums
+        int k=n-1;//perm
         int cnt=0;
         for(;k>=0&&f>=0;)
         {
@@ -1879,7 +2007,7 @@ public:
 
 
 
-### [870. 优势洗牌](https://leetcode.cn/problems/advantage-shuffle/)
+### [870. 优势洗牌](https://leetcode.cn/problems/advantage-shuffle/) :recycle:
 
 给定两个长度相等的数组 `nums1` 和 `nums2`，`nums1` 相对于 `nums2` 的*优势*可以用满足 `nums1[i] > nums2[i]` 的索引 `i` 的数目来描述。
 
@@ -2244,7 +2372,7 @@ public:
 
 
 
-### [2449. 使数组相似的最少操作次数 ](https://leetcode.cn/problems/minimum-number-of-operations-to-make-arrays-similar/)2076
+### [2449. 使数组相似的最少操作次数 ](https://leetcode.cn/problems/minimum-number-of-operations-to-make-arrays-similar/)2076 :recycle:
 
 给你两个正整数数组 `nums` 和 `target` ，两个数组长度相等。
 
@@ -2302,7 +2430,7 @@ public:
 
 
 
-### 补充题目：[2541. 使数组中所有元素相等的最小操作数 II](https://leetcode.cn/problems/minimum-operations-to-make-array-equal-ii/)（注意跟上一题做区分）
+### 补充题目：[2541. 使数组中所有元素相等的最小操作数 II](https://leetcode.cn/problems/minimum-operations-to-make-array-equal-ii/)（注意跟上一题做区分） :recycle:
 
 > 给你两个整数数组 `nums1` 和 `nums2` ，两个数组长度都是 `n` ，再给你一个整数 `k` 。你可以对数组 `nums1` 进行以下操作：
 >
