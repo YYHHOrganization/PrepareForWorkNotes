@@ -4398,6 +4398,57 @@ public:
 
 ## 3.5 表达式解析专题
 
+### （1）[1006. 笨阶乘](https://leetcode.cn/problems/clumsy-factorial/)
+
+这道题可以用于入门。根据题意，可以定义`乘法(*)，除法(/)，加法(+)和减法(-)`分别是1，2，3，4，利用取模运算来做到不断循环操作。由于+和-的优先级比较低，因此先放入到栈里面保存（当然遇到减的情况，push的就是相反数）。如果遇到乘除号，则将栈顶和当前元素做运算，然后把结果放入到栈中即可(或者可以直接对栈顶元素操作)。代码如下：
+```c++
+class Solution {
+public:
+    int clumsy(int n) {
+        int index = 0; //1:乘法(*)，2:除法(/)，3:加法(+)和4:减法(-)
+        stack<int> stk;
+        stk.push(n); //栈中一定有元素
+        n -= 1;
+        while(n) //还没到0
+        {
+            if(index==0) stk.top() *= n;
+            else if(index==1) stk.top() /= n;
+            else if(index==2) stk.push(n);
+            else if(index==3) stk.push(-n);
+            index = ((index + 1) % 4);
+            n--;
+        }
+        //计算栈里的元素的总和
+        long long ans = 0;
+        while(!stk.empty())
+        {
+            ans += (long long)stk.top();
+            stk.pop();
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### （2）[150. 逆波兰表达式求值](https://leetcode.cn/problems/evaluate-reverse-polish-notation/)
+
+> 给你一个字符串数组 `tokens` ，表示一个根据 [逆波兰表示法](https://baike.baidu.com/item/逆波兰式/128437) 表示的算术表达式。
+>
+> 请你计算该表达式。返回一个表示表达式值的整数。
+>
+> **注意：**
+>
+> - 有效的算符为 `'+'`、`'-'`、`'*'` 和 `'/'` 。
+> - 每个操作数（运算对象）都可以是一个整数或者另一个表达式。
+> - 两个整数之间的除法总是 **向零截断** 。
+> - 表达式中不含除零运算。
+> - 输入是一个根据逆波兰表示法表示的算术表达式。
+> - 答案及所有中间计算结果可以用 **32 位** 整数表示。
+
+
+
 
 
 # 四、字典树（Trie树）

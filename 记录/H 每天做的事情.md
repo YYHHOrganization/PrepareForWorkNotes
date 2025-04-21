@@ -152,3 +152,21 @@ LIS:
 
 数据结构板子中的新增题目
 
+
+
+# 2025.4.19
+
+1. 复习数据结构题单,整理了一部分的板子.
+
+2. 每日一题:[2563. 统计公平数对的数目](https://leetcode.cn/problems/count-the-number-of-fair-pairs/)
+3. Leetcode:表达式解析的相关题目
+   1. [1006. 笨阶乘](https://leetcode.cn/problems/clumsy-factorial/)
+   2. 
+
+
+
+# 2025.4.20
+
+随机roll一些题目(先统一放一起):
+
+- 见本文件夹下面的markdown文件,记录今天做的所有题目.
