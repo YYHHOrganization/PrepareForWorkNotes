@@ -25,3 +25,15 @@
 - 读新的论文，以及之前没有读完的内容；
 - 人脸可以延续前面的3DMM做法，但细节编辑以及纹理生成目前的研究还是做的不好，下周会调研完成人脸重建纹理生成的一些方案，以及一般纹理生成的方案（特别关注UV域怎么做迁移），Mesh的编辑也会调研一下，因为之前直接做在3DMM上的效果并不好，需要看看其他文章有什么别的思路。
 - 重新跑起来之前的base 程序，对现有的问题和瓶颈进行整理。
+
+
+
+可以考虑读：MeshCraft，meshgen，instantMesh，MVEdit，SceneTex，MeshGPT，《Scalable Diffusion Models with Transformers》，《Michelangelo: Conditional 3D Shape Generation based on Shape-Image-Text Aligned Latent Representation》，
+
+
+
+## 2025.04.21~2025.04.25 周报
+
+科研进展相关：
+
+- 阅读综述论文：《Advances in text‐guided 3D editing: a survey》
