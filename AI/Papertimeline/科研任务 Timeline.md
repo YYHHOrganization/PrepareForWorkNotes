@@ -2,7 +2,7 @@
 
 # 2025.04.16
 
-- [x] （重要）能够正确表述attention的意义，self-attention和cross-attention的作用和意义。
+- [x] （重要）能够正确表述attention的意义，self-attention和cross-attention的作用和意义。（可以讲一下）
 - [ ] 关注三篇前置/并行文章：3DShape2VecSet、Dora、Michelangelo
 - [ ] 看一下DiT
 - [ ] 阅读3D Generation的综述：Advances in 3D Generation: A Survey
@@ -28,7 +28,7 @@
 
 
 
-可以考虑读：MeshCraft，meshgen，instantMesh，MVEdit，SceneTex，MeshGPT，《Scalable Diffusion Models with Transformers》，《Michelangelo: Conditional 3D Shape Generation based on Shape-Image-Text Aligned Latent Representation》，
+可以考虑读：MeshCraft，meshgen，instantMesh，MVEdit，SceneTex，MeshGPT，《Scalable Diffusion Models with Transformers》，《Michelangelo: Conditional 3D Shape Generation based on Shape-Image-Text Aligned Latent Representation》，《What’s the Situation with Intelligent Mesh Generation: A Survey and Perspectives》，Flux这个开源项目，《Advances in text‑guided 3D editing: a survey》，《CLAY: A Controllable Large-scale Generative Model for Creating High-quality 3D Assets》，开源项目：[NVIDIAGameWorks](https://github.com/NVIDIAGameWorks)/**[kaolin](https://github.com/NVIDIAGameWorks/kaolin)**，
 
 
 
@@ -37,3 +37,4 @@
 科研进展相关：
 
 - 阅读综述论文：《Advances in text‐guided 3D editing: a survey》
+
