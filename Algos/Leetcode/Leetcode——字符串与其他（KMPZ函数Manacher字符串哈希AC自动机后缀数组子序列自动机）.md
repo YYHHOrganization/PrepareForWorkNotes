@@ -1,5 +1,7 @@
 # Leetcode——字符串（KMP/Z函数/Manacher/字符串哈希/AC自动机/后缀数组/子序列自动机）
 
+
+
 # 一、KMP算法
 
 首先，可以先阅读这一篇文章：[(99+ 封私信 / 82 条消息) 如何更好地理解和掌握 KMP 算法? - 知乎](https://www.zhihu.com/question/21923021/answer/37475572)
