@@ -241,20 +241,22 @@ public:
 
 ## 1.判断质数
 
-[3115. 质数的最大距离 - 力扣（LeetCode）](https://leetcode.cn/problems/maximum-prime-difference/description/)
+### （1）板子相关
 
-这是一道算是板子的题目，先来写一个基础的判断质数的函数：
+先来写一个基础的判断质数的函数：
 
 ```c++
 bool isPrime(int n)
 {
-    for(int i=2;i<=sqrt(n);i++)
+    for(int i=2;i<=sqrt(n);i++) //或者写i*i<=n也可以
     {
         if(n%i==0) return false;
     }
     return n>=2;
 }
 ```
+
+![image-20250423193637917](assets/image-20250423193637917.png)
 
 接下来，使用素数筛来改善一下，以下是本题的核心代码：
 
@@ -281,7 +283,431 @@ void init()
 
 
 
-相似题目：[2761. 和等于目标值的质数对 - 力扣（LeetCode）](https://leetcode.cn/problems/prime-pairs-with-target-sum/description/)，这题比较容易写错（写错了好几次。。。）。
+### （2）[3115. 质数的最大距离 - 力扣（LeetCode）](https://leetcode.cn/problems/maximum-prime-difference/description/)
+
+> 给你一个整数数组 `nums`。
+>
+> 返回两个（不一定不同的）质数在 `nums` 中 **下标** 的 **最大距离**。
+
+本题使用质数筛会比较容易一些。
+
+```c++
+//预计算所有的质数
+int MAXN = 105;
+vector<int> isPrime(MAXN+1, 1);
+//[] { ... }();  // 定义并立即执行
+auto init = []  
+{
+    isPrime[0] = 0;
+    isPrime[1] = 0;
+    for(int i=2;i<=MAXN;i++) //使用素数筛
+    {
+        if(isPrime[i])
+        {
+            for(int j=i;j<=MAXN/i;j++) //防止溢出,本来j从i^2开始遍历,现在同时除以i
+            {
+                isPrime[i*j] = 0;
+            }
+        }
+    }
+    return 0;
+}();
+class Solution {
+public:
+    int maximumPrimeDifference(vector<int>& nums) {
+        //从左到右找第一个质数,从右到左找第一个质数即可
+        int n = nums.size();
+        int left = 0, right = n - 1;
+        while (!isPrime[nums[left]]) left++; //题目保证至少有一个质数
+        while(!isPrime[nums[right]]) right--;
+        return right - left;
+    }
+};
+```
+
+
+
+### （2）[2614. 对角线上的质数](https://leetcode.cn/problems/prime-in-diagonal/)
+
+> 给你一个下标从 **0** 开始的二维整数数组 `nums` 。
+>
+> 返回位于 `nums` 至少一条 **对角线** 上的最大 **质数** 。如果任一对角线上均不存在质数，返回 *0 。*
+>
+> 注意：
+>
+> - 如果某个整数大于 `1` ，且不存在除 `1` 和自身之外的正整数因子，则认为该整数是一个质数。
+> - 如果存在整数 `i` ，使得 `nums[i][i] = val` 或者 `nums[i][nums.length - i - 1]= val` ，则认为整数 `val` 位于 `nums` 的一条对角线上。
+
+```c++
+class Solution {
+public:
+    bool isPrime(int n)
+    {
+        for(int i=2;i*i<=n;i++)
+        {
+            if(n%i==0) return false;
+        }
+        return n>=2;
+    }
+    int diagonalPrime(vector<vector<int>>& nums) {
+        //4*10^6,数据范围不小,不适合打表,直接硬算就行,最多600个数
+        int maxPrime = -1;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            int x = nums[i][i];
+            if(x < maxPrime) continue;
+            if(isPrime(x)) maxPrime = max(maxPrime, x);
+        }
+        for(int i=0;i<n;i++)
+        {
+            int x = nums[i][n-i-1];
+            if(x < maxPrime) continue;
+            if(isPrime(x)) maxPrime = max(maxPrime, x);
+        }
+        if(maxPrime==-1) return 0;
+        return maxPrime;
+    }
+};
+```
+
+
+
+### （3）[762. 二进制表示中质数个计算置位](https://leetcode.cn/problems/prime-number-of-set-bits-in-binary-representation/)
+
+> 给你两个整数 `left` 和 `right` ，在闭区间 `[left, right]` 范围内，统计并返回 **计算置位位数为质数** 的整数个数。
+>
+> **计算置位位数** 就是二进制表示中 `1` 的个数。
+>
+> - 例如， `21` 的二进制表示 `10101` 有 `3` 个计算置位。
+
+小的范围的质数可以直接打表了：
+
+```c++
+class Solution {
+public:
+    unordered_set<int> isprime{2,3,5,7,11,13,17,19,23,29,31,37};
+    int countPrimeSetBits(int left, int right) {
+        //10^6 打表质数
+        int ans = 0;
+        for(int index=left;index<=right;index++)
+        {
+            int cnt = __builtin_popcount(index);
+            if(isprime.contains(cnt))
+            {
+                ans++;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### （4）[3044. 出现频率最高的质数](https://leetcode.cn/problems/most-frequent-prime/)
+
+> 给你一个大小为 `m x n` 、下标从 **0** 开始的二维矩阵 `mat` 。在每个单元格，你可以按以下方式生成数字：
+>
+> - 最多有 `8` 条路径可以选择：东，东南，南，西南，西，西北，北，东北。
+> - 选择其中一条路径，沿着这个方向移动，并且将路径上的数字添加到正在形成的数字后面。
+> - 注意，每一步都会生成数字，例如，如果路径上的数字是 `1, 9, 1`，那么在这个方向上会生成三个数字：`1, 19, 191` 。
+>
+> 返回在遍历矩阵所创建的所有数字中，出现频率最高的、**大于** `10`的质数；如果不存在这样的质数，则返回 `-1` 。如果存在多个出现频率最高的质数，那么返回其中最大的那个。
+>
+> **注意：**移动过程中不允许改变方向。
+
+做法就是暴力一些来做，不需要打表（注释中有解释），现场计算即可。
+
+```c++
+//范围是1~999999,打表有可能比较亏,因为六位数最多是28个(6行+6列+两条对角线的正序和逆序),所以整体范围都不大,而且大部分数都不是质数,可以提前退出
+//实际考试做题的时候,是否预处理都可以试一下
+class Solution {
+public:
+    bool isPrime(int n)
+    {
+        for(int i=2;i*i<=n;i++)
+        {
+            if(n%i==0) return false;
+        }
+        return n>=2;
+    }
+    int mostFrequentPrime(vector<vector<int>>& mat) {
+        //m和n的范围<=6,因此纯暴力做应该是可以过的
+        int m = mat.size();
+        int n = mat[0].size();
+        int dirs[8][2] = {1,0,-1,0,0,1,0,-1,1,1,-1,1,1,-1,-1,-1};
+        unordered_map<int, int> umap; //存放每个质数及其个数
+        //每个值往8个方向扩散求解
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                for(int d=0;d<8;d++) //尝试往八个方向走,起点那个值其实是不用加的,因为只包含自己一定<=10,不可能放入哈希表中
+                {
+                    int x = mat[i][j]; //8个方向计算都要先重置x
+                    int nxtX = i + dirs[d][0];
+                    int nxtY = j + dirs[d][1];
+                    while(nxtX>=0 && nxtX<m && nxtY>=0 && nxtY<n)
+                    {
+                        x = x * 10 + mat[nxtX][nxtY]; //加一位
+                        if(umap.contains(x) || isPrime(x))
+                        {
+                            umap[x]++;
+                        }
+                        nxtX += dirs[d][0];
+                        nxtY += dirs[d][1];
+                    }
+                }
+            }
+        }
+        //开始看umap中哪个数最大
+        int maxFreq = 0;
+        int maxValue = -1;
+        for(auto& [k, v]: umap)
+        {
+            if(k<=10) continue; //质数需要>10
+            if(v>maxFreq) //明显频率更大了
+            {
+                maxFreq = v;
+                maxValue = k;
+            }
+            else if(v==maxFreq && k>maxValue) maxValue = k; //频率与最大的频率相等,看看值有没有更大
+        }
+
+        return maxValue;
+    }
+};
+```
+
+
+
+### （5）[866. 回文质数](https://leetcode.cn/problems/prime-palindrome/)(缺题解)
+
+> 给你一个整数 `n` ，返回大于或等于 `n` 的最小 **回文质数**。
+>
+> 一个整数如果恰好有两个除数：`1` 和它本身，那么它是 **质数** 。注意，`1` 不是质数。
+>
+> - 例如，`2`、`3`、`5`、`7`、`11` 和 `13` 都是质数。
+>
+> 一个整数如果从左向右读和从右向左读是相同的，那么它是 **回文数** 。
+>
+> - 例如，`101` 和 `12321` 都是回文数。
+>
+> 测试用例保证答案总是存在，并且在 `[2, 2 * 108]` 范围内。
+
+这道题的题解质量不是特别高，可以预先打表来做，并可以注意几个优化项：
+
+- （1）结尾是0，2，4，6，8的一定不是质数，同时也就意味着第一位是2，4，6，8的也一定不是要求的数；
+- （2）**长度为偶数的回文素数只有11，比如四位数是不存在回文素数的。**
+
+> ### 简要证明：大于两位数的偶数位数的回文数一定是11的倍数，因此不存在这样的回文素数。
+>
+> #### **核心证明思路**  
+> 利用**回文数的对称性**和**11的整除规则**：  
+>
+> **11的整除规则**：一个数能被11整除，当且仅当它的（奇数位数字之和）减去（偶数位数字之和）的差是11的倍数（包括0）
+
+挺埋汰的，不知道有没有更干净的写法。
+
+```c++
+class Solution {
+public:
+    long long reverse_num(long long n)
+    {
+        long long ans = 0;
+        while(n)
+        {
+            int x = n%10;
+            ans = ans * 10 + x;
+            n /= 10;
+        }
+        return ans;
+    }
+    bool isPrime(long long n)
+    {
+        for(long long i=2;i*i<=n;i++)
+        {
+            if(n%i==0) return false;
+        }
+        return n>=2;
+    }
+    bool isValid(long long n)
+    {
+        //判断是否为回文质数
+        if(n==11) return true;
+        if(n==2) return true;
+        //1.长度为偶数的回文数一定不是质数
+        if(n>=1000 && n<=9999) return false;
+        if(n>=100000 && n<=999999) return false;
+        if(n>=10000000 && n<=99999999) return false; //注:这个放在前面会快不少,不然放后面有可能会超时
+        //2.尾数为偶数的一定不是
+        if((n%10)%2==0) return false;
+        //同理,第一为为偶数的也一定不是
+        int m = reverse_num(n);
+        if((m%10)%2==0) return false;
+        //3.判断是否为回文串
+        if(m!=n) return false;
+        return isPrime(n);
+    }
+    int primePalindrome(int n) {
+        long long mx = 2e10+8;
+        for(long long index = n;index<=mx;index++)
+        {
+            if(isValid(index))
+            {
+                return index;
+            }
+        }
+        return -1;
+    }
+};
+```
+
+
+
+## 2.预处理质数（筛质数）
+
+[模板（埃氏筛和欧拉筛）](https://leetcode.cn/problems/closest-prime-numbers-in-range/solutions/2040087/yu-chu-li-zhi-shu-mei-ju-by-endlesscheng-uw2b/)
+
+
+
+## §1.5 因子
+
+### （1）板子题——[2427. 公因子的数目](https://leetcode.cn/problems/number-of-common-factors/)
+
+> 给你两个正整数 `a` 和 `b` ，返回 `a` 和 `b` 的 **公** 因子的数目。
+>
+> 如果 `x` 可以同时整除 `a` 和 `b` ，则认为 `x` 是 `a` 和 `b` 的一个 **公因子** 。
+
+思路：枚举因子，挨个判断能否整除a和b。
+
+- 优化思路在于：只需要枚举a和b的最大公因数的因子即可。
+
+```c++
+class Solution {
+public:
+    int commonFactors(int a, int b) {
+        int g = gcd(a, b); //求a和b的最大公因数,其因子数即为所求
+        int ans = 0;
+        for(int i=1;i*i<=g;i++)
+        {
+            if(g % i == 0) 
+            {
+                ans++; 
+                if(i * i < g) ans++; //说明g/i也是一个公因子,如果i*i==g,需要避免重复计算一遍
+            }
+        }
+        return ans;
+    }
+};
+```
+
+> 需要记住上面这个求解因子数目的板子题。
+
+
+
+### （2）[1952. 三除数](https://leetcode.cn/problems/three-divisors/)
+
+> 给你一个整数 `n` 。如果 `n` **恰好有三个正除数** ，返回 `true` ；否则，返回 `false` 。
+>
+> 如果存在整数 `k` ，满足 `n = k * m` ，那么整数 `m` 就是 `n` 的一个 **除数** 。
+
+```c++
+class Solution {
+public:
+    bool isThree(int n) {
+        //求解因子的数目
+        int cnt = 0;
+        for(int i=1;i*i<=n;i++)
+        {
+            if(n % i == 0) 
+            {
+                cnt++;
+                if(i * i < n)
+                {
+                    cnt++;
+                }
+            }
+        }
+        return cnt==3;
+    }
+};
+```
+
+
+
+### （3）[1492. n 的第 k 个因子](https://leetcode.cn/problems/the-kth-factor-of-n/)
+
+> 给你两个正整数 `n` 和 `k` 。
+>
+> 如果正整数 `i` 满足 `n % i == 0` ，那么我们就说正整数 `i` 是整数 `n` 的因子。
+>
+> 考虑整数 `n` 的所有因子，将它们 **升序排列** 。请你返回第 `k` 个因子。如果 `n` 的因子数少于 `k` ，请你返回 `-1` 。
+
+```c++
+class Solution {
+public:
+    int kthFactor(int n, int k) {
+        //把所有因子放到一个vector里面,然后取top k
+        vector<int> factors;
+        for(int i=1;i*i<=n;i++)
+        {
+            if(n%i==0)
+            {
+                factors.emplace_back(i);
+                if(i*i<n)
+                {
+                    factors.emplace_back(n / i);
+                }
+            }
+        }
+        if((int)factors.size()<k) return -1;
+        nth_element(factors.begin(), factors.begin()+k-1, factors.end());
+        return factors[k-1];
+    }
+};
+```
+
+
+
+### （4）[829. 连续整数求和](https://leetcode.cn/problems/consecutive-numbers-sum/)
+
+> 给定一个正整数 `n`，返回 *连续正整数满足所有数字之和为 `n` 的组数* 。 
+>
+>  
+>
+> **示例 1:**
+>
+> ```
+> 输入: n = 5
+> 输出: 2
+> 解释: 5 = 2 + 3，共有两组连续整数([5],[2,3])求和后为 5。
+> ```
+>
+> **示例 2:**
+>
+> ```
+> 输入: n = 9
+> 输出: 3
+> 解释: 9 = 4 + 5 = 2 + 3 + 4
+> ```
+>
+> **示例 3:**
+>
+> ```
+> 输入: n = 15
+> 输出: 4
+> 解释: 15 = 8 + 7 = 4 + 5 + 6 = 1 + 2 + 3 + 4 + 5
+> ```
+>
+>  
+>
+> **提示:**
+>
+> - `1 <= n <= 109`
+
+
 
 
 
