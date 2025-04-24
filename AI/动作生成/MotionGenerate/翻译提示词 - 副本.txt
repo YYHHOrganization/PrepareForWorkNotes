@@ -1,0 +1,1 @@
+这是论文《MotionLCM: Real-time Controllable Motion Generation via Latent Consistency Model  》的内容，请翻译成中文，并给出两句话总结，重点的标注**重点**，如果是1 使用##，如果是 3.1使用###，公式都弄好，并帮我可读性写高一点（同时不可以缺少语句，原文该有的都有，可以增加你的理解，让翻译得容易读懂）,我要复制进typora中：

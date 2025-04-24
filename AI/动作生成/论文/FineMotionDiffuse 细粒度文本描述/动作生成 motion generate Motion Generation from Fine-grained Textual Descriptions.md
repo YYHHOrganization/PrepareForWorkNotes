@@ -38,6 +38,10 @@
 
 ### Motion Generation from Fine-grained Textual Descriptions
 
+LREC-COLING (CCF B)
+
+没开源代码  只开源了data
+
 主页：https://kunhangl.github.io/finemotiondiffuse/
 
 grained 高度详细的

@@ -170,3 +170,19 @@ LIS:
 随机roll一些题目(先统一放一起):
 
 - 见本文件夹下面的markdown文件,记录今天做的所有题目.
+
+
+
+# 2025.4.23
+
+新做题目：集中于数学篇的题目：
+
+- [3115. 质数的最大距离](https://leetcode.cn/problems/maximum-prime-difference/)
+- [2614. 对角线上的质数](https://leetcode.cn/problems/prime-in-diagonal/)
+- [762. 二进制表示中质数个计算置位](https://leetcode.cn/problems/prime-number-of-set-bits-in-binary-representation/)
+- [3044. 出现频率最高的质数](https://leetcode.cn/problems/most-frequent-prime/)
+- [866. 回文质数](https://leetcode.cn/problems/prime-palindrome/)
+- [2427. 公因子的数目](https://leetcode.cn/problems/number-of-common-factors/)
+- [1952. 三除数](https://leetcode.cn/problems/three-divisors/)
+- [1492. n 的第 k 个因子](https://leetcode.cn/problems/the-kth-factor-of-n/)
+- [829. 连续整数求和](https://leetcode.cn/problems/consecutive-numbers-sum/)
