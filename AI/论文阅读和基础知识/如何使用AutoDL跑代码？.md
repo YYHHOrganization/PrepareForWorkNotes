@@ -519,3 +519,42 @@ python fit.py --pkl assets/testMySelf.pkl # 把上一张图中的pkl文件挪到
 
 ### （2）Render SMPL Meshes
 
+
+
+# 六、其他补充：Huggingface的使用
+
+## 1.模型和数据集的准备
+
+> 关于Huggingface的模型下载，推荐这个链接：https://zhuanlan.zhihu.com/p/663712983
+
+**将环境变量的配置命令写入到终端的配置文件中**，**使得终端自动加载该环境变量，免去每次手动执行命令的麻烦**。
+
+```bash
+echo 'export HF_ENDPOINT="https://hf-mirror.com"' >> ~/.bashrc
+```
+
+- 优先推荐：`huggingface-cli`
+  - 安装：`pip install -U huggingface_hub`
+
+#### （a）数据集下载
+
+可以在代码中这样写：
+
+```python
+dataset = load_dataset(
+    config.dataset_name, 
+    split="train", 
+    token=globalConfig.huggingface_token, # 这里填写huggingface的token，为了安全起见放到了其他文件中
+    download_mode="force_redownload")  # load the dataset
+```
+
+
+
+#### （b）模型权重下载
+
+使用如下的shell指令是合理的：
+
+```shell
+huggingface-cli download --token hf_*** --resume-download meta-llama/Llama-2-7b-hf --local-dir Llama-2-7b-hf
+```
+
