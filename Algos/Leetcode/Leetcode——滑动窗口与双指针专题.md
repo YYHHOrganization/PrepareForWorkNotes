@@ -719,12 +719,109 @@ public:
 
 
 
-### [1297. 子串的最大出现次数](https://leetcode.cn/problems/maximum-number-of-occurrences-of-a-substring/)
+### [1297. 子串的最大出现次数](https://leetcode.cn/problems/maximum-number-of-occurrences-of-a-substring/)（值得复习）
 
 > 给你一个字符串 `s` ，请你返回满足以下条件且出现次数最大的 **任意** 子串的出现次数：
 >
 > - 子串中不同字母的数目必须小于等于 `maxLetters` 。
 > - 子串的长度必须大于等于 `minSize` 且小于等于 `maxSize` 。
+
+先有一个小的贪心，题目要求我们找一个长度范围内的字符串，那么长度大的必然包含长度小的子串，也就是长度小的个数一定不劣于长度大的，所以我们贪心的只取长度等于最小值。
+
+> ==假设字符串 T 在给定的字符串 S 中出现的次数为 k，那么 T 的任意一个子串出现的次数至少也为 k，即 T 的任意一个子串在 S 中出现的次数不会少于 T 本身==。这样我们就可以断定，在所有满足条件且出现次数最多的的字符串中，一定有一个的长度恰好为 minSize。
+>
+> 我们可以使用反证法证明上述的结论：假设所有满足条件且出现次数最多的字符串中没有长度为 minSize 的，不妨任取其中的一个长度为 l 的字符串，根据假设，有 l > minSize。此时我们再任取该字符串的一个长度为 minSize 的子串，子串出现的次数不会少于原字符串出现的次数，与假设相矛盾。
+>
+
+本题代码如下：
+```c++
+class Solution {
+public:
+    int maxFreq(string s, int maxLetters, int minSize, int maxSize) {
+        //这道题的maxSize可以不考虑，短串匹配的数量不会少于长串，因此只考虑minSize也一定能拿到一个符合题意的解
+        //定长滑动窗口
+        unordered_map<string, int> umap;
+        unordered_map<char, int> wordDict;
+        int n = s.size();
+        int k = minSize;
+        for(int i=0;i<n;i++)
+        {
+            wordDict[s[i]]++;
+            if(i<k-1) continue;
+            //update
+            if(wordDict.size()<=maxLetters)
+            {
+                string tmp = s.substr(i-k+1, k);
+                umap[tmp]++;
+            }
+            wordDict[s[i-k+1]]--;
+            if(wordDict[s[i-k+1]]==0)
+            {
+                wordDict.erase(s[i-k+1]);
+            }
+        }
+        int mx = 0;
+        for(auto& [k, v]: umap)
+        {
+            mx = max(mx, v);
+        }
+        return mx;
+    }
+};
+```
+
+
+
+### [2653. 滑动子数组的美丽值](https://leetcode.cn/problems/sliding-subarray-beauty/)（思路比较巧妙）
+
+> 给你一个长度为 `n` 的整数数组 `nums` ，请你求出每个长度为 `k` 的子数组的 **美丽值** 。
+>
+> 一个子数组的 **美丽值** 定义为：如果子数组中第 `x` **小整数** 是 **负数** ，那么美丽值为第 `x` 小的数，否则美丽值为 `0` 。
+>
+> 请你返回一个包含 `n - k + 1` 个整数的数组，**依次** 表示数组中从第一个下标开始，每个长度为 `k` 的子数组的 **美丽值** 。
+>
+> - 子数组指的是数组中一段连续 **非空** 的元素序列。
+
+![image-20250425163430951](assets/image-20250425163430951.png)
+
+实际操作中，用的是 `left = x - cnt[j]`, 当`left`的值从大于零变成小于等于0的时候，说明找到了（j从最小值往大了遍历）。利用计数排序的思想，还是比较巧妙的。代码和详细的注释如下：
+
+```c++
+class Solution {
+public:
+    vector<int> getSubarrayBeauty(vector<int>& nums, int k, int x) {
+        //这题数是-50~50，可以创建长度为101的数组，存放0~100，bias=50
+        int BIAS = 50;
+        vector<int> cnt(2*BIAS+1, 0); //类似于计数排序
+        int n = nums.size();
+        //先把k-1个数放进来
+        for(int i=0;i<k-1;i++)
+        {
+            cnt[nums[i]+BIAS] += 1;
+        }
+        vector<int> ans(n-k+1); //答案
+        for(int i=k-1;i<n;i++) //往后遍历
+        {
+            cnt[nums[i]+BIAS] ++;
+            //此时窗口的长度为k，update
+            int t = x;
+            for(int j=-BIAS;j<0;j++) //遍历负数的情况，正数不用管，会使得结果为0
+            {
+                t -= cnt[j+BIAS]; 
+                if(t<=0) //符合要求，表示到了第x小的数
+                {
+                    ans[i-k+1] = j;
+                    break; //找到了解，break掉即可
+                }
+            }
+            cnt[nums[i-k+1]+BIAS]--;
+        }
+        return ans;
+    }
+};
+```
+
+
 
 
 
@@ -2536,9 +2633,56 @@ public:
 
 
 
-### ==（14）[18. 四数之和](https://leetcode.cn/problems/4sum/)==
+### （14）[18. 四数之和](https://leetcode.cn/problems/4sum/)
 
-与前面的题目一样，只不过变成前两根指针走循环，后两根指针走双指针的逻辑。==这题放后面回顾的时候再做吧，防止过拟合。==
+与前面的题目一样，只不过变成前两根指针走循环，后两根指针走双指针的逻辑。没有考虑太多的优化，为了让代码逻辑更清楚一些：
+```c++
+class Solution {
+public:
+    vector<vector<int>> fourSum(vector<int>& nums, int target) {
+        sort(nums.begin(), nums.end());
+        //固定a和b两个指针
+        vector<vector<int>> res;
+        int n = nums.size();
+        for(int a=0;a<n;)
+        {
+            for(int b=a+1;b<n;) //左面两个指针,先不剪枝直接算
+            {
+                long long remain = (long long)target - nums[a] - nums[b];
+                int left = b+1, right = n-1;
+                while(left<right)
+                {
+                    if((long long)nums[left]+nums[right]<remain)
+                    {
+                        left++;
+                    }
+                    else if((long long)nums[left]+nums[right]>remain)
+                    {
+                        right--;
+                    }
+                    else 
+                    {
+                        res.push_back({nums[a], nums[b], nums[left], nums[right]});
+                        left++, right--; //这俩也得走到不重复的地方
+                        while(left<right && nums[left]==nums[left-1]) left++;
+                        while(right>left && nums[right]==nums[right+1]) right--;
+                    }
+                }
+                //要保证数不能重复,也就是跳过后面都和当前数相等的b
+                //b指向最后一个和当前值相等的地方
+                b++;
+                while(b<n && nums[b]==nums[b-1]) b++;
+            }
+            //跳过后面都和当前数相等的a
+            a++;
+            while(a<n && nums[a]==nums[a-1]) a++;
+        }
+        return res;
+    }
+};
+```
+
+
 
 
 

@@ -186,3 +186,20 @@ LIS:
 - [1952. 三除数](https://leetcode.cn/problems/three-divisors/)
 - [1492. n 的第 k 个因子](https://leetcode.cn/problems/the-kth-factor-of-n/)
 - [829. 连续整数求和](https://leetcode.cn/problems/consecutive-numbers-sum/)
+
+
+
+# 2025.4.25
+
+【1】[605. 种花问题](https://leetcode.cn/problems/can-place-flowers/)
+
+第154场双周赛的4个题；
+
+【6】[2957. 消除相邻近似相等字符](https://leetcode.cn/problems/remove-adjacent-almost-equal-characters/)
+
+【7】[1297. 子串的最大出现次数](https://leetcode.cn/problems/maximum-number-of-occurrences-of-a-substring/)
+
+【8】[2653. 滑动子数组的美丽值](https://leetcode.cn/problems/sliding-subarray-beauty/)
+
+【9】[18. 四数之和](https://leetcode.cn/problems/4sum/)
+

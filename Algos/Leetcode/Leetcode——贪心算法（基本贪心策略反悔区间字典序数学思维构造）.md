@@ -2764,3 +2764,66 @@ public:
 > 假设有一个很长的花坛，一部分地块种植了花，另一部分却没有。可是，花不能种植在相邻的地块上，它们会争夺水源，两者都会死去。
 >
 > 给你一个整数数组 `flowerbed` 表示花坛，由若干 `0` 和 `1` 组成，其中 `0` 表示没种植花，`1` 表示种植了花。另有一个数 `n` ，能否在不打破种植规则的情况下种入 `n` 朵花？能则返回 `true` ，不能则返回 `false` 。
+
+```c++
+class Solution {
+public:
+    bool canPlaceFlowers(vector<int>& flowerbed, int n) {
+       //得是左边不是1且右边不是1，且自己不是1，才能种，种就是变为1
+       int total = n;
+       //为了方便写代码，可以左右各塞一个0，但头插会比较慢，所以就
+       int sz = flowerbed.size();
+       if(total==0) return true; //不需要种花，原题满足要求，直接返回true即可
+       for(int i=0;i<sz;i++)
+       {
+            if(flowerbed[i]==0)
+            {
+                bool left = ((i==0) || flowerbed[i-1]==0);
+                bool right = ((i==sz-1) || flowerbed[i+1]==0);
+                if(left && right)
+                {
+                    flowerbed[i] = 1;
+                    total--;
+                    if(total==0) return true;
+                }
+            }
+       }
+       return false;
+    }
+};
+```
+
+
+
+### （6）[2957. 消除相邻近似相等字符](https://leetcode.cn/problems/remove-adjacent-almost-equal-characters/)
+
+>  给你一个下标从 **0** 开始的字符串 `word` 。
+>
+> 一次操作中，你可以选择 `word` 中任意一个下标 `i` ，将 `word[i]` 修改成任意一个小写英文字母。
+>
+> 请你返回消除 `word` 中所有相邻 **近似相等** 字符的 **最少** 操作次数。
+>
+> 两个字符 `a` 和 `b` 如果满足 `a == b` 或者 `a` 和 `b` 在字母表中是相邻的，那么我们称它们是 **近似相等** 字符。
+
+```c++
+class Solution {
+public:
+    int removeAlmostEqualCharacters(string word) {
+        //跟左侧的比，如果不合法，那么一定可以改成一个合法的，并且i可以+=2，让下一个也一定合法
+        int left = 1;
+        int n = word.size();
+        int cnt = 0;
+        while(left < n)
+        {
+            if(word[left]==word[left-1] || abs(word[left]-word[left-1])==1)
+            {
+                cnt++;
+                left += 2;
+            }
+            else left++; //查下一个位置是否符合要求
+        }
+        return cnt;
+    }
+};
+```
+
