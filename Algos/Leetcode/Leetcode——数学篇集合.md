@@ -45,7 +45,7 @@ public:
     double Power(double x, long long n)
     {
         //快速幂
-        double res = 1.0;
+        double res = 1.0; // 1!!
         while(n) // 从低到高枚举 n 的每个比特位
         {
             if(n&1) // 这个比特位是 1
@@ -53,7 +53,7 @@ public:
                 res*=x;// 把 x 乘到 ans 中
             }
             x*=x;// x 自身平方
-            n>>=1;// 继续枚举下一个比特位
+            n>>=1;// 继续枚举下一个比特位 //=!!!
         }
         return res;
     }
@@ -115,7 +115,7 @@ public:
     const int MOD = 1337;
     int Power(int x,long long n)
     {
-        int ans=1;
+        int ans=1; // 1!!!
         while(n)
         {
             if(n&1)
@@ -123,7 +123,7 @@ public:
                 ans =((long long)ans* x)%MOD;
             }
             x=((long long)x*x)%MOD;
-            n>>=1;
+            n>>=1;//= !!!
         }
         return ans;
     }
@@ -408,6 +408,71 @@ public:
 
 
 
+### [2961. 双模幂运算](https://leetcode.cn/problems/double-modular-exponentiation/)
+
+给你一个下标从 **0** 开始的二维数组 `variables` ，其中 `variables[i] = [ai, bi, ci, mi]`，以及一个整数 `target` 。
+
+如果满足以下公式，则下标 `i` 是 **好下标**：
+
+- `0 <= i < variables.length`
+- `((ai^bi % 10)^ci) % mi == target`
+
+返回一个由 **好下标** 组成的数组，**顺序不限** 。
+
+**示例 1：**
+
+```
+输入：variables = [[2,3,3,10],[3,3,3,1],[6,1,1,4]], target = 2
+输出：[0,2]
+解释：对于 variables 数组中的每个下标 i ：
+1) 对于下标 0 ，variables[0] = [2,3,3,10] ，(23 % 10)3 % 10 = 2 。
+2) 对于下标 1 ，variables[1] = [3,3,3,1] ，(33 % 10)3 % 1 = 0 。
+3) 对于下标 2 ，variables[2] = [6,1,1,4] ，(61 % 10)1 % 4 = 2 。
+因此，返回 [0,2] 作为答案。
+```
+
+
+
+```C++
+class Solution {
+public:
+    // x x*x  
+    int power(int x,int m,int mod)
+    {
+        int ans=1;
+        while(m)
+        {
+            if(m&1==1)
+            {
+                ans = ans*x%mod;
+            }
+            x = x*x % mod;
+            m>>=1;
+        }
+        return ans%mod;
+    }
+    vector<int> getGoodIndices(vector<vector<int>>& variables, int target) {
+        
+        int n = variables.size();
+        vector<int> res;
+        for(int i=0;i<n;i++)
+        {
+            int a = variables[i][0];
+            int b = variables[i][1];
+            int c = variables[i][2];
+            int m = variables[i][3];
+            int num =  power(power(a,b,10),c,m);  
+            if(num == target) res.push_back(i);
+        }
+        return res;
+    }
+};
+```
+
+
+
+
+
 # 二、数论
 
 ## 1.判断质数
@@ -445,14 +510,19 @@ void init()
         if(isPrime[i])
         {
             primes.push_back(i); //同时，这个逻辑还可以判断质数
-            for(int j=i;j<=MAX/i;j++)  //这样做是为了防止溢出
+            for(int j=i;j<=MAX/i;j++)  //这样做是为了防止溢出 
                 isPrime[i*j]=0; //相当于这些都不是质数
         }  
     }
 }
 ```
 
-
+>```C++
+>for(int j=i;j<=MAX/i;j++)  //这样做是为了防止溢出 //！从i开始，因为i*i之前的已经算过,且如果写为从1开始也是错的，会导致比如2等质数成为非质数，但是2等是质数。要写也是从2开始，但是显然慢于从i开始
+>    isPrime[i*j]=0; //相当于这些都不是质数
+>```
+>
+>
 
 ### （2）[3115. 质数的最大距离 - 力扣（LeetCode）](https://leetcode.cn/problems/maximum-prime-difference/description/)
 
@@ -482,7 +552,7 @@ auto init = []
         }
     }
     return 0;
-}();
+}(); // 记住这个写法
 class Solution {
 public:
     int maximumPrimeDifference(vector<int>& nums) {
@@ -622,7 +692,7 @@ public:
                     while(nxtX>=0 && nxtX<m && nxtY>=0 && nxtY<n)
                     {
                         x = x * 10 + mat[nxtX][nxtY]; //加一位
-                        if(umap.contains(x) || isPrime(x))
+                        if(umap.contains(x) || isPrime(x))//umap.contains(x)  可以加速
                         {
                             umap[x]++;
                         }
@@ -776,6 +846,18 @@ public:
 
 > 需要记住上面这个求解因子数目的板子题。
 
+如果要自己写gcd:
+
+```C++
+//24 16
+//16 8
+//8 0
+int gcd(int a,int b)
+{
+    return b==0?a:gcd(b,a%b);
+}
+```
+
 
 
 ### （2）[1952. 三除数](https://leetcode.cn/problems/three-divisors/)
@@ -846,37 +928,33 @@ public:
 
 > 给定一个正整数 `n`，返回 *连续正整数满足所有数字之和为 `n` 的组数* 。 
 >
->  
->
-> **示例 1:**
+>  **示例 1:**
 >
 > ```
-> 输入: n = 5
+>输入: n = 5
 > 输出: 2
 > 解释: 5 = 2 + 3，共有两组连续整数([5],[2,3])求和后为 5。
 > ```
->
+> 
 > **示例 2:**
 >
 > ```
-> 输入: n = 9
+>输入: n = 9
 > 输出: 3
 > 解释: 9 = 4 + 5 = 2 + 3 + 4
 > ```
->
+> 
 > **示例 3:**
 >
 > ```
-> 输入: n = 15
+>输入: n = 15
 > 输出: 4
 > 解释: 15 = 8 + 7 = 4 + 5 + 6 = 1 + 2 + 3 + 4 + 5
 > ```
->
->  
->
+> 
 > **提示:**
 >
-> - `1 <= n <= 109`
+>  - `1 <= n <= 109`
 
 
 
