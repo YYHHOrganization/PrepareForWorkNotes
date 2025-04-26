@@ -203,3 +203,35 @@ LIS:
 
 【9】[18. 四数之和](https://leetcode.cn/problems/4sum/)
 
+
+
+# 2025.4.26
+
+【1】[1323. 6 和 9 组成的最大数字](https://leetcode.cn/problems/maximum-69-number/)
+
+【2】[3216. 交换后字典序最小的字符串](https://leetcode.cn/problems/lexicographically-smallest-string-after-a-swap/)
+
+【3】[2697. 字典序最小回文串](https://leetcode.cn/problems/lexicographically-smallest-palindrome/)
+
+【4】[1881. 插入后的最大值](https://leetcode.cn/problems/maximum-value-after-insertion/)
+
+【5】[1946. 子字符串突变后可能得到的最大整数](https://leetcode.cn/problems/largest-number-after-mutating-substring/)
+
+【6】[3517. 最小回文排列 I](https://leetcode.cn/problems/smallest-palindromic-rearrangement-i/)
+
+【7】[409. 最长回文串](https://leetcode.cn/problems/longest-palindrome/)
+
+【8】[680. 验证回文串 II](https://leetcode.cn/problems/valid-palindrome-ii/)
+
+【9】[2160. 拆分数位后四位数字的最小和](https://leetcode.cn/problems/minimum-sum-of-four-digit-number-after-splitting-digits/)
+
+【10】[2578. 最小和分割](https://leetcode.cn/problems/split-with-minimum-sum/)
+
+【11】[2244. 完成所有任务需要的最少轮数](https://leetcode.cn/problems/minimum-rounds-to-complete-all-tasks/)
+
+【12】[2870. 使数组为空的最少操作次数](https://leetcode.cn/problems/minimum-number-of-operations-to-make-array-empty/)
+
+
+
+
+
