@@ -3112,6 +3112,24 @@ public:
 
 [80. 删除有序数组中的重复项 II - 力扣（LeetCode）](https://leetcode.cn/problems/remove-duplicates-from-sorted-array-ii/solutions/3060042/yong-zhan-si-kao-yuan-di-shi-xian-python-zw8l/)
 
+```c++
+class Solution {
+public:
+    int removeDuplicates(vector<int>& nums) {
+        int n = nums.size();
+        int stkSize = 2; //默认栈的大小是2,意味着前面两个元素都保留
+        for(int i=2;i<n;i++)
+        {
+            if(nums[i]!=nums[stkSize-2]) //和栈顶下面的元素不相等
+            {
+                nums[stkSize++] = nums[i]; 
+            }
+        }
+        return min(n, stkSize); //防止n=1的情况,结果肯定不是2
+    }
+};
+```
+
 
 
 ### [283. 移动零 ](https://leetcode.cn/problems/move-zeroes/) :fire:HOT100   
@@ -3545,6 +3563,55 @@ public:
 
 
 ## **思维扩展**：
+
+
+
+### [2367. 等差三元组的数目](https://leetcode.cn/problems/number-of-arithmetic-triplets/)
+
+> 给你一个下标从 **0** 开始、**严格递增** 的整数数组 `nums` 和一个正整数 `diff` 。如果满足下述全部条件，则三元组 `(i, j, k)` 就是一个 **等差三元组** ：
+>
+> - `i < j < k` ，
+> - `nums[j] - nums[i] == diff` 且
+> - `nums[k] - nums[j] == diff`
+>
+> 返回不同 **等差三元组** 的数目*。*
+
+其实就是正常的三指针：
+
+```c++
+class Solution {
+public:
+    int arithmeticTriplets(vector<int>& nums, int diff) {
+        //三指针,i在最左,j在中间,k在最右(即为当前)
+        int n = nums.size();
+        int i = 0, j = 1, k = 2;
+        int ans = 0;
+        while(k<n)
+        {
+            //先移动j,直到nums[j]+diff>=nums[k]
+            int x = nums[k];
+            while(nums[j]+diff<x) j++; //不需要判断j<=k,如果j=k,那么必有nums[j]+diff>x
+            if(nums[j]+diff==x)
+            {
+                while(nums[i]+2*diff<x) i++;
+                if(nums[i]+2*diff==x) ans++;
+            }
+            k++;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### [795. 区间子数组个数](https://leetcode.cn/problems/number-of-subarrays-with-bounded-maximum/)
+
+> 给你一个整数数组 `nums` 和两个整数：`left` 及 `right` 。找出 `nums` 中连续、非空且其中最大元素在范围 `[left, right]` 内的子数组，并返回满足条件的子数组的个数。
+>
+> 生成的测试用例保证结果符合 **32-bit** 整数范围。
+
+
 
 
 
