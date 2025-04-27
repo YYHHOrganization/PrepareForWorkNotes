@@ -821,9 +821,40 @@ public:
 };
 ```
 
+常规的定长滑动窗口做法：(`if(i<k-1)continue;`放里面)
 
-
-
+```C++
+class Solution {
+public:
+    vector<int> getSubarrayBeauty(vector<int>& nums, int k, int x) {
+        // -50 - 50
+        vector<int> hash(105,0);
+        int Bias = 50;
+        int n = nums.size();
+        vector<int> res(n-k+1);
+        for(int i=0;i<n;i++)
+        {
+            //in
+            hash[nums[i]+Bias]++;
+            if(i<k-1)continue;
+            //update 寻找第x小
+            int a = x;
+            for(int j=-Bias;j<=0;j++)
+            {
+                a-=hash[j+Bias];
+                if(a<=0)
+                {
+                    res[i-k+1] = j; 
+                    break;
+                }
+            }
+            //out
+            hash[nums[i-k+1]+Bias]--;
+        }
+        return res;
+    }
+};
+```
 
 
 
@@ -1440,6 +1471,80 @@ public:
     }
 };
 ```
+
+
+
+### [825. 适龄的朋友](https://leetcode.cn/problems/friends-of-appropriate-ages/)
+
+在社交媒体网站上有 `n` 个用户。给你一个整数数组 `ages` ，其中 `ages[i]` 是第 `i` 个用户的年龄。
+
+如果下述任意一个条件为真，那么用户 `x` 将不会向用户 `y`（`x != y`）发送好友请求：
+
+- `ages[y] <= 0.5 * ages[x] + 7`
+- `ages[y] > ages[x]`
+- `ages[y] > 100 && ages[x] < 100`
+
+否则，`x` 将会向 `y` 发送一条好友请求。
+
+注意，如果 `x` 向 `y` 发送一条好友请求，`y` 不必也向 `x` 发送一条好友请求。另外，用户不会向自己发送好友请求。
+
+返回在该社交媒体网站上产生的好友请求总数。
+
+**示例 1：**
+
+```
+输入：ages = [16,16]
+输出：2
+解释：2 人互发好友请求。
+```
+
+
+
+[825. 适龄的朋友 - 力扣（LeetCode）](https://leetcode.cn/problems/friends-of-appropriate-ages/solutions/2990994/ji-shu-hua-dong-chuang-kou-pythonjavaccg-jfya/)
+
+![image-20250426141717584](assets/image-20250426141717584.png)
+
+![image-20250426141736695](assets/image-20250426141736695.png)
+
+
+
+```C++
+class Solution {
+public:
+    int numFriendRequests(vector<int>& ages) {
+        vector<int> age(122,0);
+        for(int i=0;i<ages.size();i++)
+        {
+            age[ages[i]]++;
+        }
+        int windowNum = 0;
+        int ay=0;
+        int cnt=0;
+        //0.5xax+7, ax ,ay
+        for(int ax=0;ax<=120;ax++)
+        {
+            //in
+            windowNum += age[ax];
+            //out
+            //ay > 0.5ax+7
+            while(2*ay<=ax+14) // 不能发送好友请求 //这题特殊的，if也可以
+            {
+                windowNum -= age[ay];
+                ay++;
+            }
+            //update
+            if(windowNum>0)// 存在可以发送好友请求的用户 // 【if(windowNum>0)】一定要有 因为这个年龄段可能没人
+            {
+                cnt += windowNum * age[ax] - age[ax];//cnt += (windowNum -1)* age[ax]自己不能给自己发
+            }
+        }
+        return cnt;
+
+    }
+};
+```
+
+
 
 
 
@@ -2115,7 +2220,9 @@ public:
 
 
 
-### ==（3）[825. 适龄的朋友](https://leetcode.cn/problems/friends-of-appropriate-ages/)==
+### （3）[825. 适龄的朋友](https://leetcode.cn/problems/friends-of-appropriate-ages/)
+
+放上面不定长里面了
 
 
 
@@ -2650,7 +2757,7 @@ public:
             {
                 long long remain = (long long)target - nums[a] - nums[b];
                 int left = b+1, right = n-1;
-                while(left<right)
+                while(left<right) // 别忘了
                 {
                     if((long long)nums[left]+nums[right]<remain)
                     {
@@ -2822,9 +2929,626 @@ public:
 
 两个指针的移动方向相同（都向右，或者都向左）。
 
+## 3 背向双指针
+
+两个指针从数组中的同一个位置出发，一个向左，另一个向右，背向移动。
+
+- [1793. 好子数组的最大分数](https://leetcode.cn/problems/maximum-score-of-a-good-subarray/) 1946
 
 
-## 6.分组循环
+
+## 4 原地修改
+
+- [27. 移除元素](https://leetcode.cn/problems/remove-element/)
+- [26. 删除有序数组中的重复项](https://leetcode.cn/problems/remove-duplicates-from-sorted-array/)
+- [80. 删除有序数组中的重复项 II](https://leetcode.cn/problems/remove-duplicates-from-sorted-array-ii/)
+
+
+
+### [27. 移除元素](https://leetcode.cn/problems/remove-element/)
+
+给你一个数组 `nums` 和一个值 `val`，你需要 **[原地](https://baike.baidu.com/item/原地算法)** 移除所有数值等于 `val` 的元素。元素的顺序可能发生改变。然后返回 `nums` 中与 `val` 不同的元素的数量。
+
+假设 `nums` 中不等于 `val` 的元素数量为 `k`，要通过此题，您需要执行以下操作：
+
+- 更改 `nums` 数组，使 `nums` 的前 `k` 个元素包含不等于 `val` 的元素。`nums` 的其余元素和 `nums` 的大小并不重要。
+- 返回 `k`。
+
+
+
+简易点：
+
+```C++
+class Solution {
+public:
+    int removeElement(vector<int>& nums, int val) {
+        int l=0,r=0;
+        int n = nums.size();
+        for(int r=0;r<n;r++)
+        {
+            if(nums[r]!=val) 
+            {
+                nums[l]=nums[r];
+                l++;
+            }
+        }
+        return l;
+    }
+};
+```
+
+else
+
+```C++
+class Solution {
+public:
+    int removeElement(vector<int>& nums, int val) {
+        // l,r
+        int l=0,r=0;
+        int n = nums.size();
+        // 3 2 2 3
+        // l r
+        // 2 l r
+        // 2 2 l r
+        while(l<n&&r<n)
+        {
+            while(r<n&&nums[r]==val)
+            {
+                r++;
+            }
+            if(r<n&&nums[r]!=val) 
+            {
+                nums[l]=nums[r];//2 
+                l++;
+                r++;
+            }
+        }
+        return l;
+    }
+};
+```
+
+
+
+### [26. 删除有序数组中的重复项](https://leetcode.cn/problems/remove-duplicates-from-sorted-array/)
+
+给你一个 **非严格递增排列** 的数组 `nums` ，请你**[ 原地](http://baike.baidu.com/item/原地算法)** 删除重复出现的元素，使每个元素 **只出现一次** ，返回删除后数组的新长度。元素的 **相对顺序** 应该保持 **一致** 。然后返回 `nums` 中唯一元素的个数。
+
+考虑 `nums` 的唯一元素的数量为 `k` ，你需要做以下事情确保你的题解可以被通过：
+
+- 更改数组 `nums` ，使 `nums` 的前 `k` 个元素包含唯一元素，并按照它们最初在 `nums` 中出现的顺序排列。`nums` 的其余元素与 `nums` 的大小不重要。
+- 返回 `k` 。
+
+**示例 1：**
+
+```
+输入：nums = [1,1,2]
+输出：2, nums = [1,2,_]
+解释：函数应该返回新的长度 2 ，并且原数组 nums 的前两个元素被修改为 1, 2 。不需要考虑数组中超出新长度后面的元素。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int removeDuplicates(vector<int>& nums) {
+        int n = nums.size();
+        int l=0;
+        for(int r=0;r<n;r++)
+        {
+            if(r==0||nums[r]!=nums[r-1])
+            {
+                nums[l]=nums[r];
+                l++;
+            }
+        }
+        return l;
+    }
+};
+```
+
+or
+
+```C++
+class Solution {
+public:
+    int removeDuplicates(vector<int>& nums) {
+        int n = nums.size();
+        int l=1;
+        for(int r=1;r<n;r++)
+        {
+            if(r==0||nums[r]!=nums[l-1])// 
+            {
+                nums[l]=nums[r];
+                l++;
+            }
+        }
+        return l;
+    }
+};
+```
+
+
+
+### [80. 删除有序数组中的重复项 II](https://leetcode.cn/problems/remove-duplicates-from-sorted-array-ii/)
+
+给你一个有序数组 `nums` ，请你**[ 原地](http://baike.baidu.com/item/原地算法)** 删除重复出现的元素，使得出现次数超过两次的元素**只出现两次** ，返回删除后数组的新长度。
+
+不要使用额外的数组空间，你必须在 **[原地 ](https://baike.baidu.com/item/原地算法)修改输入数组** 并在使用 O(1) 额外空间的条件下完成。
+
+**示例 1：**
+
+```
+输入：nums = [1,1,1,2,2,3]
+输出：5, nums = [1,1,2,2,3]
+解释：函数应返回新长度 length = 5, 并且原数组的前五个元素被修改为 1, 1, 2, 2, 3。 不需要考虑数组中超出新长度后面的元素。
+```
+
+
+
+```C++
+class Solution {
+public:
+    int removeDuplicates(vector<int>& nums) {
+        //和前两个不一样的可以放入
+        int l=2; // 从第三个数字开始判断
+        int n = nums.size();
+        if(n<=2)return n;
+        for(int r=2;r<n;r++)
+        {
+            if(!(nums[r]==nums[l-1]&&nums[r]==nums[l-2])) //注意是l-1，l-2！！
+            {
+                nums[l] = nums[r];
+                l++;
+            }
+        }
+        return l;
+    }
+};
+```
+
+用栈的思想做：
+
+[80. 删除有序数组中的重复项 II - 力扣（LeetCode）](https://leetcode.cn/problems/remove-duplicates-from-sorted-array-ii/solutions/3060042/yong-zhan-si-kao-yuan-di-shi-xian-python-zw8l/)
+
+
+
+### [283. 移动零 ](https://leetcode.cn/problems/move-zeroes/) :fire:HOT100   
+
+给定一个数组 `nums`，编写一个函数将所有 `0` 移动到数组的末尾，同时保持非零元素的相对顺序。
+
+**请注意** ，必须在不复制数组的情况下原地对数组进行操作。
+
+ 
+
+**示例 1:**
+
+```
+输入: nums = [0,1,0,3,12]
+输出: [1,3,12,0,0]
+```
+
+**示例 2:**
+
+```
+输入: nums = [0]
+输出: [0]
+```
+
+
+
+```C++
+class Solution {
+public:
+    void moveZeroes(vector<int>& nums) {
+        int l=0,r=0;
+        int n = nums.size();
+        while( r<n&& nums[r]!=0)r++; //r走到最后一个非0的
+        //一旦找到非0数字 就填入l
+        for(int r=0;r<n;r++)
+        {
+            if(nums[r]!=0)
+            {
+                nums[l] = nums[r];
+                l++;
+            }
+        }
+        for(int i=l;i<n;i++)
+        {
+            nums[i]=0;
+        }
+        return ;
+    }
+};
+```
+
+https://leetcode.cn/problems/move-zeroes/solutions/90229/dong-hua-yan-shi-283yi-dong-ling-by-wang_ni_ma/?envType=problem-list-v2&envId=2cktkvj
+
+
+
+### [905. 按奇偶排序数组](https://leetcode.cn/problems/sort-array-by-parity/)
+
+给你一个整数数组 `nums`，将 `nums` 中的的所有偶数元素移动到数组的前面，后跟所有奇数元素。
+
+返回满足此条件的 **任一数组** 作为答案
+
+**示例 1：**
+
+```
+输入：nums = [3,1,2,4]
+输出：[2,4,3,1]
+解释：[4,2,3,1]、[2,4,1,3] 和 [4,2,1,3] 也会被视作正确答案。
+```
+
+**示例 2：**
+
+```
+输入：nums = [0]
+输出：[0]
+```
+
+
+
+相向双指针
+
+```C++
+class Solution {
+public:
+    vector<int> sortArrayByParity(vector<int>& nums) {
+        int n = nums.size();
+        int l=0,r=n-1;
+        while(l<r)
+        {
+            while(l<r&&nums[l]%2==0)l++;
+            while(l<r&&nums[r]%2==1)r--;
+            if(l<r)
+            {
+                swap(nums[l],nums[r]);
+                l++;r--;
+            }
+        }
+        return nums;
+    }
+};
+```
+
+
+
+### [922. 按奇偶排序数组 II](https://leetcode.cn/problems/sort-array-by-parity-ii/)
+
+给定一个非负整数数组 `nums`， `nums` 中一半整数是 **奇数** ，一半整数是 **偶数** 。
+
+对数组进行排序，以便当 `nums[i]` 为奇数时，`i` 也是 **奇数** ；当 `nums[i]` 为偶数时， `i` 也是 **偶数** 。
+
+你可以返回 *任何满足上述条件的数组作为答案* 
+
+**示例 1：**
+
+```
+输入：nums = [4,2,5,7]
+输出：[4,5,2,7]
+解释：[4,7,2,5]，[2,5,4,7]，[2,7,4,5] 也会被接受。
+```
+
+
+
+```C++
+class Solution {
+public:
+    vector<int> sortArrayByParityII(vector<int>& nums) {
+        int odd=1,even=0;
+        int n = nums.size();
+        for(;odd<n&&even<n;) 
+        {
+            while(odd<n&&nums[odd]%2==1)odd+=2;
+            while(even<n&&nums[even]%2==0)even += 2;
+            if(odd<n&&even<n)
+            {
+                swap(nums[odd],nums[even]);
+                odd+=2;
+                even +=2;
+            }
+        }
+        return nums;
+    }
+};
+```
+
+
+
+### [3467. 将数组按照奇偶性转化](https://leetcode.cn/problems/transform-array-by-parity/)
+
+给你一个整数数组 `nums`。请你按照以下顺序 **依次** 执行操作，转换 `nums`：
+
+1. 将每个偶数替换为 0。
+2. 将每个奇数替换为 1。
+3. 按 **非递减** 顺序排序修改后的数组。
+
+执行完这些操作后，返回结果数组。
+
+**示例 1:**
+
+**输入：**nums = [4,3,2,1]
+
+**输出：**[0,0,1,1]
+
+**解释：**
+
+- 将偶数（4 和 2）替换为 0，将奇数（3 和 1）替换为 1。现在，`nums = [0, 1, 0, 1]`。
+- 按非递减顺序排序 `nums`，得到 `nums = [0, 0, 1, 1]`。
+
+```C++
+class Solution {
+public:
+    vector<int> transformArray(vector<int>& nums) {
+        int n = nums.size();
+        int l=0;
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]%2==0)
+            {
+                nums[l]=0;
+                l++;
+            }
+        }
+        while(l<n)
+        {
+            nums[l]=1;
+            l++;
+        }
+        return  nums;
+
+    }
+};
+```
+
+
+
+### [2460. 对数组执行操作](https://leetcode.cn/problems/apply-operations-to-an-array/)
+
+简单题
+
+给你一个下标从 **0** 开始的数组 `nums` ，数组大小为 `n` ，且由 **非负** 整数组成。
+
+你需要对数组执行 `n - 1` 步操作，其中第 `i` 步操作（从 **0** 开始计数）要求对 `nums` 中第 `i` 个元素执行下述指令：
+
+- 如果 `nums[i] == nums[i + 1]` ，则 `nums[i]` 的值变成原来的 `2` 倍，`nums[i + 1]` 的值变成 `0` 。否则，跳过这步操作。
+
+在执行完 **全部** 操作后，将所有 `0` **移动** 到数组的 **末尾** 。
+
+- 例如，数组 `[1,0,2,0,0,1]` 将所有 `0` 移动到末尾后变为 `[1,2,1,0,0,0]` 。
+
+返回结果数组。
+
+**注意** 操作应当 **依次有序** 执行，而不是一次性全部执行。
+
+```C++
+class Solution {
+public:
+    vector<int> applyOperations(vector<int>& nums) {
+        // 1 2 2 1 1 0
+        // 1 4 0 1 10
+        int n = nums.size();
+        for(int i=0;i<n-1;i++)
+        {
+            if( nums[i]==nums[i+1] )
+            {
+                nums[i] = nums[i]*2;
+                nums[i+1]=0;
+            }
+        }
+        int l=0;
+        for(int r=0;r<n;r++)
+        {
+            if(nums[r]!=0)
+            {
+                nums[l] = nums[r];
+                l++; 
+            }
+        }
+        while(l<n)
+        {
+            nums[l]=0;l++;
+        }
+        return nums;
+    }
+};
+```
+
+
+
+### [1089. 复写零](https://leetcode.cn/problems/duplicate-zeros/)   :cat:
+
+给你一个长度固定的整数数组 `arr` ，请你将该数组中出现的每个零都复写一遍，并将其余的元素向右平移。
+
+注意：请不要在超过该数组长度的位置写入元素。请对输入的数组 **就地** 进行上述修改，不要从函数返回任何东西。
+
+**示例 1：**
+
+```
+输入：arr = [1,0,2,3,0,4,5,0]
+输出：[1,0,0,2,3,0,0,4]
+解释：调用函数后，输入的数组将被修改为：[1,0,0,2,3,0,0,4]
+```
+
+
+
+题解：
+
+[1089. 复写零 - 力扣（LeetCode）](https://leetcode.cn/problems/duplicate-zeros/solutions/1604450/fu-xie-ling-by-leetcode-solution-7ael/)
+
+```C++
+class Solution {
+public:
+    void duplicateZeros(vector<int>& arr) {
+        int n = arr.size();
+        int top =0;
+        int i=0;
+        while(top<n)
+        {
+            if(arr[i]==0)
+            {
+                top++;
+            }
+            top++;
+            i++;
+        }
+        int j=n-1;
+        i=i-1;//n-1 
+        if(top==n+1)
+        {
+            arr[j] = 0;
+            j--;
+            i--;
+        }
+        while(j>=0)
+        {
+            arr[j] = arr[i];
+            j--;
+            if(arr[i]==0)
+            {
+                arr[j] = 0;
+                j--;
+            }
+            i--;
+        }
+    }
+};
+```
+
+
+
+**思维扩展（选做）**
+
+
+
+# 四、双序列双指针
+
+## §4.1 双指针
+
+### [2109. 向字符串添加空格](https://leetcode.cn/problems/adding-spaces-to-a-string/)
+
+给你一个下标从 **0** 开始的字符串 `s` ，以及一个下标从 **0** 开始的整数数组 `spaces` 。
+
+数组 `spaces` 描述原字符串中需要添加空格的下标。每个空格都应该插入到给定索引处的字符值 **之前** 。
+
+- 例如，`s = "EnjoyYourCoffee"` 且 `spaces = [5, 9]` ，那么我们需要在 `'Y'` 和 `'C'` 之前添加空格，这两个字符分别位于下标 `5` 和下标 `9` 。因此，最终得到 `"Enjoy ***Y***our ***C***offee"` 。
+
+请你添加空格，并返回修改后的字符串*。
+
+**示例 1：**
+
+```
+输入：s = "LeetcodeHelpsMeLearn", spaces = [8,13,15]
+输出："Leetcode Helps Me Learn"
+解释：
+下标 8、13 和 15 对应 "LeetcodeHelpsMeLearn" 中加粗斜体字符。
+接着在这些字符前添加空格。
+```
+
+
+
+```C++
+class Solution {
+public:
+    string addSpaces(string s, vector<int>& spaces) {
+        // 8 13 15
+        string str;
+        int n = spaces.size();
+        int last=0;
+        
+        for(int i=0;i<n;i++)
+        {
+            int k = spaces[i];
+            str+=s.substr(last,k-last);
+            str+=' ';
+            last = k;
+        }
+
+        str+= s.substr(last,s.size()-last);
+        return str;
+    }
+};
+```
+
+
+
+
+
+## §4.2 判断子序列
+
+
+
+## **进阶**：
+
+
+
+# 五、三指针
+
+注：部分题目已整理到「§2.3.3 恰好型滑动窗口」中。
+
+
+
+### [2444. 统计定界子数组的数目](https://leetcode.cn/problems/count-subarrays-with-fixed-bounds/)
+
+困难
+
+给你一个整数数组 `nums` 和两个整数 `minK` 以及 `maxK` 。
+
+`nums` 的定界子数组是满足下述条件的一个子数组：
+
+- 子数组中的 **最小值** 等于 `minK` 。
+- 子数组中的 **最大值** 等于 `maxK` 。
+
+返回定界子数组的数目。
+
+子数组是数组中的一个连续部分。
+
+**示例 1：**
+
+```
+输入：nums = [1,3,5,2,7,5], minK = 1, maxK = 5
+输出：2
+解释：定界子数组是 [1,3,5] 和 [1,3,5,2] 。
+```
+
+
+
+**https://leetcode.cn/problems/count-subarrays-with-fixed-bounds/solutions/1895713/jian-ji-xie-fa-pythonjavacgo-by-endlessc-gag2/?envType=daily-question&envId=2025-04-26**
+
+<img src="assets/image-20250427002603627.png" alt="image-20250427002603627" style="zoom:50%;" />
+
+```C++
+class Solution {
+public:
+    long long countSubarrays(vector<int>& nums, int minK, int maxK) {
+        int max_x=-1,min_x=-1,i0=-1;
+        long long ans=0;
+        int n = nums.size();
+        for(int r=0;r<n;r++)
+        {
+            int x = nums[r];
+            if(x==minK) min_x = r;
+            if(x==maxK) max_x = r;
+            if(x<minK || x>maxK) i0=r;
+            // [i0+1,min(min_x,max_x)]
+            ans += max(0,min(min_x,max_x)-i0);
+        }
+        return ans;
+    }
+};
+```
+
+
+
+
+
+## **思维扩展**：
+
+
+
+# 六.分组循环
 
 适用场景：按照题目要求，数组会被分割成若干组，每一组的判断/处理逻辑是相同的。
 
