@@ -37,4 +37,12 @@
 科研进展相关：
 
 - 阅读综述论文：《Advances in text‐guided 3D editing: a survey》
+- 重新配置环境，跑通当时的FaceG2E的代码，回顾论文；
+- 实践huggingface的diffusers库的一些官方文档，加深对pipeline的理解和实践；
+
+下周计划：
+
+- 阅读完成FaceG2E的代码，确认上次修改的地方和要修改的地方；
+- 明确当时SDS Loss失败的原因，研究解决方案（Displacement map和deformation map生成效果很差，需要查明原因）；
+- FaceG2E这篇工作的不足之处在于texture的生成效果不够好，同时编辑能力较差，这是完全可以提升的点，会去找一下比较新的工作能否解决这两个问题。
 
