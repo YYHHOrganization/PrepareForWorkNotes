@@ -239,5 +239,9 @@ LIS:
 
 【1】[2367. 等差三元组的数目](https://leetcode.cn/problems/number-of-arithmetic-triplets/)
 
-【2】[795. 区间子数组个数](https://leetcode.cn/problems/number-of-subarrays-with-bounded-maximum/)
+
+
+# 2025.4.28 Leetcode题号51~100的题目
+
+[51. N 皇后](https://leetcode.cn/problems/n-queens/)
 
