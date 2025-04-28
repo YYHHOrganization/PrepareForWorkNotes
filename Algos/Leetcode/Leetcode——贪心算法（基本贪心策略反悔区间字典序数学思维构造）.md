@@ -2906,7 +2906,7 @@ public:
 
 
 
-### （4）[1881. 插入后的最大值](https://leetcode.cn/problems/maximum-value-after-insertion/)
+### （4）[1881. 插入后的最大值 ](https://leetcode.cn/problems/maximum-value-after-insertion/) :recycle:
 
 > 给你一个非常大的整数 `n` 和一个整数数字 `x` ，大整数 `n` 用一个字符串表示。`n` 中每一位数字和数字 `x` 都处于闭区间 `[1, 9]` 中，且 `n` 可能表示一个 **负数** 。
 >
@@ -2929,13 +2929,13 @@ public:
         if(sign=='-')
         {
             int index = 1; //输入是有效整数,因此至少有两个char
-            while(index<sz && n[index]-'0'<=x) index++;
+            while(index<sz && n[index]-'0'<=x) index++; //找到第一个严格>x的
             n.insert(n.begin()+index,'0'+x);
         }
         else //正数
         {
             int index = 0;
-            while(index<sz && n[index]-'0'>=x) index++;
+            while(index<sz && n[index]-'0'>=x) index++; // 找到第一个严格<x的
             n.insert(n.begin()+index, '0'+x);
         }
         return n;
@@ -2968,7 +2968,7 @@ public:
             if(change[x] > x) //会让值变大,就从这里开始,只能突变一次
             {
                 int j = index;
-                while(j<n && change[num[j]-'0'] >= (num[j]-'0')) //注意,中间取到等号也是可以继续往后走的,不然可能会断掉导致错误（这里是>=）
+                while(j<n && change[num[j]-'0'] >= (num[j]-'0')) //注意,中间取到=等号也是可以继续往后走的,不然可能会断掉导致错误（这里是>=）
                 {
                     num[j] = change[num[j]-'0'] + '0';
                     j++;
@@ -3039,6 +3039,22 @@ public:
 
 > 优化空间：其实只需要考虑字符串的左半部分即可（因为字符串是回文串，因此右半部分和左半部分是对称的）。如果总的字符串长度为奇数，那么最中间那个字符就是呈现奇数数量的字符。**所以其实只要对左半部分排序即可，右半部分等于左半部分的翻转。**
 
+```C++
+class Solution {
+public:
+    string smallestPalindrome(string s) {
+        int  n =s.size();
+        // 0 1 2 3 4   0-n/2,排序
+        sort(s.begin(),s.begin()+n/2);
+        for(int i=0,j=n-1;i<j;i++,j--)
+        {
+            s[j] = s[i];
+        }
+        return s;
+    }
+};
+```
+
 
 
 ## 2.回文串贪心
@@ -3071,7 +3087,7 @@ public:
             {
                 hasOdd = true;
                 //加入偶数个
-                ans += (arr[i] / 2 * 2);
+                ans += (arr[i] / 2 * 2); // 也可以写为 ans += (arr[i]-1);
             }
         }
         if(hasOdd) ans+=1;
@@ -3192,6 +3208,48 @@ public:
 
 
 
+以上（1）（2）题也都可以用这个代码：交替放置
+
+```C++
+class Solution {
+public:
+    int splitNum(int num) {
+        //0-9
+        array<int,10> arr;
+        while(num)
+        {
+            int a =num%10;
+            num/=10;
+            arr[a]++;
+        }
+        //0-5,1-2,3-3,4-1
+        int put=0;//put=0,给new1
+        int new1=0,new2=0;
+        for(int i=0;i<=9;i++)
+        {
+            while(arr[i]>0)
+            {
+                if(put==0)
+                {
+                    new1 = new1*10+i;
+                    arr[i]--;
+                    put =1;
+                }
+                else
+                {
+                    new2 = new2*10+i;
+                    arr[i]--;
+                    put =0;
+                }
+            }
+        }
+        return new1+new2;
+    }
+};
+```
+
+
+
 ### （3）[2244. 完成所有任务需要的最少轮数](https://leetcode.cn/problems/minimum-rounds-to-complete-all-tasks/)
 
 > 给你一个下标从 **0** 开始的整数数组 `tasks` ，其中 `tasks[i]` 表示任务的难度级别。在每一轮中，你可以完成 2 个或者 3 个 **相同难度级别** 的任务。
@@ -3232,6 +3290,43 @@ public:
 ```
 
 注：用哈希表也可以，不用排序，应该会更快一些。
+
+哈希表：
+
+```C++
+class Solution {
+public:
+    int minimumRounds(vector<int>& tasks) {
+        //所有任务数量可以被 2，3整除/由2，3组成
+        int n = tasks.size();
+        unordered_map<int,int> umap;
+        for(int i=0;i<n;i++)
+        {
+            umap[tasks[i]] ++; 
+        }
+        int cnt=0;
+        for(auto &[k,v]:umap) // k:taski,v:num
+        {
+            if(v==1)return -1;
+            //直接用cnt += (v+2)/3; （即v/3向上取整） 可以替代以下三种情况，参考下一题
+            if(v%3==0)
+            {
+                cnt += v/3;
+            }
+            else if(v%3==1)
+            {
+                cnt += (v-4)/3+2;
+            }
+            else // (v%3==2)
+            {
+                cnt += v/3+1;
+            }
+        }
+        return cnt;
+
+    }
+};
+```
 
 
 
