@@ -6009,6 +6009,12 @@ public:
                 MaxPos = i;
             }
         }
+        // # 1 # 2 # 3 # 2 # 1 # 5 # 6 #
+        // 0 1 2 3 4 5 6 7 8 9 1011121314
+        // MaxPos(5)-MaxRL(6)+1=0/2=0
+        // MaxRL-1 = 6-1 = 5
+        // 1 2 3 2 1
+        // 0 1 2 3 4 
         return s.substr((MaxPos-MaxRL+1)/2,MaxRL-1);//可以再看看如何还原
 
     }
@@ -6022,6 +6028,7 @@ public:
 >     RL[i] = min(RL[2*pos-i], maxRight-i+1);
 > }
 > ```
+> MaxRL是算自身的
 
 
 
