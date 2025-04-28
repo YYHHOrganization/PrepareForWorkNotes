@@ -2,7 +2,9 @@
 
 这里以这个项目为例：https://github.com/Dai-Wenxun/MotionLCM?tab=readme-ov-file，介绍配置AutoDL跑代码的一些遇到的问题和心得体会。
 
+直接在Github上打开VS Code：
 
+![image-20250423182923155](assets/image-20250423182923155.png)
 
 # 一、准备AutoDL环境
 
@@ -64,6 +66,10 @@ Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0  # 3
 
 
 # 三、项目的conda环境配置
+
+平时使用：
+
+![image-20250423181745092](assets/image-20250423181745092.png)
 
 根据Github的链接进行配置：https://github.com/Dai-Wenxun/MotionLCM。按原文的描述一步一步配置，有问题会进行整理。
 
@@ -422,6 +428,8 @@ Github的仓库中的原文：Please refer to [HumanML3D](https://github.com/Eri
 
 
 # 五、基本测试
+
+![image-20250423182414379](assets/image-20250423182414379.png)
 
 根据原始参考仓库的说法，可以先下载一个小的数据集来为后面做测试：
 
