@@ -4176,7 +4176,7 @@ public:
         //a a b a v v*a+
         //a a b a v*v+a
         //a a b a*v v a+
-        vector<vector<int>> isPalindrome(n,vector<int>(n,true));
+        vector<vector<int>> isPalindrome(n,vector<int>(n,true));//单个字符算回文串
         for(int l = n-2;l>=0;l--)
         {
             for(int r = l+1;r<n;r++)
