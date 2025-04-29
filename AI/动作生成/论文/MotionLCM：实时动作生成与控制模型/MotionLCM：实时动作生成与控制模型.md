@@ -58,22 +58,6 @@ A person sits down, raises his left hand, leans to the left, slowly leans back o
 
 
 
-一个男人从站着到跪下
-
-A man kneels down from standing, covers his eyes with his right hand in frustration, and hits the ground with his left hand several times.
-
-
-
-![image-20250416161439668](assets/image-20250416161439668.png)
-
-A man transitions from standing to kneeling, repeatedly pounding the ground with his left fist in frustration while covering his eyes with his right hand in a gesture
-
-![image-20250416164029010](assets/image-20250416164029010.png)
-
-
-
-
-
 
 
 
@@ -600,7 +584,7 @@ $$
 1. **时间成本**：  
    采用[9]提出的**单句平均推理时间(AITS)**衡量模型推理效率
 2. **运动质量**：  
-   使用**Fréchet起始距离(FID)**评估生成运动与真实运动的特征分布差异，特征提取器采用[17]的方案
+   使用**Fréchet起始距离(FID)**评估生成运动与真实运动的**特征分布差异**，特征提取器采用[17]的方案
 3. **运动多样性**：  
    - **多模态性(MModality)**：相同文本条件下的生成多样性
    - **多样性(Diversity)**：通过特征方差计算

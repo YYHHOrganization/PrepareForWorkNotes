@@ -2,6 +2,26 @@
 
 
 
+# 关键代码
+
+```python
+teacher_unet = base_model.denoiser # teacher model是base
+
+unet = instantiate_from_config(cfg.model.denoiser) # 要训练的LCM
+
+target_unet = instantiate_from_config(cfg.model.denoiser) #
+
+
+```
+
+
+
+验证代码如FID位置
+
+D:\_Postgraduate\motionGen\MotionLCM\MotionLCM\mld\models\metrics\utils.py
+
+
+
 ## 步骤
 
 服务器开机：
