@@ -28,7 +28,7 @@ export HF_ENDPOINT=https://hf-mirror.com
 ```python
 from diffusers import DDPMScheduler, UNet2DModel
 
-scheduler = DDPMScheduler.from_pretrained("google/ddpm-cat-256")
+scheduler = DDPMScheduler.from_pretrained("google/ddpm-cat-256") # schedular
 model = UNet2DModel.from_pretrained("google/ddpm-cat-256").to("cuda")
 
 scheduler.set_timesteps(50)
@@ -43,7 +43,7 @@ noise = torch.randn((1, 3, sample_size, sample_size), device="cuda") # (1, 3, 25
 input = noise  # 初始化为纯噪声（latent space维度）
 
 for t in scheduler.timesteps:  # 遍历所有timestep（从大到小，如1000→0）
-    with torch.no_grad():
+    with torch.no_grad(): # 测试,没有在训练
         # 步骤1：UNet预测噪声残差
         noisy_residual = model(input, t).sample  # 输入当前噪声图+时间步，输出预测的噪声
     

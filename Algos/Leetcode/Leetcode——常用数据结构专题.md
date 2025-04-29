@@ -45,6 +45,12 @@ public:
 
 ### （2）[1512. 好数对的数目](https://leetcode.cn/problems/number-of-good-pairs/)
 
+给你一个整数数组 `nums` 。
+
+如果一组数字 `(i,j)` 满足 `nums[i]` == `nums[j]` 且 `i` < `j` ，就可以认为这是一组 **好数对** 。
+
+返回好数对的数目。
+
 ```c++
 class Solution {
 public:
@@ -52,8 +58,10 @@ public:
         //哈希表维护有多少相同的数
         unordered_map<int, int> umap;
         int cnt = 0;
-        for(int j=0;j<nums.size();j++){
-            if(umap.count(nums[j])){
+        for(int j=0;j<nums.size();j++)
+        {
+            if(umap.count(nums[j]))
+            {
                 cnt += umap[nums[j]]; //每遍历到一个新的数,和数组内所有和他相等的数都构成好数对
             }
             umap[nums[j]]++;
@@ -67,18 +75,30 @@ public:
 
 ### （3）[219. 存在重复元素 II](https://leetcode.cn/problems/contains-duplicate-ii/)
 
-哈希表里存索引，取出时检查索引是否在范围内即可。代码如下：
+给你一个整数数组 `nums` 和一个整数 `k` ，判断数组中是否存在两个 **不同的索引** `i` 和 `j` ，满足 `nums[i] == nums[j]` 且 `abs(i - j) <= k` 。如果存在，返回 `true` ；否则，返回 `false` 。
+
+**示例 1：**
+
+```
+输入：nums = [1,2,3,1], k = 3
+输出：true
+```
+
+哈希表里存这个数字最后的索引，取出时检查索引是否在范围内即可。代码如下：
 
 ```c++
 class Solution {
 public:
     bool containsNearbyDuplicate(vector<int>& nums, int k) {
         unordered_map<int, int> umap;
-        for(int j=0;j<nums.size();j++){
+        for(int j=0;j<nums.size();j++)
+        {
             auto it = umap.find(nums[j]);
-            if(it!=umap.end()){
+            if(it!=umap.end())
+            {
                 int index = umap[nums[j]];
-                if(abs(index-j)<=k){
+                if(abs(index-j)<=k)
+                {
                     return true;
                 }
             }
@@ -1175,6 +1195,122 @@ public:
                 umap[cur]=i;
         }
         return vector<string>(array.begin()+maxLenStart,array.begin()+maxLenStart+maxLen);
+    }
+};
+```
+
+
+
+### [2845. 统计趣味子数组的数目](https://leetcode.cn/problems/count-of-interesting-subarrays/) 2073
+
+给你一个下标从 **0** 开始的整数数组 `nums` ，以及整数 `modulo` 和整数 `k` 。
+
+请你找出并统计数组中 **趣味子数组** 的数目。
+
+如果 **子数组** `nums[l..r]` 满足下述条件，则称其为 **趣味子数组** ：
+
+- 在范围 `[l, r]` 内，设 `cnt` 为满足 `nums[i] % modulo == k` 的索引 `i` 的数量。并且 `cnt % modulo == k` 。
+
+以整数形式表示并返回趣味子数组的数目。
+
+**注意：**子数组是数组中的一个连续非空的元素序列。
+
+**示例 1：**
+
+```
+输入：nums = [3,2,4], modulo = 2, k = 1
+输出：3
+解释：在这个示例中，趣味子数组分别是： 
+子数组 nums[0..0] ，也就是 [3] 。 
+- 在范围 [0, 0] 内，只存在 1 个下标 i = 0 满足 nums[i] % modulo == k 。
+- 因此 cnt = 1 ，且 cnt % modulo == k 。
+子数组 nums[0..1] ，也就是 [3,2] 。
+- 在范围 [0, 1] 内，只存在 1 个下标 i = 0 满足 nums[i] % modulo == k 。
+- 因此 cnt = 1 ，且 cnt % modulo == k 。
+子数组 nums[0..2] ，也就是 [3,2,4] 。
+- 在范围 [0, 2] 内，只存在 1 个下标 i = 0 满足 nums[i] % modulo == k 。
+- 因此 cnt = 1 ，且 cnt % modulo == k 。
+可以证明不存在其他趣味子数组。因此，答案为 3 。
+```
+
+
+
+这题其实不好想到是前缀和。。不好想到是枚举右 维护左
+
+讲解：
+
+**https://leetcode.cn/problems/count-of-interesting-subarrays/solutions/2424063/qian-zhui-he-ha-xi-biao-fu-ti-dan-by-end-74bb/?envType=daily-question&envId=2025-04-25**
+
+#### 写法一：前缀和数组
+
+```C++
+class Solution {
+public:
+    long long countInterestingSubarrays(vector<int>& nums, int modulo, int k) {
+        int n = nums.size();
+        vector<int> sum(n+1,0);
+        for(int i=0;i<n;i++)
+        {
+            sum[i+1] = sum[i] +  (nums[i]%modulo==k);
+        }
+        vector<int> cnt(min(n+1,modulo));
+        long long ans=0;
+        for(int r=0;r<=n;r++) // 注意这个=号 需要从[0,n],因为cnt[0]要=1,这样当sum==k时才有值
+        {
+            int s = sum[r];
+            if(s>=k)
+            {
+                ans += cnt[(s-k)%modulo];
+            }
+            cnt[s%modulo]++;//s[l]  // 把不合法的sum[0]计算进去，cnt[0]会被赋值为1
+        }
+        return ans;
+    }
+};
+```
+
+上面也可写为
+
+>1、常规写法：需要手动赋值cnt[0]=1
+>
+>![image-20250425193216159](assets/image-20250425193216159.png)
+
+>2 、0X3F
+>
+>```c++
+>for (int s : sum) 
+>{
+>    if (s >= k) 
+>    {
+>       ans += cnt[(s - k) % modulo];
+>    }
+>    cnt[s % modulo]++;
+>}
+>```
+
+
+
+#### 写法二：前缀和变量
+
+```C++
+class Solution {
+public:
+    long long countInterestingSubarrays(vector<int>& nums, int modulo, int k) {
+        int n = nums.size();
+        int s=0;
+        vector<int> cnt(min(n+1,modulo));
+        long long ans=0;
+        cnt[0]=1;//
+        for(int r=0;r<n;r++) // [0,n)
+        {
+            s = s + (nums[r]%modulo==k);
+            if(s>=k)
+            {
+                ans += cnt[(s-k)%modulo];
+            }
+            cnt[s%modulo]++;//s[l]
+        }
+        return ans;
     }
 };
 ```

@@ -2764,3 +2764,601 @@ public:
 > 假设有一个很长的花坛，一部分地块种植了花，另一部分却没有。可是，花不能种植在相邻的地块上，它们会争夺水源，两者都会死去。
 >
 > 给你一个整数数组 `flowerbed` 表示花坛，由若干 `0` 和 `1` 组成，其中 `0` 表示没种植花，`1` 表示种植了花。另有一个数 `n` ，能否在不打破种植规则的情况下种入 `n` 朵花？能则返回 `true` ，不能则返回 `false` 。
+
+```c++
+class Solution {
+public:
+    bool canPlaceFlowers(vector<int>& flowerbed, int n) {
+       //得是左边不是1且右边不是1，且自己不是1，才能种，种就是变为1
+       int total = n;
+       //为了方便写代码，可以左右各塞一个0，但头插会比较慢，所以就
+       int sz = flowerbed.size();
+       if(total==0) return true; //不需要种花，原题满足要求，直接返回true即可
+       for(int i=0;i<sz;i++)
+       {
+            if(flowerbed[i]==0)
+            {
+                bool left = ((i==0) || flowerbed[i-1]==0);
+                bool right = ((i==sz-1) || flowerbed[i+1]==0);
+                if(left && right)
+                {
+                    flowerbed[i] = 1;
+                    total--;
+                    if(total==0) return true;
+                }
+            }
+       }
+       return false;
+    }
+};
+```
+
+
+
+### （6）[2957. 消除相邻近似相等字符](https://leetcode.cn/problems/remove-adjacent-almost-equal-characters/)
+
+>  给你一个下标从 **0** 开始的字符串 `word` 。
+>
+> 一次操作中，你可以选择 `word` 中任意一个下标 `i` ，将 `word[i]` 修改成任意一个小写英文字母。
+>
+> 请你返回消除 `word` 中所有相邻 **近似相等** 字符的 **最少** 操作次数。
+>
+> 两个字符 `a` 和 `b` 如果满足 `a == b` 或者 `a` 和 `b` 在字母表中是相邻的，那么我们称它们是 **近似相等** 字符。
+
+```c++
+class Solution {
+public:
+    int removeAlmostEqualCharacters(string word) {
+        //跟左侧的比，如果不合法，那么一定可以改成一个合法的，并且i可以+=2，让下一个也一定合法
+        int left = 1;
+        int n = word.size();
+        int cnt = 0;
+        while(left < n)
+        {
+            if(word[left]==word[left-1] || abs(word[left]-word[left-1])==1)
+            {
+                cnt++;
+                left += 2;
+            }
+            else left++; //查下一个位置是否符合要求
+        }
+        return cnt;
+    }
+};
+```
+
+
+
+# 三、字符串贪心
+
+## 1.字典序最小/最大
+
+![image-20250426131436743](assets/image-20250426131436743.png)
+
+### （1）[1323. 6 和 9 组成的最大数字](https://leetcode.cn/problems/maximum-69-number/)
+
+```c++
+class Solution {
+public:
+    int maximum69Number (int num) {
+        //把第一个6翻成9即可
+        string s = to_string(num);
+        int n = s.size();
+        for(int i=0;i<n;i++)
+        {
+            if(s[i]=='6')
+            {
+                s[i] = '9';
+                break;
+            }
+        }
+        int res = stoi(s);
+        return res;
+    }
+};
+```
+
+
+
+### （2）[3216. 交换后字典序最小的字符串](https://leetcode.cn/problems/lexicographically-smallest-string-after-a-swap/)
+
+```c++
+class Solution {
+public:
+    string getSmallestString(string s) {
+        //后一个数比前一个数小,且具有相同奇偶性,则做一次交换;本题也可以不进行交换
+        //小的数尽量出现在前面,字典序更小
+        int n = s.size();
+        for(int i=1;i<n;i++)
+        {
+            if(s[i]<s[i-1] && (s[i]%2==s[i-1]%2))
+            {
+                swap(s[i], s[i-1]);
+                break; //只能交换一次
+            }
+        }
+        return s;
+    }
+};
+```
+
+
+
+### （3）[2697. 字典序最小回文串](https://leetcode.cn/problems/lexicographically-smallest-palindrome/)
+
+```c++
+class Solution {
+public:
+    string makeSmallestPalindrome(string s) {
+        int n = s.size();
+        int left = 0, right = n - 1;
+        //选小的数在前面
+        while(left<right)
+        {
+            if(s[left]<s[right]) s[right] = s[left];
+            else if(s[left]>s[right]) s[left] = s[right];
+            left++, right--;
+        }
+        return s;
+    }
+};
+```
+
+
+
+### （4）[1881. 插入后的最大值 ](https://leetcode.cn/problems/maximum-value-after-insertion/) :recycle:
+
+> 给你一个非常大的整数 `n` 和一个整数数字 `x` ，大整数 `n` 用一个字符串表示。`n` 中每一位数字和数字 `x` 都处于闭区间 `[1, 9]` 中，且 `n` 可能表示一个 **负数** 。
+>
+> 你打算通过在 `n` 的十进制表示的任意位置插入 `x` 来 **最大化** `n` 的 **数值** 。但 **不能** 在负号的左边插入 `x` 。
+>
+> - 例如，如果 `n = 73` 且 `x = 6` ，那么最佳方案是将 `6` 插入 `7` 和 `3` 之间，使 `n = 763` 。
+> - 如果 `n = -55` 且 `x = 2` ，那么最佳方案是将 `2` 插在第一个 `5` 之前，使 `n = -255` 。
+>
+> 返回插入操作后，用字符串表示的 `n` 的最大值。
+
+```c++
+class Solution {
+public:
+    string maxValue(string n, int x) {
+        //n可能是负数,但不包含0
+        //先考虑正数,while 当前数>=x,就往后走,直到找到位置insert即可
+        //负数, -255 插入2,其实就是想让负号右边的数尽可能小,插入到第一个比当前数大的值的索引位置
+        char sign = n[0];
+        int sz = n.size();
+        if(sign=='-')
+        {
+            int index = 1; //输入是有效整数,因此至少有两个char
+            while(index<sz && n[index]-'0'<=x) index++; //找到第一个严格>x的
+            n.insert(n.begin()+index,'0'+x);
+        }
+        else //正数
+        {
+            int index = 0;
+            while(index<sz && n[index]-'0'>=x) index++; // 找到第一个严格<x的
+            n.insert(n.begin()+index, '0'+x);
+        }
+        return n;
+    }
+};
+```
+
+
+
+### （5）[1946. 子字符串突变后可能得到的最大整数](https://leetcode.cn/problems/largest-number-after-mutating-substring/)
+
+> 给你一个字符串 `num` ，该字符串表示一个大整数。另给你一个长度为 `10` 且 **下标从 0 开始** 的整数数组 `change` ，该数组将 `0-9` 中的每个数字映射到另一个数字。更规范的说法是，数字 `d` 映射为数字 `change[d]` 。
+>
+> 你可以选择 **突变** `num` 的任一子字符串。**突变** 子字符串意味着将每位数字 `num[i]` 替换为该数字在 `change` 中的映射（也就是说，将 `num[i]` 替换为 `change[num[i]]`）。
+>
+> 请你找出在对 `num` 的任一子字符串执行突变操作（也可以不执行）后，可能得到的 **最大整数** ，并用字符串表示返回。
+>
+> **子字符串** 是字符串中的一个连续序列。
+
+```c++
+class Solution {
+public:
+    string maximumNumber(string num, vector<int>& change) {
+        //本题可以不进行突变
+        int n = num.size();
+        int index = 0;
+        for(; index<n;index++)
+        {
+            int x = num[index] - '0';
+            if(change[x] > x) //会让值变大,就从这里开始,只能突变一次
+            {
+                int j = index;
+                while(j<n && change[num[j]-'0'] >= (num[j]-'0')) //注意,中间取到=等号也是可以继续往后走的,不然可能会断掉导致错误（这里是>=）
+                {
+                    num[j] = change[num[j]-'0'] + '0';
+                    j++;
+                }
+                break;
+            }
+        }
+        return num;
+    }
+};
+```
+
+
+
+### （6）[3517. 最小回文排列 I](https://leetcode.cn/problems/smallest-palindromic-rearrangement-i/)
+
+> 给你一个 **回文** 字符串 `s`。
+>
+> 返回 `s` 的按字典序排列的 **最小** 回文排列。
+>
+> 如果一个字符串从前往后和从后往前读都相同，那么这个字符串是一个 **回文** 字符串。
+>
+> **排列** 是字符串中所有字符的重排。
+>
+> 如果字符串 `a` 按字典序小于字符串 `b`，则表示在第一个不同的位置，`a` 中的字符比 `b` 中的对应字符在字母表中更靠前。
+> 如果在前 `min(a.length, b.length)` 个字符中没有区别，则较短的字符串按字典序更小。
+
+```c++
+class Solution {
+public:
+    string smallestPalindrome(string s) {
+        //对于回文串来说,最多只会有一格字符出现奇数次,出现奇数次的一定在中间,比如
+        // aacccbbbbee -> abbcececbba
+        array<int, 26> arr;
+        for(char c: s)
+        {
+            arr[c-'a']++;
+        }
+        //看一下有没有某个值有奇数个
+        int oddalpha = '0';
+        for(int i=0;i<26;i++)
+        {
+            if(arr[i]%2==1)
+            {
+                oddalpha = 'a' + i;
+                break;
+            } 
+        }
+        //5个,我们取2个,剩一个放中间
+        string half;
+        for(int i=0;i<26;i++)
+        {
+            int cnt = arr[i] / 2;
+            char c = 'a' + i;
+            for(int j=0;j<cnt;j++)
+            {
+                half.push_back(c);
+            }
+        }
+        string res = half;
+        if(oddalpha!='0') res.push_back(oddalpha);
+        reverse(half.begin(), half.end());
+        res.append(half);
+        return res;
+    }
+};
+```
+
+> 优化空间：其实只需要考虑字符串的左半部分即可（因为字符串是回文串，因此右半部分和左半部分是对称的）。如果总的字符串长度为奇数，那么最中间那个字符就是呈现奇数数量的字符。**所以其实只要对左半部分排序即可，右半部分等于左半部分的翻转。**
+
+```C++
+class Solution {
+public:
+    string smallestPalindrome(string s) {
+        int  n =s.size();
+        // 0 1 2 3 4   0-n/2,排序
+        sort(s.begin(),s.begin()+n/2);
+        for(int i=0,j=n-1;i<j;i++,j--)
+        {
+            s[j] = s[i];
+        }
+        return s;
+    }
+};
+```
+
+
+
+## 2.回文串贪心
+
+> 部分题目也出现在其他贪心分类中，为了题单的完整性整理到一起。
+
+### （1）[409. 最长回文串](https://leetcode.cn/problems/longest-palindrome/)
+
+> 给定一个包含大写字母和小写字母的字符串 `s` ，返回 *通过这些字母构造成的 **最长的 回文串*** 的长度。
+>
+> 在构造过程中，请注意 **区分大小写** 。比如 `"Aa"` 不能当做一个回文字符串。
+
+```c++
+class Solution {
+public:
+    int longestPalindrome(string s) {
+        //所有偶数个的字母全部可以构造成回文串
+        //如果有字符的个数是奇数个,最后还可以+1
+        array<int, 'z'+2> arr; //为了稳妥
+        for(char c: s)
+        {
+            arr[c-'A']++;
+        }
+        int ans = 0;
+        bool hasOdd = false;
+        for(int i=0;i<(int)('z'+2);i++)
+        {
+            if(arr[i]%2==0) ans += arr[i];
+            else
+            {
+                hasOdd = true;
+                //加入偶数个
+                ans += (arr[i] / 2 * 2); // 也可以写为 ans += (arr[i]-1);
+            }
+        }
+        if(hasOdd) ans+=1;
+        return ans;
+    }
+};
+```
+
+
+
+### （2）[680. 验证回文串 II](https://leetcode.cn/problems/valid-palindrome-ii/)
+
+> 给你一个字符串 `s`，**最多** 可以从中删除一个字符。
+>
+> 请你判断 `s` 是否能成为回文字符串：如果能，返回 `true` ；否则，返回 `false` 。
+
+```c++
+class Solution {
+public:
+    bool isPalindrome(string& s, int i, int j) //判断i到j是否为回文的
+    {
+        int left = i, right = j;
+        while(left<right)
+        {
+            if(s[left]!=s[right]) return false;
+            left++, right--;
+        }
+        return true;
+    }
+    bool validPalindrome(string s) {
+        //aabccaa
+        //正常两侧判断,如果不相等了则退出,把中间那段跳过最左/最右做两次判断.相等的时候是没有必要删字符的,不会错过正确答案.有需要可以看0x3f的证明过程.
+        int n = s.size();
+        int left = 0, right = n-1;
+        while(left<right)
+        {
+            if(s[left]!=s[right]) //不相等了,判断删一格字符之后是否为回文串
+            {
+                bool res = isPalindrome(s, left+1, right) || isPalindrome(s, left, right-1);
+                return res;
+            }
+            left++, right--;
+        }
+        return true;
+    }
+};
+```
+
+
+
+# 四、数学贪心
+
+## 1.基础
+
+### （1）[2160. 拆分数位后四位数字的最小和](https://leetcode.cn/problems/minimum-sum-of-four-digit-number-after-splitting-digits/)
+
+> 给你一个四位 **正** 整数 `num` 。请你使用 `num` 中的 **数位** ，将 `num` 拆成两个新的整数 `new1` 和 `new2` 。`new1` 和 `new2` 中可以有 **前导 0** ，且 `num` 中 **所有** 数位都必须使用。
+>
+> - 比方说，给你 `num = 2932` ，你拥有的数位包括：两个 `2` ，一个 `9` 和一个 `3` 。一些可能的 `[new1, new2]` 数对为 `[22, 93]`，`[23, 92]`，`[223, 9]` 和 `[2, 329]` 。
+>
+> 请你返回可以得到的 `new1` 和 `new2` 的 **最小** 和。
+
+```c++
+class Solution {
+public:
+    int minimumSum(int num) {
+        //均等分,尽可能小
+        string s = to_string(num);
+        sort(s.begin(), s.end());
+        int num1 = (s[0]-'0') * 10 + s[2]-'0';
+        int num2 = (s[1]-'0') * 10 + s[3]-'0';
+        return num1 + num2;
+    }
+};
+```
+
+
+
+### （2）[2578. 最小和分割](https://leetcode.cn/problems/split-with-minimum-sum/)
+
+> 给你一个正整数 `num` ，请你将它分割成两个非负整数 `num1` 和 `num2` ，满足：
+>
+> - num1 和 num2直接连起来，得到 num各数位的一个排列。
+>   - 换句话说，`num1` 和 `num2` 中所有数字出现的次数之和等于 `num` 中所有数字出现的次数。
+> - `num1` 和 `num2` 可以包含前导 0 。
+>
+> 请你返回 `num1` 和 `num2` 可以得到的和的 **最小** 值。
+>
+> **注意：**
+>
+> - `num` 保证没有前导 0 。
+> - `num1` 和 `num2` 中数位顺序可以与 `num` 中数位顺序不同。
+
+其实就是切成两部分，使得每一部分的和最小。
+
+```c++
+class Solution {
+public:
+    int splitNum(int num) {
+        string s = to_string(num);
+        sort(s.begin(), s.end());
+        //1244567
+        //1457 246
+        string s1;
+        string s2;
+        int n = s.size();
+        int left = 0;
+        while(left<n)
+        {
+            s1.push_back(s[left]);
+            if(left+1<n) s2.push_back(s[left+1]);
+            left+=2;
+        }
+        return stoi(s1) + stoi(s2);
+    }
+};
+```
+
+
+
+以上（1）（2）题也都可以用这个代码：交替放置
+
+```C++
+class Solution {
+public:
+    int splitNum(int num) {
+        //0-9
+        array<int,10> arr;
+        while(num)
+        {
+            int a =num%10;
+            num/=10;
+            arr[a]++;
+        }
+        //0-5,1-2,3-3,4-1
+        int put=0;//put=0,给new1
+        int new1=0,new2=0;
+        for(int i=0;i<=9;i++)
+        {
+            while(arr[i]>0)
+            {
+                if(put==0)
+                {
+                    new1 = new1*10+i;
+                    arr[i]--;
+                    put =1;
+                }
+                else
+                {
+                    new2 = new2*10+i;
+                    arr[i]--;
+                    put =0;
+                }
+            }
+        }
+        return new1+new2;
+    }
+};
+```
+
+
+
+### （3）[2244. 完成所有任务需要的最少轮数](https://leetcode.cn/problems/minimum-rounds-to-complete-all-tasks/)
+
+> 给你一个下标从 **0** 开始的整数数组 `tasks` ，其中 `tasks[i]` 表示任务的难度级别。在每一轮中，你可以完成 2 个或者 3 个 **相同难度级别** 的任务。
+>
+> 返回完成所有任务需要的 **最少** 轮数，如果无法完成所有任务，返回 `-1` 。
+
+```c++
+class Solution {
+public:
+    int minimumRounds(vector<int>& tasks) {
+        //sort完之后分组循环,求出每一组数有几个
+        sort(tasks.begin(), tasks.end());
+        int ans = 0;
+        int i = 0;
+        int n = tasks.size();
+        while(i<n)
+        {
+            int start = i;
+            i++;
+            while(i<n && tasks[i]==tasks[start]) i++;
+            int sz = i - start; //相同的数有几个
+            //看sz能否被x个2和y个3的和来表示
+            if(sz==1) return -1; //此时不能完成
+            //int x = sz;
+            //int cnt = 0;
+            // while((x%3!=0) && x>=0)
+            // {
+            //     x -= 2;
+            //     cnt+=1;
+            // }
+            // if(x>=0) ans += (cnt + x/3);
+            // else return -1;
+            ans += (sz+2)/3;
+        }
+        return ans;
+    }
+};
+```
+
+注：用哈希表也可以，不用排序，应该会更快一些。
+
+哈希表：
+
+```C++
+class Solution {
+public:
+    int minimumRounds(vector<int>& tasks) {
+        //所有任务数量可以被 2，3整除/由2，3组成
+        int n = tasks.size();
+        unordered_map<int,int> umap;
+        for(int i=0;i<n;i++)
+        {
+            umap[tasks[i]] ++; 
+        }
+        int cnt=0;
+        for(auto &[k,v]:umap) // k:taski,v:num
+        {
+            if(v==1)return -1;
+            //直接用cnt += (v+2)/3; （即v/3向上取整） 可以替代以下三种情况，参考下一题
+            if(v%3==0)
+            {
+                cnt += v/3;
+            }
+            else if(v%3==1)
+            {
+                cnt += (v-4)/3+2;
+            }
+            else // (v%3==2)
+            {
+                cnt += v/3+1;
+            }
+        }
+        return cnt;
+
+    }
+};
+```
+
+
+
+### （4）[2870. 使数组为空的最少操作次数](https://leetcode.cn/problems/minimum-number-of-operations-to-make-array-empty/)
+
+> 给你一个下标从 **0** 开始的正整数数组 `nums` 。
+>
+> 你可以对数组执行以下两种操作 **任意次** ：
+>
+> - 从数组中选择 **两个** 值 **相等** 的元素，并将它们从数组中 **删除** 。
+> - 从数组中选择 **三个** 值 **相等** 的元素，并将它们从数组中 **删除** 。
+>
+> 请你返回使数组为空的 **最少** 操作次数，如果无法达成，请返回 `-1` 。
+
+```c++
+class Solution {
+public:
+    int minOperations(vector<int>& nums) {
+        unordered_map<int, int> umap;
+        for(int num: nums)
+        {
+            umap[num]++;
+        }
+        int ans = 0;
+        for(auto& [k, v]: umap)
+        {
+            int x = v;
+            if(x==1) return -1;
+            ans += (x + 2) / 3;
+        }
+        return ans;
+    }
+};
+```
+

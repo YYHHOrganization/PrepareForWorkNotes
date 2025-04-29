@@ -681,6 +681,164 @@ public:
 
 
 
+## §1.4 反转链表
+
+[视频讲解【基础算法精讲 06】](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1sd4y1x7KN%2F)
+
+206. 反转链表
+207. 反转链表 II
+208. 两两交换链表中的节点
+209. K 个一组翻转链表
+210. 反转偶数长度组的节点
+
+
+
+###  [92. 反转链表 II](https://leetcode.cn/problems/reverse-linked-list-ii/)
+
+给你单链表的头指针 `head` 和两个整数 `left` 和 `right` ，其中 `left <= right` 。请你反转从位置 `left` 到位置 `right` 的链表节点，返回 **反转后的链表** 。
+
+ 
+
+**示例 1：**
+
+![img](https://assets.leetcode.com/uploads/2021/02/19/rev2ex2.jpg)
+
+```
+输入：head = [1,2,3,4,5], left = 2, right = 4
+输出：[1,4,3,2,5]
+```
+
+
+
+```C++
+ListNode dummy(0, head);
+ListNode* p0 = &dummy;
+for (int i = 0; i < left - 1; i++)  // 从dummy走left-1步
+{
+    p0 = p0->next;
+}
+//最后p0停留在2之前
+```
+
+<img src="assets/image-20250428000854133.png" alt="image-20250428000854133" style="zoom:50%;" />
+
+```C++
+ListNode* pre = nullptr;
+ListNode* cur = p0->next;
+for (int i = 0; i < right - left + 1; i++)  // 假设下述情况，进入三次这个，第一次2指向null
+{
+    ListNode* nxt = cur->next;
+    cur->next = pre; // 每次循环只修改一个 next，方便大家理解
+    pre = cur;
+    cur = nxt;
+}
+```
+
+<img src="assets/image-20250428001037008.png" alt="image-20250428001037008" style="zoom:50%;" />
+
+```C++
+p0->next->next = cur;
+```
+
+<img src="assets/image-20250428001139288.png" alt="image-20250428001139288" style="zoom:50%;" />
+
+```C++
+p0->next = pre;
+```
+
+<img src="assets/image-20250428001224894.png" alt="image-20250428001224894" style="zoom:50%;" />
+
+
+
+总的：
+
+```C++
+class Solution {
+public:
+    ListNode* reverseBetween(ListNode* head, int left, int right) {
+        ListNode dummy(0, head);
+        ListNode* p0 = &dummy;
+        for (int i = 0; i < left - 1; i++) {
+            p0 = p0->next;
+        }
+
+        ListNode* pre = nullptr;
+        ListNode* cur = p0->next;
+        for (int i = 0; i < right - left + 1; i++) {
+            ListNode* nxt = cur->next;
+            cur->next = pre; // 每次循环只修改一个 next，方便大家理解
+            pre = cur;
+            cur = nxt;
+        }
+
+        // 见视频
+        p0->next->next = cur;
+        p0->next = pre;
+        return dummy.next;
+    }
+};
+```
+
+
+
+### [25. K 个一组翻转链表](https://leetcode.cn/problems/reverse-nodes-in-k-group/)
+
+给你链表的头节点 `head` ，每 `k` 个节点一组进行翻转，请你返回修改后的链表。
+
+`k` 是一个正整数，它的值小于或等于链表的长度。如果节点总数不是 `k` 的整数倍，那么请将最后剩余的节点保持原有顺序。
+
+你不能只是单纯的改变节点内部的值，而是需要实际进行节点交换。
+
+**示例 1：**
+
+![img](assets/reverse_ex1.jpg)
+
+```
+输入：head = [1,2,3,4,5], k = 2
+输出：[2,1,4,3,5]
+```
+
+```C++
+class Solution {
+public:
+    ListNode* reverseKGroup(ListNode* head, int k) {
+        int n = 0;
+        ListNode* dummy = new ListNode(0,head);
+        ListNode* p0 = head;
+        while(p0)
+        {
+            p0=p0->next;
+            n++;
+        }
+        p0=dummy;
+        ListNode* pre = nullptr;
+        ListNode *cur = p0->next;
+        while(n>=k)
+        {
+            n-=k;
+            for(int i=0;i<k;i++) // k 个一组处理
+            {
+                ListNode* nxt = cur->next;
+                cur->next = pre; // ②
+                pre=cur; // ①
+                cur=nxt;
+            }
+            ListNode *p00=p0->next;
+            p0->next->next = cur;
+            p0->next = pre;
+            p0=p00;
+            // pre = p0; //可以不写） pre在 ① 会被更新，在 ② 虽然第一次会指向奇怪的地方，但是最后会被修正，无所谓
+            // cur = p0->next; //可以不写）cur自然是下一组的第一个 也可以不用改
+            
+        }
+        return dummy->next;
+
+    }
+};
+```
+
+
+
 ## §1.10 综合应用
 
 - [707. 设计链表](https://leetcode.cn/problems/design-linked-list/)

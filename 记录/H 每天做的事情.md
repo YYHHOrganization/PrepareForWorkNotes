@@ -170,3 +170,78 @@ LIS:
 随机roll一些题目(先统一放一起):
 
 - 见本文件夹下面的markdown文件,记录今天做的所有题目.
+
+
+
+# 2025.4.23
+
+新做题目：集中于数学篇的题目：
+
+- [3115. 质数的最大距离](https://leetcode.cn/problems/maximum-prime-difference/)
+- [2614. 对角线上的质数](https://leetcode.cn/problems/prime-in-diagonal/)
+- [762. 二进制表示中质数个计算置位](https://leetcode.cn/problems/prime-number-of-set-bits-in-binary-representation/)
+- [3044. 出现频率最高的质数](https://leetcode.cn/problems/most-frequent-prime/)
+- [866. 回文质数](https://leetcode.cn/problems/prime-palindrome/)
+- [2427. 公因子的数目](https://leetcode.cn/problems/number-of-common-factors/)
+- [1952. 三除数](https://leetcode.cn/problems/three-divisors/)
+- [1492. n 的第 k 个因子](https://leetcode.cn/problems/the-kth-factor-of-n/)
+- [829. 连续整数求和](https://leetcode.cn/problems/consecutive-numbers-sum/)
+
+
+
+# 2025.4.25
+
+【1】[605. 种花问题](https://leetcode.cn/problems/can-place-flowers/)
+
+第154场双周赛的4个题；
+
+【6】[2957. 消除相邻近似相等字符](https://leetcode.cn/problems/remove-adjacent-almost-equal-characters/)
+
+【7】[1297. 子串的最大出现次数](https://leetcode.cn/problems/maximum-number-of-occurrences-of-a-substring/)
+
+【8】[2653. 滑动子数组的美丽值](https://leetcode.cn/problems/sliding-subarray-beauty/)
+
+【9】[18. 四数之和](https://leetcode.cn/problems/4sum/)
+
+
+
+# 2025.4.26
+
+【1】[1323. 6 和 9 组成的最大数字](https://leetcode.cn/problems/maximum-69-number/)
+
+【2】[3216. 交换后字典序最小的字符串](https://leetcode.cn/problems/lexicographically-smallest-string-after-a-swap/)
+
+【3】[2697. 字典序最小回文串](https://leetcode.cn/problems/lexicographically-smallest-palindrome/)
+
+【4】[1881. 插入后的最大值](https://leetcode.cn/problems/maximum-value-after-insertion/)
+
+【5】[1946. 子字符串突变后可能得到的最大整数](https://leetcode.cn/problems/largest-number-after-mutating-substring/)
+
+【6】[3517. 最小回文排列 I](https://leetcode.cn/problems/smallest-palindromic-rearrangement-i/)
+
+【7】[409. 最长回文串](https://leetcode.cn/problems/longest-palindrome/)
+
+【8】[680. 验证回文串 II](https://leetcode.cn/problems/valid-palindrome-ii/)
+
+【9】[2160. 拆分数位后四位数字的最小和](https://leetcode.cn/problems/minimum-sum-of-four-digit-number-after-splitting-digits/)
+
+【10】[2578. 最小和分割](https://leetcode.cn/problems/split-with-minimum-sum/)
+
+【11】[2244. 完成所有任务需要的最少轮数](https://leetcode.cn/problems/minimum-rounds-to-complete-all-tasks/)
+
+【12】[2870. 使数组为空的最少操作次数](https://leetcode.cn/problems/minimum-number-of-operations-to-make-array-empty/)
+
+
+
+
+
+# 2025.4.27
+
+【1】[2367. 等差三元组的数目](https://leetcode.cn/problems/number-of-arithmetic-triplets/)
+
+
+
+# 2025.4.28 Leetcode题号51~100的题目
+
+[51. N 皇后](https://leetcode.cn/problems/n-queens/)
+
