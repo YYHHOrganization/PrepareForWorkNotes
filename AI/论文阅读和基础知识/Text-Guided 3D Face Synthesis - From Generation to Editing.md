@@ -723,6 +723,528 @@ loss = train_step(fitter,text , text_z,static_text_z, opt, sds_input=sds_input,e
 
 
 
+## 3.lib文件夹
+
+### （1）boxDiff
+
+#### （a）ptp_utils.py
+
+> 以下是针对代码的详细注释，包含核心逻辑解析和功能说明：
+>
+> ---
+>
+> ### **1. 工具函数**
+> #### `text_under_image()`
+> ```python
+> def text_under_image(image: np.ndarray, text: str, text_color: Tuple[int, int, int] = (0, 0, 0)) -> np.ndarray:
+>     """
+>     在图像下方添加文字标注
+>     Args:
+>         image: 输入图像 (H, W, C)
+>         text: 要添加的文字
+>         text_color: 文字颜色 (RGB)
+>     Returns:
+>         带有文字标注的新图像
+>     """
+>     h, w, c = image.shape
+>     offset = int(h * .2)  # 文字区域高度为原图的20%
+>     img = np.ones((h + offset, w, c), dtype=np.uint8) * 255  # 创建白色背景
+>     font = cv2.FONT_HERSHEY_SIMPLEX
+>     img[:h] = image  # 将原图粘贴到顶部
+>     textsize = cv2.getTextSize(text, font, 1, 2)[0]  # 计算文字尺寸
+>     text_x, text_y = (w - textsize[0]) // 2, h + offset - textsize[1] // 2  # 文字居中
+>     cv2.putText(img, text, (text_x, text_y), font, 1, text_color, 2)  # 添加文字
+>     return img
+> ```
+>
+> #### `view_images()`
+> ```python
+> def view_images(images: Union[np.ndarray, List], num_rows: int = 1, offset_ratio: float = 0.02, display_image: bool = True) -> Image.Image:
+>     """
+>     将多张图像排列为网格显示
+>     Args:
+>         images: 单张图像或图像列表
+>         num_rows: 网格行数
+>         offset_ratio: 图像间距比例（相对于高度）
+>         display_image: 是否直接显示（适用于Jupyter）
+>     Returns:
+>         拼接后的PIL图像
+>     """
+>     # 处理输入类型
+>     if type(images) is list:
+>         num_empty = len(images) % num_rows
+>     elif images.ndim == 4:  # 批次维度
+>         num_empty = images.shape[0] % num_rows
+>     else:
+>         images = [images]
+>         num_empty = 0
+> 
+>     # 用空白图像填充不足的部分
+>     empty_images = np.ones(images[0].shape, dtype=np.uint8) * 255
+>     images = [image.astype(np.uint8) for image in images] + [empty_images] * num_empty
+> 
+>     # 计算网格布局
+>     h, w, c = images[0].shape
+>     offset = int(h * offset_ratio)
+>     num_cols = len(images) // num_rows
+> 
+>     # 创建空白画布
+>     canvas = np.ones((h * num_rows + offset * (num_rows - 1), 
+>                       w * num_cols + offset * (num_cols - 1), 3), dtype=np.uint8) * 255
+> 
+>     # 填充图像
+>     for i in range(num_rows):
+>         for j in range(num_cols):
+>             canvas[i*(h+offset):i*(h+offset)+h, j*(w+offset):j*(w+offset)+w] = images[i*num_cols + j]
+> 
+>     pil_img = Image.fromarray(canvas)
+>     if display_image:
+>         display(pil_img)  # Jupyter环境显示
+>     return pil_img
+> ```
+>
+> ---
+>
+> ### **2. 注意力控制核心类**
+> #### `AttendExciteCrossAttnProcessor`
+> ```python
+> class AttendExciteCrossAttnProcessor:
+>     """
+>     替换Diffusers默认的CrossAttention处理器，用于捕获和存储注意力图
+>     核心功能：
+>         1. 在UNet的前向传播中拦截注意力分数
+>         2. 将注意力图传递给外部控制器（如AttentionStore）
+>     """
+>     def __init__(self, attnstore, place_in_unet):
+>         """
+>         Args:
+>             attnstore: 注意力存储器（如AttentionStore实例）
+>             place_in_unet: 标识当前处理器在UNet中的位置 ("down"/"mid"/"up")
+>         """
+>         self.attnstore = attnstore
+>         self.place_in_unet = place_in_unet
+> 
+>     def __call__(self, attn: CrossAttention, hidden_states, encoder_hidden_states=None, attention_mask=None):
+>         # 标准注意力计算流程
+>         batch_size, seq_len, _ = hidden_states.shape
+>         attention_mask = attn.prepare_attention_mask(attention_mask, seq_len, batch_size=1)
+>         
+>         # 计算QKV
+>         query = attn.to_q(hidden_states)
+>         is_cross = encoder_hidden_states is not None  # 判断是交叉/自注意力
+>         encoder_hidden_states = encoder_hidden_states if is_cross else hidden_states
+>         key = attn.to_k(encoder_hidden_states)
+>         value = attn.to_v(encoder_hidden_states)
+> 
+>         # 多头注意力拆分
+>         query = attn.head_to_batch_dim(query)
+>         key = attn.head_to_batch_dim(key)
+>         value = attn.head_to_batch_dim(value)
+> 
+>         # 计算注意力分数
+>         attention_probs = attn.get_attention_scores(query, key, attention_mask)
+> 
+>         # 关键步骤：将注意力图传递给存储器
+>         self.attnstore(attention_probs, is_cross, self.place_in_unet)
+> 
+>         # 常规注意力输出
+>         hidden_states = torch.bmm(attention_probs, value)
+>         hidden_states = attn.batch_to_head_dim(hidden_states)
+>         hidden_states = attn.to_out[0](hidden_states)  # 线性投影
+>         hidden_states = attn.to_out[1](hidden_states)  # Dropout
+>         return hidden_states
+> ```
+>
+> #### `register_attention_control()`
+> ```python
+> def register_attention_control(model, controller):
+>     """
+>     将自定义注意力处理器注册到UNet的所有注意力层
+>     Args:
+>         model: 扩散模型（需包含UNet）
+>         controller: 注意力控制器（如AttentionStore）
+>     """
+>     attn_procs = {}
+>     cross_att_count = 0
+>     
+>     # 遍历UNet所有注意力层
+>     for name in model.unet.attn_processors.keys():
+>         # 判断是交叉注意力还是自注意力
+>         cross_attention_dim = None if name.endswith("attn1.processor") else model.unet.config.cross_attention_dim
+>         
+>         # 确定当前层在UNet中的位置
+>         if name.startswith("mid_block"):
+>             place_in_unet = "mid"
+>         elif name.startswith("up_blocks"):
+>             block_id = int(name[len("up_blocks.")])
+>             place_in_unet = "up"
+>         elif name.startswith("down_blocks"):
+>             block_id = int(name[len("down_blocks.")])
+>             place_in_unet = "down"
+>         else:
+>             continue
+> 
+>         # 替换为自定义处理器
+>         cross_att_count += 1
+>         attn_procs[name] = AttendExciteCrossAttnProcessor(
+>             attnstore=controller, place_in_unet=place_in_unet
+>         )
+>     
+>     model.unet.set_attn_processor(attn_procs)
+>     controller.num_att_layers = cross_att_count  # 记录总层数
+> ```
+>
+> ---
+>
+> ### **3. 注意力控制抽象基类**
+> #### `AttentionControl`
+> ```python
+> class AttentionControl(abc.ABC):
+>     """
+>     注意力控制系统的抽象基类，定义通用接口：
+>         1. 记录当前扩散步数和注意力层索引
+>         2. 提供步骤间回调函数
+>     """
+>     def __init__(self):
+>         self.cur_step = 0       # 当前扩散步数
+>         self.num_att_layers = -1 # 总注意力层数（由register_attention_control设置）
+>         self.cur_att_layer = 0  # 当前处理的注意力层索引
+> 
+>     def step_callback(self, x_t):
+>         """每步生成后的回调（可修改潜在变量）"""
+>         return x_t
+> 
+>     def between_steps(self):
+>         """所有注意力层处理完成后的回调"""
+>         pass
+> 
+>     @abc.abstractmethod
+>     def forward(self, attn, is_cross: bool, place_in_unet: str):
+>         """子类必须实现的注意力处理逻辑"""
+>         raise NotImplementedError
+> 
+>     def __call__(self, attn, is_cross: bool, place_in_unet: str):
+>         """由AttendExciteCrossAttnProcessor调用"""
+>         if self.cur_att_layer >= 0:  # 跳过无条件注意力层（如有）
+>             self.forward(attn, is_cross, place_in_unet)
+>         
+>         self.cur_att_layer += 1
+>         if self.cur_att_layer == self.num_att_layers:
+>             self.cur_att_layer = 0
+>             self.cur_step += 1
+>             self.between_steps()  # 完成一步所有层的处理
+> 
+>     def reset(self):
+>         """重置状态"""
+>         self.cur_step = 0
+>         self.cur_att_layer = 0
+> ```
+>
+> ---
+>
+> ### **4. 具体实现类**
+> #### `EmptyControl`
+> ```python
+> class EmptyControl(AttentionControl):
+>     """空实现，不修改任何注意力图"""
+>     def forward(self, attn, is_cross: bool, place_in_unet: str):
+>         return attn
+> ```
+>
+> #### `AttentionStore`
+> ```python
+> class AttentionStore(AttentionControl):
+>     """
+>     注意力图存储器实现：
+>         1. 按UNet位置（down/mid/up）和注意力类型（cross/self）分类存储
+>         2. 支持多步平均和全局统计
+>     """
+>     @staticmethod
+>     def get_empty_store():
+>         """初始化空存储结构"""
+>         return {
+>             "down_cross": [], "mid_cross": [], "up_cross": [],
+>             "down_self": [], "mid_self": [], "up_self": []
+>         }
+> 
+>     def __init__(self, save_global_store=False):
+>         """
+>         Args:
+>             save_global_store: 是否累计所有步骤的注意力图
+>         """
+>         super().__init__()
+>         self.save_global_store = save_global_store
+>         self.step_store = self.get_empty_store()  # 当前步骤的存储
+>         self.attention_store = {}                 # 上一步的存储（用于可视化）
+>         self.global_store = {}                   # 全局累计存储
+> 
+>     def forward(self, attn, is_cross: bool, place_in_unet: str):
+>         """存储注意力图（仅保存分辨率<=32x32的图以节省内存）"""
+>         key = f"{place_in_unet}_{'cross' if is_cross else 'self'}"
+>         if attn.shape[1] <= 32 ** 2:
+>             self.step_store[key].append(attn.detach())
+>         return attn
+> 
+>     def between_steps(self):
+>         """步骤结束时转移数据"""
+>         self.attention_store = self.step_store
+>         
+>         if self.save_global_store:
+>             if not self.global_store:
+>                 self.global_store = self.step_store
+>             else:
+>                 for key in self.global_store:
+>                     for i in range(len(self.global_store[key])):
+>                         self.global_store[key][i] += self.step_store[key][i].detach()
+>         
+>         self.step_store = self.get_empty_store()  # 重置当前步骤存储
+> 
+>     def get_average_attention(self):
+>         """获取上一步的平均注意力图"""
+>         return self.attention_store
+> 
+>     def get_average_global_attention(self):
+>         """获取全局平均注意力图（需save_global_store=True）"""
+>         return {key: [item/self.cur_step for item in self.global_store[key]] 
+>                 for key in self.global_store}
+> ```
+>
+> ---
+>
+> ### **5. 注意力聚合工具**
+> #### `aggregate_attention()`
+> ```python
+> def aggregate_attention(attention_store: AttentionStore, res: int, from_where: List[str], is_cross: bool, select: int) -> torch.Tensor:
+>     """
+>     聚合指定条件下的注意力图
+>     Args:
+>         attention_store: 存储器实例
+>         res: 目标分辨率（如16对应16x16的注意力图）
+>         from_where: 要聚合的UNet位置列表（["down", "mid"]）
+>         is_cross: 是否聚合交叉注意力
+>         select: 选择哪个样本（批次索引）
+>     Returns:
+>         聚合后的注意力图 (res, res, seq_len)
+>     """
+>     out = []
+>     attention_maps = attention_store.get_average_attention()
+>     num_pixels = res ** 2
+> 
+>     for location in from_where:
+>         for item in attention_maps[f"{location}_{'cross' if is_cross else 'self'}"]:
+>             if item.shape[1] == num_pixels:  # 匹配目标分辨率
+>                 # 重塑为 (head, height, width, seq_len)
+>                 cross_maps = item.reshape(1, -1, res, res, item.shape[-1])[select]
+>                 out.append(cross_maps)
+>     
+>     # 平均所有头和层
+>     out = torch.cat(out, dim=0)
+>     return out.sum(0) / out.shape[0]
+> ```
+>
+> ---
+>
+> ### **核心功能总结**
+> 1. **注意力可视化**  
+>    - 通过`AttentionStore`捕获扩散过程中所有注意力层的激活
+>    - 使用`aggregate_attention`生成可解释的热力图
+>
+> 2. **注意力控制**  
+>    - 可继承`AttentionControl`实现自定义逻辑（如Prompt-to-Prompt）
+>    - 典型应用：增强特定token的注意力（"Attend & Excite"技术）
+>
+> 3. **架构设计**  
+>    ```mermaid
+>    graph TD
+>      A[UNet] -->|原始注意力| B[CrossAttention]
+>      B -->|被替换| C[AttendExciteCrossAttnProcessor]
+>      C -->|传递数据| D[AttentionControl]
+>      D --> E[AttentionStore/自定义实现]
+>    ```
+>
+> 该代码是理解扩散模型内部注意力机制的重要工具，适用于可视化分析、可控生成等研究场景。
+
+
+
+#### （b）vis_utils.py
+
+> 以下是针对该代码文件的逐行详细解析，涵盖核心功能、实现逻辑以及与扩散模型注意力机制的关联：
+>
+> ---
+>
+> ### **1. 核心功能概述**
+> 该文件实现了一套**交叉注意力可视化工具**，主要用于：
+> 1. **提取并可视化** Stable Diffusion等扩散模型中文本-图像的交叉注意力热力图
+> 2. **定位关键token** 对生成图像特定区域的影响（通过`indices_to_alter`指定）
+> 3. **生成热力图叠加** 将注意力权重以热力图形式叠加到原始图像上
+> 4. **网格化展示** 多张注意力图的对比结果
+>
+> ---
+>
+> ### **2. 关键函数解析**
+>
+> #### **(1) `show_cross_attention()` - 主可视化入口**
+> ```python
+> def show_cross_attention(
+>     prompt: str,                     # 输入文本提示
+>     attention_store: AttentionStore,  # 存储的注意力数据
+>     tokenizer,                       # 分词器（如CLIP Tokenizer）
+>     indices_to_alter: List[int],     # 需要强化的token索引（如[3,5]）
+>     res: int,                        # 注意力图分辨率（如16对应16x16）
+>     from_where: List[str],           # 聚合哪些UNet层（["up","down"]）
+>     select: int = 0,                 # 选择批次中的第几个样本
+>     orig_image=None                  # 原始图像（用于热力图叠加）
+> ):
+>     # Step 1: 分词并解码
+>     tokens = tokenizer.encode(prompt)  # 将文本转为token ID序列
+>     decoder = tokenizer.decode         # 获取ID转文本的解码器
+> 
+>     # Step 2: 聚合注意力图
+>     attention_maps = aggregate_attention(
+>         attention_store, res, from_where, True, select
+>     ).detach().cpu()  # shape: [res, res, seq_len]
+> 
+>     # Step 3: 为每个目标token生成可视化
+>     images = []
+>     for i in range(len(tokens)):
+>         image = attention_maps[:, :, i]  # 提取当前token的注意力图
+>         if i in indices_to_alter:        # 只处理指定token
+>             if orig_image is not None:   # 热力图叠加模式
+>                 image = show_image_relevance(image, orig_image)
+>                 image = image.astype(np.uint8)
+>                 image = np.array(Image.fromarray(image).resize((res**2, res**2)))
+>             # 添加文字标注
+>             image = ptp_utils.text_under_image(image, decoder(int(tokens[i])))
+>             images.append(image)
+> 
+>     # Step 4: 网格化展示
+>     return ptp_utils.view_images(np.stack(images, axis=0))
+> ```
+>
+> **关键参数说明：**
+> - `indices_to_alter`：指定需要可视化的token位置（如Prompt中第3个词）
+> - `from_where`：控制从UNet的哪些层级聚合注意力（影响热力图粗细程度）：
+>   - `"down"`：下采样层（捕捉全局结构）
+>   - `"up"`：上采样层（捕捉细节特征）
+>   - `"mid"`：中间层
+>
+> ---
+>
+> #### **(2) `show_image_relevance()` - 热力图生成**
+> ```python
+> def show_image_relevance(
+>     image_relevance,    # 注意力权重矩阵 (res, res)
+>     image: Image.Image, # 原始图像
+>     relevnace_res=16    # 热力图分辨率
+> ):
+>     # 热力图生成函数（Jet色彩映射）
+>     def show_cam_on_image(img, mask):
+>         heatmap = cv2.applyColorMap(np.uint8(255 * mask), cv2.COLORMAP_JET)
+>         heatmap = np.float32(heatmap) / 255
+>         cam = heatmap + np.float32(img)  # 叠加到原图
+>         cam = cam / np.max(cam)          # 归一化
+>         return cam
+> 
+>     # Step 1: 调整图像尺寸
+>     image = image.resize((relevnace_res ** 2, relevnace_res ** 2))
+>     image = np.array(image)  # PIL转numpy
+> 
+>     # Step 2: 插值调整注意力图分辨率
+>     image_relevance = image_relevance.reshape(1, 1, *image_relevance.shape)
+>     image_relevance = image_relevance.cuda()  # 使用GPU加速插值
+>     image_relevance = torch.nn.functional.interpolate(
+>         image_relevance, size=relevnace_res**2, mode='bilinear'
+>     ).cpu()  # 插值后转回CPU
+> 
+>     # Step 3: 归一化处理
+>     image_relevance = (image_relevance - image_relevance.min()) / \
+>                      (image_relevance.max() - image_relevance.min())
+>     image_relevance = image_relevance.reshape(relevnace_res**2, relevnace_res**2)
+> 
+>     # Step 4: 图像归一化并生成热力图
+>     image = (image - image.min()) / (image.max() - image.min())
+>     vis = show_cam_on_image(image, image_relevance)
+>     vis = np.uint8(255 * vis)  # 转为8位图像
+>     vis = cv2.cvtColor(vis, cv2.COLOR_RGB2BGR)  # OpenCV格式转换
+>     return vis
+> ```
+>
+> **技术细节：**
+> - **双线性插值**：将低分辨率注意力图（如16x16）上采样到与图像相同尺寸
+> - **色彩映射**：使用`COLORMAP_JET`（蓝-青-黄-红）表示注意力强度
+> - **归一化**：确保热力图和原图像素值在[0,1]范围内
+>
+> ---
+>
+> #### **(3) `get_image_grid()` - 网格布局工具**
+> ```python
+> def get_image_grid(images: List[Image.Image]) -> Image:
+>     num_images = len(images)
+>     cols = int(math.ceil(math.sqrt(num_images)))  # 计算列数
+>     rows = int(math.ceil(num_images / cols))     # 计算行数
+>     width, height = images[0].size
+>     
+>     # 创建空白画布
+>     grid_image = Image.new('RGB', (cols * width, rows * height))
+>     
+>     # 填充图像
+>     for i, img in enumerate(images):
+>         x = i % cols  # 列坐标
+>         y = i // cols # 行坐标
+>         grid_image.paste(img, (x * width, y * height))
+>     return grid_image
+> ```
+>
+> **布局逻辑：**
+> - 自动计算接近正方形的网格排列（如7张图 → 3x3网格）
+> - 保持原始图像比例不变
+>
+> ---
+>
+> ### **3. 与扩散模型的关联**
+> 1. **注意力数据来源**：
+>    - 通过`AttentionStore`捕获UNet在去噪过程中的交叉注意力图
+>    - 每个token对应一个`[res, res]`的矩阵，表示该token对图像每个位置的关注程度
+>
+> 2. **典型工作流**：
+>    ```mermaid
+>    sequenceDiagram
+>      用户->>+Diffusion模型: 输入Prompt生成图像
+>      Diffusion模型->>AttentionStore: 记录所有注意力图
+>      用户->>show_cross_attention: 指定要分析的token位置
+>      show_cross_attention->>aggregate_attention: 聚合相关层级的注意力
+>      aggregate_attention->>show_image_relevance: 生成热力图叠加
+>      show_image_relevance->>get_image_grid: 网格化展示结果
+>    ```
+>
+> 3. **应用场景**：
+>    - **Prompt调优**：通过热力图发现无效token（如对生成无影响的词）
+>    - **可控生成**：定位需要增强/抑制的token（如`indices_to_alter=[5]`强化第5个词）
+>    - **模型解释**：可视化文本-图像对齐机制
+>
+> ---
+>
+> ### **4. 扩展使用示例**
+> ```python
+> # 在扩散模型推理后调用
+> prompt = "a cat sitting on a bench"
+> attention_store = AttentionStore()  # 需提前注册到UNet
+> # ...（运行模型生成图像后）
+> show_cross_attention(
+>     prompt=prompt,
+>     attention_store=attention_store,
+>     tokenizer=clip_tokenizer,
+>     indices_to_alter=[2, 4],  # 可视化"cat"和"bench"的注意力
+>     res=16,
+>     from_where=["up", "down"],
+>     orig_image=generated_image
+> )
+> ```
+>
+> **输出效果**：
+> - 网格显示两张热力图，分别标注"cat"和"bench"
+> - 红色区域表示该token强烈影响的图像部分
+
 
 
 # 五、其他补充知识

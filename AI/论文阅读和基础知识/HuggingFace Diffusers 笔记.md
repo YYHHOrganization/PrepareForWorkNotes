@@ -321,6 +321,122 @@ Dataset({
 
 > You can find additional datasets from the [HugGan Community Event](https://huggingface.co/huggan) or you can use your own dataset by creating a local [`ImageFolder`](https://huggingface.co/docs/datasets/image_dataset#imagefolder). Set `config.dataset_name` to the repository id of the dataset if it is from the HugGan Community Event, or `imagefolder` if you’re using your own images.
 
+如果还是不行，可以尝试如下的方案：
+
+> 你的代码仍然无法连接到 Hugging Face 数据集，可能是由于网络限制或镜像站不稳定。以下是 **手动下载数据集** 的方法（适用于 Linux 环境），以及一些额外的解决方案：
+>
+> ---
+>
+> ### **1. 手动下载数据集（Linux 方法）**
+> #### **(1) 使用 `git lfs` 下载数据集**
+> ```bash
+> # 安装 git-lfs（如果未安装）
+> sudo apt-get update && sudo apt-get install git-lfs -y
+> git lfs install
+> 
+> # 克隆数据集（使用国内镜像）
+> export HF_ENDPOINT=https://hf-mirror.com
+> git lfs clone https://hf-mirror.com/datasets/huggan/anime-faces
+> # 如果中间断了，可以cd进下载的文件夹当中，输入：
+> git lfs pull # 要在下载到本地的文件夹当中写
+> ```
+> 如果数据集较大，可以只下载部分文件：
+> ```bash
+> git clone --depth 1 https://hf-mirror.com/datasets/huggan/anime-faces
+> cd anime-faces
+> git lfs pull --include="*.jpg"  # 只下载图片
+> ```
+>
+> #### **(2) 使用 `wget` 或 `curl` 下载**
+> 如果数据集是 `.zip` 或 `.tar.gz` 格式：
+> ```bash
+> wget https://hf-mirror.com/datasets/huggan/anime-faces/resolve/main/data.zip
+> unzip data.zip -d ./anime-faces
+> ```
+>
+> #### **(3) 加载本地数据集**
+> ```python
+> import os
+> from datasets import load_dataset
+> 
+> # 指定本地路径
+> dataset_path = "./anime-faces"  # 替换为你的路径
+> dataset = load_dataset(dataset_path, split="train")
+> ```
+>
+> ---
+>
+> ### **2. 检查网络连接**
+> 确保你的服务器能访问 `hf-mirror.com`：
+> ```bash
+> ping hf-mirror.com
+> curl -v https://hf-mirror.com
+> ```
+> 如果无法访问，可能是 **防火墙/代理问题**，尝试：
+> ```bash
+> export http_proxy=http://your-proxy:port
+> export https_proxy=http://your-proxy:port
+> ```
+>
+> ---
+>
+> ### **3. 强制使用镜像站**
+> 确保环境变量生效：
+> ```python
+> import os
+> os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'  # 强制镜像
+> os.environ['HF_HUB_OFFLINE'] = '1'  # 离线模式（如果已下载）
+> ```
+>
+> ---
+>
+> ### **4. 使用 `datasets` 的离线模式**
+> 如果数据集已缓存，直接加载缓存：
+> ```python
+> dataset = load_dataset("huggan/anime-faces", split="train", download_mode="reuse_dataset_if_exists")
+> ```
+>
+> ---
+>
+> ### **5. 检查 Hugging Face Token**
+> 如果你的数据集是私有的，确保 `token` 正确：
+> ```python
+> from huggingface_hub import login
+> login(token="your_token_here")  # 替代全局变量
+> ```
+>
+> ---
+>
+> ### **6. 直接下载 `.parquet` 文件（备用方案）**
+> 某些数据集提供 `.parquet` 格式，可直接下载：
+> ```python
+> import pandas as pd
+> url = "https://hf-mirror.com/datasets/huggan/anime-faces/resolve/main/train.parquet"
+> df = pd.read_parquet(url)
+> ```
+>
+> ---
+>
+> ### **7. 使用 `aria2` 加速下载**
+> 如果数据集很大，可以用多线程下载：
+> ```bash
+> sudo apt-get install aria2
+> aria2c -x 16 -s 16 "https://hf-mirror.com/datasets/huggan/anime-faces/resolve/main/data.zip"
+> ```
+>
+> ---
+>
+> ### **总结**
+> 1. **推荐手动下载**（`git lfs clone` 或 `wget`），然后本地加载。  
+> 2. 检查网络连接和代理设置。  
+> 3. 确保 `HF_ENDPOINT` 环境变量生效。  
+> 4. 如果问题持续，可能是服务器网络限制，尝试更换网络环境。
+>
+> 如果仍有问题，请提供：
+> - 你使用的具体数据集名称（`huggan/anime-faces` 还是 `vollerei-id/anime_cartoon2`？）
+> - `ping hf-mirror.com` 的结果
+> - 是否在代理环境下运行？
+
 
 
 #### （b）可视化数据集中的数据
