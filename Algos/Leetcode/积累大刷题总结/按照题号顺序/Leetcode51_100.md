@@ -627,6 +627,48 @@ public:
 >
 > 你可以直接复制上述公式和代码到 Typora 中使用！
 
+本题的代码如下：
+```c++
+class Solution {
+public:
+    int factorial(int n) {
+        int res = 1;
+        for (int i = 2; i <= n; i++)
+            res *= i;
+        return res;
+    }
+    vector<int> inverseCantorExpansion(int rank, int n) {
+        vector<int> nums(n);
+        for (int i = 0; i < n; i++)
+            nums[i] = i + 1; // nums[2] = 3
+        vector<int> perm;
+
+        for (int i = 0; i < n; i++) {
+            int fact = factorial(n - i - 1);
+            int k = rank / fact;
+            perm.push_back(nums[k]);
+            nums.erase(nums.begin() + k);
+            rank %= fact;
+        }
+        return perm;
+    }
+    string getPermutation(int n, int k) {
+        // 康托展开，逆康托展开
+        // 32541 2x4!(30000前的都考虑完了) + 1x3！ + 2x2! + 1x1! + 0x0! 第k个
+        // 逆康托展开
+        // k / 4！ = 3 -》4
+        vector<int> ans = inverseCantorExpansion(k-1, n);
+        string res;
+        for (int a : ans) {
+            res += (a + '0');
+        }
+        return res;
+    }
+};
+```
+
+
+
 ## [61. 旋转链表](https://leetcode.cn/problems/rotate-list/)
 
 > 给你一个链表的头节点 `head` ，旋转链表，将链表每个节点向右移动 `k` 个位置。
@@ -742,6 +784,33 @@ public:
 
 
 
+## ==[65. 有效数字](https://leetcode.cn/problems/valid-number/)==（DFA,有点变态，先不做了）
+
+> 给定一个字符串 `s` ，返回 `s` 是否是一个 **有效数字**。
+>
+> 例如，下面的都是有效数字：`"2", "0089", "-0.1", "+3.14", "4.", "-.9", "2e10", "-90E3", "3e+7", "+6e-1", "53.5e93", "-123.456e789"`，而接下来的不是：`"abc", "1a", "1e", "e3", "99e2.5", "--6", "-+3", "95a54e53"`。
+>
+> 一般的，一个 **有效数字** 可以用以下的规则之一定义：
+>
+> 1. 一个 **整数** 后面跟着一个 **可选指数**。
+> 2. 一个 **十进制数** 后面跟着一个 **可选指数**。
+>
+> 一个 **整数** 定义为一个 **可选符号** `'-'` 或 `'+'` 后面跟着 **数字**。
+>
+> 一个 **十进制数** 定义为一个 **可选符号** `'-'` 或 `'+'` 后面跟着下述规则：
+>
+> 1. **数字** 后跟着一个 **小数点 `.`**。
+> 2. **数字** 后跟着一个 **小数点 `.`** 再跟着 **数位**。
+> 3. 一个 **小数点 `.`** 后跟着 **数位**。
+>
+> **指数** 定义为指数符号 `'e'` 或 `'E'`，后面跟着一个 **整数**。
+>
+> **数字** 定义为一个或多个数位。
+
+做法：**有限状态机。**
+
+
+
 ## [64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/)
 
 > 给定一个包含非负整数的 `*m* x *n*` 网格 `grid` ，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
@@ -751,6 +820,8 @@ public:
 >  
 >
 > **示例 1：**
+>
+> 
 >
 > ![img](assets/minpath.jpg)
 >
@@ -986,4 +1057,38 @@ public:
     }
 };
 ```
+
+
+
+## [69. x 的平方根 ](https://leetcode.cn/problems/sqrtx/)
+
+> 给你一个非负整数 `x` ，计算并返回 `x` 的 **算术平方根** 。
+>
+> 由于返回类型是整数，结果只保留 **整数部分** ，小数部分将被 **舍去 。**
+>
+> **注意：**不允许使用任何内置指数函数和算符，例如 `pow(x, 0.5)` 或者 `x ** 0.5` 。
+
+用二分法来做，代码如下：
+
+```c++
+class Solution {
+public:
+    int mySqrt(int x) {
+        //二分法,左闭右闭区间,找到最后一个平方<=x的正数
+        long long l = 0, r = x;
+        while(l<=r) { //左闭右闭区间
+            long long mid = l + ((r-l)>>1);
+            if(mid*mid > x){ //严格到左边找
+                r = mid-1;
+            }
+            else l = mid+1; //l可以再激进一点
+        }
+        return l-1;
+    }
+};
+```
+
+
+
+## [73. 矩阵置零](https://leetcode.cn/problems/set-matrix-zeroes/)
 
