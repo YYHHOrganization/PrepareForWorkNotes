@@ -576,7 +576,7 @@ public:
 >     int rank = 0;
 >     vector<bool> used(n + 1, false); // 标记数字是否已使用
 >     
->     for (int i = 0; i < n; i++) {
+>     for (int i = 0; i < n; i++) 	{
 >         int cnt = 0;
 >         for (int j = 1; j < perm[i]; j++) {
 >             if (!used[j]) cnt++;
@@ -983,6 +983,40 @@ public:
         if(flag) res.push_back('1');
         reverse(res.begin(), res.end());
         return res;
+    }
+};
+```
+
+
+
+Y ： 补零
+
+```C++
+class Solution {
+public:
+    string addBinary(string a, string b) {
+        int an = a.size();
+        int bn = b.size();
+        if(an<bn)
+        {
+            a = string(bn-an,'0')+a;//cout<<a<<endl;
+        }
+        else
+        {
+            b = string(an-bn,'0')+b;//cout<<b<<endl;
+        }
+        int carry = 0;
+        for(int i=max(an,bn)-1;i>=0;i--)
+        {
+            int t = (a[i]-'0')+(b[i]-'0')+carry;
+            a[i] = (t%2+'0');
+            carry = t/2;
+        }
+        if(carry==1)
+        {
+            a = "1"+a;
+        }
+        return a;
     }
 };
 ```
