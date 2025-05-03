@@ -245,3 +245,18 @@ LIS:
 
 [51. N 皇后](https://leetcode.cn/problems/n-queens/)
 
+
+
+# 2025.5.3
+
+继续做Leetcode 51~100的题目
+
+- 更新贪心题单——脑筋急转弯篇的一些题目
+  - [2733. 既不是最小值也不是最大值](https://leetcode.cn/problems/neither-minimum-nor-maximum/)
+  - [1007. 行相等的最少多米诺旋转](https://leetcode.cn/problems/minimum-domino-rotations-for-equal-row/)
+  - [1903. 字符串中的最大奇数](https://leetcode.cn/problems/largest-odd-number-in-string/)
+  - [3432. 统计元素和差值为偶数的分区方案](https://leetcode.cn/problems/count-partitions-with-even-sum-difference/)
+  - [2549. 统计桌面上的不同数字](https://leetcode.cn/problems/count-distinct-numbers-on-board/)
+  - [2396. 严格回文的数字](https://leetcode.cn/problems/strictly-palindromic-number/)
+- 0501，每日一题：[838. 推多米诺](https://leetcode.cn/problems/push-dominoes/)
+- 
