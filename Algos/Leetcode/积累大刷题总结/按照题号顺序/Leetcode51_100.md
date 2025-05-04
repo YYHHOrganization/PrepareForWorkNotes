@@ -1385,3 +1385,196 @@ public:
 
 
 ## [73. 矩阵置零](https://leetcode.cn/problems/set-matrix-zeroes/)
+
+> 给定一个 `m x n` 的矩阵，如果一个元素为 **0** ，则将其所在行和列的所有元素都设为 **0** 。请使用 **[原地](http://baike.baidu.com/item/原地算法)** 算法**。**
+
+一种笔试中一定能做出来的方法,记录rows和cols数组,如果有0则对rows数组和cols数组的对应索引赋值。这样后面只要遍历这两个数组即可都赋值为0。
+
+这里讨论常数额外空间的方法：
+
+- 我们可以把上面说的两个数组分别用矩阵的第一行和第一列来替代，这样如果第x行有0，那么对应第一列第x行就会被置为0。
+- 不过由于会改变原始数组，因此先用flag_row和flag_col记录原来的第一行和第一列是否有0.
+
+代码如下（这题出的不太好，理解思路即可，代码比较丑）：
+
+```c++
+class Solution {
+public:
+    void setZeroes(vector<vector<int>>& matrix) {
+        bool flag_row = false;
+        bool flag_col = false;
+        //遍历第一行和第一列，记录是否本来有0
+        int m = matrix.size();
+        int n = matrix[0].size();
+        for(int i=0;i<m;i++)
+        {
+            if(matrix[i][0]==0)
+            {
+                flag_col = true; //第一列有0
+                break;
+            }
+        }
+        for(int i=0;i<n;i++)
+        {
+            if(matrix[0][i]==0)
+            {
+                flag_row = true; //第一行有0
+                break;
+            }
+        }
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                if(matrix[i][j]==0)
+                {
+                    matrix[i][0] = 0;
+                    matrix[0][j] = 0;
+                }
+            }
+        }
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                if(matrix[i][0]==0 || matrix[0][j]==0)
+                {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+        //看第一行和第一列原本有没有0
+        if(flag_row)
+        {
+            for(int i=0;i<n;i++) matrix[0][i] = 0;
+        }
+        if(flag_col)
+        {
+            for(int i=0;i<m;i++) matrix[i][0] = 0;
+        }
+    }
+};
+```
+
+
+
+## [74. 搜索二维矩阵](https://leetcode.cn/problems/search-a-2d-matrix/)
+
+> 给你一个满足下述两条属性的 `m x n` 整数矩阵：
+>
+> - 每行中的整数从左到右按非严格递增顺序排列。
+> - 每行的第一个整数大于前一行的最后一个整数。
+>
+> 给你一个整数 `target` ，如果 `target` 在矩阵中，返回 `true` ；否则，返回 `false` 。
+
+也就是说，这个矩阵后一行最左侧的数会比前一行最右侧的数大，类似于下面的矩阵：
+
+![img](assets/mat.jpg)
+
+本题其实跟[240. 搜索二维矩阵 II](https://leetcode.cn/problems/search-a-2d-matrix-ii/)是基本一样的题目，甚至链接中的那道题泛用性更广一些。代码如下（从左下角开始排除）：
+```c++
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int n = matrix.size(), m = matrix[0].size(); //n是行,m是列
+        int horizon = 0, vertical = n-1; //horizon是水平方向移动的指针,vertical是垂直方向移动的指针
+        while(horizon<m && vertical>=0){
+            if(matrix[vertical][horizon]<target){
+                horizon++;
+            } else if(matrix[vertical][horizon]>target){
+                vertical--;
+            }else return true;
+        }
+        return false;
+    }
+};
+```
+
+
+
+## [75. 颜色分类](https://leetcode.cn/problems/sort-colors/)
+
+> 给定一个包含红色、白色和蓝色、共 `n` 个元素的数组 `nums` ，**[原地](https://baike.baidu.com/item/原地算法)** 对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
+>
+> 我们使用整数 `0`、 `1` 和 `2` 分别表示红色、白色和蓝色。
+>
+> 必须在不使用库内置的 sort 函数的情况下解决这个问题。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [2,0,2,1,1,0]
+> 输出：[0,0,1,1,2,2]
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums = [2,0,1]
+> 输出：[0,1,2]
+> ```
+
+题意：原地处理数组，使得其0都在前面，1都在中间，2都在后面。
+
+### （1）方法1：两轮循环
+
+```c++
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int left = 0;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==0)
+            {
+                swap(nums[left], nums[i]);
+                left++;
+            }
+        }
+        for(int i=left;i<n;i++)
+        {
+            if(nums[i]==1)
+            {
+                swap(nums[i], nums[left]);
+                left++;
+            }
+        }
+    }
+};
+```
+
+
+
+### （2）方法2：一轮循环（==值得复习一下！==）
+
+```c++
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        //一轮for循环,双指针
+        int n = nums.size();
+        int p0 = 0, p1 = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==1)
+            {
+                swap(nums[i], nums[p1]);
+                p1++;
+            }
+            else if(nums[i]==0)
+            {
+                swap(nums[i], nums[p0]);
+                if(p0 < p1)
+                {
+                    swap(nums[i], nums[p1]);
+                }
+                p0++, p1++;
+            }
+        }
+    }
+};
+```
+

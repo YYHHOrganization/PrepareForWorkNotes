@@ -272,3 +272,12 @@ LIS:
 继续做Leetcode 51~100的题目：
 
 - [68. 文本左右对齐](https://leetcode.cn/problems/text-justification/)
+
+Effective C++的前四个条款学习；
+
+一些二叉树的水题：
+
+- [872. 叶子相似的树](https://leetcode.cn/problems/leaf-similar-trees/)
+- [LCP 44. 开幕式焰火](https://leetcode.cn/problems/sZ59z6/)
+- [404. 左叶子之和](https://leetcode.cn/problems/sum-of-left-leaves/)
+- [671. 二叉树中第二小的节点](https://leetcode.cn/problems/second-minimum-node-in-a-binary-tree/)

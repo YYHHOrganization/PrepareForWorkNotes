@@ -1,5 +1,230 @@
 # Leetcode——二叉树篇
 
+> 本系列Leetcode总结篇基本参考[分享丨【算法题单】链表、二叉树与回溯（前后指针/快慢指针/DFS/BFS/直径/LCA/一般树）- 讨论 - 力扣（LeetCode）](https://leetcode.cn/discuss/post/3142882/fen-xiang-gun-ti-dan-lian-biao-er-cha-sh-6srp/),仅用作个人准备秋招总结,无商用的情况。
+
+![DFS BFS](assets/1724824379-UOsXIV-dfsbfsnew-c.png)
+
+**学习递归，从二叉树开始。**
+
+带着问题去做下面的题目：
+
+- 一般来说，DFS 的递归边界是空节点。在什么情况下，要额外把叶子节点作为递归边界？
+- 在什么情况下，DFS 需要有返回值？什么情况下不需要有返回值？
+- 在什么情况下，题目更适合用自顶向下的方法解决？什么情况下更适合用自底向上的方法解决？
+
+## 1.遍历二叉树
+
+### （1）[872. 叶子相似的树](https://leetcode.cn/problems/leaf-similar-trees/)
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    void dfs(TreeNode* root, vector<int>& leafs)
+    {
+        if(root==nullptr) return;
+        if(root->left==root->right) //叶子结点
+        {
+            leafs.push_back(root->val);
+            return;
+        }
+        dfs(root->left, leafs);
+        dfs(root->right, leafs);
+    }
+    bool leafSimilar(TreeNode* root1, TreeNode* root2) {
+        //前序遍历两棵树，叶子节点记录下来，然后比较是否一样
+        vector<int> leaf1;
+        vector<int> leaf2;
+        dfs(root1, leaf1);
+        dfs(root2, leaf2);
+        return leaf1==leaf2;
+    }
+};
+```
+
+
+
+### （2）[LCP 44. 开幕式焰火](https://leetcode.cn/problems/sZ59z6/)
+
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    vector<int> vals;
+    void dfs(TreeNode* root)
+    {
+        if(root==NULL) return;
+        vals[root->val] += 1; //前序遍历
+        dfs(root->left);
+        dfs(root->right);
+    }
+    int numColor(TreeNode* root) {
+        //前序遍历，记录有多少个不同的值即可
+        vals.resize(1001);
+        dfs(root);
+        int ans = 0;
+        for(int val: vals)
+        {
+            if(val!=0) ans++;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### （3）[404. 左叶子之和](https://leetcode.cn/problems/sum-of-left-leaves/)（==可以复习==）
+
+> 给定二叉树的根节点 `root` ，返回所有左叶子之和。
+
+本题直接判断是否是左叶子比较麻烦，简单起见可以在if语句中判断当前结点的左节点是否是叶子结点，是的话就累加sum到最终结果当中。代码如下：
+```c++
+class Solution {
+public:
+    int sum = 0;
+    void dfs(TreeNode* root) 
+    {
+        if(root==nullptr) return;
+        //判断当前结点是否有左孩子，且左孩子是否为叶子节点
+        //依旧是前序遍历顺序：根，左，右
+        if(root->left && root->left->left==nullptr && root->left->right==nullptr)
+        {
+            sum += root->left->val; 
+        }
+        dfs(root->left);
+        dfs(root->right);
+    }
+    int sumOfLeftLeaves(TreeNode* root) {
+        dfs(root);
+        return sum;
+    }
+};
+```
+
+
+
+### （4）[671. 二叉树中第二小的节点](https://leetcode.cn/problems/second-minimum-node-in-a-binary-tree/)
+
+> 给定一个非空特殊的二叉树，每个节点都是正数，并且每个节点的子节点数量只能为 `2` 或 `0`。如果一个节点有两个子节点的话，那么该节点的值等于两个子节点中较小的一个。
+>
+> 更正式地说，即 `root.val = min(root.left.val, root.right.val)` 总成立。
+>
+> 给出这样的一个二叉树，你需要输出所有节点中的 **第二小的值** 。
+>
+> 如果第二小的值不存在的话，输出 -1 **。**
+
+#### （a）我的做法
+
+两次DFS，时间复杂度会高一些，代码如下：
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    unordered_set<int> uset;
+    int update(TreeNode* root) //更新二叉树所有节点的值
+    {
+        if(root==nullptr) return 0;
+        if(root->left==root->right) return root->val;
+        int v = min(update(root->left), update(root->right));
+        root->val = v;
+        return v;
+    }
+    void dfs(TreeNode* root)
+    {
+        if(root==nullptr) return;
+        //根，左，右
+        uset.insert(root->val);
+        dfs(root->left);
+        dfs(root->right);
+    }
+    int findSecondMinimumValue(TreeNode* root) {
+        update(root);
+        dfs(root);
+        vector<int> res(uset.begin(), uset.end());
+        if((int)res.size()<2) return -1;
+        nth_element(res.begin(), res.begin()+1, res.end());
+        return res[1];
+    }
+};
+```
+
+
+
+#### （b）简单一些的做法
+
+经过题意的理解，对于二叉树中的任意节点 *x*，*x* 的值不大于以 *x* 为根的子树中所有节点的值。同理，根节点应该是整棵树最小的值。因此，问题转换为了求解严格比根节点值大的最小的值。
+
+代码如下：
+```c++
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    long long mn = (long long)INT_MAX + 5;
+    long long ans = (long long)INT_MAX + 5; //结果,注意本题的数据范围
+    void dfs(TreeNode* root)
+    {
+        if(root==nullptr) return;
+        long long x = root->val;
+        if(x>mn && x<ans) //更新ans的值
+        {
+            ans = x;
+        }
+        dfs(root->left);
+        dfs(root->right);
+    }
+    int findSecondMinimumValue(TreeNode* root) {
+        //结点数量>=1，一定有根
+        mn = (long long)root->val;
+        dfs(root);
+        if(ans==(long long)INT_MAX+5) return -1;
+        return ans;
+    }
+};
+```
+
+
+
+
+
 # 一、视频中的热门题目
 
 对应视频:[如何灵活运用递归？【基础算法精讲 10】_哔哩哔哩_bilibili](https://www.bilibili.com/video/BV18M411z7bb/?vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99&spm_id_from=333.788.videopod.sections)
