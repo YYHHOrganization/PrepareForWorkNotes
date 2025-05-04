@@ -258,5 +258,17 @@ LIS:
   - [3432. 统计元素和差值为偶数的分区方案](https://leetcode.cn/problems/count-partitions-with-even-sum-difference/)
   - [2549. 统计桌面上的不同数字](https://leetcode.cn/problems/count-distinct-numbers-on-board/)
   - [2396. 严格回文的数字](https://leetcode.cn/problems/strictly-palindromic-number/)
-- 0501，每日一题：[838. 推多米诺](https://leetcode.cn/problems/push-dominoes/)
+- 0502，每日一题：[838. 推多米诺](https://leetcode.cn/problems/push-dominoes/)
 - 
+
+
+
+# 2025.5.4
+
+0501每日一题（困难）：[2071. 你可以安排的最多任务数目](https://leetcode.cn/problems/maximum-number-of-tasks-you-can-assign/)
+
+0503每日一题：[1128. 等价多米诺骨牌对的数量](https://leetcode.cn/problems/number-of-equivalent-domino-pairs/)
+
+继续做Leetcode 51~100的题目：
+
+- [68. 文本左右对齐](https://leetcode.cn/problems/text-justification/)
