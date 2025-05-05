@@ -281,3 +281,21 @@ Effective C++的前四个条款学习；
 - [LCP 44. 开幕式焰火](https://leetcode.cn/problems/sZ59z6/)
 - [404. 左叶子之和](https://leetcode.cn/problems/sum-of-left-leaves/)
 - [671. 二叉树中第二小的节点](https://leetcode.cn/problems/second-minimum-node-in-a-binary-tree/)
+
+
+
+# 2025.5.5
+
+[1315. 祖父节点值为偶数的节点和](https://leetcode.cn/problems/sum-of-nodes-with-even-valued-grandparent/)
+
+[988. 从叶结点开始的最小字符串](https://leetcode.cn/problems/smallest-string-starting-from-leaf/)
+
+[623. 在二叉树中增加一行](https://leetcode.cn/problems/add-one-row-to-tree/)
+
+[1372. 二叉树中的最长交错路径](https://leetcode.cn/problems/longest-zigzag-path-in-a-binary-tree/)
+
+[1379. 找出克隆二叉树中的相同节点](https://leetcode.cn/problems/find-a-corresponding-node-of-a-binary-tree-in-a-clone-of-that-tree/)
+
+[563. 二叉树的坡度](https://leetcode.cn/problems/binary-tree-tilt/)
+
+[606. 根据二叉树创建字符串](https://leetcode.cn/problems/construct-string-from-binary-tree/)
