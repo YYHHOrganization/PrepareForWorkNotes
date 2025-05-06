@@ -627,6 +627,48 @@ public:
 >
 > 你可以直接复制上述公式和代码到 Typora 中使用！
 
+本题的代码如下：
+```c++
+class Solution {
+public:
+    int factorial(int n) {
+        int res = 1;
+        for (int i = 2; i <= n; i++)
+            res *= i;
+        return res;
+    }
+    vector<int> inverseCantorExpansion(int rank, int n) {
+        vector<int> nums(n);
+        for (int i = 0; i < n; i++)
+            nums[i] = i + 1; // nums[2] = 3
+        vector<int> perm;
+
+        for (int i = 0; i < n; i++) {
+            int fact = factorial(n - i - 1);
+            int k = rank / fact;
+            perm.push_back(nums[k]);
+            nums.erase(nums.begin() + k);
+            rank %= fact;
+        }
+        return perm;
+    }
+    string getPermutation(int n, int k) {
+        // 康托展开，逆康托展开
+        // 32541 2x4!(30000前的都考虑完了) + 1x3！ + 2x2! + 1x1! + 0x0! 第k个
+        // 逆康托展开
+        // k / 4！ = 3 -》4
+        vector<int> ans = inverseCantorExpansion(k-1, n);
+        string res;
+        for (int a : ans) {
+            res += (a + '0');
+        }
+        return res;
+    }
+};
+```
+
+
+
 ## [61. 旋转链表](https://leetcode.cn/problems/rotate-list/)
 
 > 给你一个链表的头节点 `head` ，旋转链表，将链表每个节点向右移动 `k` 个位置。
@@ -752,6 +794,8 @@ public:
 >
 > **示例 1：**
 >
+> 
+>
 > ![img](assets/minpath.jpg)
 >
 > ```
@@ -785,6 +829,31 @@ public:
 ```
 
 
+
+## ==[65. 有效数字](https://leetcode.cn/problems/valid-number/)（DFA,有点变态，先不做了）==
+
+> 给定一个字符串 `s` ，返回 `s` 是否是一个 **有效数字**。
+>
+> 例如，下面的都是有效数字：`"2", "0089", "-0.1", "+3.14", "4.", "-.9", "2e10", "-90E3", "3e+7", "+6e-1", "53.5e93", "-123.456e789"`，而接下来的不是：`"abc", "1a", "1e", "e3", "99e2.5", "--6", "-+3", "95a54e53"`。
+>
+> 一般的，一个 **有效数字** 可以用以下的规则之一定义：
+>
+> 1. 一个 **整数** 后面跟着一个 **可选指数**。
+> 2. 一个 **十进制数** 后面跟着一个 **可选指数**。
+>
+> 一个 **整数** 定义为一个 **可选符号** `'-'` 或 `'+'` 后面跟着 **数字**。
+>
+> 一个 **十进制数** 定义为一个 **可选符号** `'-'` 或 `'+'` 后面跟着下述规则：
+>
+> 1. **数字** 后跟着一个 **小数点 `.`**。
+> 2. **数字** 后跟着一个 **小数点 `.`** 再跟着 **数位**。
+> 3. 一个 **小数点 `.`** 后跟着 **数位**。
+>
+> **指数** 定义为指数符号 `'e'` 或 `'E'`，后面跟着一个 **整数**。
+>
+> **数字** 定义为一个或多个数位。
+
+做法：**有限状态机。**
 
 ## [66. 加一](https://leetcode.cn/problems/plus-one/)
 
@@ -987,8 +1056,6 @@ public:
 };
 ```
 
-
-
 Y ： 补零
 
 ```C++
@@ -1017,6 +1084,496 @@ public:
             a = "1"+a;
         }
         return a;
+    }
+};
+```
+
+
+
+## [68. 文本左右对齐](https://leetcode.cn/problems/text-justification/)
+
+> 给定一个单词数组 `words` 和一个长度 `maxWidth` ，重新排版单词，使其成为每行恰好有 `maxWidth` 个字符，且左右两端对齐的文本。
+>
+> 你应该使用 “**贪心算法**” 来放置给定的单词；也就是说，尽可能多地往每行中放置单词。必要时可用空格 `' '` 填充，使得每行恰好有 *maxWidth* 个字符。
+>
+> 要求尽可能均匀分配单词间的空格数量。如果某一行单词间的空格不能均匀分配，则左侧放置的空格数要多于右侧的空格数。
+>
+> 文本的最后一行应为左对齐，且单词之间不插入**额外的**空格。
+>
+> **注意:**
+>
+> - 单词是指由非空格字符组成的字符序列。
+> - 每个单词的长度大于 0，小于等于 *maxWidth*。
+> - 输入单词数组 `words` 至少包含一个单词。
+>
+>  
+>
+> **示例 1:**
+>
+> ```
+> 输入: words = ["This", "is", "an", "example", "of", "text", "justification."], maxWidth = 16
+> 输出:
+> [
+>    "This    is    an",
+>    "example  of text",
+>    "justification.  "
+> ]
+> ```
+>
+> **示例 2:**
+>
+> ```
+> 输入:words = ["What","must","be","acknowledgment","shall","be"], maxWidth = 16
+> 输出:
+> [
+>   "What   must   be",
+>   "acknowledgment  ",
+>   "shall be        "
+> ]
+> 解释: 注意最后一行的格式应为 "shall be    " 而不是 "shall     be",
+>      因为最后一行应为左对齐，而不是左右两端对齐。       
+>      第二行同样为左对齐，这是因为这行只包含一个单词。
+> ```
+>
+> **示例 3:**
+>
+> ```
+> 输入:words = ["Science","is","what","we","understand","well","enough","to","explain","to","a","computer.","Art","is","everything","else","we","do"]，maxWidth = 20
+> 输出:
+> [
+>   "Science  is  what we",
+>   "understand      well",
+>   "enough to explain to",
+>   "a  computer.  Art is",
+>   "everything  else  we",
+>   "do                  "
+> ]
+> ```
+>
+>  
+>
+> **提示:**
+>
+> - `1 <= words.length <= 300`
+> - `1 <= words[i].length <= 20`
+> - `words[i]` 由小写英文字母和符号组成
+> - `1 <= maxWidth <= 100`
+> - `words[i].length <= maxWidth`
+
+算是模拟题。写起来一定要足够小心，逻辑要足够清晰。
+
+### （1）自己的做法：代码冗长，但某些次执行效率还可以
+
+```c++
+class Solution {
+public:
+    vector<string> fullJustify(vector<string>& words, int maxWidth) {
+        //确认能放几个单词,再确认间距
+        //每一个单词之间至少得有一个空格
+        int index = 0;
+        int n = words.size();
+        int sum = 0; //假设每个单词只间隔一个空格,总的长度(用来计算一行能放下几个单词的)
+        int wordLength = 0; //选中的这一行的总裸单词长度(即不包含空格)
+        vector<string> ans;
+        
+        while(index<n) //写起来有点像分组循环,这么写不容易出错
+        {
+            //确认哪些单词放一起
+            int start = index; //从当前字符开始,看看能放入几个单词
+            sum += (int)words[index].size(); //添加当前字符
+            wordLength += (int)words[index].size();
+            index++; //第一个单词前面没有空格,需要特判
+
+            //while里面的+1表示中间的空格(算至少1个)
+            while(index<n && (sum + (int)words[index].size() + 1 <= maxWidth))
+            {
+                sum += ((int)words[index].size() + 1);
+                wordLength += (int)words[index].size();
+                index++;
+            }
+            bool flag = false; //是否是最后一行
+            if(index==n) flag = true;
+            int cnt = index - start; //这一行能放得下的单词数量
+            int remain = maxWidth - wordLength; //总的要放空格的数量
+
+            string res; //构造本行字符串
+            res += words[start]; //这个一定放的进去
+            cnt--;
+            if(flag) //最后一行,左对齐
+            {
+                for(int i=0;i<cnt;i++) //塞这么多空格+单词
+                {
+                    res += string(1, ' '); //一个空格+一个单词
+                    res += words[start+1+i];
+                }
+                res += string(maxWidth-(int)res.size(), ' '); //补后面的空格
+            } 
+            else if(cnt==0) //只能放一个单词,后面都补空格
+            {
+                int remainSpace = maxWidth - (int)res.size();
+                res += string(remainSpace, ' ');
+            }
+            else
+            {
+                int avg = remain / cnt; //表示平均每个单词间隔多长 
+                int r = remain % cnt; //不能整除的情况,第一行第一个空格长度+avg
+
+                for(int i=0;i<cnt;i++) //塞这么多空格+单词
+                {
+                    if(i<r) res += string(avg+1, ' ');
+                    else res += string(avg, ' ');
+                    res += words[start+1+i];
+                }
+            }
+            
+            ans.push_back(std::move(res));
+            sum = 0; 
+            wordLength = 0; //清空
+        }
+        return ans;
+    }
+};
+```
+
+
+
+
+
+## [69. x 的平方根 ](https://leetcode.cn/problems/sqrtx/)
+
+> 给你一个非负整数 `x` ，计算并返回 `x` 的 **算术平方根** 。
+>
+> 由于返回类型是整数，结果只保留 **整数部分** ，小数部分将被 **舍去 。**
+>
+> **注意：**不允许使用任何内置指数函数和算符，例如 `pow(x, 0.5)` 或者 `x ** 0.5` 。
+
+用二分法来做，代码如下：
+
+```c++
+class Solution {
+public:
+    int mySqrt(int x) {
+        //二分法,左闭右闭区间,找到最后一个平方<=x的正数
+        long long l = 0, r = x;
+        while(l<=r) { //左闭右闭区间
+            long long mid = l + ((r-l)>>1);
+            if(mid*mid > x){ //严格到左边找
+                r = mid-1;
+            }
+            else l = mid+1; //l可以再激进一点
+        }
+        return l-1;
+            }
+};
+```
+
+
+
+## [70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+
+直接给出代码了：
+```c++
+class Solution {
+public:
+    int climbStairs(int n) {
+        if(n<2) return n;
+        int a1=1,a2=1,tmp=2;  //在初始2阶台阶的时候,a1表示从0阶+2的方案,a2表示从1阶+1的方案
+        //f(n)=f(n-1)+f(n-2),f(1)=1, f(2)=2;
+        for(int i=2;i<=n;i++)
+        {
+            tmp=a1+a2;  a1=a2;  a2=tmp;
+        }
+        return tmp;
+    }
+};
+```
+
+
+
+## [71. 简化路径](https://leetcode.cn/problems/simplify-path/)
+
+用**栈**，对C++的接口需要熟悉：
+```c++
+class Solution {
+public:
+    string simplifyPath(string path) {
+        vector<string> stk;
+        istringstream ss(path);
+        string s; //接收每个子字符串
+        while(getline(ss, s, '/')) //以/间隔
+        {
+            if(s.empty() || s==".") {continue;} //只有一个.,此时忽略掉即可
+            else if(s=="..")
+            {
+                if(!stk.empty()) stk.pop_back();
+            }
+            else
+            {
+                stk.push_back(s);
+            }
+        }
+        string result;
+        result+="/";
+        for(int i=0;i<stk.size();i++)
+        {
+            result+=stk[i];
+            if(i<stk.size()-1) result+="/";
+        }
+        return result;
+    }
+};
+```
+
+
+
+## [72. 编辑距离](https://leetcode.cn/problems/edit-distance/)
+
+要点是状态转移方程：`if(s[i]!=t[j])  dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1`
+
+```cpp
+dp[-1][y] = y+1 => dp[0][y+1] = y+1
+dp[x][-1] = x+1 => dp[x+1][0] = x+1
+```
+
+注意，如果是用二维的状态转移方程，需要显式地写下面的逻辑：
+```c++
+if(word1[i]!=word2[j]) //不相等,则计算编辑距离
+{
+    dp[i+1][j+1] = min({dp[i][j+1], dp[i+1][j], dp[i][j]}) + 1;
+}
+else //别忘了两种情况都要显式赋值
+{
+    dp[i+1][j+1] = dp[i][j];
+}
+```
+
+本题总的代码如下：
+```c++
+class Solution {
+public:
+    int minDistance(string word1, string word2) {
+        //令dp[i][j]是word1以i为结尾的字符串和word2以j为结尾的字符串进行转换的最少操作数,则有
+        //dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])+1; //最后一项是要编辑
+        //dp[-1][-1] = 0;
+        int m = word1.size();
+        int n = word2.size();
+        vector<vector<int>> dp(m+1, vector<int>(n+1, 0));
+        //dp[-1][y] = y+1 => dp[0][y+1] = y+1
+        //dp[x][-1] = x+1
+        for(int i=1;i<=m;i++) dp[i][0] = i;
+        for(int j=1;j<=n;j++) dp[0][j] = j;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(word1[i]!=word2[j]) //不相等,则计算编辑距离
+                {
+                    dp[i+1][j+1] = min({dp[i][j+1], dp[i+1][j], dp[i][j]}) + 1;
+                }
+                else
+                {
+                    dp[i+1][j+1] = dp[i][j];
+                }
+                
+            }
+        }
+        return dp[m][n];
+    }
+};
+```
+
+
+
+## [73. 矩阵置零](https://leetcode.cn/problems/set-matrix-zeroes/)
+
+> 给定一个 `m x n` 的矩阵，如果一个元素为 **0** ，则将其所在行和列的所有元素都设为 **0** 。请使用 **[原地](http://baike.baidu.com/item/原地算法)** 算法**。**
+
+一种笔试中一定能做出来的方法,记录rows和cols数组,如果有0则对rows数组和cols数组的对应索引赋值。这样后面只要遍历这两个数组即可都赋值为0。
+
+这里讨论常数额外空间的方法：
+
+- 我们可以把上面说的两个数组分别用矩阵的第一行和第一列来替代，这样如果第x行有0，那么对应第一列第x行就会被置为0。
+- 不过由于会改变原始数组，因此先用flag_row和flag_col记录原来的第一行和第一列是否有0.
+
+代码如下（这题出的不太好，理解思路即可，代码比较丑）：
+
+```c++
+class Solution {
+public:
+    void setZeroes(vector<vector<int>>& matrix) {
+        bool flag_row = false;
+        bool flag_col = false;
+        //遍历第一行和第一列，记录是否本来有0
+        int m = matrix.size();
+        int n = matrix[0].size();
+        for(int i=0;i<m;i++)
+        {
+            if(matrix[i][0]==0)
+            {
+                flag_col = true; //第一列有0
+                break;
+            }
+        }
+        for(int i=0;i<n;i++)
+        {
+            if(matrix[0][i]==0)
+            {
+                flag_row = true; //第一行有0
+                break;
+            }
+        }
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                if(matrix[i][j]==0)
+                {
+                    matrix[i][0] = 0;
+                    matrix[0][j] = 0;
+                }
+            }
+        }
+        for(int i=1;i<m;i++)
+        {
+            for(int j=1;j<n;j++)
+            {
+                if(matrix[i][0]==0 || matrix[0][j]==0)
+                {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+        //看第一行和第一列原本有没有0
+        if(flag_row)
+        {
+            for(int i=0;i<n;i++) matrix[0][i] = 0;
+        }
+        if(flag_col)
+        {
+            for(int i=0;i<m;i++) matrix[i][0] = 0;
+        }
+    }
+};
+```
+
+
+
+## [74. 搜索二维矩阵](https://leetcode.cn/problems/search-a-2d-matrix/)
+
+> 给你一个满足下述两条属性的 `m x n` 整数矩阵：
+>
+> - 每行中的整数从左到右按非严格递增顺序排列。
+> - 每行的第一个整数大于前一行的最后一个整数。
+>
+> 给你一个整数 `target` ，如果 `target` 在矩阵中，返回 `true` ；否则，返回 `false` 。
+
+也就是说，这个矩阵后一行最左侧的数会比前一行最右侧的数大，类似于下面的矩阵：
+
+![img](assets/mat.jpg)
+
+本题其实跟[240. 搜索二维矩阵 II](https://leetcode.cn/problems/search-a-2d-matrix-ii/)是基本一样的题目，甚至链接中的那道题泛用性更广一些。代码如下（从左下角开始排除）：
+```c++
+class Solution {
+public:
+    bool searchMatrix(vector<vector<int>>& matrix, int target) {
+        int n = matrix.size(), m = matrix[0].size(); //n是行,m是列
+        int horizon = 0, vertical = n-1; //horizon是水平方向移动的指针,vertical是垂直方向移动的指针
+        while(horizon<m && vertical>=0){
+            if(matrix[vertical][horizon]<target){
+                horizon++;
+            } else if(matrix[vertical][horizon]>target){
+                vertical--;
+            }else return true;
+        }
+        return false;
+    }
+};
+```
+
+
+
+## [75. 颜色分类](https://leetcode.cn/problems/sort-colors/)
+
+> 给定一个包含红色、白色和蓝色、共 `n` 个元素的数组 `nums` ，**[原地](https://baike.baidu.com/item/原地算法)** 对它们进行排序，使得相同颜色的元素相邻，并按照红色、白色、蓝色顺序排列。
+>
+> 我们使用整数 `0`、 `1` 和 `2` 分别表示红色、白色和蓝色。
+>
+> 必须在不使用库内置的 sort 函数的情况下解决这个问题。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：nums = [2,0,2,1,1,0]
+> 输出：[0,0,1,1,2,2]
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：nums = [2,0,1]
+> 输出：[0,1,2]
+> ```
+
+题意：原地处理数组，使得其0都在前面，1都在中间，2都在后面。
+
+### （1）方法1：两轮循环
+
+```c++
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int left = 0;
+        int n = nums.size();
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==0)
+            {
+                swap(nums[left], nums[i]);
+                left++;
+            }
+        }
+        for(int i=left;i<n;i++)
+        {
+            if(nums[i]==1)
+            {
+                swap(nums[i], nums[left]);
+                left++;
+            }
+        }
+    }
+};
+```
+
+
+
+### （2）方法2：一轮循环（==值得复习一下！==）
+
+```c++
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        //一轮for循环,双指针
+        int n = nums.size();
+        int p0 = 0, p1 = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(nums[i]==1)
+            {
+                swap(nums[i], nums[p1]);
+                p1++;
+            }
+            else if(nums[i]==0)
+            {
+                swap(nums[i], nums[p0]);
+                if(p0 < p1)
+                {
+                    swap(nums[i], nums[p1]);
+                }
+                p0++, p1++;
+            }
+        }
     }
 };
 ```

@@ -3362,3 +3362,228 @@ public:
 };
 ```
 
+
+
+# 五、思维题
+
+回想一下高考数学的最后一题，三个小问，前两小问让你计算一些特殊情况，第三小问让你计算/证明一个一般的结论。这其实就是从特殊到一般的思考方式，我们在做算法题（尤其是思维题和构造题）时，也可以从最简单、最特殊的情况开始，去探索题目的性质，逐渐过渡到一般情况。
+
+思考清单
+
+- 小型数组：nums 只有 1 个数？只有 2 个数？只有 3 个数？
+- 万里挑一：nums 所有数都相同？只有一个数不一样？有两个数不一样？某个数特别大？
+- 黑白世界：只有两种数？例如 [0,1,0,1,0,1] 或者 ababab。
+- 反向思考：如果答案是 1，输入会是什么样的？如果答案是 2？是 nums[0]？是 nums[1]？
+- 枚举归纳：试试小范围打表，暴力枚举所有情况，找规律。
+
+思考这些特殊情况，有时会产生求解原问题的灵感。
+
+
+
+## 2.脑筋急转弯
+
+从一般到特殊。
+
+### [2733. 既不是最小值也不是最大值](https://leetcode.cn/problems/neither-minimum-nor-maximum/)
+
+> 给你一个整数数组 `nums` ，数组由 **不同正整数** 组成，请你找出并返回数组中 **任一** 既不是 **最小值** 也不是 **最大值** 的数字，如果不存在这样的数字，返回 **`-1`** 。
+>
+> 返回所选整数。
+
+```c++
+class Solution {
+public:
+    int findNonMinOrMax(vector<int>& nums) {
+        //找到最小值和最大值即可
+        int mx = INT_MIN;
+        int mn = INT_MAX;
+        for(int num: nums)
+        {
+            mx = max(mx, num);
+            mn = min(mn, num);
+        }
+        int ans = -1;
+        for(int num: nums)
+        {
+            if(num!=mx && num!=mn) return num;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### 脑筋急转弯版答案
+
+> 仅作为参考学习，实际上笔试题出了还是要以快速做对为优先级最高。
+
+数组每个元素都不相等，因此一个符合要求的答案一定在前三个数当中，不妨取前三个数排序后中间的那个值，就一定符合题意。代码如下：
+
+```c++
+class Solution {
+public:
+    int findNonMinOrMax(vector<int>& nums) {
+        int n = nums.size();
+        if(n<=2) return -1;
+        sort(nums.begin(), nums.begin()+3);
+        return nums[1];
+    }
+};
+```
+
+
+
+### [3432. 统计元素和差值为偶数的分区方案](https://leetcode.cn/problems/count-partitions-with-even-sum-difference/)
+
+> 给你一个长度为 `n` 的整数数组 `nums` 。
+>
+> **分区** 是指将数组按照下标 `i` （`0 <= i < n - 1`）划分成两个 **非空** 子数组，其中：
+>
+> - 左子数组包含区间 `[0, i]` 内的所有下标。
+> - 右子数组包含区间 `[i + 1, n - 1]` 内的所有下标。
+>
+> 对左子数组和右子数组先求元素 **和** 再做 **差** ，统计并返回差值为 **偶数** 的 **分区** 方案数。
+
+可以硬做（也很简单），但这里给出简单的一种做法。假设左侧选择的部分的和为L，数组总的和为S，那么右侧部分的和为S-L，于是题目要求的是L-(S-L)=2L-S。已知2L一定是偶数，所以题目就变为了判断S的奇偶性。如果S是奇数，那么返回0，一定无法做到。否则如果S是偶数，那么其实任意的分割方法都是符合题意的，return的结果为n-1（一共n-1个合理位置）；
+
+代码如下：
+```c++
+class Solution {
+public:
+    int countPartitions(vector<int>& nums) {
+        int sum = accumulate(nums.begin(), nums.end(), 0);
+        int n = nums.size();
+        if(sum%2==1) return 0;
+        else return n-1;
+    }
+};
+```
+
+
+
+### [1903. 字符串中的最大奇数](https://leetcode.cn/problems/largest-odd-number-in-string/)
+
+>  给你一个字符串 `num` ，表示一个大整数。请你在字符串 `num` 的所有 **非空子字符串** 中找出 **值最大的奇数** ，并以字符串形式返回。如果不存在奇数，则返回一个空字符串 `""` 。
+>
+> **子字符串** 是字符串中的一个连续的字符序列。
+
+从后往前找第一个奇数即可。毕竟越长的字符串表明数越大。
+
+```c++
+class Solution {
+public:
+    string largestOddNumber(string num) {
+        int n = num.size();
+        int index = n - 1;
+        while(index>=0)
+        {
+            int x = num[index] - '0';
+            if(x % 2==0) index--;
+            else break;
+        }
+        if(index<0) return "";
+        return num.substr(0, index+1);
+    }
+};
+```
+
+
+
+### [2549. 统计桌面上的不同数字](https://leetcode.cn/problems/count-distinct-numbers-on-board/)
+
+> 给你一个正整数 `n` ，开始时，它放在桌面上。在 `10^9` 天内，每天都要执行下述步骤：
+>
+> - 对于出现在桌面上的每个数字 `x` ，找出符合 `1 <= i <= n` 且满足 `x % i == 1` 的所有数字 `i` 。
+> - 然后，将这些数字放在桌面上。
+>
+> 返回在 `10^9` 天之后，出现在桌面上的 **不同** 整数的数目。
+>
+> **注意：**
+>
+> - 一旦数字放在桌面上，则会一直保留直到结束。
+> - `%` 表示取余运算。例如，`14 % 3` 等于 `2` 。
+
+对于这道题目来说，发现规律并提出猜想是比较容易的，但需要思考如何能够给出证明呢？
+
+证明如下：由于n mod (n-1) == 1一定成立，因此对于某个数x而言，经过一天至少可以生成n-1，依此类推，题目的范围是1~100，十亿天一定可以生成除了1以外的数。当然对于这一题来说1需要特殊讨论。如果给出的正整数是1的话，那么最后只会有给出的1自己，所以此时需要return 1，不要忘了这种特殊情况。
+
+```c++
+class Solution {
+public:
+    int distinctIntegers(int n) {
+        if(n==1) return 1;
+        return n - 1;
+    }
+};
+```
+
+
+
+### [2396. 严格回文的数字](https://leetcode.cn/problems/strictly-palindromic-number/)
+
+> 如果一个整数 `n` 在 `b` 进制下（`b` 为 `2` 到 `n - 2` 之间的所有整数）对应的字符串 **全部** 都是 **回文的** ，那么我们称这个数 `n` 是 **严格回文** 的。
+>
+> 给你一个整数 `n` ，如果 `n` 是 **严格回文** 的，请返回 `true` ，否则返回 `false` 。
+>
+> 如果一个字符串从前往后读和从后往前读完全相同，那么这个字符串是 **回文的** 。
+
+根据观察，如果想让任意进制是回文的，那么至少最后一位有效位得是1（因为不含有前导0，因此最前面的有效位一定是1，为了满足回文串的特点，最后面的有效位也一定是1），不过`n%(n-2)`的最后一位一定不是1，因此永远return false。
+
+本题代码：
+
+```c++
+class Solution {
+public:
+    bool isStrictlyPalindromic(int n) {
+        //考虑每个进制下都回文的数需要满足什么特征
+        //对于符合题意的值来说,至少最后一位合理的对应b进制下的位值得是1(因为不考虑前导0,首位一定是1)
+        return false;
+    }
+};
+```
+
+
+
+### [1007. 行相等的最少多米诺旋转](https://leetcode.cn/problems/minimum-domino-rotations-for-equal-row/)
+
+> 在一排多米诺骨牌中，`tops[i]` 和 `bottoms[i]` 分别代表第 `i` 个多米诺骨牌的上半部分和下半部分。（一个多米诺是两个从 1 到 6 的数字同列平铺形成的 —— 该平铺的每一半上都有一个数字。）
+>
+> 我们可以旋转第 `i` 张多米诺，使得 `tops[i]` 和 `bottoms[i]` 的值交换。
+>
+> 返回能使 `tops` 中所有值或者 `bottoms` 中所有值都相同的最小旋转次数。
+>
+> 如果无法做到，返回 `-1`.
+
+代码如下：
+```c++
+class Solution {
+public:
+    int minDominoRotations(vector<int>& tops, vector<int>& bottoms) {
+        //题意:经过最少的交换次数cnt,使得tops或者bottoms中的所有值都相同
+        //两边都试一下,都变成tops[0]或者都变成bottoms[0],比如都变成tops[0]的话,不确定都交换到上面还是都交换到下面步数更少,都得试试
+        //把tops或者buttoms旋转到全是target所需要的最小旋转次数
+        int n = tops.size();
+        auto minRot = [&](this auto&& dfs, int target)->int
+        {
+            int toTop = 0; //旋转到上面的最小次数
+            int toBottom = 0; //旋转到下面的最小次数
+            //有可能都旋转到上面步数最小,也有可能都旋转到下面步数最小,都得试试
+            for(int i=0;i<n;i++)
+            {
+                int x = tops[i];
+                int y = bottoms[i];
+                if(x!=target && y!=target) return INT_MAX;
+                else if(x==target && y!=target) toBottom++;
+                else if(x!=target && y==target) toTop++; //一次遍历算出都翻到上面或者都翻到下面的最少步数
+                //都==target,不用管
+            }
+            return min(toTop, toBottom);
+        };
+        int ans = min(minRot(tops[0]), minRot(bottoms[0]));
+        if(ans==INT_MAX) return -1;
+        return ans;
+    }
+};
+```
+
