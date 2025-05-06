@@ -2,6 +2,8 @@
 
 # 前置知识
 
+Score-based Model, DDPM(两个工作,有共同点) ->SDE/ODE(做了一个统一,离散->连续) ->Consistency Model(单步去噪)
+
 ## 1.Score-based Model
 
 论文：《Generative Modeling by Estimating Gradients of the Data Distribution》
@@ -213,7 +215,7 @@ SDE本质上还是在估计Score。
 >
 > 1. **采样步骤**：反向过程的迭代更新公式，每一步减去漂移项并添加噪声。
 > 2. **得分函数**：核心是估计 $ \nabla_x \log p(x) $，通常通过训练神经网络（如Score Matching或Diffusion Models）近似。
-> 3. **正反向SDE对比**：反向SDE的漂移项多了一个得分驱动的修正，确保从噪声中逐步生成数据。
+> 3. **正反向SDE对比**：反向SDE的漂移项多了一个score-based的修正，确保从噪声中逐步生成数据。
 >
 > ---
 >
