@@ -293,3 +293,6 @@ elif args.loss_type == "huber":
 ```
 
 至此，我们已经完成了Consistency Model一致性模型的贡献、理论部分，并且和代码直接结合起来了，你看这个一致性模型像不像悖理？
+
+
+
