@@ -2661,6 +2661,138 @@ public:
 
 
 
+### （4）[3112. 访问消失节点的最少时间](https://leetcode.cn/problems/minimum-time-to-visit-disappearing-nodes/)
+
+> 给你一个二维数组 `edges` 表示一个 `n` 个点的无向图，其中 `edges[i] = [ui, vi, lengthi]` 表示节点 `ui` 和节点 `vi` 之间有一条需要 `lengthi` 单位时间通过的无向边。
+>
+> 同时给你一个数组 `disappear` ，其中 `disappear[i]` 表示节点 `i` 从图中消失的时间点，在那一刻及以后，你无法再访问这个节点。
+>
+> **注意**，图有可能一开始是不连通的，两个节点之间也可能有多条边。
+>
+> 请你返回数组 `answer` ，`answer[i]` 表示从节点 `0` 到节点 `i` 需要的 **最少** 单位时间。如果从节点 `0` 出发 **无法** 到达节点 `i` ，那么 `answer[i]` 为 `-1` 。
+
+```c++
+class Solution {
+public:
+    vector<int> minimumTime(int n, vector<vector<int>>& edges, vector<int>& disappear) {
+        //也就是说,dist[i] + length[i] < disappear[j] 才可以走到
+        vector<int> visited(n, 0);
+        vector<int> dist(n, INT_MAX / 2); //dist数组存储从节点0出发到某个节点的最短路径
+        vector<vector<pair<int, int>>> graph(n);
+        for(auto& e: edges)
+        {
+            int from = e[0];
+            int to = e[1];
+            int dist = e[2];
+            graph[from].push_back(make_pair(to, dist));
+            graph[to].push_back(make_pair(from, dist));
+        }
+        //贪心性质,能走就走,不然绕远路可能更完蛋
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+        pq.emplace(0, 0);
+        dist[0] = 0; 
+        while(!pq.empty())
+        {
+            auto [d, cur] = pq.top();
+            pq.pop();
+            if(d > dist[cur]) continue;  //cur之前出堆过,这里剪枝,跟其他的Dijkstra算法一样
+            for(auto& [v, nxtDist]: graph[cur])
+            {
+                if(dist[cur] + nxtDist < disappear[v])
+                {
+                    if(dist[cur] + nxtDist < dist[v])
+                    {
+                        dist[v] = dist[cur] + nxtDist;
+                        //务必注意,本题并不需要visited数组(可能Dijkstra算法都不需要?)因为本来就要访问某个节点多次,可能有更近的方案
+                        pq.emplace(dist[v], v);
+                    }
+                }
+            }
+        }
+        for(int i=0;i<n;i++)
+        {
+            if(dist[i]==INT_MAX/2) dist[i] = -1;
+        }
+        return dist;
+    }
+};
+```
+
+
+
+### （5）[2642. 设计可以求最短路径的图类](https://leetcode.cn/problems/design-graph-with-shortest-path-calculator/)
+
+>  给你一个有 `n` 个节点的 **有向带权** 图，节点编号为 `0` 到 `n - 1` 。图中的初始边用数组 `edges` 表示，其中 `edges[i] = [fromi, toi, edgeCosti]` 表示从 `fromi` 到 `toi` 有一条代价为 `edgeCosti` 的边。
+>
+> 请你实现一个 `Graph` 类：
+>
+> - `Graph(int n, int[][] edges)` 初始化图有 `n` 个节点，并输入初始边。
+> - `addEdge(int[] edge)` 向边集中添加一条边，其中 `edge = [from, to, edgeCost]` 。数据保证添加这条边之前对应的两个节点之间没有有向边。
+> - `int shortestPath(int node1, int node2)` 返回从节点 `node1` 到 `node2` 的路径 **最小** 代价。如果路径不存在，返回 `-1` 。一条路径的代价是路径中所有边代价之和。
+
+#### （a）方法1：Dijkstra硬做
+
+使用Dijkstra算法按照题意直接做：
+```c++
+class Graph {
+public:
+    vector<vector<pair<int, int>>> graph;
+    int n;
+    Graph(int n, vector<vector<int>>& edges) {
+        graph.resize(n);
+        this->n = n;
+        for(auto& e: edges)
+        {
+            int from = e[0];
+            int to = e[1];
+            int edgeCost = e[2];
+            graph[from].push_back(make_pair(to, edgeCost));
+        }
+    }
+    
+    void addEdge(vector<int> edge) {
+        int from = edge[0];
+        int to = edge[1];
+        int edgeCost = edge[2];
+        graph[from].push_back(make_pair(to, edgeCost));
+    }
+    
+    int shortestPath(int node1, int node2) {
+        //从node1开始做Dijkstra
+        vector<int> dist(n, INT_MAX / 2);
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+        pq.emplace(0, node1);
+        dist[node1] = 0;
+        while(!pq.empty())
+        {
+            auto [curDist, cur] = pq.top();
+            pq.pop();
+            if(curDist > dist[cur]) continue;
+            if(cur==node2) return dist[cur];
+            for(auto& [v, nxtDist]: graph[cur])
+            {
+                int newDist = curDist + nxtDist;
+                if(newDist<dist[v])
+                {
+                    dist[v] = newDist;
+                    pq.emplace(newDist, v);
+                }
+            }
+        }
+        return -1;
+    }
+};
+
+/**
+ * Your Graph object will be instantiated and called as such:
+ * Graph* obj = new Graph(n, edges);
+ * obj->addEdge(edge);
+ * int param_2 = obj->shortestPath(node1,node2);
+ */
+```
+
+
+
 
 
 ## 2.全源最短路：Floyd算法

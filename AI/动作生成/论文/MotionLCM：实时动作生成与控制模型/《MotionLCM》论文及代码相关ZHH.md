@@ -133,8 +133,8 @@ https://github1s.com/luosiallen/latent-consistency-model/blob/main/LCM_Training_
 # Sample a random timestep for each image t_n ~ U[0, N - k - 1] without bias.
 topk = noise_scheduler.config.num_train_timesteps // args.num_ddim_timesteps
 index = torch.randint(0, args.num_ddim_timesteps, (bsz,), device=latents.device).long()
-start_timesteps = solver.ddim_timesteps[index]
-timesteps = start_timesteps - topk
+start_timesteps = solver.ddim_timesteps[index] # t_{n+1}
+timesteps = start_timesteps - topk # t_{n}
 timesteps = torch.where(timesteps < 0, torch.zeros_like(timesteps), timesteps)
 ```
 
@@ -162,7 +162,7 @@ c_skip, c_out = [append_dims(x, latents.ndim) for x in [c_skip, c_out]]
 ```python
 # 20.4.5. Add noise to the latents according to the noise magnitude at each timestep
 # (this is the forward diffusion process) [z_{t_{n + k}} in Algorithm 1]
-noisy_model_input = noise_scheduler.add_noise(latents, noise, start_timesteps)
+noisy_model_input = noise_scheduler.add_noise(latents, noise, start_timesteps) # x_{t_{n+1}}
 
 # 20.4.6. Sample a random guidance scale w from U[w_min, w_max] and embed it
 w = (args.w_max - args.w_min) * torch.rand((bsz,)) + args.w_min
@@ -176,7 +176,7 @@ w_embedding = w_embedding.to(device=latents.device, dtype=latents.dtype)
 prompt_embeds = encoded_text.pop("prompt_embeds")
 
 # 20.4.9. Get online LCM prediction on z_{t_{n + k}}, w, c, t_{n + k}
-noise_pred = unet(
+noise_pred = unet( # F_theta网络
     noisy_model_input,
     start_timesteps,
     timestep_cond=w_embedding,

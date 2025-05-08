@@ -299,3 +299,11 @@ Effective C++的前四个条款学习；
 [563. 二叉树的坡度](https://leetcode.cn/problems/binary-tree-tilt/)
 
 [606. 根据二叉树创建字符串](https://leetcode.cn/problems/construct-string-from-binary-tree/)
+
+
+
+# 2025.5.8
+
+[3112. 访问消失节点的最少时间](https://leetcode.cn/problems/minimum-time-to-visit-disappearing-nodes/)
+
+[2642. 设计可以求最短路径的图类](https://leetcode.cn/problems/design-graph-with-shortest-path-calculator/)
