@@ -1426,3 +1426,34 @@ model = target_model_class(cfg, dataset)
 
 进到 mld.py
 
+
+
+####  control
+
+生成的 `launch.json` 中，添加一个自定义配置来传递命令行参数。示例配置如下：
+
+`python demo.py --cfg configs/motionlcm_control_s.yaml`
+
+尝试一下这个
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug MotionLCM Demo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/root/MotionLCM/MotionLCM/demo.py",
+            "args": [
+                "--cfg", "configs/motionlcm_control_s.yaml", // 参数
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "python": "/root/miniconda3/envs/motionlcm/bin/python",  // 显式指定 Conda 环境路径
+            "cwd": "/root/MotionLCM/MotionLCM"                // 设置工作目录
+        }
+    ]
+}
+```
+

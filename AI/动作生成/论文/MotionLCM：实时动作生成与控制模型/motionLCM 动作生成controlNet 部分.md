@@ -637,6 +637,111 @@ train_motion_control.py是会调用mld中定义的模型来进行训练
 
 
 
+## demo.py
+
+以下是关于轨迹编码器（Trajectory Encoder）的详细解析，结合论文与代码逻辑的完整说明：
+
+---
+
+### **1. 轨迹编码器（Trajectory Encoder）设计原理**
+#### **输入数据格式**
+- **原始控制信号**：初始τ帧的K个控制关节的全局绝对位置  
+  $$\mathbf{g}^{1:\tau} = \{\mathbf{g}^i\}_{i=1}^{\tau}, \quad \mathbf{g}^i \in \mathbb{R}^{K \times 3}$$  
+  - 每个$\mathbf{g}^i$表示第i帧时K个关节的3D坐标（X/Y/Z）
+- **代码中的预处理**（对应论文图3(b)）：  
+  ```python
+  # 实际代码中的hint处理（假设batch['hint']形状为[B, T, K*3]）
+  hint = batch['hint'].reshape(batch_size, -1, K, 3)  # 分解为关节维度
+  hint = dataset.denorm_spatial(hint)  # 反归一化到原始坐标空间
+  ```
+
+#### **编码器架构**
+- **核心组件**：堆叠的Transformer层（论文中标记为$\boxed{67}$）  
+  ```python
+  # 伪代码示意（实际实现可能使用PyTorch TransformerEncoder）
+  class TrajectoryEncoder(nn.Module):
+      def __init__(self):
+          self.cls_token = nn.Parameter(torch.zeros(1, 1, d_model))  # [CLS]全局令牌
+          self.embed = nn.Linear(K*3, d_model)  # 将3D坐标映射到隐空间
+          self.transformer = TransformerEncoder(num_layers=6, d_model=d_model)
+          
+      def forward(self, g):
+          B, T, K, _ = g.shape
+          g = g.reshape(B, T, -1)  # 展平关节维度 [B,T,K*3]
+          x = self.embed(g)  # 线性投影 [B,T,d_model]
+          cls_tokens = self.cls_token.expand(B, -1, -1)  # 扩展[B,1,d_model]
+          x = torch.cat([cls_tokens, x], dim=1)  # 添加[CLS] [B,T+1,d_model]
+          return self.transformer(x)[:, 0]  # 返回[CLS]特征 [B,d_model]
+  ```
+
+#### **关键设计**
+1. **[CLS]全局令牌**  
+   - 作为整个轨迹序列的聚合表征，直接与潜在变量$\mathbf{z}_n$相加（公式8中的$\mathbf{c}^*$组成部分）
+2. **零初始化技巧**  
+   - ControlNet的附加线性层初始化为零，避免训练初期噪声干扰（论文3.3节第二段）
+
+---
+
+### **2. 控制信号与扩散过程的融合**
+#### **联合训练目标**
+- **双重损失函数**（公式10）：  
+  $$\mathcal{L} = \mathcal{L}_{\text{recon}} + \lambda \mathcal{L}_{\text{control}}$$  
+  - **潜在空间重建损失**（公式8）：  
+    $$\mathcal{L}_{\text{recon}} = \mathbb{E}\left[d\left(f_{\Theta^*}(\mathbf{z}_n, t_n, w, \mathbf{c}^*), \mathbf{z}_0\right)\right]$$  
+  - **运动空间控制损失**（公式9）：  
+    $$\mathcal{L}_{\text{control}} = \mathbb{E}\left[\frac{\sum_{i,j} m_{ij} \|R(\hat{\mathbf{x}}_0)_{ij} - R(\mathbf{x}_0)_{ij}\|_2^2}{\sum_{i,j} m_{ij}}\right]$$  
+
+#### **代码实现逻辑**
+```python
+# 训练循环伪代码（关键步骤）
+z_noisy = q_sample(z_start, noise, t)  # 前向扩散加噪
+c_text = text_encoder(prompts)  # 文本编码
+c_traj = trajectory_encoder(hint)  # 轨迹编码
+
+# ControlNet引导的降噪
+z_pred = model(z_noisy, t, c_text, c_traj)  
+
+# 损失计算
+loss_recon = F.mse_loss(z_pred, z_start)  
+x_pred = vae_decoder(z_pred)  # 解码到运动空间
+loss_control = masked_mse(global_pos(x_pred), global_pos(x_gt), mask)
+loss = loss_recon + lambda * loss_control
+```
+
+---
+
+### **3. 与ControlNet的协同工作流程**
+1. **初始化阶段**  
+   - MotionLCM的权重克隆到ControlNet $\Theta^a$，新增层零初始化
+2. **推理阶段**  
+   ```python
+   # 实际推理代码逻辑（对应论文图3）
+   def generate_motion(text, hint_trajectory):
+       c_text = encode_text(text)  # 文本编码
+       c_traj = trajectory_encoder(hint_trajectory)  # 轨迹编码
+       z_T = torch.randn_like(z_init)  # 随机噪声
+       z_0 = consistency_sampling(model, z_T, c_text, c_traj)  # 一致性采样
+       return vae_decoder(z_0)  # 最终运动输出
+   ```
+
+---
+
+### **4. 两句话核心总结**
+1. **轨迹编码本质**：通过Transformer将关节轨迹$\mathbf{g}^{1:\tau}$编码为[CLS]令牌特征，**与文本条件拼接后引导潜在空间降噪**（公式8的$\mathbf{c}^*$）。  
+2. **创新监督机制**：通过VAE解码器将$\hat{\mathbf{z}}_0$映射到运动空间计算$\mathcal{L}_{\text{control}}$，**实现潜在空间与原始运动空间的双重约束**（公式10）。  
+
+---
+
+### **附：关键公式对照表**
+| 论文符号              | 含义               | 代码对应              |
+| --------------------- | ------------------ | --------------------- |
+| $\mathbf{g}^{1:\tau}$ | 控制关节轨迹输入   | `batch['hint']`       |
+| $\Theta^b$            | Trajectory Encoder | `trajectory_encoder`  |
+| $R(\cdot)$            | 局部→全局坐标转换  | `global_pos()`        |
+| $\lambda$             | 控制损失权重       | `args.lambda_control` |
+
+
+
 # 其他
 
 ### 涉及到的基础知识

@@ -599,7 +599,7 @@ debug `python demo.py --cfg configs/motionlcm_t2m.yaml --example assets/example.
 
 在生成的 `launch.json` 中，添加一个自定义配置来传递命令行参数。示例配置如下：
 
-```C++
+```json
 {
     "version": "0.2.0",
     "configurations": [
