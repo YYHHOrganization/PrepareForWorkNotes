@@ -566,3 +566,97 @@ dataset = load_dataset(
 huggingface-cli download --token hf_*** --resume-download meta-llama/Llama-2-7b-hf --local-dir Llama-2-7b-hf
 ```
 
+
+
+# 七、 配置debug环境
+
+例子
+
+debug `python demo.py --cfg configs/motionlcm_t2m.yaml --example assets/example.txt `
+
+
+
+#### 1 
+
+在远程服务器上配置一下 安装好python和python debugger这两个extentions
+
+![image-20250507161756057](assets/image-20250507161756057.png)
+
+![image-20250507161801830](assets/image-20250507161801830.png)
+
+#### 2 **配置 VS Code 的调试环境**
+
+1. **打开项目文件夹**
+   在 VS Code 中打开 MotionLCM 的代码目录（确保包含 `demo.py` 和 `configs/`）。
+2. **进入调试模式**
+   点击左侧活动栏的 **“运行和调试”** 图标（或按 `Ctrl+Shift+D`），然后点击顶部菜单的 **“创建 launch.json 文件”**。
+3. **选择调试配置模板**
+   选择 **“Python 文件”**（如果提示选择环境）。
+
+
+
+#### 3 **编辑 `launch.json` 文件**
+
+在生成的 `launch.json` 中，添加一个自定义配置来传递命令行参数。示例配置如下：
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug MotionLCM Demo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/root/MotionLCM/MotionLCM/demo.py",
+            "args": [
+                "--cfg", "configs/motionlcm_t2m.yaml", // 参数
+                "--example", "assets/example.txt"	// 参数
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "python": "/root/miniconda3/envs/motionlcm/bin/python",  // 显式指定 Conda 环境路径
+            "cwd": "/root/MotionLCM/MotionLCM"                // 设置工作目录
+        }
+    ]
+}
+```
+
+
+
+>### Conda 环境路径
+>
+>1. **确认路径和权限**
+>
+>   ```
+>   # 检查 Conda 环境路径
+>   conda activate motionlcm
+>   which python
+>   ```
+>
+>   这样就可以得到路径 然后再复制进来即可
+
+
+
+![image-20250507162040225](assets/image-20250507162040225.png)
+
+**关键参数说明**：
+
+- `"program"`: 指定要调试的脚本路径（`demo.py`）。
+- `"args"`: 传递命令行参数，格式为字符串数组（每个参数和值分开写）。
+- `"console"`: 设置为 `integratedTerminal` 以便查看实时输出。
+
+
+
+#### **开始调试**
+
+设置断点
+
+点击: 
+
+![image-20250507162157624](assets/image-20250507162157624.png)
+
+
+
+就好啦!
+
+![image-20250507161615078](assets/image-20250507161615078.png)
