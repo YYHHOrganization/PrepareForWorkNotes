@@ -24,6 +24,26 @@ D:\_Postgraduate\motionGen\MotionLCM\MotionLCM\mld\models\metrics\utils.py
 
 ## 步骤
 
+>如果建了新的机器,第一次连接
+>
+>就add下
+>
+>![image-20250508151329188](assets/image-20250508151329188.png)
+>
+>输入ssh后选择C盘那个
+>
+>![image-20250508151405879](assets/image-20250508151405879.png)
+>
+>然后输入密码,如果不行就关闭连接,重新尝试连接
+>
+>也就是说可能得在这个界面上继续连接才可以 不知道为啥 但似乎这样可以
+>
+>![image-20250510152751677](assets/image-20250510152751677.png)
+
+
+
+非第一次连接:
+
 服务器开机：
 
 ![image-20250425153454160](assets/image-20250425153454160.png)
@@ -1008,6 +1028,7 @@ motion = model.generate(text="坐下", hint=scene_heatmap)  # 将场景热图作
 
 #### **操作方法**
 1. **冻结主干网络**：
+   
    ```python
    # 在训练脚本中设置
    for param in model.text_encoder.parameters():
@@ -1425,6 +1446,32 @@ demo.py
 model = target_model_class(cfg, dataset)
 
 进到 mld.py
+
+
+
+带example的 :
+
+```JSON
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug MotionLCM Demo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/root/MotionLCM/MotionLCM/demo.py",
+            "args": [
+                "--cfg", "configs/motionlcm_t2m.yaml",
+                "--example", "assets/example.txt"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "python": "/root/miniconda3/envs/motionlcm/bin/python",  // 显式指定 Conda 环境路径
+            "cwd": "/root/MotionLCM/MotionLCM"                // 设置工作目录
+        }
+    ]
+}
+```
 
 
 
