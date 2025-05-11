@@ -925,3 +925,63 @@ public:
 
 
 
+# 其他
+
+### [3542. 将所有元素变为 0 的最少操作次数](https://leetcode.cn/problems/minimum-operations-to-convert-all-elements-to-zero/)
+
+给你一个大小为 `n` 的 **非负** 整数数组 `nums` 。你的任务是对该数组执行若干次（可能为 0 次）操作，使得 **所有** 元素都变为 0。
+
+在一次操作中，你可以选择一个子数组 `[i, j]`（其中 `0 <= i <= j < n`），将该子数组中所有 **最小的非负整数** 的设为 0。
+
+返回使整个数组变为 0 所需的**最少**操作次数。
+
+一个 **子数组** 是数组中的一段连续元素。
+
+**示例 1：**
+
+**输入:** nums = [0,2]
+
+**输出:** 1
+
+**解释:**
+
+- 选择子数组 `[1,1]`（即 `[2]`），其中最小的非负整数是 2。将所有 2 设为 0，结果为 `[0,0]`。
+- 因此，所需的最少操作次数为 1。
+
+
+
+https://leetcode.cn/problems/minimum-operations-to-convert-all-elements-to-zero/solutions/3673804/cong-fen-zhi-dao-dan-diao-zhan-jian-ji-x-mzbl/
+
+```C++
+class Solution {
+public:
+    int minOperations(vector<int>& nums) {
+        stack<int> stk;
+        int n = nums.size();
+        int ans=0;
+        for(auto x:nums)
+        {
+            while(!stk.empty() && x<stk.top())
+            {
+                stk.pop();
+                ans++;
+            }
+            if(stk.empty()||x>stk.top()) stk.push(x);//非=，则push
+        }
+        int inStk=0;
+        if(stk.size()>=1)
+        {
+            while(stk.size()>1)
+            {
+                stk.pop();
+                inStk++;
+            }
+            // cout<<"instk"<<inStk<<endl;
+            inStk+=(stk.top()>0);
+        }
+        return ans + inStk;
+    }
+};
+```
+
+也可以用数组模拟 
