@@ -46,3 +46,11 @@
 - 明确当时SDS Loss失败的原因，研究解决方案（Displacement map和deformation map生成效果很差，需要查明原因）；
 - FaceG2E这篇工作的不足之处在于texture的生成效果不够好，同时编辑能力较差，这是完全可以提升的点，会去找一下比较新的工作能否解决这两个问题。
 
+
+
+# 2025.05.01~2025.05.09 周报
+
+科研进展相关:
+
+- (1)详细了解了一致性模型Consistency Model和Latent Consitency Model,并阅读完成相关的源码;
+- (2)将FaceG2E的源码部分进行理解,找到可以更新的点;
