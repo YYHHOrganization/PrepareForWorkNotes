@@ -299,3 +299,39 @@ Effective C++的前四个条款学习；
 [563. 二叉树的坡度](https://leetcode.cn/problems/binary-tree-tilt/)
 
 [606. 根据二叉树创建字符串](https://leetcode.cn/problems/construct-string-from-binary-tree/)
+
+
+
+# 2025.5.8
+
+[3112. 访问消失节点的最少时间](https://leetcode.cn/problems/minimum-time-to-visit-disappearing-nodes/)
+
+[2642. 设计可以求最短路径的图类](https://leetcode.cn/problems/design-graph-with-shortest-path-calculator/)
+
+
+
+# 2025.5.10
+
+[3343. 统计平衡排列的数目](https://leetcode.cn/problems/count-number-of-balanced-permutations/)
+
+[2918. 数组的最小相等和](https://leetcode.cn/problems/minimum-equal-sum-of-two-arrays-after-replacing-zeros/)
+
+第83场周赛(算是国内的第一场):
+
+- [830. 较大分组的位置](https://leetcode.cn/problems/positions-of-large-groups/)
+
+- [829. 连续整数求和](https://leetcode.cn/problems/consecutive-numbers-sum/)
+
+第150场双周赛:
+
+- 
+
+
+
+# 2025.5.11
+
+[1550. 存在连续三个奇数的数组](https://leetcode.cn/problems/three-consecutive-odds/)
+
+[1870. 准时到达的列车最小时速](https://leetcode.cn/problems/minimum-speed-to-arrive-on-time/)（**再做一遍，要点：化浮点数为整数，化除法为乘法，维护好哪些量需要乘，哪些量不需要乘即可。**）
+
+[3453. 分割正方形 I](https://leetcode.cn/problems/separate-squares-i/)
