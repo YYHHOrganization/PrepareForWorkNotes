@@ -77,7 +77,15 @@ A person sits down, raises his left hand, leans to the left, slowly leans back o
 ## **摘要**  
 本研究提出MotionLCM，将可控运动生成扩展到**实时**水平。现有基于文本条件的时空控制方法在运动生成中存在**显著的运行时效率问题**。为解决该问题，我们首先基于运动潜在扩散模型构建了**运动潜在一致性模型（MotionLCM）**，通过采用**一步（或少量步）推理**技术，显著提升了运动生成效率。为保障有效控制性，我们在MotionLCM的潜在空间中引入**运动ControlNet**，并利用原始运动空间中的显式控制信号（即**初始动作**）为训练过程提供额外监督。通过上述技术，我们的方法能实时生成符合文本描述与控制信号的人体动作。实验结果表明，MotionLCM在保持实时运行效率的同时，展现出卓越的生成与控制能力。
 
+Abstract. 
 
+This work introduces MotionLCM, extending controllable motion generation to a real-time level. Existing methods for spatialtemporal control in text-conditioned motion generation suffer from significant runtime inefficiency. To address this issue, we first propose the motion latent consistency model (MotionLCM) for motion generation,
+
+building on the motion latent diffusion model. By adopting one-step (or few-step) inference, we further improve the runtime efficiency of the motion latent diffusion model for motion generation. To ensure effective controllability, we incorporate a motion ControlNet within the latent space of MotionLCM and enable explicit control signals (i.e., initial motions) in the vanilla motion space to further provide supervision for the training process. By employing these techniques, our approach can generate human motions with text and control signals in real-time. Experimental results demonstrate the remarkable generation and controlling capabilities of MotionLCM while maintaining real-time runtime efficiency.
+
+
+
+Keywords: Text-to-Motion · Real-time Control · Consistency Model
 
 **核心总结**  
 1. **重点** MotionLCM通过潜在一致性模型与一步推理技术，将文本驱动动作生成的实时控制变为可能  

@@ -57,7 +57,7 @@ Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0  # 3
 
 ![image-20250422150408062](./assets/image-20250422150408062.png)
 
-有可能密码失效，这种情况下可以==尝试重启一下远程服务器，换一个自己比较熟悉的密码。或者是保存一下相关的SSH配置==（【重点】亲测对本机来说，这个是有效的，修改一下密码并保存一下SSH配置）。
+有可能密码失效，这种情况下可以==尝试重启一下远程服务器，换一个自己比较熟悉的密码。或者是保存一下相关的SSH配置==（【重点】亲测对本机来说，这个是有效的，修改一下密码并保存一下SSH配置，不修改代码应该也可以，重点是保存配置）。
 
 > 保存SSH配置的操作如下图：
 >
@@ -79,6 +79,14 @@ Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0  # 3
 conda create python=3.10.12 --name motionlcm
 conda activate motionlcm
 ```
+
+学术资源加速（相关网站：https://www.autodl.com/docs/network_turbo/）：
+
+```bash
+source /etc/network_turbo
+```
+
+
 
 首先进入VS code，选最上面一排->View->Terminal，打开Terminal窗口，如下：
 
@@ -425,9 +433,183 @@ Github的仓库中的原文：Please refer to [HumanML3D](https://github.com/Eri
 
 现在我们按照这个链接所说的，再配置对应的conda环境，==思路跟之前是一样的，但这里也记录一下，避免后面忘记导致出问题。==
 
+## 1.数据集的介绍
+
+### （1）For KIT-ML dataset, you could directly download [[Here\]](https://drive.google.com/drive/folders/1D3bf2G2o4Hv-Ale26YW18r1Wrh7oIAwK?usp=sharing). 
+
+不过MotionLCM这个项目使用的是HumanML3D数据集，以下我们优先配这个数据集。
+
+### （2）HumanML3D数据集配置
+
+## ==不要配环境了！他这个环境根本用不了！直接用MotionLCM的conda环境即可！！！！！！缺的包稍微补充一下就好了。这一节配环境的部分不要看！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！==
+
+Due to the distribution policy of AMASS dataset, we are not allowed to distribute the data directly. We provide a series of script that could reproduce our HumanML3D dataset from AMASS dataset.
+
+You need to clone this repository and install the virtual environment.
+
+也就是说，需要先创建一个conda环境，由于我们只要数据集的处理相关，且数据集可能非常大，因此到==数据盘==中去做这件事：
+
+![image-20250509105007417](./assets/image-20250509105007417.png)
+
+然后新建一个文件夹HumanML3D：
+
+```bash
+mkdir HumanML3D
+```
+
+然后clone仓库并创建对应的环境：
+
+```shell
+git clone https://github.com/EricGuo5513/HumanML3D.git
+cd HumanML3D
+conda env create -f environment.yaml
+conda activate torch_render
+```
+
+> 注：在conda env create的步骤报了一个错：
+>
+> ```shell
+> Pip subprocess error:
+> ERROR: Could not find a version that satisfies the requirement body-visualizer==1.1.0
+> ERROR: No matching distribution found for body-visualizer==1.1.0
+> ```
+>
+> ==这里采用的是Issue当中提供的解决方案（挺麻烦的，不行可能得多配置几次）：https://github.com/EricGuo5513/HumanML3D/issues/10，==
+>
+> ```shell
+> conda env remove -n torch_render  # 出问题记得删除原来的环境
+> source /etc/network_turbo  # AutoDL的学术加速
+> ```
+>
+> 然后修改yaml文件（==务必注意注释掉下面yaml文件中的四行，==）：
+>
+> ```yaml
+> name: torch_render
+> channels:
+>   - defaults
+> dependencies:
+>   	# ... 这部分跟之前一样 
+>   - zstd=1.4.9=haebb681_0
+>   - pip:
+>     - absl-py==1.0.0
+>     # - body-visualizer==1.1.0
+>     # - configer==1.4.1
+>     - # ...
+>     # - install==1.3.5
+>     # - psbody-mesh==0.4
+> prefix: /home/chuan/anaconda3/envs/torch_render
+> ```
+>
+> 这四个包会给我们的环境带来环境，这里我们==手动配置以下这四个包：==
+>
+> - （1）`pip install git+https://github.com/nghorbani/body_visualizer.git`，这个包不会有任何问题；
+>
+> - （2）`pip install git+https://github.com/MPI-IS/configer`，这个包也不会有任何问题；
+>
+> - （3）
+>
+>   
+>
+> - ```bash
+>   # 这个会有问题！！！！ pip install git+https://github.com/MPI-IS/mesh.git
+>   ```
+>
+> 上面这个mesh的会有问题，改成（之前报错应该是因为缺少boost包）：
+>
+> ```shell
+> sudo apt-get install libboost-dev
+> pip install git+https://github.com/MPI-IS/mesh.git
+> ```
+>
+> - （4）`pip install pip-install==1.3.5`，这个也不会有任何问题。
+>
+> ==至此，下载数据集的环境算是配好了。==
+>
+> 
+>
+> 补充：仓库提出的解决方案（==未使用==）：In the case of installation failure, you could alternatively install the following:
+>
+> ```
+> - Python==3.7.10
+> - Numpy          
+> - Scipy          
+> - PyTorch        
+> - Tqdm 
+> - Pandas
+> - Matplotlib==3.3.4     // Only for animation
+> - ffmpeg==4.3.1  // Only for animation
+> - Spacy==2.3.4   // Only for text process
+> ```
+
+
+
+接下来这个仓库说的是：
+
+#### Download SMPL+H and DMPL model
+
+Download SMPL+H mode from [SMPL+H](https://mano.is.tue.mpg.de/download.php) (choose Extended SMPL+H model used in AMASS project) and DMPL model from [DMPL](https://smpl.is.tue.mpg.de/download.php) (choose DMPLs compatible with SMPL). Then place all the models under "./body_model/".（==注意，下面图不准确，作者说的有问题，应该取名叫做body_models，注意有s==）
+
+这个应该需要我们手动创建一个body_model的文件夹，然后按照上述的要求下载两个文件夹放在其下面，如下图：
+
+![image-20250509114533583](./assets/image-20250509114533583.png)
+
+对这两个文件进行解压：
+```shell
+# 先cd进入到body_models文件夹当中
+tar xf dmpls.tar.xz 
+tar xf smplh.tar.xz 
+```
+
+注意，原仓库说的==漏洞百出==，实际上还需要创建两个文件夹，然后分别解压上面两个文件放入进去：
+
+![image-20250509121107200](./assets/image-20250509121107200.png)
+
+> 每个文件解压之后都会有female，male和neutral这几个子文件，需要创建对应的父文件夹，不然后面运行ipynb文件的时候会报错。
+
+
+
+#### Extract and Process Data
+
+这一步要跑三个ipynb文件。
+
+You need to run the following scripts in order to obtain HumanML3D dataset:
+
+1. raw_pose_processing.ipynb
+2. motion_representation.ipynb
+3. cal_mean_variance.ipynb
+
+
+
+先阅读一下https://github.com/EricGuo5513/HumanML3D/blob/main/raw_pose_processing.ipynb，这个文件，看看我们都要做些什么。
+
+首先进入这个网站：https://amass.is.tue.mpg.de/download.php，这里有很多数据集，==Note only download the SMPL+H G data.==。暂时只是尝试的话，都下载不太现实，我们下一个动作稍微多一些的，选这个：[BMLmovi](http://www.biomotionlab.ca/movi/)
+
+然后上传到服务器上，在仓库根目录下创建一个文件夹：amass_data，然后把下载后的没有解压的文件放进去，然后进入到对应的文件目录中，解压：
+```shell
+tar -xvjf BMLmovi.tar.bz2
+```
+
+接下来就可以跑上面的三个ipynb文件了，记得要安装比如jupyter notebook相关的运行环境（VS Code会直接给出提示，按照提示来即可。）
+
+==注意，解压之后要把tar.bz2本来的压缩文件和license.txt文件都删掉，只留下面的文件夹：==
+
+![image-20250509122251607](./assets/image-20250509122251607.png)
+
+这几个ipynb文件直接看修改之后的就行，==要改的实在是太多了，贴不过来了，神人仓库。==
+
+完成之后需要把数据集拷贝到MotionLCM这个仓库的datasets文件夹当中：
+
+```shell
+cp -r /root/autodl-tmp/HumanML3D/HumanML3D/HumanML3D /root/MotionLCM/MotionLCM/datasets
+```
+
+==然后记得把文件夹名字改成小写（humanml3d），MotionLCM这个项目需要。==
+
 
 
 # 五、基本测试
+
+注意：==推荐将 scipy 降级到 1.11.1 ！否则train vae的代码可能会报错！==
 
 ![image-20250423182414379](assets/image-20250423182414379.png)
 
@@ -480,11 +662,13 @@ python demo.py --cfg configs/motionlcm_t2m.yaml --example assets/example.txt
 
 ![image-20250422165036311](./assets/image-20250422165036311.png)
 
-==测试一下其他的指令，也都是可以执行的，目前就先测试到这里。==
-
 
 
 ## 2.Render SMPL
+
+### （1）创建SMPL Mesh
+
+The SMPL meshes (numpy array) will be stored in `assets/example_mesh.pkl` with the shape `(nframes, 6890, 3)`.
 
 After running the demo, the output folder will store the stick figure animation for each generated motion (e.g., `assets/example.gif`).To record the necessary information about the generated motion, a pickle file with the following keys will be saved simultaneously (e.g., `assets/example.pkl`):
 
@@ -497,35 +681,248 @@ After running the demo, the output folder will store the stick figure animation 
 
 ![image-20250422170343804](./assets/image-20250422170343804.png)
 
-### （1）创建SMPL Mesh
+可以读取这个`pkl`文件并输出对应的信息，其实应该就在仓库介绍的`fit.py`文件当中。
 
-一个example如下：
-```python
+```shell
 python fit.py --pkl assets/example.pkl
 ```
 
-The SMPL meshes (numpy array) will be stored in `assets/example_mesh.pkl` with the shape `(nframes, 6890, 3)`.
+> ==【报错问题解决】==运行的时候有一个报错：
+>
+> (motionlcm) (base) root@autodl-container-de0747bdea-2702c64f:~/MotionLCM/MotionLCM# python fit.py --pkl assets/testSMPL0512.pkl
+> //...
+>
+> pickle.load(smpl_file,
+>   File "/root/miniconda3/envs/motionlcm/lib/python3.10/site-packages/chumpy/__init__.py", line 11, in <module>
+>     from numpy import bool, int, float, complex, object, unicode, str, nan, inf
+> ImportError: cannot import name 'bool' from 'numpy' (/root/miniconda3/envs/motionlcm/lib/python3.10/site-packages/numpy/__init__.py)
+>
+> ==**解决方案（实测有效！）：**==
+>
+> 临时修改 `chumpy/__init__.py` 文件：
+>
+> 1. 找到文件路径：
+>
+>    ```bash
+>    /root/miniconda3/envs/motionlcm/lib/python3.10/site-packages/chumpy/__init__.py
+>    ```
+>
+> 2. 将以下行：
+>
+>    ```python
+>    from numpy import bool, int, float, complex, object, unicode, str, nan, inf
+>    ```
+>
+>    修改为以下，即可成功运行：
+>
+>    ```python
+>    from numpy import int_, float_, complex_, object_, unicode_, str_, nan, inf
+>    import numpy as np
+>    bool = np.bool_
+>    int = int_
+>    float = float_
+>    complex = complex_
+>    object = object_
+>    unicode = unicode_
+>    str = str_
+>    ```
 
-You can also fit all pickle files within a folder. The code will traverse all `.pkl` files in the directory and filter out files that have already been fitted.
+生成的结果位置：The SMPL meshes (numpy array) will be stored in `assets/example_mesh.pkl` with the shape `(nframes, 6890, 3)`.
 
-```python
-python fit.py --dir assets/
-```
+注：根据原仓库：https://github.com/Dai-Wenxun/MotionLCM?tab=readme-ov-file，也可以把一个文件夹下面的都依据pkl文件生成SMPL，具体操作见仓库说明即可。
 
+这一步运行代码，结果如下：
 
-
-以我们的为例，就是：
-
-```python
-python fit.py --pkl assets/testMySelf.pkl # 把上一张图中的pkl文件挪到这里并重命名，以方便生成
-```
-
-生成的结果如下：
-
+![image-20250512113611255](./assets/image-20250512113611255.png)
 
 
 
 ### （2）Render SMPL Meshes
+
+这一步主要参考这个仓库：
+
+https://github.com/Mathux/TEMOS
+
+以下进行比较详细的介绍。首先根据https://www.blender.org/download/lts/2-93/这个网站下载Blender 2.93这个版本：==必须要精准下载这个版本！==
+
+#### （a）Windows版本的配置（==不太推荐（可以不看了）==，有点麻烦，不如Linux版本好配置，正好MotionLCM这篇文章也在Linux上）
+
+依据刚才的链接。我是下载到了Windows操作系统上。
+
+这里下载的是下面这个版本：
+
+![image-20250512114255868](./assets/image-20250512114255868.png)
+
+接下来，配置正确的环境变量:
+
+![image-20250512114633846](./assets/image-20250512114633846.png)
+
+验证一下：
+```shell
+blender --background --version # 输出Blender 2.93.18 (hash cb886aba06d5 built 2023-05-22 23:36:57)
+blender --background --python-expr "import sys; print('\nThe version of python is '+sys.version.split(' ')[0])" # 输出内容：The version of python is 3.9.2
+
+# 以下路径用于输出Blender当中的python解释器的路径：
+blender --background --python-expr "import sys; import os; print('\nThe path to the installation of python of blender can be:'); print('\n'.join(['- '+x.replace('/lib/python', '/bin/python') for x in sys.path if 'python' in (file:=os.path.split(x)[-1]) and not file.endswith('.zip')]))"
+# 我的输出：- D:\OtherUsefulSoftwares\BlenderOtherVersions\Blender2_93\2.93\python
+```
+
+
+
+接下来是安装pip：
+
+```shell
+D:\OtherUsefulSoftwares\BlenderOtherVersions\Blender2_93\2.93\python\bin\python.exe -m ensurepip --upgrade  # 注意这里指定的是python解释器的路径
+
+D:\OtherUsefulSoftwares\BlenderOtherVersions\Blender2_93\2.93\python\bin\python.exe -m pip install --user numpy
+D:\OtherUsefulSoftwares\BlenderOtherVersions\Blender2_93\2.93\python\bin\python.exe -m pip install --user matplotlib
+D:\OtherUsefulSoftwares\BlenderOtherVersions\Blender2_93\2.93\python\bin\python.exe -m pip install --user hydra-core --upgrade
+D:\OtherUsefulSoftwares\BlenderOtherVersions\Blender2_93\2.93\python\bin\python.exe -m pip install --user hydra_colorlog --upgrade
+D:\OtherUsefulSoftwares\BlenderOtherVersions\Blender2_93\2.93\python\bin\python.exe -m pip install --user moviepy
+D:\OtherUsefulSoftwares\BlenderOtherVersions\Blender2_93\2.93\python\bin\python.exe -m pip install --user shortuuid
+```
+
+中间应该有一些警告，但基本上就是pip可以升级了之类的，并不是十分重要，可以忽略掉。
+
+接下来，在TEMOS这个仓库中下载`render.py`这个文件。接下来就是渲染一个结果出来了：
+```shell
+blender --background --python render.py -- npy=PATH_TO_DATA.npy [OPTIONS]
+```
+
+我的示例：
+
+```shell
+blender --background --python render.py -- npy=testSMPL0512_mesh.pkl # 前提是进入到这个对应的路径下
+```
+
+
+
+#### （b）Linux版本的配置
+
+首先下载对应的Blender 2.93的精确版本：
+
+```shell
+wget https://www.blender.org/download/release/Blender2.93/blender-2.93.18-linux-x64.tar.xz
+```
+
+如果不行的话，就去https://www.blender.org/download/lts/2-93/官网上手动下载一下，拉到服务器上。
+
+接下来在对应文件夹中解压一下Blender：
+
+```shell
+tar -xf blender-2.93.18-linux-x64.tar.xz
+```
+
+接下来执行下面这段：
+
+> ### **1. 定位 Blender 可执行文件**
+>
+> 进入解压后的目录，查找 `blender` 可执行文件：
+>
+> ```bash
+> cd /root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64
+> ls -l blender  # 确认可执行文件是否存在
+> ```
+>
+> 如果输出类似：
+>
+> ```bash
+> -rwxr-xr-x 1 root root ... blender
+> ```
+>
+> 则 `blender` 是可执行文件。如果权限不足，运行：
+>
+> ```bash
+> chmod +x blender  # 添加可执行权限
+> ```
+>
+> ------
+>
+> ### **2. 直接运行 Blender**
+>
+> 使用绝对路径启动 Blender：
+>
+> ```bash
+> /root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/blender
+> ```
+>
+> ------
+>
+> ### **3. （推荐）创建符号链接到系统路径**
+>
+> 将 Blender 链接到 `/usr/local/bin`（需 `sudo` 权限）：
+>
+> ```bash
+> sudo ln -s /root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/blender /usr/local/bin/blender
+> ```
+>
+> 之后可直接通过命令 `blender` 启动。
+
+验证一下：
+```shell
+blender --background --version
+blender --background --python-expr "import sys; print('\nThe version of python is '+sys.version.split(' ')[0])"
+# 以及仓库中的下一句，输出路径如下：
+
+The path to the installation of python of blender can be:
+- /root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9
+```
+
+然后安装必要的包：
+
+```python
+/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m ensurepip --upgrade
+/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install numpy
+/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user matplotlib
+/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user hydra-core --upgrade
+/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user hydra_colorlog --upgrade
+/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user moviepy
+/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user shortuuid
+```
+
+接下来回到MotionLCM的仓库，这样做：
+
+（1）生成Sequence：
+
+```shell
+YOUR_BLENDER_PATH/blender --background --python render.py -- --pkl assets/example_mesh.pkl --mode sequence --num 8
+```
+
+我的指令：
+```shell
+blender --background --python render.py -- --pkl assets/testSMPL0512_mesh.pkl --mode sequence --num 8
+blender --background --python render.py -- --pkl assets/testSMPL0512_mesh.pkl --mode video --fps 20
+```
+
+==如果报错==`moviepy.editor`没有的话，修改一下`video.py`文件的开头部分：
+
+```python
+# import moviepy.editor as mp  # 可以理解成配的环境的moviepy版本没有editor了，直接用moviepy即可
+import moviepy as mp
+import os
+import imageio
+```
+
+跑出来的结果如下图：
+
+![image-20250512125138424](./assets/image-20250512125138424.png)
+
+video有个报错:
+
+```
+Traceback (most recent call last):
+  File "/root/MotionLCM/MotionLCM/render.py", line 80, in <module>
+    render_cli()
+  File "/root/MotionLCM/MotionLCM/render.py", line 62, in render_cli
+    render(
+  File "/root/MotionLCM/MotionLCM/mld/render/blender/render.py", line 137, in render
+    video.save(out_path=vid_path)
+  File "/root/MotionLCM/MotionLCM/mld/render/video.py", line 66, in save
+    self.video.subclip(0, self.duration).write_videofile(
+AttributeError: 'ImageSequenceClip' object has no attribute 'subclip'
+```
+
+下午解决一下，应该不是什么大问题。
 
 
 
