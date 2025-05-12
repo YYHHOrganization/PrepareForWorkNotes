@@ -90,6 +90,8 @@ public:
 };
 ```
 
+或者用`unordered_set<int> s;`
+
 
 
 ### （3）[404. 左叶子之和](https://leetcode.cn/problems/sum-of-left-leaves/)（==可以复习==）
@@ -173,6 +175,35 @@ public:
         if((int)res.size()<2) return -1;
         nth_element(res.begin(), res.begin()+1, res.end());
         return res[1];
+    }
+};
+```
+
+
+
+#### （a.y）记录 最小值 和 次小值
+
+```C++
+class Solution {
+public:
+    long long min1=(long long)INT_MAX+1,min2 = (long long)INT_MAX+1;
+    void dfs(TreeNode* root)
+    {
+        if(root==nullptr)return ;
+        int v = root->val;
+        if(v<min1)
+        {
+            min2 = min1;
+            min1 = v;
+        }
+        else if(v!=min1&&v<min2) min2 = v;
+        dfs(root->left); 
+        dfs(root->right);
+    }
+    int findSecondMinimumValue(TreeNode* root) {
+         min1=(long long)INT_MAX+1,min2 = (long long)INT_MAX+1;
+        dfs(root);
+        return min2>INT_MAX?-1:min2;
     }
 };
 ```
@@ -451,6 +482,14 @@ public:
 > - `cur` 原来的左子树应该是新的左子树根的左子树。
 > - `cur` 原来的右子树应该是新的右子树根的右子树。
 > - 如果 `depth == 1 `意味着 `depth - 1` 根本没有深度，那么创建一个树节点，值 `val `作为整个原始树的新根，而原始树就是新根的左子树。
+> - **示例 1:**
+>
+>   <img src="assets/addrow-tree.jpg" alt="img" style="zoom:67%;" />
+>
+>   ```
+>   输入: root = [4,2,6,3,1,5], val = 1, depth = 2
+>   输出: [4,1,1,2,null,null,6,3,1,5]
+>   ```
 
 我写的代码：
 ```c++
@@ -491,6 +530,53 @@ public:
 ```
 
 > 本题也可以用二叉树的层序遍历来做。
+
+层序遍历：
+
+```C++
+class Solution {
+public:
+    TreeNode* addOneRow(TreeNode* root, int val, int depth) {
+        int curDepth = 0;
+        //用层序
+        queue<TreeNode* > que;
+        que.emplace(root);
+        if(depth==1)
+        {
+            TreeNode* newNode = new TreeNode(val);
+            newNode->left = root;
+            return newNode;
+        }
+        while(!que.empty())
+        {
+            curDepth++;
+            int sz = que.size();
+            for(int i=0;i<sz;i++)
+            {
+                TreeNode *node = que.front();
+                // cout<<"curnode"<<node->val<<endl;
+                que.pop();
+                TreeNode* left = node->left;  
+                TreeNode* right = node->right;
+                if(curDepth == depth-1)
+                {
+                    TreeNode* newl = new TreeNode(val);
+                    newl->left = left;
+                    TreeNode* newr = new TreeNode(val);
+                    newr->right = right;
+                    node->left = newl; 
+                    node->right =newr;
+                }
+                if(left) que.push(left);
+                if(right)que.push(right);
+            }
+        }
+        return root;
+    }
+};
+```
+
+
 
 
 
@@ -661,7 +747,7 @@ public:
         //否则,左右孩子都有,返回v(dfs(v->left))(dfs(v->right))
         //其实情况可以有一定的合并，这里为了方便理解直接都写了。
         if(root==nullptr) return "";
-        if(root->left==root->right) return to_string(root->val);
+        if(root->left==root->right) return to_string(root->val);//即if(!root->left&&!root->right)
         if(root->left && !root->right)
         {
             return to_string(root->val) + "(" + tree2str(root->left) + ")";
