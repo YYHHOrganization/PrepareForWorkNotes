@@ -312,7 +312,9 @@ Effective C++的前四个条款学习；
 
 # 2025.5.10
 
-[3343. 统计平衡排列的数目](https://leetcode.cn/problems/count-number-of-balanced-permutations/)
+- [ ] 3343 y
+
+[3343. 统计平衡排列的数目](https://leetcode.cn/problems/count-number-of-balanced-permutations/) 
 
 [2918. 数组的最小相等和](https://leetcode.cn/problems/minimum-equal-sum-of-two-arrays-after-replacing-zeros/)
 
