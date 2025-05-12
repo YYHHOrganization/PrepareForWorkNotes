@@ -1,6 +1,6 @@
 Synthesizing Physically Plausible Human Motions in 3D Scenes 合成3D场景中物理上合理的人类动作
 
-3DV 2024 (emm  似乎是C类)
+3DV 2024 (emm  似乎是C类，不过好像是个不错的c)
 
 任务：输入一段文字，生成一段人物跑向椅子并坐下的动画。
 场景中提供椅子和椅子坐标。
