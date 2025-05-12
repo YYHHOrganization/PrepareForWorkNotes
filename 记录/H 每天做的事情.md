@@ -304,6 +304,8 @@ Effective C++的前四个条款学习；
 
 # 2025.5.8
 
+图论: Dijkstra:
+
 [3112. 访问消失节点的最少时间](https://leetcode.cn/problems/minimum-time-to-visit-disappearing-nodes/)
 
 [2642. 设计可以求最短路径的图类](https://leetcode.cn/problems/design-graph-with-shortest-path-calculator/)
@@ -312,17 +314,45 @@ Effective C++的前四个条款学习；
 
 # 2025.5.10
 
-- [ ] 3343 y
+记录文件夹/五月杂题
 
-[3343. 统计平衡排列的数目](https://leetcode.cn/problems/count-number-of-balanced-permutations/) 
+- [ ]  3343 y
+
+[3343. 统计平衡排列的数目](https://leetcode.cn/problems/count-number-of-balanced-permutations/)
 
 [2918. 数组的最小相等和](https://leetcode.cn/problems/minimum-equal-sum-of-two-arrays-after-replacing-zeros/)
 
-第83场周赛(算是国内的第一场):
+第83场周赛(算是国内的第一场): 五月杂题
 
 - [830. 较大分组的位置](https://leetcode.cn/problems/positions-of-large-groups/)
 
 - [829. 连续整数求和](https://leetcode.cn/problems/consecutive-numbers-sum/)
+
+```c++
+class Solution {
+public:
+    int consecutiveNumbersSum(int n) {
+       //n是组中的元素数量
+       //start是起始元素,根据等差数列求和公式,可以推导出,start = (2 * n - i^2 + i) / 2i , 分子一定要能整除分母,且分子必须>=1
+       //i即为某一组的元素个数
+        long long i = 1;
+        int ans = 0;
+        long long up = (long long)n * 2 - i * i + i;  
+        while(up>=1)
+        {
+            if(up%(2*i)==0)
+            {
+                ans++;
+            }
+            i++;
+            up = (long long)n * 2 - i * i + i;  
+        }
+       return ans;
+    }
+};
+```
+
+
 
 第150场双周赛:
 
