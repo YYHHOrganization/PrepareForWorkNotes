@@ -866,6 +866,95 @@ public:
 
 
 
+### 思维扩展：浮点数二分
+
+#### [3453. 分割正方形 I](https://leetcode.cn/problems/separate-squares-i/)
+
+> 给你一个二维整数数组 `squares` ，其中 `squares[i] = [xi, yi, li]` 表示一个与 x 轴平行的正方形的左下角坐标和正方形的边长。
+>
+> 找到一个**最小的** y 坐标，它对应一条水平线，该线需要满足它以上正方形的总面积 **等于** 该线以下正方形的总面积。
+>
+> 答案如果与实际答案的误差在 `10-5` 以内，将视为正确答案。
+>
+> **注意**：正方形 **可能会** 重叠。重叠区域应该被 **多次计数** 。
+
+**务必注意浮点数二分的写法，以后遇到不会写错。**
+
+```c++
+class Solution {
+public:
+    double separateSquares(vector<vector<int>>& squares) {
+        long long totalArea = 0.0;
+        double maxHeight = 0.0;
+        int n = squares.size();
+        for(auto& s: squares)
+        {
+            totalArea += (long long)s[2] * s[2];
+            maxHeight = max(maxHeight, (double)s[1] + s[2]);
+        }
+        double target = (double)totalArea / 2.0;
+        double left = 0.0, right = maxHeight;
+        //浮点数二分,直接用迭代的方法即可
+        for(int step=0;step<60;step++)
+        {
+            double mid = (left + right) * 0.5;
+            double belowArea = 0.0;
+            for(int i=0;i<n;i++)
+            {
+                double y = squares[i][1];
+                double l = squares[i][2];
+                if(y<mid) //下面的才作数
+                    belowArea += (min(mid - y, l) * l);
+            }
+            if(belowArea>=target) right = mid;
+            else if(belowArea<target) left = mid;
+        }
+        return (left + right) * 0.5;
+
+    }
+};
+```
+
+
+
+##### 方法2：扫描线方法（利用差分）
+
+挺有意思的思路，扫描线还是要认真理解的，代码如下：
+```c++
+class Solution {
+public:
+    double separateSquares(vector<vector<int>>& squares) {
+        //还可以用差分来做,计算每个整数y值都涵盖多少的底边长度
+        map<int, long long> diff; //key:每个关键的y值,value:涵盖的底边长
+        long long totalArea = 0;
+        for(auto& s:squares)
+        {
+            int y = s[1];
+            int l = s[2];
+            totalArea += (long long) l * l;
+            diff[y] += l;
+            diff[y+l] -= l; //相当于这中间都有l长度的底边价值，注意本来差分是diff[right+1] -= l， 但这里相当于y+l并不是这个正方形囊括的范围了，所以这里的right相当于y+l-1，自然就写成了diff[y+l] -= l了
+        }
+        long long s = 0;
+        long long area = 0;
+        for(auto it = diff.begin(); ;)
+        {
+            auto [y, length] = *it;
+            int y2 = (++it)->first; //下一个关键的y值
+            s += length; //还原原数组
+            area += s * (y2-y);
+            if(area * 2 >= totalArea) //说明超了,答案就在其中, 由此来求解出答案的y：自己用公式推导一下就可以得到下面的式子：
+            {
+                return y2 - (area * 2 - totalArea) / (s * 2.0);
+            }
+        }
+        return 0.0; //不会进这里的,必有==totalArea/2的y值
+    }
+};
+```
+
+
+
 ## 2.求最大
 
 ### （1）[2226. 每个小孩最多能分到多少糖果](https://leetcode.cn/problems/maximum-candies-allocated-to-k-children/)（看题解）
