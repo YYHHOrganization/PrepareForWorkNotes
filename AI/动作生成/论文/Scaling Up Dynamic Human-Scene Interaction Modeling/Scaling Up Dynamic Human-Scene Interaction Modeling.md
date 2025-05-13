@@ -131,3 +131,33 @@ https://www.ai.pku.edu.cn/info/1053/2984.htm
 ![image-20250417164911623](assets/image-20250417164911623.png)
 
 ![image-20250417165011361](assets/image-20250417165011361.png)
+
+这是论文《Scaling Up Dynamic Human-Scene Interaction Modeling》的内容，请翻译成中文，并给出两句话总结，重点的标注**重点**，如果是1 使用##，如果是 3.1使用###，公式都弄好,公式前后加上$$，并帮我可读性写高一点（同时不可以缺少语句，原文该有的都有，可以增加你的理解，让翻译得容易读懂）,我要复制进typora中：
+
+3.3. MoCap Data Augmentation Our data augmentation pipeline is designed to adapt human motions to changes in 3D scene objects, ensuring physical plausibility and accuracy in HSI, following [45]. This process is vital in complex scenarios with concurrent or successive interactions; see Fig. 2. The pipeline consists of three main steps for integrating altered human motions into diverse 3D settings. Calculate Target Joint We identify contact points between human joints and object meshes, and locate corresponding points on transformed or replaced objects. This step crucially adjusts the target joint’s position to maintain the original interaction’s contact relationship, ensuring realistic human-object interactions despite changes in object dimensions or positions. Refine Trajectory To smooth out abrupt trajectory changes from the first step or Inverse Kinematic (IK) computations, we apply temporal smoothing to joint offsets, iteratively adjusting weights in adjacent frames. This refinement is critical for maintaining seamless motion, particularly in scenarios with multiple object interactions. Further details and theoretical background are discussed in Appendix B.5. Recompute Motion with IK In the final step, we recompute human motion using the smoothed trajectories with an enhanced CCD-based [24] IK solver. This solver applies clipping and regularizations to bone movements, ensuring natural motion fluidity. Bones further from the root joint have increased rotational limits, reducing jitteriness and enhancing motion realism. For a complete description of these methods, refer to Appendix B.5.
+
+3.3. 运动捕捉数据增强  
+
+我们的数据增强流程旨在使人体运动适应3D场景物体的变化，**重点**确保人-场景交互(HSI)的物理合理性和准确性（方法延续自[45]）。该流程对存在并发或连续交互的复杂场景尤为重要（见图2），包含三个核心步骤：  
+
+**计算目标关节**  
+首先识别人体关节与物体网格的接触点，并在变换/替换后的物体上定位对应点。**重点** 这一步通过调整目标关节位置来保持原始交互的接触关系，即使物体尺寸或位置发生变化，也能确保真实的人-物交互效果。  
+
+**优化运动轨迹**  
+为消除第一步或逆向运动学(IK)计算导致的轨迹突变，我们对关节偏移量进行时间平滑处理，通过迭代调整相邻帧的权重来实现。**重点** 该优化对维持多物体交互场景中的运动连贯性至关重要，理论细节详见附录B.5。  
+
+**基于IK重新计算运动**  
+最后使用增强的CCD算法[24] IK求解器，根据平滑后的轨迹重新计算人体运动。该求解器通过以下方式提升效果：  
+
+- 对骨骼运动施加剪裁和正则化约束  
+- **重点** 设置层级化旋转限制（离根关节越远的骨骼允许更大旋转）  
+- 显著减少抖动并增强运动真实感  
+完整算法描述见附录B.5。  
+
+$$ \text{关节偏移量} = \sum_{t=i-k}^{i+k} w_t \cdot \Delta p_t \quad \text{(平滑计算公式)} $$  
+
+**两句话总结**：  
+
+1. **重点** 本研究提出三级数据增强流程，通过关节重定位、轨迹平滑和增强IK计算，使运动数据适应动态场景变化  
+2. **重点** 采用层级化骨骼约束和时空优化策略，显著提升了复杂交互场景下的运动自然度和物理合理性  
+
