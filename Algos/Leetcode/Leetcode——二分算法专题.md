@@ -906,7 +906,7 @@ public:
                 if(y<mid) //下面的才作数
                     belowArea += (min(mid - y, l) * l);
             }
-            if(belowArea>=target) right = mid;
+            if(belowArea>=target) right = mid;  //这里取等的情况必须写在上面，这样才会保证是符合条件的最小的结果；如果写在下面则是求解符合条件的最大的结果
             else if(belowArea<target) left = mid;
         }
         return (left + right) * 0.5;
@@ -923,7 +923,7 @@ public:
 ```c++
 class Solution {
 public:
-    double separateSquares(vector<vector<int>>& squares) {
+    double separateSquares(vector<vector<int>>& squares) { //[l,r] + num ： diff[l]+=num， diff[r+1]-=num
         //还可以用差分来做,计算每个整数y值都涵盖多少的底边长度
         map<int, long long> diff; //key:每个关键的y值,value:涵盖的底边长
         long long totalArea = 0;
