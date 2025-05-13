@@ -26,7 +26,7 @@ HUMANISE: Language-conditioned Human Motion Generation in 3D Scenes
 
 ![image-20240909151600504](D:\myNote\Postgraduate\MotionGenerate\Generating Human Motion in 3D Scenes from Text Descriptions 场景和文本\assets\image-20240909151600504.png)
 
-
+实际上这个motionlcm自带了一个轨迹编码器，输入轨迹，它可以生成符合轨迹的动作，我想通过拓展它这部分，就是引入场景，实现轨迹生成器，然后再输入这个motionlcm实现符合场景的动作，这样好做吗，请问这个可行性以及请给我一些参考文献。
 
 **摘要**
 
@@ -180,11 +180,17 @@ few-shot（少样本）示例： {example_1}; {example_2}。【“few-shot” �
 
 **4.2. 基于扩散的轨迹生成**
 
-在从 ChatGPT 获取到定位对象后，我们首先根据指令生成轨迹，然后合成局部人类姿态。轨迹被定义为角色的平移和方向序列。如 [51] 所建议的，并不是场景中的每一个点都与最终的人类运动相关。受到 NSM [70] 和 ManipNet [92] 的启发，我们在目标对象周围使用**体积传感器（如图 4 所示）来表示场景。**
+在从 ChatGPT 获取到定位对象后，我们首先根据指令生成轨迹，然后合成局部人类姿态。**轨迹被定义为角色的平移和方向序列**。如 [51] 所建议的，并不是场景中的每一个点都与最终的人类运动相关。受到 NSM [70] 和 ManipNet [92] 的启发，我们在目标对象周围使用**体积传感器（如图 4 所示）来表示场景。**
 
 ![image-20240909163611579](D:\myNote\Postgraduate\MotionGenerate\Generating Human Motion in 3D Scenes from Text Descriptions 场景和文本\image-20240909163611579.png)
 
-图 4. 环境传感器、目标传感器和轨迹传感器的可视化。目标传感器 (b) 提供了目标对象的详细几何信息。环境传感器 (c) 提供了目标对象周围的粗略空间信息。轨迹传感器 (d) 位于人体周围。
+图 4. 环境传感器、目标传感器和轨迹传感器的可视化。
+
+目标传感器 (b) 提供了目标对象的详细几何信息。
+
+环境传感器 (c) 提供了目标对象周围的粗略空间信息。
+
+轨迹传感器 (d) 位于人体周围。
 
 
 
