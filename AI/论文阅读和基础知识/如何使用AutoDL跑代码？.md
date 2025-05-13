@@ -903,11 +903,11 @@ import os
 import imageio
 ```
 
-跑出来的结果如下图：
+渲染sequence跑出来的结果如下图：
 
 ![image-20250512125138424](./assets/image-20250512125138424.png)
 
-video有个报错:
+对于video的部分来说，video有个报错:
 
 ```
 Traceback (most recent call last):
@@ -922,7 +922,21 @@ Traceback (most recent call last):
 AttributeError: 'ImageSequenceClip' object has no attribute 'subclip'
 ```
 
-下午解决一下，应该不是什么大问题。
+解决办法是==全局搜索`video.py`这个文件，然后修改其save函数：==
+
+```python
+def save(self, out_path):
+    out_path = str(out_path)
+    # self.video.subclip(0, self.duration).write_videofile(
+    #     out_path, **self._conf)
+    self.video.write_videofile(out_path, **self._conf)  # 把注释掉的部分改成下面这样
+```
+
+此时再运行输出video的指令，就可以成功生成SMPL的视频了：
+
+![image-20250513102755091](./assets/image-20250513102755091.png)
+
+
 
 
 
@@ -973,7 +987,7 @@ debug `python demo.py --cfg configs/motionlcm_t2m.yaml --example assets/example.
 
 
 
-#### 1 
+#### 1 在VS Code上配置对应的extentions
 
 在远程服务器上配置一下 安装好python和python debugger这两个extentions
 

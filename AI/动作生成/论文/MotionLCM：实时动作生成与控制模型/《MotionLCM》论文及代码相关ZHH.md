@@ -334,6 +334,10 @@ elif args.loss_type == "huber":
 > ![image-20250512170311565](./assets/image-20250512170311565.png)
 >
 > ==务必注意是在哪个空间当中的。例如joints都是在root space当中的。==
+>
+> 记录一下：其实就是传统方法使用HumanML3D数据集的话（这个数据集本身提供的数据中的joints相关参数都是关节空间的），一般都是通过神经网络输出目标姿态序列（依旧是关节空间），然后用FK计算出全局姿态，在这上面去和Ground truth动作通过FK解算的结果做Loss。
+>
+> - 【吐槽】也有工作尝试在世界空间直接做，然后用IK反解（可以参考**InterGen**这篇文章），这样输入网络的数据就包括joint positions，joint velocities（在世界空间下），joint rotations（在关节空间下），==神人做法。不一定有用，为什么不统一空间作为输入呢？==（DS说为了防止万向锁，感觉没关系）
 
 
 
@@ -855,7 +859,38 @@ train VAE中用到的VAE的架构：
 
 
 
-## 2.评估指标详细介绍==（还没完结，后面需要整理）==
+
+
+## 2.损失函数介绍
+
+### （1）来自最初MDM的损失函数：论文《HUMAN MOTION DIFFUSION MODEL》
+
+重点是阅读`Geometric losses.`这一部分。以下是截图：
+
+![image-20250513104241259](./assets/image-20250513104241259.png)
+
+这里面介绍一下$x_0^i$这种变量是什么。具体的在MDM这篇论文前面有进行介绍，这里直接理解好整理一下：
+
+- 首先，$\hat{x}_0^i$这种是预测值，可以认为是神经网络的预测结果；
+- $x^{1:N} = \{x^i\}_{i=1}^N$表示的是生成的动作序列，这里的1：N应该指的是第一帧到第N帧。$x^i$则可以表示出joints的位置和旋转属性（其实也就是代表了姿态）。$x^i \in \mathbb{R}^{J \times D}$，这里的$J$是joints的数量，而$D$则是joint representation的维度。
+- 所以上面损失函数中的$x_0^i$指的是第i帧的$x_0$姿态，而$x_0$姿态本身就表示没有噪声的，干净的姿态。==此时上面的损失函数就比较好理解了。==
+
+实际对于代码来说，这里很有可能是L1 smooth损失。
+
+这部分总的损失函数如下：
+$$
+\begin{equation}
+    \mathcal{L} = \mathcal{L}_{\text{simple}} + \lambda_{\text{pos}} \mathcal{L}_{\text{pos}} + \lambda_{\text{vel}} \mathcal{L}_{\text{vel}} + \lambda_{\text{foot}} \mathcal{L}_{\text{foot}}
+    \label{eq:6}
+\end{equation}
+$$
+
+
+------
+
+
+
+## 3.评估指标详细介绍==（还没完结，后面需要整理）==
 
 这里将会认真理解一下以下的这部分内容，并结合代码来看：
 
