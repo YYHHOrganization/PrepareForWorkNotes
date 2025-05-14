@@ -318,6 +318,8 @@ Effective C++的前四个条款学习；
 
 记录文件夹/五月杂题
 
+- [ ]  3343 y
+
 [3343. 统计平衡排列的数目](https://leetcode.cn/problems/count-number-of-balanced-permutations/)
 
 [2918. 数组的最小相等和](https://leetcode.cn/problems/minimum-equal-sum-of-two-arrays-after-replacing-zeros/)
@@ -367,3 +369,12 @@ public:
 [1870. 准时到达的列车最小时速](https://leetcode.cn/problems/minimum-speed-to-arrive-on-time/)（**再做一遍，要点：化浮点数为整数，化除法为乘法，维护好哪些量需要乘，哪些量不需要乘即可。**）
 
 [3453. 分割正方形 I](https://leetcode.cn/problems/separate-squares-i/)
+
+
+
+# 2025.5.13
+
+[76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/),再做一遍
+
+[93. 复原 IP 地址](https://leetcode.cn/problems/restore-ip-addresses/)
+
