@@ -1578,3 +1578,127 @@ public:
 };
 ```
 
+
+
+## [76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/)
+
+> 给你一个字符串 `s` 、一个字符串 `t` 。返回 `s` 中涵盖 `t` 所有字符的最小子串。如果 `s` 中不存在涵盖 `t` 所有字符的子串，则返回空字符串 `""` 。
+>
+>  
+>
+> **注意：**
+>
+> - 对于 `t` 中重复字符，我们寻找的子字符串中该字符数量必须不少于 `t` 中该字符数量。
+> - 如果 `s` 中存在这样的子串，我们保证它是唯一的答案。
+
+```c++
+class Solution {
+public:
+    bool check(array<int, 128>& s, array<int, 128>& t)
+    {
+        for(int i=0;i<128;i++)
+        {
+            if(s[i]<t[i]) return false;
+        }
+        return true;
+    }
+    string minWindow(string s, string t) {
+        array<int, 128> sarr{}; //对ASCII码来说,这里开到128是没问题的
+        array<int, 128> tarr{};
+        int tn = t.size();
+        for(int i=0;i<tn;i++)
+        {
+            tarr[t[i]]++;
+        }
+        int left = 0;
+        int sn = s.size();
+        // 以下两个变量用于还原出答案的字符串
+        int ans = INT_MAX; //记录长度
+        int startIndex = -1;
+        for(int right=0;right<sn;right++)
+        {
+            sarr[s[right]]++;
+            while(check(sarr, tarr))
+            {
+                if(right-left+1 < ans) //小了才去更新
+                {
+                    ans = right-left+1;
+                    startIndex = left;
+                }
+                sarr[s[left]]--;
+                left++;
+            }
+        }
+        if(startIndex==-1) return "";
+        return s.substr(startIndex, ans);
+    }
+};
+```
+
+
+
+## [93. 复原 IP 地址](https://leetcode.cn/problems/restore-ip-addresses/)
+
+> **有效 IP 地址** 正好由四个整数（每个整数位于 `0` 到 `255` 之间组成，且不能含有前导 `0`），整数之间用 `'.'` 分隔。
+>
+> - 例如：`"0.1.2.201"` 和` "192.168.1.1"` 是 **有效** IP 地址，但是 `"0.011.255.245"`、`"192.168.1.312"` 和 `"192.168@1.1"` 是 **无效** IP 地址。
+>
+> 给定一个只包含数字的字符串 `s` ，用以表示一个 IP 地址，返回所有可能的**有效 IP 地址**，这些地址可以通过在 `s` 中插入 `'.'` 来形成。你 **不能** 重新排序或删除 `s` 中的任何数字。你可以按 **任何** 顺序返回答案。
+
+回溯法,但是做的时候要小心谨慎一些(2025.5.13 大概需要20多分钟才能做对):
+```c++
+class Solution {
+public:
+    vector<string> restoreIpAddresses(string s) {
+        //回溯
+        //每一个值不能是0xx,同时必须要<255才能用
+        vector<string> ans;
+        int n = s.size();
+        //i表示遍历到哪个数,num表示当前分出来了几个数,cur表示当前的值是多少
+        vector<int> path; //里面要装4个部分
+        auto dfs = [&](this auto&& dfs, int i, int sum)
+        {
+            if(i==n)
+            {
+                if((int)path.size()==4) //处理完了四个值,找到一个答案
+                {
+                    string tmp;
+                    for(int idx=0;idx<3;idx++)
+                    {
+                        tmp += to_string(path[idx]);
+                        tmp += '.';
+                    }
+                    tmp += to_string(path[3]);
+                    ans.emplace_back(tmp);
+                }
+                return;
+            }
+            //最多有可能会遍历三位:i,i+1,i+2
+            //如果当前是0,则可以选0,并且后面的都不能选了
+            if(sum==0 && s[i]=='0')
+            {
+                path.push_back(0);
+                dfs(i+1, 0);
+                path.pop_back();
+            }
+            else
+            {
+                for(int index=i;index<min(i+3, n);index++) //i,i+1,i+2,最多也就这些合法了
+                {
+                    sum = sum * 10 + s[index]-'0';
+                    if(sum > 0 && sum<=255) //符合要求
+                    {
+                        path.push_back(sum);
+                        dfs(index+1, 0);
+                        path.pop_back();
+                    }
+                }
+            }
+
+        };
+        dfs(0, 0);
+        return ans;
+    }
+};
+```
+
