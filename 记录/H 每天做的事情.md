@@ -391,3 +391,10 @@ Mihoyo的相关题目的一部分：在五月杂题那个文件夹里面。
 - [1137. 第 N 个泰波那契数](https://leetcode.cn/problems/n-th-tribonacci-number/)
 - [1220. 统计元音字母序列的数目](https://leetcode.cn/problems/count-vowels-permutation/)
 - 
+
+
+
+# 2025.5.15
+
+每日一题:在5月杂题里面:[2900. 最长相邻不相等子序列 I](https://leetcode.cn/problems/longest-unequal-adjacent-groups-subsequence-i/)
+
