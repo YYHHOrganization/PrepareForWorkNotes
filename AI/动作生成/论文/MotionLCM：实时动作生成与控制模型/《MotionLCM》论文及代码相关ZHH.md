@@ -906,3 +906,9 @@ $$
 
 
 
+# 三、代码阅读
+
+## 1.Trajectory相关
+
+python demo_change0515.py --cfg configs/motionlcm_control_s.yaml
+
