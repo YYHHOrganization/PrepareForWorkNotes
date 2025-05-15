@@ -398,3 +398,10 @@ Mihoyo的相关题目的一部分：在五月杂题那个文件夹里面。
 
 每日一题:在5月杂题里面:[2900. 最长相邻不相等子序列 I](https://leetcode.cn/problems/longest-unequal-adjacent-groups-subsequence-i/)
 
+[551. 学生出勤记录 I](https://leetcode.cn/problems/student-attendance-record-i/)
+
+[552. 学生出勤记录 II](https://leetcode.cn/problems/student-attendance-record-ii/)
+
+[935. 骑士拨号器](https://leetcode.cn/problems/knight-dialer/)
+
+[350. 两个数组的交集 II](https://leetcode.cn/problems/intersection-of-two-arrays-ii/)（做对了，但0x3f的做法还没看完）
