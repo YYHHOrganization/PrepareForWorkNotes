@@ -376,3 +376,18 @@ public:
 
 [93. 复原 IP 地址](https://leetcode.cn/problems/restore-ip-addresses/)
 
+
+
+# 2025.5.14
+
+Mihoyo的相关题目的一部分：在五月杂题那个文件夹里面。
+
+- [1684. 统计一致字符串的数目](https://leetcode.cn/problems/count-the-number-of-consistent-strings/)
+
+矩阵快速幂DP：在DP那个题单里面：
+
+- [3337. 字符串转换后的长度 II](https://leetcode.cn/problems/total-characters-in-string-after-transformations-ii/)
+- [70. 爬楼梯](https://leetcode.cn/problems/climbing-stairs/)
+- [1137. 第 N 个泰波那契数](https://leetcode.cn/problems/n-th-tribonacci-number/)
+- [1220. 统计元音字母序列的数目](https://leetcode.cn/problems/count-vowels-permutation/)
+- 
