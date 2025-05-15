@@ -318,6 +318,8 @@ Effective C++的前四个条款学习；
 
 记录文件夹/五月杂题
 
+- [x]  3343 y
+
 [3343. 统计平衡排列的数目](https://leetcode.cn/problems/count-number-of-balanced-permutations/)
 
 [2918. 数组的最小相等和](https://leetcode.cn/problems/minimum-equal-sum-of-two-arrays-after-replacing-zeros/)
@@ -355,8 +357,6 @@ public:
 
 
 第150场双周赛:
-
-- 
 
 
 
