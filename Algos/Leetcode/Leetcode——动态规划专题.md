@@ -5936,7 +5936,7 @@ public:
             0,0,1,0,0,
             0,0,1,1,0
         };
-        Matrix mt = pow(m, n-1);
+        Matrix mt = pow(m, n-1); // -1 ！
         //矩阵的总和即为所求
         long long ans = 0;
         for(int i=0;i<SIZE;i++)
@@ -5951,9 +5951,15 @@ public:
 };
 ```
 
-
-
-
+>```C++
+>//          a e i o u
+>Matrix M = {0,1,1,0,1, //a
+>            1,0,1,0,0, //e
+>            0,1,0,1,0, //i
+>            0,0,1,0,0, //o
+>            0,0,1,1,0  //u
+>            };
+>```
 
 ### [3337. 字符串转换后的长度 II](https://leetcode.cn/problems/total-characters-in-string-after-transformations-ii/)
 
@@ -5967,6 +5973,13 @@ public:
 > 返回 **恰好** 执行 `t` 次转换后得到的字符串的 **长度**。
 >
 > 由于答案可能非常大，返回其对 `109 + 7` 取余的结果。
+
+
+
+
+链接：https://leetcode.cn/problems/total-characters-in-string-after-transformations-ii/solutions/2967037/ju-zhen-kuai-su-mi-you-hua-dppythonjavac-cd2j/
+
+![image-20250515213231263](assets/image-20250515213231263.png)
 
 ```c++
 class Solution {
@@ -6012,7 +6025,7 @@ public:
         {
             for(int j=i+1;j<=i+nums[i];j++)
             {
-                m[i][j%SIZE] = 1;
+                m[i][j%SIZE] = 1; //i能转化为j 注意 这里也许与上面几题有所不同
             }
         }
         Matrix mt = pow(m, t);
