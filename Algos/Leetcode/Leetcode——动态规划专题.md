@@ -6110,6 +6110,31 @@ public:
 
 代码实现时，可以把 *dfs* 写在外面，这样多个测试用例之间可以**共享**记忆化搜索的结果，效率更高。==笔试的时候可以注意这一点。==
 
+Python:
+
+```python
+MOD = 1_000_000_007
+
+@cache
+def dfs(i:int, cntA: int, cntL: int) -> int:
+    if i == 0:
+        return 1
+    res = dfs(i-1, cntA, 0)
+    if cntA == 0: # 可以考虑缺勤一天
+        res += dfs(i-1, 1, 0)
+    if cntL < 2:
+        res += dfs(i-1, cntA, cntL+1)
+    return res % MOD
+
+class Solution:
+    def checkRecord(self, n: int) -> int: 
+        ans = dfs(n, 0, 0) % MOD
+        # f.cache_clear()
+        return ans
+```
+
+> 如果把dfs+@cache放在里面的话,需要写一句这个:`ans = f(n, 0, 0) f.cache_clear()`
+
 
 
 ### (2)方法2:转化为递推来做
@@ -6349,8 +6374,6 @@ public:
     }
 };
 ```
-
-
 
 
 
