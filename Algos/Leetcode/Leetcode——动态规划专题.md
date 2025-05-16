@@ -5002,6 +5002,21 @@ https://leetcode.cn/problems/maximum-strength-of-a-group/solutions/2896423/yi-ge
 
 
 
+# 七、其他线性DP
+
+## 7.1.一维DP
+
+### [2901. 最长相邻不相等子序列 II](https://leetcode.cn/problems/longest-unequal-adjacent-groups-subsequence-ii/)
+
+> 需要从 words 中选择一个子序列，满足以下条件：
+>
+> - 相邻单词的 groups 值不同。
+> - 相邻单词的长度相同，且汉明距离为 1（即只有一个字符不同）。
+>
+> 目标是找到满足条件的最长子序列。
+
+
+
 
 
 # 十、数位 DP
