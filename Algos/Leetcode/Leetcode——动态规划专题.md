@@ -5006,7 +5006,7 @@ https://leetcode.cn/problems/maximum-strength-of-a-group/solutions/2896423/yi-ge
 
 ## 7.1.一维DP
 
-### [2901. 最长相邻不相等子序列 II](https://leetcode.cn/problems/longest-unequal-adjacent-groups-subsequence-ii/)
+### [2901. 最长相邻不相等子序列 II](https://leetcode.cn/problems/longest-unequal-adjacent-groups-subsequence-ii/)（方法二暂时有点超纲，看0x3F）
 
 > 需要从 words 中选择一个子序列，满足以下条件：
 >
@@ -5014,6 +5014,95 @@ https://leetcode.cn/problems/maximum-strength-of-a-group/solutions/2896423/yi-ge
 > - 相邻单词的长度相同，且汉明距离为 1（即只有一个字符不同）。
 >
 > 目标是找到满足条件的最长子序列。
+
+C++：
+
+```c++
+class Solution {
+public:
+    bool isOk(string& a, string& b)
+    {
+        //长度相等且汉明距离为1
+        int m = a.size();
+        int n = b.size();
+        if(m!=n) return false;
+        int dist = 0;
+        for(int i=0;i<n;i++)
+        {
+            if(a[i]!=b[i])
+            {
+                dist++;
+                if(dist>1) return false;
+            }
+        }
+        return dist==1;
+    }
+
+    vector<string> getWordsInLongestSubsequence(vector<string>& words, vector<int>& groups) {
+        //dp[i]表示以i为开头的最长子序列的长度,从后往前方便复原
+        int n = words.size();
+        vector<int> dp(n);
+        vector<int> from(n); //from[i] = j, 表示i是从j转移过来的
+        int maxIndex = n-1; //记录最大的长度是哪个i开头的,方便递推
+        for(int i=n-1;i>=0;i--)
+        {
+            //找到最大的j
+            for(int j=i+1;j<n;j++)
+            {
+                if(dp[j]>dp[i] && groups[j]!=groups[i] && isOk(words[i], words[j]))
+                {
+                    dp[i] = dp[j];
+                    from[i] = j;
+                }
+            }
+            dp[i]++;
+            if(dp[i]>dp[maxIndex])
+            {
+                maxIndex = i;
+            }
+        }
+        int cnt = dp[maxIndex];
+        int index = maxIndex;
+        vector<string> ans(cnt);
+        for(int i=0;i<cnt;i++)
+        {
+            ans[i] = words[index];
+            index = from[index];
+        }
+        return ans;
+    }
+};
+```
+
+Python：
+
+```python
+class Solution:
+    def getWordsInLongestSubsequence(self, words: List[str], groups: List[int]) -> List[str]:
+        def check(a: str, b:str):
+            return len(a)==len(b) and sum(x != y for x, y in zip(a, b)) == 1
+        
+        n = len(words)
+        f = [0] * n
+        from_ = [0] * n
+        maxIndex = n - 1
+        for i in range(n-1, -1, -1):
+            for j in range(i+1, n):
+                if f[j] > f[i] and groups[j] != groups[i] and check(words[i], words[j]):
+                    f[i] = f[j]
+                    from_[i] = j
+            f[i] += 1
+            if f[i] > f[maxIndex]:
+                maxIndex = i
+
+        cnt = f[maxIndex]
+        ans = [""] * cnt
+        index = maxIndex
+        for k in range(0, cnt):
+            ans[k] = words[index]
+            index = from_[index]
+        return ans 
+```
 
 
 
