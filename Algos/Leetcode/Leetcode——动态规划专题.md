@@ -434,7 +434,7 @@ public:
             {
                 dp[i] = max(dp[i], dp[i+questions[i][1]+1]+(long long)questions[i][0]); //做题
             }
-            else
+            else //这个else不要忘了写,相当于没办法参考后面的题,那么有可能会做当前的题,分数更高.如果不写的话相当于没有考虑这种做当前题的情况,导致错误.
             {
                 dp[i] = max((long long)questions[i][0],dp[i]);
             }
@@ -520,6 +520,15 @@ public:
 
 
 ### （2）[1749. 任意子数组和的绝对值的最大值](https://leetcode.cn/problems/maximum-absolute-sum-of-any-subarray/)
+
+> 给你一个整数数组 `nums` 。一个子数组 `[numsl, numsl+1, ..., numsr-1, numsr]` 的 **和的绝对值** 为 `abs(numsl + numsl+1 + ... + numsr-1 + numsr)` 。
+>
+> 请你找出 `nums` 中 **和的绝对值** 最大的任意子数组（**可能为空**），并返回该 **最大值** 。
+>
+> `abs(x)` 定义如下：
+>
+> - 如果 `x` 是负整数，那么 `abs(x) = -x` 。
+> - 如果 `x` 是非负整数，那么 `abs(x) = x` 。
 
 代码如下：
 
@@ -6035,6 +6044,305 @@ public:
     }
 };
 ```
+
+
+
+## [552. 学生出勤记录 II](https://leetcode.cn/problems/student-attendance-record-ii/)
+
+> 可以用字符串表示一个学生的出勤记录，其中的每个字符用来标记当天的出勤情况（缺勤、迟到、到场）。记录中只含下面三种字符：
+>
+> - `'A'`：Absent，缺勤
+> - `'L'`：Late，迟到
+> - `'P'`：Present，到场
+>
+> 如果学生能够 **同时** 满足下面两个条件，则可以获得出勤奖励：
+>
+> - 按 **总出勤** 计，学生缺勤（`'A'`）**严格** 少于两天。
+> - 学生 **不会** 存在 **连续** 3 天或 **连续** 3 天以上的迟到（`'L'`）记录。
+>
+> 给你一个整数 `n` ，表示出勤记录的长度（次数）。请你返回记录长度为 `n` 时，可能获得出勤奖励的记录情况 **数量** 。答案可能很大，所以返回对 `109 + 7` **取余** 的结果。
+
+### (1)方法1:类似于数位DP,用回溯+记忆化
+
+```c++
+class Solution {
+public:
+    static constexpr int MOD = 1e9+7;
+    int checkRecord(int n) {
+        //回溯+记忆化搜索,先做出来
+        //dfs(i,j,k)表示从右往左看:还剩下i个字母需要填(左侧的i个字母),
+        //右边填了j个A,以及右边相邻位置有k个连续L
+        //dfs(i,j,k)记录右边填了j个A,相邻位置有k个连续L的情况下,继续往左填字母,能构造多少个长为i的字符串
+        vector dp(n+1, vector<vector<int>>(2, vector<int>(3, -1)));
+        auto dfs = [&](this auto&& dfs, int i, int j, int k) -> int
+        {
+            //从右往左填
+            if(i==0) //填完了一个结果
+            {
+                return j<=1 && k<=2; //应该是都能满足的,直接return 1应该也可以
+            }
+            if(dp[i][j][k]!=-1) return dp[i][j][k]; //记忆化
+            int res = 0;
+            //填A,要求j==0才可以
+            if(j==0) res = (res + dfs(i-1, j+1, 0))%MOD;
+            //填L,要求k<2才可以
+            if(k<2) res = (res + dfs(i-1, j, k+1))%MOD;
+            //填P,都可以
+            res = (res + dfs(i-1, j, 0))%MOD;
+            if(dp[i][j][k]==-1) dp[i][j][k] = res; //记忆化的过程
+            return res;
+        };
+        int ans = dfs(n, 0, 0);
+        return ans;
+    }
+};
+```
+
+代码实现时，可以把 *dfs* 写在外面，这样多个测试用例之间可以**共享**记忆化搜索的结果，效率更高。==笔试的时候可以注意这一点。==
+
+
+
+### (2)方法2:转化为递推来做
+
+基本上是把上一种方法一比一地进行递归->递推的翻译过程。
+
+```c++
+static constexpr int MOD = 1e9+7;
+static constexpr int SIZE = 100005; //n的范围
+int f[SIZE][2][3] = {};
+auto init = []
+{
+    //i==0的值都是1
+    f[0][0][0] = f[0][0][1] = f[0][0][2] = f[0][1][0] = f[0][1][1] = f[0][1][2] = 1;
+    for(int i=1;i<SIZE;i++)
+    {
+        for(int j=0;j<2;j++)
+        {
+            for(int k=0;k<3;k++)
+            {
+                int& res = f[i][j][k];
+                res = f[i-1][j][0]; //表示填P,都可以
+                if(j==0) res = (res + f[i-1][1][0]) % MOD; //表示填A
+                if(k<2) res = (res + f[i-1][j][k+1]) % MOD;
+            }
+        }
+    }  
+    return 0;
+}();
+class Solution {
+public:
+    int checkRecord(int n) {
+        return f[n][0][0];
+    }
+};
+```
+
+
+
+### ==（3）方法3：矩阵快速幂DP==
+
+把后面两维进行合并，然后写出所有的情况，用矩阵快速幂DP更新即可，应该能写出来，有空顺便复习的时候可以再写。
+
+
+
+## [935. 骑士拨号器](https://leetcode.cn/problems/knight-dialer/)
+
+>  象棋骑士有一个**独特的移动方式**，它可以垂直移动两个方格，水平移动一个方格，或者水平移动两个方格，垂直移动一个方格(两者都形成一个 **L** 的形状)。
+>
+> 象棋骑士可能的移动方式如下图所示:
+>
+> ![img](assets/chess.jpg)
+>
+> 我们有一个象棋骑士和一个电话垫，如下所示，骑士**只能站在一个数字单元格上**(即蓝色单元格)。
+>
+> ![img](assets/phone.jpg)
+>
+> 给定一个整数 n，返回我们可以拨多少个长度为 n 的不同电话号码。
+>
+> 你可以将骑士放置在**任何数字单元格**上，然后你应该执行 n - 1 次移动来获得长度为 n 的号码。所有的跳跃应该是**有效**的骑士跳跃。
+>
+> 因为答案可能很大，**所以输出答案模** `109 + 7`.
+
+### （1）方法1：正常记忆化
+
+这道题目也可以记忆化，记忆化的是第几个，所处第几行和第几列，下次遇到完全一样的情况就可以进行返回了，代码如下：
+
+```c++
+class Solution {
+public:
+    static constexpr int MOD = 1e9+7;
+    static constexpr int SIZE = 5005; //n的最大值
+    int knightDialer(int n) {
+        int dp[SIZE][4][3]; //记忆化:第几个,第几行,第几列
+        memset(dp, -1, sizeof(dp));
+        int dirs[8][2] = {{1,2},{1,-2},{-1,2},{-1,-2},{2,1},{-2,1},{2,-1},{-2,-1}};
+        auto dfs = [&](this auto&& dfs, int i, int r, int c) -> int
+        {
+            if(i==n-1) return 1; //这里不是n,是n-1,表明最后一步就是有效的(反正后面会做判断,最后一步一定有效)
+            if(dp[i][r][c]!=-1) return dp[i][r][c];
+            //cout<<r<<" "<<c<<endl;
+            int res = 0;
+            for(int d=0;d<8;d++)
+            {
+                int nxtX = r + dirs[d][0];
+                int nxtY = c + dirs[d][1];
+                if(nxtX>=0 && nxtX<3 && nxtY>=0 && nxtY<3)
+                {
+                    res = (res + dfs(i+1, nxtX, nxtY)) % MOD;
+                }
+                if(nxtX==3 && nxtY==1) res = (res + dfs(i+1, nxtX, nxtY)) % MOD;
+            }
+            if(dp[i][r][c]==-1) dp[i][r][c] = res; //记忆化
+            return res;
+        };
+
+        int ans = 0;
+        for(int i=0;i<3;i++)
+        {
+            for(int j=0;j<3;j++)
+            {
+                ans = (ans + dfs(0, i, j)) % MOD;
+            }
+        }
+        ans = (ans + dfs(0, 3, 1)) % MOD;
+        return ans%MOD;
+    }
+};
+```
+
+
+
+### （2）让代码优雅一些
+
+现在的代码不够优雅，我们手动指定一下每个位置接下来可以跳到哪里，同时倒着往回推，这样就可以转换记忆化搜索为递推了，也就是转为DP问题：
+
+```c++
+class Solution {
+public:
+    static constexpr int MOD = 1e9+7;
+    static constexpr int SIZE = 5005;
+    int knightDialer(int n) {
+        //dp[i][j]表示长度为i的电话号码,当前位置为j的个数
+        //nextStep数组
+        vector<vector<int>> fromSteps //每个位置可以由这些位置跳过来
+        {
+            {4,6},
+            {6,8},
+            {7,9},
+            {4,8},
+            {3,0,9},
+            {-1}, //5什么都做不到
+            {7,1,0},
+            {2,6},
+            {1,3},
+            {4,2},
+        };
+        int dp[SIZE][10] = {0};
+        //memset(dp, -1, sizeof(dp));
+        for(int i=0;i<10;i++) dp[1][i] = 1; //还要处理长度为1,当前位置为i的电话号码的个数
+        for(int i=2;i<SIZE;i++)
+        {
+            for(int d=0;d<10;d++)
+            {
+                int sum = 0;
+                for(int x: fromSteps[d])
+                {
+                    if(x==-1) continue;
+                    sum = (sum + dp[i-1][x]) % MOD;
+                }
+                dp[i][d] = sum % MOD;
+            }
+        }
+        int ans = 0;
+        for(int i=0;i<10;i++)
+        {
+            ans = (ans + dp[n][i])%MOD;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+### （3）矩阵快速幂DP
+
+把上面的递推方程手动打出来，然后就可以用矩阵快速幂DP来加快运算了，代码如下：
+```c++
+class Solution {
+public:
+    static constexpr int MOD = 1e9+7;
+    static constexpr int SIZE = 10;
+    using Matrix = array<array<long long, SIZE>, SIZE>;
+    Matrix mul(Matrix&a, Matrix& b)
+    {
+        Matrix c = {};
+        for(int i=0;i<SIZE;i++)
+        {
+            for(int k=0;k<SIZE;k++)
+            {
+                if(a[i][k]==0) continue;
+                for(int j=0;j<SIZE;j++)
+                {
+                    c[i][j] = (c[i][j] + a[i][k] * b[k][j] % MOD) % MOD;
+                }
+            }
+        }
+        return c;
+    }
+    Matrix pow(Matrix a, int n)
+    {
+        Matrix res = {};
+        for(int i=0;i<SIZE;i++) res[i][i] = 1;
+        while(n)
+        {
+            if(n&1) res = mul(res, a);
+            a = mul(a, a);
+            n >>= 1;
+        }
+        return res;
+    }
+    int knightDialer(int n) {
+        vector<vector<int>> fromSteps //每个位置可以由这些位置跳过来
+        {
+            {4,6},
+            {6,8},
+            {7,9},
+            {4,8},
+            {3,0,9},
+            {-1}, //5什么都做不到
+            {7,1,0},
+            {2,6},
+            {1,3},
+            {4,2},
+        };
+        if(n==1) return 10;
+        Matrix m{};
+        for(int i=0;i<10;i++)
+        {
+            for(int& x: fromSteps[i])
+            {
+                if(x==-1) continue;
+                m[i][x] = 1; 
+            }
+        }
+        Matrix mt = pow(m, n-1);
+        int ans = 0;
+        for(int i=0;i<10;i++)
+        {
+            for(int j=0;j<10;j++)
+            {
+                ans = (ans + mt[i][j]) % MOD;
+            }
+        }
+        return ans;
+    }
+};
+```
+
+
+
+
 
 
 
