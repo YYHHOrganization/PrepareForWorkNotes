@@ -405,3 +405,10 @@ Mihoyo的相关题目的一部分：在五月杂题那个文件夹里面。
 [935. 骑士拨号器](https://leetcode.cn/problems/knight-dialer/)
 
 [350. 两个数组的交集 II](https://leetcode.cn/problems/intersection-of-two-arrays-ii/)（做对了，但0x3f的做法还没看完）
+
+
+
+# 2025.5.16
+
+[2140. 解决智力问题](https://leetcode.cn/problems/solving-questions-with-brainpower/),重新做了一遍
+

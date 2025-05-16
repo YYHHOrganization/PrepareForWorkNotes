@@ -434,7 +434,7 @@ public:
             {
                 dp[i] = max(dp[i], dp[i+questions[i][1]+1]+(long long)questions[i][0]); //做题
             }
-            else
+            else //这个else不要忘了写,相当于没办法参考后面的题,那么有可能会做当前的题,分数更高.如果不写的话相当于没有考虑这种做当前题的情况,导致错误.
             {
                 dp[i] = max((long long)questions[i][0],dp[i]);
             }
@@ -520,6 +520,15 @@ public:
 
 
 ### （2）[1749. 任意子数组和的绝对值的最大值](https://leetcode.cn/problems/maximum-absolute-sum-of-any-subarray/)
+
+> 给你一个整数数组 `nums` 。一个子数组 `[numsl, numsl+1, ..., numsr-1, numsr]` 的 **和的绝对值** 为 `abs(numsl + numsl+1 + ... + numsr-1 + numsr)` 。
+>
+> 请你找出 `nums` 中 **和的绝对值** 最大的任意子数组（**可能为空**），并返回该 **最大值** 。
+>
+> `abs(x)` 定义如下：
+>
+> - 如果 `x` 是负整数，那么 `abs(x) = -x` 。
+> - 如果 `x` 是非负整数，那么 `abs(x) = x` 。
 
 代码如下：
 
