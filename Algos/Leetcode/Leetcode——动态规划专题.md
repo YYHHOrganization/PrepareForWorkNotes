@@ -474,6 +474,11 @@ public:
 
 ## 3.最大子数组和（最大子段和）——==未整理完==
 
+> Takeaway(2025.5.18):
+>
+> - (1)**记住**:需要维护dp的同时维护中间的max值
+> - (2)注意:子数组能否允许选空?
+
 有两种做法：
 
 - 定义状态 `f[i]` 表示以 `a[i]` 结尾的最大子数组和，不和 `i` 左边拼起来就是 `f[i]=a[i]`，和`i` 左边拼起来就是 `f[i]=f[i−1]+a[i]`，取最大值就得到了状态转移方程 `f[i]=max(f[i−1],0)+a[i]`，答案为 max(f)(因为不确定最大值是以哪个索引为结尾的，所以要维护中间过程中的max值)。这个做法也叫做 `Kadane` 算法。
@@ -659,7 +664,7 @@ public:
 ```C++
 int max_s = INT_MIN; // 最大子数组和，不能为空
 int min_s = 0;       // 最小子数组和，可以为空
-int max_f = 0, min_f = 0, sum = 0;
+int max_f = 0, min_f = 0, sum = 0;0000000
 ```
 
 
@@ -707,7 +712,7 @@ public:
         // ns2 = s2 + (a.-b.)
         int n = nums1.size();
         int mx2=INT_MIN/2,mx1=INT_MIN/2;
-        int mx2dp=INT_MIN/2,mx1dp=INT_MIN/2; 
+        int mx2dp=INT_MIN/2,mx1dp=INT_MIN/2;  //这个按理说应该初值为0(实测全部设置初值为0也是可以过的),考虑空的情况,但是 由于不换== 全交换,所以也可以不考虑空子数组情况,只考虑非空子数组情况,像这段代码
         int sum1=0,sum2=0;
         for(int i=0;i<n;i++)
         {
@@ -753,6 +758,48 @@ $s_1$已知且不变，所以最后数值取决于$ diff[left] + ... + diff[righ
 
 
 
+2025.5.17补充解法，可能这样会清晰一些：
+
+```c++
+class Solution {
+public:
+    int maximumsSplicedArray(vector<int>& nums1, vector<int>& nums2) {
+        //可以执行1次或者不执行
+        //其实就是求解diff数组的最大子数组和,以及最小子数组和,也可以不操作
+        int n = nums1.size();
+        vector<int> diff(n);
+        for(int i=0;i<n;i++)
+        {
+            diff[i] = nums1[i] - nums2[i];
+        }
+        int sum1 = accumulate(nums1.begin(), nums1.end(), 0);
+        int sum2 = accumulate(nums2.begin(), nums2.end(), 0);
+
+        //以下是做交换的过程, 此时从diff数组中选出来的子数组部分可以为空,最后就可以统一一下
+        int mxdp = 0;
+        int mndp = 0;
+        int mx = 0;
+        int mn = 0;
+        //找到diff数组子数组的最大和,和最小和
+        for(int i=0;i<n;i++)
+        {
+            mxdp = max(mxdp+diff[i], diff[i]);
+            mx = max(mx, mxdp);
+            mndp = min(mndp+diff[i], diff[i]);
+            mn = min(mn, mndp);
+        }
+        //cout<<mx<<" "<<mn<<endl;
+        int res2 = max(sum1-mx, sum2+mx);
+        int res3 = max(sum1-mn, sum2+mn);
+        return max(res2, res3);
+    }
+};
+```
+
+
+
+
+
 ### [152. 乘积最大子数组](https://leetcode.cn/problems/maximum-product-subarray/)
 
 中等
@@ -789,13 +836,29 @@ public:
             int x = nums[i];
             int tmpMndp = mndp;
             mndp = min({mndp*x,x,mxdp*x});
-            mn = min(mndp,mn);
+            mn = min(mndp,mn); //这个mn其实可以不用存
             mxdp = max({mxdp*x,x,tmpMndp*x}); 
             mx = max(mxdp,mx);
         }
         return mx;
     }
 };
+```
+
+python:
+
+```python
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        n = len(nums)
+        mx = mn = mxdp = mndp = res = nums[0]
+        for i in range(1, n):
+            x = nums[i]
+            tmpMXdp = mxdp
+            mxdp = max(x, mxdp*x, mndp*x)
+            mndp = min(x, tmpMXdp*x, mndp*x)
+            res = max(res, mxdp, mndp)
+        return res
 ```
 
 
@@ -6679,3 +6742,95 @@ public:
 
 
 
+# 专题：前后缀分解
+
+部分题目也可以用状态机 DP 解决。
+
+如果涉及到的只是若干元素，而不是前缀/后缀这样的一段元素。也可以用「枚举右，维护左」思考，详见数据结构题单。
+
+### （1）[724. 寻找数组的中心下标](https://leetcode.cn/problems/find-pivot-index/)
+
+> 给你一个整数数组 `nums` ，请计算数组的 **中心下标** 。
+>
+> 数组 **中心下标** 是数组的一个下标，其左侧所有元素相加的和等于右侧所有元素相加的和。
+>
+> 如果中心下标位于数组最左端，那么左侧数之和视为 `0` ，因为在下标的左侧不存在元素。这一点对于中心下标位于数组最右端同样适用。
+>
+> 如果数组有多个中心下标，应该返回 **最靠近左边** 的那一个。如果数组不存在中心下标，返回 `-1` 。
+
+```c++
+class Solution {
+public:
+    int pivotIndex(vector<int>& nums) {
+        int n = nums.size();
+        //suffix[i]表示以i为开始,一直到最后的和
+        vector<int> suffix(n+1);
+        for(int i=n-1;i>=0;i--)
+        {
+            suffix[i] = suffix[i+1] + nums[i];
+        }
+        int pre = 0;
+        int ansIndex = -1;
+        for(int i=0;i<n;i++)
+        {
+            if(pre == suffix[i+1])
+            {
+                ansIndex = i;
+                break;
+            }
+            pre += nums[i];
+        }
+        return ansIndex;
+    }
+};
+```
+
+
+
+### （2）[845. 数组中的最长山脉](https://leetcode.cn/problems/longest-mountain-in-array/)
+
+> 把符合下列属性的数组 `arr` 称为 **山脉数组** ：
+>
+> - `arr.length >= 3`
+> - 存在下标i（0 < i < arr.length - 1），满足
+>   - `arr[0] < arr[1] < ... < arr[i - 1] < arr[i]`
+>   - `arr[i] > arr[i + 1] > ... > arr[arr.length - 1]`
+>
+> 给出一个整数数组 `arr`，返回最长山脉子数组的长度。如果不存在山脉子数组，返回 `0` 。
+
+#### （a）方法1：传统方法：正常前后缀分解（未完全满足题目要求）
+
+```c++
+class Solution {
+public:
+    int longestMountain(vector<int>& arr) {
+        int n = arr.size();
+        if(n<3) return 0;
+        //要求:前面一直递增,后面一直递减.suffix[i]维护以i为开头的连续递减的子数组的长度
+        vector<int> suffix(n+1, 1); //suffix[n-1] = 1
+        for(int i=n-2;i>=0;i--)
+        {
+            if(arr[i]>arr[i+1]) suffix[i] = suffix[i+1] + 1;
+            //else = 1即可,表示自己
+        }
+        int pre = 1; //pre表示i之前的最长递增序列的长度
+        int ans = 0;
+        for(int i=1;i<n-1;i++)
+        {
+            if(arr[i]>arr[i-1] && arr[i]>arr[i+1])
+            {
+                int len = pre + 1 + suffix[i+1];
+                cout<<"i]: "<<i<<" "<<pre<<" "<<suffix[i+1]<<" "<<len<<endl;
+                if(len>=3) ans = max(ans, len);
+            }
+            if(arr[i]>arr[i-1]) pre += 1;
+            else pre = 1;
+        }
+        return ans;
+    }
+};
+```
+
+
+
+#### （b）
