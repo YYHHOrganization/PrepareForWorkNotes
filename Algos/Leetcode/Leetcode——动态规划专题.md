@@ -6412,6 +6412,36 @@ public:
 };
 ```
 
+python版本：
+
+```python
+# dfs 从x,y出发,剩下k步
+MOD = 1_000_000_007
+dirs = [[2,1],[2,-1],[1,2],[1,-2],[-2,1],[-2,-1],[-1,2],[-1,-2]]
+@cache
+def dfs(x:int, y:int, k:int)->int:
+    if k==0:
+        return 1
+    res=0
+    for d in dirs:
+        nxtx = x+d[0]
+        nxty = y+d[1]
+        if 0<=nxtx<3 and 0<=nxty<3 : 
+            res += dfs(nxtx,nxty,k-1)
+        if nxtx==1 and nxty ==3 :
+            res += dfs(nxtx,nxty,k-1)
+    return res%MOD
+
+class Solution:
+    def knightDialer(self, n: int) -> int:
+        res=0
+        for i in range(3):
+            for j in range(3):
+                res += dfs(i,j,n-1)%MOD
+        res += dfs(1,3,n-1)%MOD
+        return res%MOD
+```
+
 
 
 ### （2）让代码优雅一些
