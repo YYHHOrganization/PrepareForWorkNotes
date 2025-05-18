@@ -304,20 +304,18 @@ public:
 >
 > 算法的时间复杂度应该为 `O(log (m+n))` 。
 >
->  
->
-> **示例 1：**
+>  **示例 1：**
 >
 > ```
-> 输入：nums1 = [1,3], nums2 = [2]
+>输入：nums1 = [1,3], nums2 = [2]
 > 输出：2.00000
 > 解释：合并数组 = [1,2,3] ，中位数 2
 > ```
->
+> 
 > **示例 2：**
 >
 > ```
-> 输入：nums1 = [1,2], nums2 = [3,4]
+>输入：nums1 = [1,2], nums2 = [3,4]
 > 输出：2.50000
 > 解释：合并数组 = [1,2,3,4] ，中位数 (2 + 3) / 2 = 2.5
 > ```
@@ -341,7 +339,7 @@ public:
         {
             swap(nums1, nums2);
         }
-        int m = nums1.size();
+        int m = nums1.size(); //使用的是还没插入前后值的size！！！
         int n = nums2.size();
         //step 2:
         nums1.insert(nums1.begin(), INT_MIN);//注意语法 pos,num
@@ -355,8 +353,8 @@ public:
         while(left<=right)
         {
             int mid = left+((right-left)>>1);
-            int j = (m+n+1)/2 - mid;
-            if(nums1[mid]<=nums2[j+1]) left = mid + 1;
+            int j = (m+n+1)/2 - mid; // 👇
+            if(nums1[mid]<=nums2[j+1]) left = mid + 1;  // 这个是< 或者<= 结果都是对的
             else right = mid - 1;
         }
         int i = left - 1;
@@ -373,7 +371,11 @@ public:
 
 
 
+![image-20250517155057698](assets/image-20250517155057698.png)
+
 以下是不insert INT_MIN 和INT_MAX的版本：
+
+<img src="assets/image-20250517155316541.png" alt="image-20250517155316541" style="zoom: 67%;" />
 
 ```c++
 class Solution {
@@ -393,21 +395,21 @@ public:
         // nums2.push_back(INT_MAX);
 
         //step 3:
-        int left = 0, right = m-1;
+        int left = 0, right = m-1;// 【change】m-1
         //nums1[mid]<=nums2[j] false false false false(this!) true true 
         while(left<=right)
         {
             int mid = left+((right-left)>>1);
-            int j = (m+n+1)/2 - mid - 2;
+            int j = (m+n+1)/2 - mid - 2; // 【change】-2
             if(nums1[mid]<=nums2[j+1]) left = mid + 1;
             else right = mid - 1;
         }
         int i = left - 1;
-        int j = (m+n+1)/2-i-2;
-        int ai = (i>=0)? nums1[i]: INT_MIN;
-        int ai1 = (i+1<m)? nums1[i+1]: INT_MAX;
-        int bj = (j>=0)? nums2[j]: INT_MIN;
-        int bj1 = (j+1<n)? nums2[j+1]:INT_MAX;
+        int j = (m+n+1)/2-i-2;// 【change】-2
+        int ai = (i>=0)? nums1[i]: INT_MIN;		// 【change】
+        int ai1 = (i+1<m)? nums1[i+1]: INT_MAX; // 【change】
+        int bj = (j>=0)? nums2[j]: INT_MIN;		// 【change】
+        int bj1 = (j+1<n)? nums2[j+1]:INT_MAX;	// 【change】
         int _max = max(ai, bj);
         int _min = min(ai1, bj1);
         if((m+n)%2==1) return _max;
@@ -3146,6 +3148,7 @@ public:
   - 如果`nums[i]==1`，那么`swap(nums[i], nums[p1])`，然后`p1++`；
   - 否则，判断如果`nums[i]==0`，那么先`swap(nums[i],nums[p0])`。但是有可能p0的位置是之前换过来的1（此时`p0<p1，`注意这里不会取到等号），如果满足`p0<p1`那么就继续调换`swap(nums[i](此时为调换过去的1),nums[p1])`。
     - 关于指针的移动，都要把`p0`和`p1`往后移动一个位置，不论是否满足`p0<p1`（毕竟来了一个新的数嘛）。
+    - 多填了一个0，那么要是P0和P1不在一起，必然说明中间P1被挤走一个，需要换回来。
     - <img src="assets/image-20250319141419095.png" alt="image-20250319141419095" style="zoom: 67%;" /><img src="assets/image-20250319141430936.png" alt="image-20250319141430936" style="zoom:67%;" /><img src="assets/image-20250319141446581.png" alt="image-20250319141446581" style="zoom:67%;" />
 
 将以上逻辑写作代码，如下：
@@ -3167,7 +3170,7 @@ public:
             else if(nums[i]==0)
             {
                 swap(nums[i], nums[p0]);
-                if(p0 < p1)
+                if(p0 < p1) // 同样的，判断if(nums[i]==1)//发现交换走的是1 这个也行
                 {
                     swap(nums[i], nums[p1]);
                 }
@@ -3179,6 +3182,41 @@ public:
 ```
 
 还有一种两边交换的方法，在[75. 颜色分类 - 力扣（LeetCode）](https://leetcode.cn/problems/sort-colors/solutions/437968/yan-se-fen-lei-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj)的方法三中，不过复杂度是一样的，就先不整理了。
+
+还有一种理解方法：
+
+```C++
+class Solution {
+public:
+    void sortColors(vector<int>& nums) {
+        int p0=0,p1=0;
+        //==0 换
+        //==1
+        // 0  1* 1  2  0_  <-遇到这个0_
+        // 0  0_ 1  2  1*  交换后，发现交换走的是1,1到后面去了
+        // 0  0  1  1* 2   再把它换到前面来
+
+        for(int i=0;i<(int)nums.size();i++)
+        {
+            if(nums[i]==0)
+            {
+                swap(nums[i],nums[p0]);
+                p0++;
+                if(nums[i]==1)//发现交换走的是1
+                {
+                    swap(nums[i],nums[p1]);
+                }
+                p1++;
+            }
+            else if(nums[i]==1)
+            {
+                swap(nums[i],nums[p1]);
+                p1++;
+            }
+        }
+    }
+};
+```
 
 
 
@@ -3325,7 +3363,7 @@ public:
                     f[i][j]  |= f[i][j-2]; //j不会越界,因为*不会出现在p的第一个字符中(否则非法)
                     if(matches(i, j-1))
                     {
-                        f[i][j] |= (f[i-1][j]||f[i-1][j-2]);
+                        f[i][j] |= (f[i-1][j]||f[i-1][j-2]); 
                     }
                 }
                 else //这种比较好想,意味着不匹配即失败
@@ -3364,14 +3402,18 @@ public:
            {
                 if(p[j-1]=='*') // a a* // a b*
                 {
-                    dp[i][j] = dp[i][j-2];//①
+                    // a,a*;      a, Φ  （ Φ 表示空）
+                    // a b*;      a, Φ  
+                    dp[i][j] = dp[i][j-2];//①   //之所有j-2不会越界 是因为题目保证了p字符合法，则有*前面必有字符
                     if(matchs(i,j-1))//// a a* 
                     {
+                        ////a,a*;      Φ , Φ    |    Φ ,a*;   
                         dp[i][j] |= dp[i-1][j-2]|dp[i-1][j];//或等于|=，而不是等于.前面①如果是true也要过
                     }
                 }
                 else if(matchs(i,j))
                 {
+                    // a  a        Φ , Φ
                     dp[i][j] = dp[i-1][j-1];
                 }
            }
