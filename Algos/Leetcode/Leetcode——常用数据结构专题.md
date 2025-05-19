@@ -5529,6 +5529,60 @@ public:
 
 
 
+### [1845. 座位预约管理系统](https://leetcode.cn/problems/seat-reservation-manager/)
+
+> 请你设计一个管理 `n` 个座位预约的系统，座位编号从 `1` 到 `n` 。
+>
+> 请你实现 `SeatManager` 类：
+>
+> - `SeatManager(int n)` 初始化一个 `SeatManager` 对象，它管理从 `1` 到 `n` 编号的 `n` 个座位。所有座位初始都是可预约的。
+> - `int reserve()` 返回可以预约座位的 **最小编号** ，此座位变为不可预约。
+> - `void unreserve(int seatNumber)` 将给定编号 `seatNumber` 对应的座位变成可以预约。
+
+进阶需求:你能做到复杂度和 *n* 无关吗？
+
+其实跟前面"无限集中的最小数字"那道题目有相似之处,代码和注释如下:
+```c++
+class SeatManager {
+public:
+    //一开始大家都是可预约的
+    priority_queue<int, vector<int>, greater<>> pq; //小顶堆
+    int start = 1; //start及之后都是连续的,不需要堆来维护
+    SeatManager(int n) {
+        
+    }
+    
+    int reserve() { //将可预约作为变成不可预约,优先队列中维护前面所有可以预约的,把最小的可预约pop出去,表明现在不可约
+        if(!pq.empty())
+        {
+            int id = pq.top();
+            pq.pop();
+            return id;
+        }
+        //pq为空,表明前面都不可约,至少start是可约的
+        start++;
+        return start - 1;
+    }
+    
+    void unreserve(int seatNumber) {
+        //给定编号变成可以预约的
+        if(seatNumber<start) 
+        {
+            pq.push(seatNumber);
+        }
+    }
+};
+
+/**
+ * Your SeatManager object will be instantiated and called as such:
+ * SeatManager* obj = new SeatManager(n);
+ * int param_1 = obj->reserve();
+ * obj->unreserve(seatNumber);
+ */
+```
+
+
+
 
 
 # 七、并查集

@@ -374,7 +374,9 @@ public:
 
 [76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/),再做一遍
 
-[93. 复原 IP 地址](https://leetcode.cn/problems/restore-ip-addresses/)
+[93. 复原 IP 地址 ](https://leetcode.cn/problems/restore-ip-addresses/)  
+
+- [ ] 93 y
 
 
 
@@ -391,3 +393,51 @@ Mihoyo的相关题目的一部分：在五月杂题那个文件夹里面。
 - [1137. 第 N 个泰波那契数](https://leetcode.cn/problems/n-th-tribonacci-number/)
 - [1220. 统计元音字母序列的数目](https://leetcode.cn/problems/count-vowels-permutation/)
 - 
+
+
+
+# 2025.5.15
+
+每日一题:在5月杂题里面:[2900. 最长相邻不相等子序列 I](https://leetcode.cn/problems/longest-unequal-adjacent-groups-subsequence-i/)
+
+[551. 学生出勤记录 I](https://leetcode.cn/problems/student-attendance-record-i/)
+
+[552. 学生出勤记录 II](https://leetcode.cn/problems/student-attendance-record-ii/)
+
+[935. 骑士拨号器](https://leetcode.cn/problems/knight-dialer/)
+
+[350. 两个数组的交集 II](https://leetcode.cn/problems/intersection-of-two-arrays-ii/)（做对了，但0x3f的做法还没看完）
+
+
+
+# 2025.5.16
+
+[2140. 解决智力问题](https://leetcode.cn/problems/solving-questions-with-brainpower/),重新做了一遍
+
+
+
+# 2025.5.17
+
+【1】[30. 串联所有单词的子串](https://leetcode.cn/problems/substring-with-concatenation-of-all-words/)（困难）
+
+【2】[75. 颜色分类](https://leetcode.cn/problems/sort-colors/)
+
+- 方法1：单次遍历双指针
+- 方法2：0x3f新发布的解法 （很不好想，可能双指针的做法比较好记住）
+
+【3】[2012. 数组美丽值求和](https://leetcode.cn/problems/sum-of-beauty-in-the-array/)
+
+【4】[724. 寻找数组的中心下标](https://leetcode.cn/problems/find-pivot-index/)
+
+【5】[845. 数组中的最长山脉](https://leetcode.cn/problems/longest-mountain-in-array/)
+
+- 方法1
+- （方法2：分组循环还没看，有点困难，等复习到分组循环的时候再看吧）
+
+- 复习DP题目（复习到网格图DP之前）
+- 
+
+
+
+# 2025.5.18
+
