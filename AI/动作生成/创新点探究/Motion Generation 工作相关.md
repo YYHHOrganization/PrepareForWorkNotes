@@ -38,6 +38,8 @@
 >
 > - （2）【评估难度：:star::star::star::star::star:】夸张化动作：比如这个视频里的：https://www.bilibili.com/video/BV1fQ4y1Z7b6/?spm_id_from=333.337.search-card.all.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99，做这个相关的生成，也没人做。再比如https://www.bilibili.com/video/BV1r6ayeKE94/?spm_id_from=333.337.search-card.all.click&vd_source=f0e5ebbc6d14fe7f10f6a52debc41c99，这个视频也是。==但这个方向非常缺数据集，同时物理的约束比较难做，但感觉很创新。==
 >
+> - <img src="assets/image-20250520135924977.png" alt="image-20250520135924977" style="zoom:80%;" /><img src="assets/image-20250520140148457.png" alt="image-20250520140148457" style="zoom:50%;" />
+>
 > - （3）【评估难度：:star::star::star:(:star:)​】个性化人体运动生成
 >
 >   针对特定人物（如虚拟偶像、虚拟形象）实现个人独特风格迁移/保持（如走法、手势、速度节奏等，可以比如提供一段视频进行学习），可用于虚拟人、虚拟试衣、游戏个性化定制等领域。
@@ -182,3 +184,20 @@
 | 3    | [MulSMo](https://arxiv.org/pdf/2412.09901): Multimodal Stylized Motion Generation by Bidirectional Control Flow（ArXiv2025） | 要生成既符合目标风格又遵循给定内容提示的运动序列，需要兼顾内容与风格的双重要求。==现有方法通常仅让信息从风格单向流向内容，这可能导致风格与内容之间的冲突，损害两者的融合效果。==与此不同，本研究构建了风格与内容之间的双向控制流，同时使==风格向内容方向调整，从而缓解风格-内容碰撞问题，并在融合过程中更好地保留风格动态特征。==此外，我们通过==对比学习将风格化运动生成的输入模态从单一（风格运动）扩展到文本、图像等多模态==，实现了对运动生成更灵活的风格控制。为提升性能，我们开发了==新型运动变分自编码器（VAE），将运动扩散模型升级为运动对齐的时序潜在扩散模型。==大量实验表明，本方法在不同数据集上均显著优于现有方法，同时支持多模态信号控制。我们的代码将开源发布。 | 1.传统都是直接风格指导动作生成，这篇是**双向控制流。**<br>2.对比学习可以支持多模态的输入；<br>3.为提升性能，将motion diffusion模型扩展到运行对齐的时序latent diffusion model | ![image-20250520101911953](./assets/image-20250520101911953.png)![image-20250520102129332](./assets/image-20250520102129332.png) | :no_entry:         | ArXiv：https://arxiv.org/pdf/2412.09901           |
 | 4    | HUMOS: Human Motion Model Conditioned on Body Shape **[ECCV 2024]** | 生成逼真的人体运动对计算机视觉与图形学应用至关重要。==人体形态与尺寸的丰富多样性会显著影响运动方式，但现有运动模型通常忽视这些差异，仅采用标准化平均体型进行建模。这导致不同人体的运动呈现同质化特征，动作与物理属性不匹配，从而限制了运动多样性。==为此，我们提出一种创新方法，通过学习==基于体型的条件生成运动模型来解决该问题。==我们证明：通过循环一致性约束、直觉物理规则以及建模身份与运动相关性的稳定性约束，能够从非配对训练数据中学习此类模型。 | 1.支持多体型的动作生成，使得不同体型的动作生成结果都保持稳定 | ![image-20250520103453578](./assets/image-20250520103453578.png) | :white_check_mark: | https://otaheri.github.io/publication/2024_humos/ |
 | 5    | [SMEAR](https://dl.acm.org/doi/10.1145/3641519.3657457): Stylized Motion Exaggeration with ARt-direction**[Siggraph 2024]** | 在动画创作中，==**动态模糊帧**（smear frames）是艺术家惯用的运动表现手法。本文提出一种**自动化但支持艺术调控**的3D模糊帧生成方法，重点解决物体沿运动轨迹拉伸形成的**延长中间帧**（elongated in-betweens）问题。==该方法以关键帧动画的3D网格作为输入，为动画的每一帧输出变形后的网格模型，并允许艺术家在动画流程最终阶段、渲染开始前进行艺术化调整。我们的技术方案分两步实现：<br>1.**运动偏移量计算**：首先生成具有时空一致性的运动偏移量，量化输入网格各部分应产生的前导（leading）或拖尾（trailing）变形程度<br>2.**风格化处理框架**：通过设计的框架对这些运动偏移量进行风格化处理，以交互速率生成延长中间帧，并将该技术扩展至另外两种常见模糊帧效果——多重中间帧（multiple in-betweens）与运动轨迹线（motion lines）<br>新手用户可直接调用预设风格化函数实现快速原型设计，而资深艺术家则能通过我们在Blender中实现的**几何节点系统**（geometry node），设计更复杂的自定义风格化函数。 | ![image-20250520105122249](./assets/image-20250520105122249.png)用图形学+数学（未使用神经网络)来建模出中间的插值姿态 | 纯数学方法                                                   | :white_check_mark: | https://github.com/MoStyle/SMEAR                  |
+
+[Motion Style Transfer](https://deepmotionediting.github.io/style_transfer) Siggraph 2020年的工作，但模型比较老，而且只有走路。
+
+[GitHub - XingliangJin/MCM-LDM: [CVPR 2024\] Arbitrary Motion Style Transfer with Multi-condition Motion Latent Diffusion Model](https://github.com/xingliangjin/mcm-ldm)，这个也是类似工作，也是用Diffusion模型做的。
+
+# Motivation
+
+- 1.聚焦于Motion Stylization(动作风格化)领域,这个领域比较新,做的人也很少(基本上是近两年的工作,不是很多)。现有的工作基本都是给一个文本（chicken style），把输入的动作转换成对应风格的动作。今年年初有工作支持输入为多模态（语音/文本/视频）等，实际上还是分析出图片的风格从而转换动作（比如还是得到chicken style的信息）。
+  - 我们的Motivation：**即插即用的通用化风格迁移**，比如输入一个人物动作视频，模型可以学习到==这个人物的动作有什么特点==（情绪，整体风格，性格/运动幅度/频率/癖好），另外输入一个source motion，我们的模型输出target motion（风格化之后的结果）。
+  - 另一个可以考虑的方向：输入可以是文本：【场景】【动作】，比如输入【沙漠】【走路】，【雨天】【跳舞】。
+    - 【沙漠】【走路】：生成蹒跚行走，一步一陷地走路
+    - 【雨天】【跳舞】：可能会打滑/摔倒。
+
+
+
+
+
