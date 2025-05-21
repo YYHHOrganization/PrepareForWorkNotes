@@ -5169,6 +5169,166 @@ class Solution:
 
 
 
+# 八、区间DP
+
+讲解：[区间 DP](https://leetcode.cn/link/?target=https%3A%2F%2Fwww.bilibili.com%2Fvideo%2FBV1Gs4y1E7EU%2F)
+
+从数组的左右两端不断缩短，求解关于某段下标区间的最优值。
+
+一般定义 `f[i][j]` 表示下标区间 `[i,j] `的最优值。
+
+## 8.1 最长回文子序列
+
+### （1）[516. 最长回文子序列](https://leetcode.cn/problems/longest-palindromic-subsequence/)
+
+> 给你一个字符串 `s` ，找出其中最长的回文子序列，并返回该序列的长度。
+>
+> 子序列定义为：不改变剩余字符顺序的情况下，删除某些字符或者不删除任何字符形成的一个序列。
+
+#### （a）记忆化搜索：
+
+```c++
+class Solution {
+public:
+    int longestPalindromeSubseq(string s) {
+        //dp[i][j]表示索引i到j的最长的回文子序列的长度
+        //区间dp用记忆化搜索会比较容易写
+        int n = s.size();
+        vector<vector<int>> dp(n, vector<int>(n, -1));
+        auto dfs = [&](this auto&& dfs, int i, int j) -> int
+        {
+            if(i>j) return 0;
+            if(i==j) return 1; //自己肯定是长度为1的回文子序列
+            int& res = dp[i][j];
+            if(res!=-1) return res; //记忆化
+            
+            res = 0;
+            if(s[i]==s[j])
+            {
+                res = dfs(i+1, j-1) + 2; //往中间走,回文串长度+2
+            }
+            else
+            {
+                res = max(dfs(i+1, j), dfs(i, j-1));
+            }
+            dp[i][j] = res;
+            return res;
+        };
+        return dfs(0, n-1);
+    }
+};
+```
+
+
+
+#### （b）正常的区间DP（迭代式不一定好写，推荐记忆化搜索）
+
+```c++
+class Solution {
+public:
+    int longestPalindromeSubseq(string s) {
+        //看dfs+记忆化搜索,i是从i+1推导过来的,而j则是由j-1推导过来的,因此i需要倒序遍历,j则需要正序遍历
+        int n = s.size();
+        vector<vector<int>> dp(n+1, vector<int>(n+1, 0));
+        for(int i=n-1;i>=0;i--)
+        {
+            dp[i][i] = 1; //i>j的情况不需要考虑,为0
+            for(int j=i+1;j<n;j++)
+            {
+                if(s[i]==s[j])
+                {
+                    dp[i][j] = dp[i+1][j-1] + 2;
+                }
+                else dp[i][j] = max(dp[i+1][j], dp[i][j-1]);
+            }
+        }
+        return dp[0][n-1];
+    }
+};
+```
+
+
+
+### （2）[730. 统计不同回文子序列](https://leetcode.cn/problems/count-different-palindromic-subsequences/)（==很是困难==）
+
+> 给你一个字符串 `s` ，返回 `s` 中不同的非空回文子序列个数 。由于答案可能很大，请返回对 `109 + 7` **取余** 的结果。
+>
+> 字符串的子序列可以经由字符串删除 0 个或多个字符获得。
+>
+> 如果一个序列与它反转后的序列一致，那么它是回文序列。
+>
+> 如果存在某个 `i` , 满足 `ai != bi` ，则两个序列 `a1, a2, ...` 和 `b1, b2, ...` 不同。
+>
+>  
+>
+> **示例 1：**
+>
+> ```
+> 输入：s = 'bccb'
+> 输出：6
+> 解释：6 个不同的非空回文子字符序列分别为：'b', 'c', 'bb', 'cc', 'bcb', 'bccb'。
+> 注意：'bcb' 虽然出现两次但仅计数一次。
+> ```
+>
+> **示例 2：**
+>
+> ```
+> 输入：s = 'abcdabcdabcdabcdabcdabcdabcdabcddcbadcbadcbadcbadcbadcbadcbadcba'
+> 输出：104860361
+> 解释：共有 3104860382 个不同的非空回文子序列，104860361 是对 109 + 7 取余后的值。
+> ```
+>
+>  
+>
+> **提示：**
+>
+> - `1 <= s.length <= 1000`
+> - `s[i]` 仅包含 `'a'`, `'b'`, `'c'` 或 `'d'` 
+
+```c++
+class Solution {
+public:
+    static constexpr int MOD = 1e9+7;
+    int countPalindromicSubsequences(string s) {
+        //这题难度是比较大的
+        int n = s.size();
+        //记忆化
+        vector dp(4, vector<vector<int>>(n, vector<int>(n, -1))); //第一维表示边界是哪个字母
+        auto dfs = [&](this auto&& dfs, int i, int j, char c) -> int
+        {
+            if(i>j) return 0;
+            if(i==j) return s[i]==c; //避免重复计算
+            if(dp[c-'a'][i][j]!=-1) return dp[c-'a'][i][j];
+            int res = 0;
+            if(s[i]==s[j] && s[i]==c) //两侧相等,且都等于当前字符
+            {
+                res = (res + 2) % MOD; //包括自己的边界两个结果
+                for(int idx=0;idx<4;idx++)
+                {
+                    res = (res + dfs(i+1, j-1, 'a' + idx)) % MOD;
+                }
+            }
+            else //不相等
+            {
+                res = (res + dfs(i+1, j, c)) % MOD;
+                res = (res + dfs(i, j-1, c)) % MOD;
+                res = (res - dfs(i+1, j-1, c) + MOD) % MOD;
+            }
+            dp[c-'a'][i][j] = res;
+            return res;
+        };
+        int ans = 0;
+        for(int i=0;i<4;i++)
+        {
+            ans = (ans + dfs(0, n-1, 'a'+i)) % MOD;
+        }
+        return ans;
+    }
+};
+```
+
+
+
 
 
 # 十、数位 DP
