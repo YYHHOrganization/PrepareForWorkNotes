@@ -5329,6 +5329,69 @@ public:
 
 
 
+### （3）[1312. 让字符串成为回文串的最少插入次数](https://leetcode.cn/problems/minimum-insertion-steps-to-make-a-string-palindrome/)
+
+> 给你一个字符串 `s` ，每一次操作你都可以在字符串的任意位置插入任意字符。
+>
+> 请你返回让 `s` 成为回文串的 **最少操作次数** 。
+>
+> 「回文串」是正读和反读都相同的字符串。
+
+以下是记忆化搜索的代码：
+
+```c++
+class Solution {
+public:
+    int minInsertions(string s) {
+        //dp[i][j] 表示让i到j是回文串的最少操作次数,if(s[i]==s[j]) res = dfs(i+1, j-1),不相等的情况:res = min(dfs(i, j-1), dfs(i+1, j)) + 1
+        int n = s.size();
+        vector<vector<int>> dp(n, vector<int>(n, -1));
+        //注意,本题是插入字符
+        auto dfs = [&](this auto&& dfs, int i, int j) -> int
+        {
+            if(i>=j) return 0;
+            if(dp[i][j]!=-1) return dp[i][j];
+            int res = 0;
+            if(s[i]==s[j]) 
+            {
+                res = dfs(i+1, j-1);
+            }
+            else 
+            {
+                res = min(dfs(i+1, j), dfs(i, j-1)) + 1; //bad-> dbad(相当于看中间的ba),或者badb(相当于看ad部分)
+            }
+            dp[i][j] = res;
+            return res;
+        };
+        return dfs(0, n-1);
+    }
+};
+```
+
+以下则是转换为迭代式DP的做法：
+
+```c++
+class Solution {
+public:
+    int minInsertions(string s) {
+        //dp[i][j] 表示让i到j是回文串的最少操作次数,if(s[i]==s[j]) res = dfs(i+1, j-1),不相等的情况:res = min(dfs(i, j-1), dfs(i+1, j)) + 1
+        int n = s.size();
+        vector<vector<int>> dp(n, vector<int>(n));
+        for(int i=n-1;i>=0;i--)
+        {
+            for(int j=i+1;j<n;j++)
+            {
+                if(s[i]==s[j]) dp[i][j] = dp[i+1][j-1];
+                else dp[i][j] = min(dp[i][j-1], dp[i+1][j]) + 1;
+            }
+        }
+        return dp[0][n-1];
+    }
+};
+```
+
+
+
 
 
 # 十、数位 DP
