@@ -5219,6 +5219,27 @@ public:
 };
 ```
 
+python：
+
+```python
+# ==,dfs(i,j) = dfs(i+1,j-1)+2
+# =max(dfs(i+1,j),dfs(i,j+1))
+class Solution:
+    def longestPalindromeSubseq(self, s: str) -> int:
+        @cache
+        def dfs(i:int,j:int):
+            if i>j :
+                return 0
+            elif i==j:
+                return 1
+            if s[i]==s[j]:
+                return dfs(i+1,j-1)+2
+            return max(dfs(i+1,j),dfs(i,j-1))
+        
+        n = len(s)
+        return dfs(0,n-1)
+```
+
 
 
 #### （b）正常的区间DP（迭代式不一定好写，推荐记忆化搜索）
@@ -5300,9 +5321,9 @@ public:
             if(i==j) return s[i]==c; //避免重复计算
             if(dp[c-'a'][i][j]!=-1) return dp[c-'a'][i][j];
             int res = 0;
-            if(s[i]==s[j] && s[i]==c) //两侧相等,且都等于当前字符
+            if(s[i]==s[j] && s[i]==c) //两侧相等,且都等于当前字符 // s[i]==c！！！
             {
-                res = (res + 2) % MOD; //包括自己的边界两个结果
+                res = (res + 2) % MOD; //包括自己的边界两个结果 // +2要放在外面
                 for(int idx=0;idx<4;idx++)
                 {
                     res = (res + dfs(i+1, j-1, 'a' + idx)) % MOD;
@@ -5312,7 +5333,7 @@ public:
             {
                 res = (res + dfs(i+1, j, c)) % MOD;
                 res = (res + dfs(i, j-1, c)) % MOD;
-                res = (res - dfs(i+1, j-1, c) + MOD) % MOD;
+                res = (res - dfs(i+1, j-1, c) + MOD) % MOD; // +MOD!!!负数	
             }
             dp[c-'a'][i][j] = res;
             return res;
@@ -5326,8 +5347,6 @@ public:
     }
 };
 ```
-
-
 
 
 
