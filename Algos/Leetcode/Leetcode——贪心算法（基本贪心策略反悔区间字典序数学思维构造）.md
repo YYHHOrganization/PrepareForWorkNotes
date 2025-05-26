@@ -2835,7 +2835,30 @@ public:
 
 ![image-20250426131436743](assets/image-20250426131436743.png)
 
+```C++
+下列单词就是按照字典序进行排列的：
+as
+aster
+astrolabe
+astronomy
+astrophysics
+ 
+at
+ataman
+attack
+ 
+baa
+```
+
+
+
 ### （1）[1323. 6 和 9 组成的最大数字](https://leetcode.cn/problems/maximum-69-number/)
+
+给你一个仅由数字 6 和 9 组成的正整数 `num`。
+
+你最多只能翻转一位数字，将 6 变成 9，或者把 9 变成 6 。
+
+请返回你可以得到的最大数字。
 
 ```c++
 class Solution {
@@ -2862,6 +2885,10 @@ public:
 
 ### （2）[3216. 交换后字典序最小的字符串](https://leetcode.cn/problems/lexicographically-smallest-string-after-a-swap/)
 
+给你一个仅由数字组成的字符串 `s`，在最多交换一次 **相邻** 且具有相同 **奇偶性** 的数字后，返回可以得到的字典序最小的字符串。
+
+如果两个数字都是奇数或都是偶数，则它们具有相同的奇偶性。例如，5 和 9、2 和 4 奇偶性相同，而 6 和 9 奇偶性不同。
+
 ```c++
 class Solution {
 public:
@@ -2885,6 +2912,14 @@ public:
 
 
 ### （3）[2697. 字典序最小回文串](https://leetcode.cn/problems/lexicographically-smallest-palindrome/)
+
+给你一个由 **小写英文字母** 组成的字符串 `s` ，你可以对其执行一些操作。在一步操作中，你可以用其他小写英文字母 **替换** `s` 中的一个字符。
+
+请你执行 **尽可能少的操作** ，使 `s` 变成一个 **回文串** 。如果执行 **最少** 操作次数的方案不止一种，则只需选取 **字典序最小** 的方案。
+
+对于两个长度相同的字符串 `a` 和 `b` ，在 `a` 和 `b` 出现不同的第一个位置，如果该位置上 `a` 中对应字母比 `b` 中对应字母在字母表中出现顺序更早，则认为 `a` 的字典序比 `b` 的字典序要小。
+
+返回最终的回文字符串。
 
 ```c++
 class Solution {
@@ -3135,6 +3170,103 @@ public:
     }
 };
 ```
+
+
+
+### [2131. 连接两字母单词得到的最长回文串](https://leetcode.cn/problems/longest-palindrome-by-concatenating-two-letter-words/)
+
+给你一个字符串数组 `words` 。`words` 中每个元素都是一个包含 **两个** 小写英文字母的单词。
+
+请你从 `words` 中选择一些元素并按 **任意顺序** 连接它们，并得到一个 **尽可能长的回文串** 。每个元素 **至多** 只能使用一次。
+
+请你返回你能得到的最长回文串的 **长度** 。如果没办法得到任何一个回文串，请你返回 `0` 。
+
+**回文串** 指的是从前往后和从后往前读一样的字符串。
+
+**示例 1：**
+
+```
+输入：words = ["lc","cl","gg"]
+输出：6
+解释：一个最长的回文串为 "lc" + "gg" + "cl" = "lcggcl" ，长度为 6 。
+"clgglc" 是另一个可以得到的最长回文串。
+```
+
+
+
+#### M1 枚举右维护左 慢 不推荐
+
+有点慢
+
+```C++
+class Solution {
+public:
+    int longestPalindrome(vector<string>& words) {
+        unordered_map<string,int> umap;//是否存在 枚举右 维护左
+        // gg cl lc
+        int n = words.size();
+        int res=0;
+        for(int i=0;i<n;i++)
+        {
+            string rev = {words[i][1],words[i][0]}; 
+            if(umap.contains(rev))
+            {
+                umap[rev]--;
+                if(umap[rev]==0)umap.erase(rev);
+                res+=4;
+            }
+            else
+            {
+                umap[words[i]]++;
+            }
+        }
+        for(auto &[str,_]:umap)
+        {
+            if(str[0]==str[1])
+            {
+                res+=2;
+                return res;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+#### M2 推荐 贪心	
+
+https://leetcode.cn/problems/longest-palindrome-by-concatenating-two-letter-words/solutions/1199641/gou-zao-tan-xin-fen-lei-tao-lun-by-endle-dqr8/?envType=daily-question&envId=2025-05-25
+
+```C++
+class Solution {
+public:
+    int longestPalindrome(vector<string>& words) {
+        int cnt[26][26]{};
+        for(auto &w:words)
+        {
+            cnt[w[0]-'a'][w[1]-'a']++;
+        }
+        int odd = 0;
+        int res=0;
+        for(int i=0;i<26;i++)
+        {
+            int c = cnt[i][i];
+            res += (c - c%2);//偶数c,奇数c-1 
+            odd |= cnt[i][i]%2;// 存在出现奇数次的 cnt[i][i]
+            for(int j=i+1;j<26;j++)
+            {
+                res += min(cnt[i][j],cnt[j][i])*2;
+            }
+        }
+        return (res+odd)*2;// 上面统计的是字符串个数，乘以 2 就是长度
+
+    }
+};
+```
+
+
 
 
 
