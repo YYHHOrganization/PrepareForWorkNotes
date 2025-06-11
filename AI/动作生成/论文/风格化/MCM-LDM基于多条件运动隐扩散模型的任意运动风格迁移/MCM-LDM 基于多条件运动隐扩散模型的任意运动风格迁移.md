@@ -412,6 +412,7 @@ $$
 >[37]William Peebles and Saining Xie. Scalable diffusion models with transformers. In Proceedings of the IEEE/CVF International Conference on Computer Vision, pages 4195–4205, 2023. 5  
 
 **技术优势**：  
+
 - **内容保真**：主条件直接拼接确保动作骨架不变  
 - **风格可控**：$\alpha_s$系数调节风格强度（0.8~1.2效果最佳）  
 - **轨迹约束**：$\gamma_t$参数维持原始运动路径  
@@ -719,3 +720,4 @@ flowchart LR
 # 论文架构
 
 ![image-20250526162553836](assets/image-20250526162553836.png)
+

@@ -62,7 +62,7 @@ pip install --no-cache-dir matplotlib
 >    # 安装百度网盘官方 Linux 客户端（需桌面环境）
 >    wget https://issuecdn.baidupcs.com/issue/netdisk/LinuxGuanjia/baidunetdisk_4.17.7_amd64.deb
 >    sudo apt install ./baidunetdisk_4.17.7_amd64.deb
->    
+>       
 >    # 启动客户端（需 VNC 或 X11 转发）
 >    baidunetdisk
 >    ```
@@ -92,7 +92,7 @@ pip install --no-cache-dir matplotlib
 >    ```bash
 >    # 列出网盘文件
 >    bypy list
->    
+>       
 >    # 下载文件（需分享链接的提取码）
 >    bypy downdir /你的网盘路径 /root/autodl-tmp/
 >    ```
@@ -143,7 +143,7 @@ pip install --no-cache-dir matplotlib
 >    bypy downdir /分卷路径 /root/parts/ &  # 百度网盘
 >    ali-cli download 分享链接 /root/parts/ &  # 阿里云盘
 >    wait
->    
+>       
 >    # 合并分卷
 >    cat /root/parts/large_file_part_* > large_file.zip
 >    ```
@@ -179,3 +179,11 @@ root@autodl-container-06564c8c34-2234d0a3:~/autodl-tmp# ./BaiduPCS-Go-v3.9.7-lin
 ```
 
 ==速度会比直接上传要快不少。==
+
+使用百度网盘下载，saveto到指定的路径下面：
+
+```bash
+./BaiduPCS-Go-v3.9.7-linux-amd64/BaiduPCS-Go download /AIFile
+s/Style100/texts.zip --saveto /root/autodl-tmp/MCM-LDM/datasets
+```
+
