@@ -1,5 +1,7 @@
 # Leetcode——数学篇集合
 
+1. [数学算法（数论/组合/概率期望/博弈/计算几何/随机算法）](https://leetcode.cn/circle/discuss/IYT3ss/)
+
 # 一、取模运算基础
 
 首先，先看一下这篇：[分享丨模运算的世界：当加减乘除遇上取模（模运算恒等式/费马小定理/组合数） - 力扣（LeetCode）](https://leetcode.cn/circle/discuss/mDfnkW/)
@@ -1444,4 +1446,232 @@ $$
 
 
 ## 2.捆绑与插空法
+
+
+
+## §2.1 乘法原理
+
+ 
+
+### [2125. 银行中的激光束数量](https://leetcode.cn/problems/number-of-laser-beams-in-a-bank/)
+
+银行内部的防盗安全装置已经激活。给你一个下标从 **0** 开始的二进制字符串数组 `bank` ，表示银行的平面图，这是一个大小为 `m x n` 的二维矩阵。 `bank[i]` 表示第 `i` 行的设备分布，由若干 `'0'` 和若干 `'1'` 组成。`'0'` 表示单元格是空的，而 `'1'` 表示单元格有一个安全设备。
+
+对任意两个安全设备而言，**如果****同时** 满足下面两个条件，则二者之间存在 **一个** 激光束：
+
+- 两个设备位于两个 **不同行** ：`r1` 和 `r2` ，其中 `r1 < r2` 。
+- 满足 `r1 < i < r2` 的 **所有** 行 `i` ，都 **没有安全设备** 。
+
+激光束是独立的，也就是说，一个激光束既不会干扰另一个激光束，也不会与另一个激光束合并成一束。
+
+返回银行中激光束的总数量。
+
+**示例 1：**
+
+![img](assets/laser1.jpg)
+
+```
+输入：bank = ["011001","000000","010100","001000"]
+输出：8
+解释：在下面每组设备对之间，存在一条激光束。总共是 8 条激光束：
+ * bank[0][1] -- bank[2][1]
+ * bank[0][1] -- bank[2][3]
+ * bank[0][2] -- bank[2][1]
+ * bank[0][2] -- bank[2][3]
+ * bank[0][5] -- bank[2][1]
+ * bank[0][5] -- bank[2][3]
+ * bank[2][1] -- bank[3][2]
+ * bank[2][3] -- bank[3][2]
+注意，第 0 行和第 3 行上的设备之间不存在激光束。
+这是因为第 2 行存在安全设备，这不满足第 2 个条件。
+```
+
+```C++
+class Solution {
+public:
+    int numberOfBeams(vector<string>& bank) {
+        int n = bank.size();
+        int last = 0;
+        int res=0;
+        for(int i=0;i<n;i++)
+        {
+            int cur = 0;
+            //写法1
+            // for(int j=0;j<(int)bank[i].size();j++)
+            // {
+            //     if(bank[i][j]=='1')cur++;
+            // }
+            //写法2 
+            cur = count_if(bank[i].begin(),bank[i].end(),[](char ch){return ch == '1';});
+            if(cur!=0)
+            {
+                res += cur*last;
+                last = cur;
+            }
+        }
+        return res;
+    }
+};
+```
+
+
+
+### [3128. 直角三角形](https://leetcode.cn/problems/right-triangles/)
+
+给你一个二维 boolean 矩阵 `grid` 。
+
+如果 `grid` 的 3 个元素的集合中，一个元素与另一个元素在 **同一行**，并且与第三个元素在 **同一列**，则该集合是一个 **直角三角形**。3 个元素 **不必** 彼此相邻。
+
+请你返回使用 `grid` 中的 3 个元素可以构建的 **直角三角形** 数目，且满足 3 个元素值 **都** 为 1 。
+
+ 
+
+**示例 1：**
+
+| 0    | 1    | 0    |
+| ---- | ---- | ---- |
+| 0    | 1    | 1    |
+| 0    | 1    | 0    |
+
+| 0    | 1    | 0    |
+| ---- | ---- | ---- |
+| 0    | 1    | 1    |
+| 0    | 1    | 0    |
+
+**输入：**grid = [[0,1,0],[0,1,1],[0,1,0]]
+
+**输出：**2
+
+**解释：**有 2 个值为 1 的直角三角形。注意蓝色的那个 **没有** 组成直角三角形，因为 3 个元素在同一列。
+
+
+
+```C++
+class Solution {
+public:
+    long long numberOfRightTriangles(vector<vector<int>>& grid) {
+        //记录每行几个1，每列几个1
+        int m = grid.size();
+        int n = grid[0].size();
+        vector<long long> row(m,0);
+        vector<long long> col(n,0);
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]==1)
+                {
+                    row[i]++;
+                    col[j]++;
+                }
+            }
+        }
+        long long res=0;
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(grid[i][j]==1)
+                {
+                    res += ((row[i]-1)*(col[j]-1));  
+                }
+            }
+        } 
+        return res;
+    }
+};
+```
+
+
+
+
+
+## §2.4 容斥原理
+
+部分题目有其他解法，难度分仅供参考。
+
+### [2652. 倍数求和](https://leetcode.cn/problems/sum-multiples/)
+
+给你一个正整数 `n` ，请你计算在 `[1，n]` 范围内能被 `3`、`5`、`7` 整除的所有整数之和。
+
+返回一个整数，用于表示给定范围内所有满足约束条件的数字之和。
+
+**示例 1：**
+
+```
+输入：n = 7
+输出：21
+解释：在 [1, 7] 范围内能被 3、5、7 整除的所有整数分别是 3、5、6、7 。数字之和为 21。
+```
+
+题解：
+
+<img src="assets/image-20250609142420840.png" alt="image-20250609142420840" style="zoom: 80%;" />
+
+
+```C++
+class Solution {
+public:
+    int sum(int n,int k)
+    {
+        int num = n/k;
+        return (1+num)*num/2 *k;
+    }
+    int sumOfMultiples(int n) {
+        //return n/3+n/5+n/7-n/15-n/21-n/35+n/105; 这个算的是个数而不是题目要求的和
+        //求的是数字之和
+        return sum(n,3)+sum(n,5)+sum(n,7)-sum(n,15)-sum(n,21)-sum(n,35)+sum(n,105);
+    }
+};
+```
+
+
+
+### [2929. 给小朋友们分糖果 II ](https://leetcode.cn/problems/distribute-candies-among-children-ii/):recycle:
+
+给你两个正整数 `n` 和 `limit` 。
+
+请你将 `n` 颗糖果分给 `3` 位小朋友，确保没有任何小朋友得到超过 `limit` 颗糖果，请你返回满足此条件下的 **总方案数** 。
+
+**示例 1：**
+
+```
+输入：n = 5, limit = 2
+输出：3
+解释：总共有 3 种方法分配 5 颗糖果，且每位小朋友的糖果数不超过 2 ：(1, 2, 2) ，(2, 1, 2) 和 (2, 2, 1) 。
+```
+
+**示例 2：**
+
+```
+输入：n = 3, limit = 3
+输出：10
+解释：总共有 10 种方法分配 3 颗糖果，且每位小朋友的糖果数不超过 3 ：(0, 0, 3) ，(0, 1, 2) ，(0, 2, 1) ，(0, 3, 0) ，(1, 0, 2) ，(1, 1, 1) ，(1, 2, 0) ，(2, 0, 1) ，(2, 1, 0) 和 (3, 0, 0) 。
+```
+
+**提示：**
+
+- `1 <= n <= 106`
+- `1 <= limit <= 106`
+
+题解：
+
+https://leetcode.cn/problems/distribute-candies-among-children-ii/solutions/2522969/o1-rong-chi-yuan-li-pythonjavacgo-by-end-2woj
+
+```C++
+class Solution {
+public:
+    long long C2(long long n)
+    {
+        return n>1?((n*(n-1))/2.0):0; // 传入的是n+2 如果<=1,说明n<0了
+    }
+    long long distributeCandies(int n, int limit) {
+        return C2(n+2)-3*C2(n-limit+1)+3*C2(n-2*limit)-C2(n-3*limit-1);
+    } 
+};
+```
+
+
+
+
 
