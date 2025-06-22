@@ -721,3 +721,40 @@ flowchart LR
 
 ![image-20250526162553836](assets/image-20250526162553836.png)
 
+<<<<<<< HEAD
+
+
+# 代码
+
+/root/autodl-tmp/MCM-LDM/demo_transfer.py
+
+初始化模型
+
+```C++
+# create mld model
+    model = get_model(cfg, dataset)
+```
+
+
+
+/root/autodl-tmp/MCM-LDM/mld/models/modeltype/mld.py
+
+
+
+```python
+self.nfeats = cfg.DATASET.NFEATS # 263 means 263 features 
+self.njoints = cfg.DATASET.NJOINTS # 22 means 22 joints
+```
+
+
+
+/root/autodl-tmp/MCM-LDM/mld/models/architectures/mld_denoiser.py
+
+![image-20250527233108591](assets/image-20250527233108591.png)
+
+
+
+lengths = batch["length"] # 38 batch size？？可能是帧率
+
+=======
+>>>>>>> 9fec7813078a99b7753a324891a9701523a4c96e
