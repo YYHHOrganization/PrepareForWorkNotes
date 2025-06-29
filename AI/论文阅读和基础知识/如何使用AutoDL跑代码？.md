@@ -607,6 +607,152 @@ cp -r /root/autodl-tmp/HumanML3D/HumanML3D/HumanML3D /root/MotionLCM/MotionLCM/d
 
 
 
+## 2.AMASS数据集当中包括什么？
+
+### （1）数据集中的npz文件解析：
+
+```python
+(base) root@autodl-container-06564c8c34-2234d0a3:~/autodl-tmp/MCM-LDM# python check_npz.py clap_001_stageii.npz 
+
+[文件信息] clap_001_stageii.npz
+包含的数组数量: 21
+
+--- 数组 1: 'gender' ---
+形状 (shape): ()
+数据类型 (dtype): <U4
+总元素数: 1
+预览数据 (前5个): ['male']
+
+--- 数组 2: 'surface_model_type' ---
+形状 (shape): ()
+数据类型 (dtype): <U5
+总元素数: 1
+预览数据 (前5个): ['smplh']
+
+--- 数组 3: 'mocap_frame_rate' ---
+形状 (shape): ()
+数据类型 (dtype): float64
+总元素数: 1
+预览数据 (前5个): [120.]
+
+--- 数组 4: 'mocap_time_length' ---
+形状 (shape): ()
+数据类型 (dtype): float64
+总元素数: 1
+预览数据 (前5个): [10.575]
+
+--- 数组 5: 'markers_latent' ---
+形状 (shape): (53, 3)
+数据类型 (dtype): float64
+总元素数: 159
+预览数据 (前5个): [0.00693116 0.57888522 0.00440067 0.00213199 0.24273827]
+
+--- 数组 6: 'latent_labels' ---
+形状 (shape): (53,)
+数据类型 (dtype): <U6
+总元素数: 53
+预览数据 (前5个): ['ARIEL' 'C7' 'CLAV' 'LANK' 'LBHD']
+
+--- 数组 7: 'markers_latent_vids' ---
+形状 (shape): ()
+数据类型 (dtype): object
+总元素数: 1
+预览数据 (前5个): [{'ARIEL': 411, 'C7': 2877, 'CLAV': 3078, 'LANK': 3204, 'LBHD': 386, 'LBSH': 1244, 'LBWT': 3100, 'LELB': 1656, 'LELBIN': 3013, 'LFHD': 135, 'LFIN': 2001, 'LFRM': 1599, 'LFSH': 1316, 'LFWT': 857, 'LHEE': 3387, 'LIWR': 2112, 'LKNE': 1010, 'LKNI': 1016, 'LMT1': 3236, 'LMT5': 3270, 'LOWR': 2108, 'LSHN': 1083, 'LTHI': 872, 'LTHMB': 1998, 'LTOE': 3245, 'LUPA': 2895, 'MBWT': 1783, 'MFWT': 859, 'RANK': 6607, 'RBHD': 3690, 'RBSH': 5274, 'RBWT': 6369, 'RELB': 5087, 'RELBIN': 5131, 'RFHD': 3645, 'RFIN': 5462, 'RFRM': 5068, 'RFSH': 5006, 'RFWT': 4342, 'RHEE': 6786, 'RIWR': 5689, 'RKNE': 4495, 'RKNI': 4634, 'RMT1': 6635, 'RMT5': 6628, 'ROWR': 5568, 'RSHN': 4599, 'RTHI': 4358, 'RTHMB': 5461, 'RTOE': 6647, 'RUPA': 4916, 'STRN': 3076, 'T10': 3015}]  # 这些是动捕设备的一些关键点
+
+--- 数组 8: 'trans' ---
+形状 (shape): (1269, 3)
+数据类型 (dtype): float64
+总元素数: 3807
+预览数据 (前5个): [0.02641812 0.36152696 0.88360364 0.02625235 0.36110226]
+
+--- 数组 9: 'poses' ---
+形状 (shape): (1269, 156)
+数据类型 (dtype): float64
+总元素数: 197964
+预览数据 (前5个): [ 1.56322943 -0.06204839 -0.06359456 -0.09789047 -0.01152274]
+
+--- 数组 10: 'betas' ---
+形状 (shape): (16,)
+数据类型 (dtype): float64
+总元素数: 16
+预览数据 (前5个): [ 0.76309291 -1.18249697  0.19395753  0.39112041 -0.39251299]
+
+--- 数组 11: 'num_betas' ---
+形状 (shape): ()
+数据类型 (dtype): int64
+总元素数: 1
+预览数据 (前5个): [16]
+
+--- 数组 12: 'root_orient' ---
+形状 (shape): (1269, 3)
+数据类型 (dtype): float64
+总元素数: 3807
+预览数据 (前5个): [ 1.56322943 -0.06204839 -0.06359456  1.56338455 -0.06175761]
+
+--- 数组 13: 'pose_body' ---
+形状 (shape): (1269, 63)
+数据类型 (dtype): float64
+总元素数: 79947
+预览数据 (前5个): [-0.09789047 -0.01152274  0.0112532  -0.10612481 -0.09547471]
+
+--- 数组 14: 'pose_hand' ---
+形状 (shape): (1269, 90)
+数据类型 (dtype): float64
+总元素数: 114210
+预览数据 (前5个): [ 0.11167872  0.04289217 -0.41644184  0.10881133 -0.06598568]
+
+--- 数组 15: 'markers' ---
+形状 (shape): (1269, 53, 3)
+数据类型 (dtype): float64
+总元素数: 201771
+(高维数组，跳过数据预览)
+
+--- 数组 16: 'labels' ---
+形状 (shape): (53,)
+数据类型 (dtype): <U6
+总元素数: 53
+预览数据 (前5个): ['ARIEL' 'LFHD' 'LBHD' 'RFHD' 'RBHD']
+
+--- 数组 17: 'markers_obs' ---
+形状 (shape): (1269, 53, 3)
+数据类型 (dtype): float64
+总元素数: 201771
+(高维数组，跳过数据预览)
+
+--- 数组 18: 'labels_obs' ---
+形状 (shape): (1269, 53)
+数据类型 (dtype): <U6
+总元素数: 67257
+预览数据 (前5个): ['ARIEL' 'C7' 'CLAV' 'LANK' 'LBHD']
+
+--- 数组 19: 'markers_sim' ---
+形状 (shape): (1269, 53, 3)
+数据类型 (dtype): float64
+总元素数: 201771
+(高维数组，跳过数据预览)
+
+--- 数组 20: 'marker_meta' ---
+形状 (shape): ()
+数据类型 (dtype): object
+总元素数: 1
+预览数据 (前5个): [{'marker_vids': OrderedDict([('ARIEL', 411), ('C7', 3470), ('CLAV', 3171), ('LANK', 3327), ('LBHD', 182), ('LBSH', 2940), ('LBWT', 3122), ('LELB', 1666), ('LELBIN', 1725), ('LFHD', 0), ('LFIN', 2174), ('LFRM', 1568), ('LFSH', 1317), ('LFWT', 857), ('LHEE', 3387), ('LIWR', 2112), ('LKNE', 1053), ('LKNI', 1058), ('LMT1', 3336), ('LMT5', 3346), ('LOWR', 2108), ('LSHN', 1082), ('LTHI', 1454), ('LTHMB', 2224), ('LTOE', 3233), ('LUPA', 1443), ('MBWT', 3022), ('MFWT', 3503), ('RANK', 6728), ('RBHD', 3694), ('RBSH', 6399), ('RBWT', 6544), ('RELB', 5135), ('RELBIN', 5194), ('RFHD', 3512), ('RFIN', 5635), ('RFRM', 5037), ('RFSH', 4798), ('RFWT', 4343), ('RHEE', 6786), ('RIWR', 5573), ('RKNE', 4538), ('RKNI', 4544), ('RMT1', 6736), ('RMT5', 6747), ('ROWR', 5568), ('RSHN', 4568), ('RTHI', 4927), ('RTHMB', 5686), ('RTOE', 6633), ('RUPA', 4918), ('STRN', 3506), ('T10', 3016)]), 'marker_colors': OrderedDict([('ARIEL', (1.0, 0.0, 0.0)), ('C7', (1.0, 0.07692307692307693, 0.0)), ('CLAV', (1.0, 0.15384615384615385, 0.0)), ('LANK', (1.0, 0.23076923076923078, 0.0)), ('LBHD', (1.0, 0.3076923076923077, 0.0)), ('LBSH', (1.0, 0.3846153846153846, 0.0)), ('LBWT', (1.0, 0.46153846153846156, 0.0)), ('LELB', (1.0, 0.5384615384615384, 0.0)), ('LELBIN', (1.0, 0.6153846153846154, 0.0)), ('LFHD', (1.0, 0.6923076923076923, 0.0)), ('LFIN', (1.0, 0.7692307692307692, 0.0)), ('LFRM', (1.0, 0.8461538461538461, 0.0)), ('LFSH', (1.0, 0.9230769230769231, 0.0)), ('LFWT', (0.9999999999999998, 1.0, 0.0)), ('LHEE', (0.9230769230769231, 1.0, 0.0)), ('LIWR', (0.8461538461538465, 1.0, 0.0)), ('LKNE', (0.7692307692307692, 1.0, 0.0)), ('LKNI', (0.6923076923076918, 1.0, 0.0)), ('LMT1', (0.6153846153846152, 1.0, 0.0)), ('LMT5', (0.5384615384615385, 1.0, 0.0)), ('LOWR', (0.4615384615384619, 1.0, 0.0)), ('LSHN', (0.3846153846153846, 1.0, 0.0)), ('LTHI', (0.30769230769230727, 1.0, 0.0)), ('LTHMB', (0.23076923076923062, 1.0, 0.0)), ('LTOE', (0.15384615384615397, 1.0, 0.0)), ('LUPA', (0.07692307692307732, 1.0, 0.0)), ('MBWT', (0.0, 1.0, 0.0)), ('MFWT', (0.0, 1.0, 0.07692307692307698)), ('RANK', (0.0, 1.0, 0.15384615384615397)), ('RBHD', (0.0, 1.0, 0.23076923076923095)), ('RBSH', (0.0, 1.0, 0.3076923076923076)), ('RBWT', (0.0, 1.0, 0.3846153846153846)), ('RELB', (0.0, 1.0, 0.46153846153846156)), ('RELBIN', (0.0, 1.0, 0.5384615384615385)), ('RFHD', (0.0, 1.0, 0.6153846153846155)), ('RFIN', (0.0, 1.0, 0.6923076923076922)), ('RFRM', (0.0, 1.0, 0.7692307692307692)), ('RFSH', (0.0, 1.0, 0.8461538461538461)), ('RFWT', (0.0, 1.0, 0.9230769230769231)), ('RHEE', (0.0, 0.9999999999999998, 1.0)), ('RIWR', (0.0, 0.9230769230769231, 1.0)), ('RKNE', (0.0, 0.8461538461538458, 1.0)), ('RKNI', (0.0, 0.7692307692307692, 1.0)), ('RMT1', (0.0, 0.6923076923076925, 1.0)), ('RMT5', (0.0, 0.6153846153846152, 1.0)), ('ROWR', (0.0, 0.5384615384615385, 1.0)), ('RSHN', (0.0, 0.46153846153846123, 1.0)), ('RTHI', (0.0, 0.3846153846153846, 1.0)), ('RTHMB', (0.0, 0.30769230769230727, 1.0)), ('RTOE', (0.0, 0.23076923076923062, 1.0)), ('RUPA', (0.0, 0.15384615384615397, 1.0)), ('STRN', (0.0, 0.07692307692307665, 1.0)), ('T10', (0.0, 0.0, 1.0)), ('nan', [0.83, 1, 0])]), 'marker_type': OrderedDict([('ARIEL', 'body'), ('C7', 'body'), ('CLAV', 'body'), ('LANK', 'body'), ('LBHD', 'body'), ('LBSH', 'body'), ('LBWT', 'body'), ('LELB', 'body'), ('LELBIN', 'body'), ('LFHD', 'body'), ('LFIN', 'body'), ('LFRM', 'body'), ('LFSH', 'body'), ('LFWT', 'body'), ('LHEE', 'body'), ('LIWR', 'body'), ('LKNE', 'body'), ('LKNI', 'body'), ('LMT1', 'body'), ('LMT5', 'body'), ('LOWR', 'body'), ('LSHN', 'body'), ('LTHI', 'body'), ('LTHMB', 'body'), ('LTOE', 'body'), ('LUPA', 'body'), ('MBWT', 'body'), ('MFWT', 'body'), ('RANK', 'body'), ('RBHD', 'body'), ('RBSH', 'body'), ('RBWT', 'body'), ('RELB', 'body'), ('RELBIN', 'body'), ('RFHD', 'body'), ('RFIN', 'body'), ('RFRM', 'body'), ('RFSH', 'body'), ('RFWT', 'body'), ('RHEE', 'body'), ('RIWR', 'body'), ('RKNE', 'body'), ('RKNI', 'body'), ('RMT1', 'body'), ('RMT5', 'body'), ('ROWR', 'body'), ('RSHN', 'body'), ('RTHI', 'body'), ('RTHMB', 'body'), ('RTOE', 'body'), ('RUPA', 'body'), ('STRN', 'body'), ('T10', 'body')]), 'marker_type_mask': OrderedDict([('body', array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+         True,  True,  True,  True,  True,  True,  True,  True,  True,
+         True,  True,  True,  True,  True,  True,  True,  True,  True,
+         True,  True,  True,  True,  True,  True,  True,  True,  True,
+         True,  True,  True,  True,  True,  True,  True,  True,  True,
+         True,  True,  True,  True,  True,  True,  True,  True]))]), 'm2b_distance': OrderedDict([('body', 0.0095)]), 'surface_model_type': 'smplh', 'marker_layout_fname': '/is/cluster/scratch/nghorbani/amass/mosh_results/smplh_gendered/SOMA/SOMA_smplh.json'}                                        ]
+
+--- 数组 21: 'num_markers' ---
+形状 (shape): ()
+数据类型 (dtype): int64
+总元素数: 1
+预览数据 (前5个): [53]
+```
+
+
+
+
+
 # 五、基本测试
 
 注意：==推荐将 scipy 降级到 1.11.1 ！否则train vae的代码可能会报错！==
@@ -871,13 +1017,13 @@ The path to the installation of python of blender can be:
 然后安装必要的包：
 
 ```python
-/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m ensurepip --upgrade
-/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install numpy
-/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user matplotlib
-/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user hydra-core --upgrade
-/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user hydra_colorlog --upgrade
-/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user moviepy
-/root/autodl-tmp/Blender2_93/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user shortuuid
+/root/autodl-tmp/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m ensurepip --upgrade
+/root/autodl-tmp/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install numpy
+/root/autodl-tmp/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user matplotlib
+/root/autodl-tmp/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user hydra-core --upgrade
+/root/autodl-tmp/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user hydra_colorlog --upgrade
+/root/autodl-tmp/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user moviepy
+/root/autodl-tmp/blender-2.93.18-linux-x64/2.93/python/bin/python3.9 -m pip install --user shortuuid
 ```
 
 接下来回到MotionLCM的仓库，这样做：
