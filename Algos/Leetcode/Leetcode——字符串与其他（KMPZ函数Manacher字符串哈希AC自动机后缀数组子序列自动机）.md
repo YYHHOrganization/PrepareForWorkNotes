@@ -19,51 +19,52 @@ https://www.zhihu.com/question/21923021/answer/1032665486
 >
 > ```cpp
 > private:
-> vector<int> kmp(string &text, string &pattern) {
-> int m = pattern.length();
-> // 1. 构建前缀函数（Partial Match Table，部分匹配表）
-> vector<int> pi(m); // pi[i]表示pattern[0..i]的最长公共前后缀的长度 【pi数组初值是0！且首值永远位0】
-> int c = 0; // 当前最长公共前后缀的长度，也作为指针指向待匹配位置
-> for (int i = 1; i < m; i++) // i【必须从1开始】，因为pi[0]一定是0 
-> { 
->    char v = pattern[i];
->    // 当c>0且当前字符不匹配时，回退到前一个公共前后缀的位置
->    while (c > 0 && pattern[c] != v) 
->    {
->        c = pi[c - 1]; // 根据前缀表回退，避免重复匹配
->    }
->    // 如果当前字符匹配，则公共前后缀长度+1
->    if (pattern[c] == v) 
->    {
->        c++;
->    }
->    pi[i] = c; // 记录当前位置的最长公共前后缀长度
-> }
+> vector<int> kmp(string &text, string &pattern) 
+> {
+>     int m = pattern.length();
+>     // 1. 构建前缀函数（Partial Match Table，部分匹配表）
+>     vector<int> pi(m); // pi[i]表示pattern[0..i]的最长公共前后缀的长度 【pi数组初值是0！且首值永远位0】
+>     int c = 0; // 当前最长公共前后缀的长度，也作为指针指向待匹配位置
+>     for (int i = 1; i < m; i++) // i【必须从1开始】，因为pi[0]一定是0 
+>     { 
+>         char v = pattern[i];
+>         // 当c>0且当前字符不匹配时，回退到前一个公共前后缀的位置
+>         while (c > 0 && pattern[c] != v) 
+>         {
+>             c = pi[c - 1]; // 根据前缀表回退，避免重复匹配
+>         }
+>         // 如果当前字符匹配，则公共前后缀长度+1
+>         if (pattern[c] == v) 
+>         {
+>             c++;
+>         }
+>         pi[i] = c; // 记录当前位置的最长公共前后缀长度
+>     }
 > 
-> // 2. 使用构建好的pi数组进行模式匹配
-> vector<int> res; // 存储所有匹配的起始索引
-> c = 0; // 【重置c为0，表示当前已匹配的pattern长度】
-> for (int i = 0; i < text.length(); i++) // 遍历text的每个字符 //【与上面的不同】i=0
-> { 
->    char v = text[i]; //【与上面的不同】
->    // 当已匹配部分不为0且当前字符不匹配时，回退c
->    while (c > 0 && pattern[c] != v)  
->    {
->        c = pi[c - 1]; // 利用前缀表跳过已匹配的前缀部分
->    }
->    // 当前字符匹配，继续推进
->    if (pattern[c] == v) 
->    {
->        c++;
->    }
->    // 如果c等于pattern长度，说明找到完整匹配
->    if (c == m) //【与上面的不同】
->    {
->        res.push_back(i - m + 1); // 记录起始索引（当前i是pattern最后一个字符的位置）
->        c = pi[c - 1]; // 回退c，继续寻找后续可能的匹配
->    }
-> }
-> return res;
+>     // 2. 使用构建好的pi数组进行模式匹配
+>     vector<int> res; // 存储所有匹配的起始索引
+>     c = 0; // 【重置c为0，表示当前已匹配的pattern长度】
+>     for (int i = 0; i < text.length(); i++) // 遍历text的每个字符 //【与上面的不同】i=0
+>     { 
+>         char v = text[i]; //【与上面的不同】
+>         // 当已匹配部分不为0且当前字符不匹配时，回退c
+>         while (c > 0 && pattern[c] != v)  
+>         {
+>             c = pi[c - 1]; // 利用前缀表跳过已匹配的前缀部分
+>         }
+>         // 当前字符匹配，继续推进
+>         if (pattern[c] == v) 
+>         {
+>             c++;
+>         }
+>         // 如果c等于pattern长度，说明找到完整匹配
+>         if (c == m) //【与上面的不同】
+>         {
+>             res.push_back(i - m + 1); // 记录起始索引（当前i是pattern最后一个字符的位置）
+>             c = pi[c - 1]; // 回退c，继续寻找后续可能的匹配
+>         }
+>     }
+>     return res;
 > }
 > ```
 >

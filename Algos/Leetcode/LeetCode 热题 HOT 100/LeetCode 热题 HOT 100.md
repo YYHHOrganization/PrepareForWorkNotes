@@ -12,6 +12,8 @@ https://leetcode.cn/problem-list/2cktkvj/
 
 :kissing_cat: 表示Y最新已经能自己做出来了（曾经不能）
 
+:mag_right: 25/7/13 看答案了，需再看
+
 [TOC]
 
 
@@ -400,7 +402,7 @@ public:
         while(left<=right)
         {
             int mid = left+((right-left)>>1);
-            int j = (m+n+1)/2 - mid - 2; // 【change】-2
+            int j = (m+n+1)/2 - mid - 2; // 【change】-2 。因为[i+1] + [j+1] = (m+n+1)/2
             if(nums1[mid]<=nums2[j+1]) left = mid + 1;
             else right = mid - 1;
         }
@@ -2049,7 +2051,7 @@ public:
 
 
 
-### 排序链表
+### 排序链表 :mag_right:
 
 #### 排序链表前置题1 - [876. 链表的中间结点](https://leetcode.cn/problems/middle-of-the-linked-list/)
 
@@ -2520,6 +2522,8 @@ public:
 >
 > 你可以假设除了数字 0 之外，这两个数都不会以 0 开头。
 
+
+
 本质上这就是一道大整数加法的链表版本的题目，记得进位即可（**写起来麻烦一点，但是逻辑相对来说清晰一些，时空复杂度超过的人也比较多。**）。代码如下：
 ```c++
 /**
@@ -2605,6 +2609,46 @@ public:
 ```
 
 
+
+非原地
+
+可看0X3F：https://leetcode.cn/problems/add-two-numbers/description/?envType=problem-list-v2&envId=2cktkvj
+
+```C++
+class Solution {
+public:
+    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+        ListNode dummy; // 哨兵节点
+        ListNode* cur = &dummy;
+        int carry = 0; // 进位
+        while (l1 || l2 || carry)// 有一个不是空节点，或者还有进位，就继续迭代
+        { 
+            if (l1) 
+            {
+                carry += l1->val; // 节点值和进位加在一起
+                l1 = l1->next; // 下一个节点
+            }
+            if (l2) 
+            {
+                carry += l2->val; // 节点值和进位加在一起
+                l2 = l2->next; // 下一个节点
+            }  
+            cur = cur->next = new ListNode(carry % 10); // 每个节点保存一个数位
+            carry /= 10; // 新的进位
+        }
+        return dummy.next; // 哨兵节点的下一个节点就是头节点
+    }
+};
+
+作者：灵茶山艾府
+链接：https://leetcode.cn/problems/add-two-numbers/solutions/2327008/dong-hua-jian-ji-xie-fa-cong-di-gui-dao-oe0di/
+来源：力扣（LeetCode）
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+```
+
+递归可以考虑原地，可能比较好写
+
+![image-20250715233503294](assets/image-20250715233503294.png)
 
 
 
@@ -2821,6 +2865,56 @@ public:
 
 
 
+优化M2：
+
+```C++
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        //左边第一个比它小的
+        //右边第一个比它小的
+        int n = heights.size();
+        stack<int> stkR;
+        vector<int> Rmin(n,n);
+        vector<int> Lmin(n,-1);
+        for(int i=0;i<n;i++)
+        {
+            int x = heights[i];
+            while(!stkR.empty()&&x<=heights[stkR.top()])
+            {
+                int t = stkR.top();
+                Rmin[t] = i;
+                stkR.pop();
+            }
+            Lmin[i] = stkR.empty()?-1:stkR.top(); // !剩下的就是左边的比它小的了
+            stkR.push(i);
+        }
+        // stack<int> stkL;
+        // vector<int> Lmin(n,-1);
+        // for(int i=n-1;i>=0;i--)
+        // {
+        //     int x = heights[i];
+        //     while(!stkL.empty()&&x<heights[stkL.top()])
+        //     {
+        //         int t = stkL.top();
+        //         Lmin[t] = i;
+        //         stkL.pop();
+        //     }
+        //     stkL.push(i);
+        // }
+        int res=0;
+        for(int i=0;i<n;i++)
+        {
+            int area = (Rmin[i]-Lmin[i]-1)*heights[i];
+            res = max(res,area);
+        }
+        return res;
+    }
+};
+```
+
+
+
 
 
 ### [85. 最大矩形](https://leetcode.cn/problems/maximal-rectangle/)
@@ -2896,6 +2990,72 @@ public:
             maxRes = max(maxRes,largestRectangleArea(heights));
         }
         return maxRes;
+    }
+};
+```
+
+
+
+优化 ，一个栈
+
+```C++
+class Solution {
+public:
+    //
+    int maxRec(vector<int> &height)
+    {
+        int n = height.size();
+        vector<int> lmin(n,-1);//存储索引
+        stack<int> rminSt;
+        vector<int> rmin(n,n);//存储索引
+        //左边第一个比它小的
+        for(int i=0;i<n;i++)
+        {
+            int t = height[i];
+            //将>t的抛弃， 剩下的元素，就是<t的,那么可以顺便存储左边第一个比它小的，顺便填充lmin数组
+            while(!rminSt.empty()&&t<height[rminSt.top()])
+            {
+                int topi = rminSt.top();
+                rminSt.pop();
+                rmin[topi] = i;
+            }
+            lmin[i] = rminSt.empty()?-1:rminSt.top();
+            rminSt.push(i);
+        }
+        //test
+        // for(int i=0;i<n;i++)
+        // {
+        //     cout<<lmin[i]<<" ";
+        // }
+        int maxArea=0;
+        for(int i=0;i<n;i++)
+        {
+            int wid = rmin[i]-lmin[i]-1;
+            int tmpArea = wid * height[i];
+            maxArea = max(maxArea,tmpArea);
+        }
+        return maxArea;
+    }
+    int maximalRectangle(vector<vector<char>>& matrix) {
+        // vector<int> v = {3,2,4,15,3,2};
+        int n = matrix.size();
+        int m = matrix[0].size();
+        vector<int> height(m,0);
+        int maxArea=0;
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<m;j++)
+            {   
+                if(matrix[i][j]=='0') height[j] = 0;
+                else height[j] = height[j]+1;
+                // cout<<height[j]<<" "; 
+            }
+            int tmpArea = maxRec(height);
+            // cout<<endl;
+            // cout<<tmpArea<<endl;
+            maxArea =max(maxArea,tmpArea);
+        }
+        return maxArea;
     }
 };
 ```
@@ -3425,6 +3585,61 @@ public:
 
 
 
+## 二、网格图 DP
+对于一些二维 DP（例如背包、最长公共子序列），如果把 DP 矩阵画出来，其实状态转移可以视作在网格图上的移动。所以在学习相对更抽象的二维 DP 之前，做一些形象的网格图 DP 会让后续的学习更轻松（比如 0-1 背包的空间优化写法为什么要倒序遍历）。
+
+### [64. 最小路径和](https://leetcode.cn/problems/minimum-path-sum/)
+
+给定一个包含非负整数的 `*m* x *n*` 网格 `grid` ，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
+
+**说明：**每次只能向下或者向右移动一步。
+
+ 
+
+**示例 1：**
+
+![img](assets/minpath.jpg)
+
+```
+输入：grid = [[1,3,1],[1,5,1],[4,2,1]]
+输出：7
+解释：因为路径 1→3→1→1→1 的总和最小。
+```
+
+
+
+滚动数组优化
+
+直接在原来基础上，在j这一维%2，记住！只在j这个维度！i不用！！
+
+```C++
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        //类似的dp,dp[i][j]表示到(i,j)的最小路径和
+        int m = grid.size();
+        int n = grid[0].size();
+        //滚动数组进行优化
+        vector<vector<int>> dp(2, vector<int>(n+1, INT_MAX)); //取最小值的题可以用INT_MAX来充当边界
+        dp[1][1] = grid[0][0];
+        //dp[i+1][j+1] = min(dp[i][j+1], dp[i+1][j]) + grid[i][j]
+        for(int i=0;i<m;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                if(i==0 && j==0) continue;
+                dp[(i+1)%2][j+1] = min(dp[i%2][j+1], dp[(i+1)%2][j]) + grid[i][j];
+            }
+        }
+        return dp[m%2][n];
+    }
+};
+```
+
+
+
+
+
 ------
 
 ## 子数组线性DP题目
@@ -3459,6 +3674,29 @@ public:
 };
 ```
 
+或者不判断是不是负的也可以
+```C++
+class Solution {
+public:
+    int maxProduct(vector<int>& nums) {
+        //以某个数为结尾的最大或者最小的
+        int n = nums.size();
+        vector<int> maxPro(n,INT_MIN);
+        vector<int> minPro(n,INT_MAX);
+        int maxRes=nums[0];
+        maxPro[0] = nums[0];
+        minPro[0] = nums[0];
+        for(int i=1;i<n;i++)
+        {
+            int maxLastX = maxPro[i-1];
+            maxPro[i] = max(nums[i],max(maxPro[i-1]*nums[i],minPro[i-1]*nums[i]));
+            minPro[i] = min(nums[i],min(minPro[i-1]*nums[i],maxLastX*nums[i]));
+            maxRes = max(maxRes,maxPro[i]);
+        }
+        return maxRes;
+    }
+};
+```
 ------
 
 
@@ -4456,6 +4694,12 @@ public:
 
 
 
+另外两种方法似乎更简单：
+
+https://leetcode.cn/problems/longest-valid-parentheses/solutions/314683/zui-chang-you-xiao-gua-hao-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
+
+
+
 题解：看的这下面这个题解里的这个视频
 
 https://leetcode.cn/problems/longest-valid-parentheses/solutions/314683/zui-chang-you-xiao-gua-hao-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
@@ -4937,7 +5181,46 @@ public:
 输入：nums = [1,3,4,2,2]
 输出：2
 ```
-交换直到找到一样的（应该是剑指offer做法）
+
+
+想象一下，我们将数组的**下标**看作是链表的节点，而数组中每个**下标处的值** nums[i] 看作是从当前节点 i 指向下一个节点 nums[i] 的指针。
+
+#### **为什么一定有环？**
+
+- 数组长度是 n + 1。
+- 数组里的数字范围是 [1, n]。
+- 我们从下标 0 出发，根据 nums[i] 的值进行跳转。因为值的范围在 [1, n] 之间，所以我们永远不会跳出数组的边界（只要我们只访问 nums[1] 到 nums[n]）。
+- 由于存在一个重复的数字（比如 target），这意味着至少有两个不同的下标 i 和 j，它们对应的值都是 target，即 nums[i] = nums[j] = target。这在我们的图中就表现为有两条边都指向了节点 target。一个节点有多个“上游”节点，这是形成环的关键。
+
+```C++
+class Solution {
+public:
+    int findDuplicate(vector<int>& nums) {
+        //i= nums[i]
+        //有n+1个整数 因此不用担心越界问题 nums[6]也存在
+        //如果有多个6，那么一定会有多个人走nums[6]的时候走到同一个值上去，就是环的形成与入口
+        int fast = 0,slow = 0;
+        do
+        {
+            slow = nums[slow];
+            fast = nums[nums[fast]];
+        } while(slow != fast); //!注意 要先走一步 然后再判断
+        slow = 0;
+        while(slow!=fast)
+        {
+            slow = nums[slow];
+            fast = nums[fast];
+        }
+        return slow;
+    }
+};
+```
+
+
+
+
+
+这个方法其实不可以，因为改了数组：交换直到找到一样的（应该是剑指offer做法）
 
 ```C++
 class Solution {
@@ -4968,6 +5251,8 @@ public:
 ```
 
 别的O（n）方法：https://leetcode.cn/problems/find-the-duplicate-number/solutions/261119/xun-zhao-zhong-fu-shu-by-leetcode-solution/?envType=problem-list-v2&envId=2cktkvj
+
+
 
 
 
@@ -5111,7 +5396,7 @@ public:
 
 > 给你一个整数数组 `nums` ，你需要找出一个 **连续子数组** ，如果对这个子数组进行升序排序，那么整个数组都会变为升序排序。
 >
-> 请你找出符合题意的 **最短** 子数组，并输出它的长度。
+> 请你找出符合题意的 **最短** 子数组，并输出它的长度。[221. 最大正方形](https://leetcode.cn/problems/maximal-square/)
 >
 >  
 >
@@ -5151,6 +5436,10 @@ public:
 这题也算作是技巧题，有一点贪心的意思在里面，思路比较神奇。来看下面这张图：
 
 ![微信截图_20200921203355.png](assets/1600691648-ZCYlql-%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_20200921203355.png)
+
+
+
+
 
 也就是说，对于中段来说，其左段是排好序的，右段也是排好序的，并且根据题意，**中段的最大值应该小于右段的最小值，同时中段的最小值应该大于左段的最大值。**那么，我们维护一个`max`值和一个`min`值：
 
@@ -5192,8 +5481,8 @@ public:
         for(int i=0;i<n;i++)
         {
             //维护左边界
-            if(nums[i]>=_max) _max = nums[i];
-            else right = i;
+            if(nums[i]>=_max) _max = nums[i];//从左往右，右边那段每个值都是（从左边点到当前值的）最大值，
+            else right = i;//记录最后一个不符合的 就是边界
             
             //维护右边界
             if(nums[n-i-1]<=_min) _min = nums[n-i-1];
@@ -5795,8 +6084,7 @@ public:
         {
             sarr[s[r]]++;
             while(l<=r&&isCover(sarr,tarr))
-            {
-                // sarr[s[l]]--;//放这里也行 为啥呢 
+            { 
                 if(r-l<ResRight-ResLeft)
                 {
                     ResLeft = l;
@@ -5976,6 +6264,16 @@ public:
 #### Manacher  马拉车算法 :car: :horse_racing:  O（n）
 
 【马拉车算法 | Coding Club】 https://www.bilibili.com/video/BV1Sx4y1k7jG/?share_source=copy_web&vd_source=067de257d5f13e60e5b36da1a0ec151e
+
+已知
+
+![image-20250716210320729](assets/image-20250716210320729.png)
+
+我们可以利用回文子串的对称性和包含性
+
+直接推断
+
+![image-20250716210357463](assets/image-20250716210357463.png)
 
 <img src="assets/5_fig1-1742028156216-3.png" alt="fig1" style="zoom:67%;" />
 
@@ -6856,17 +7154,27 @@ public:
 
 ### 会员题 leetcode253.会议室 II
 
-给定一个会议时间安排的数组，每个会议时间都会包括开始和结束的时间 [[s1,e1],[s2,e2],...] (si < ei)，为避免会议冲突，同时要考虑充分利用会议室资源，请你计算至少需要多少间会议室，才能满足这些会议安排。
+给你一个会议时间安排的数组 `intervals` ，每个会议时间都会包括开始和结束的时间 `intervals[i] = [starti, endi]` ，返回 *所需会议室的最小数量* 。
 
-示例 1:
+ 
 
-输入: [[0, 30],[5, 10],[15, 20]]
-输出: 2
-示例 2:
+**示例 1：**
 
-输入: [[7,10],[2,4]]
-输出: 1
-————————————————
+```
+输入：intervals = [[0,30],[5,10],[15,20]]
+输出：2
+```
+
+**示例 2：**
+
+```
+输入：intervals = [[7,10],[2,4]]
+输出：1
+```
+
+ ————————————————
+
+1、差分
 
 ```C++
 class Solution {
@@ -6875,8 +7183,8 @@ public:
         map<int, int> m;
         for(auto& v: intervals) m[v[0]]++, m[v[1]]--;
         int ans = 0, res = 0;
-        # 按照key值从小到大排序，如果相同，则value值小的排在前面
-        # 例如(10,-1) 放在 (10,1)前面
+        //# 按照key值从小到大排序，如果相同，则value值小的排在前面
+        //# 例如(10,-1) 放在 (10,1)前面
         for(auto& it: m) {
             ans += it.second;
             res = max(res, ans);
@@ -6889,6 +7197,12 @@ public:
 
 
 https://blog.csdn.net/qq_28468707/article/details/103408503
+
+
+
+2、有空要看！！！
+
+https://leetcode.cn/problems/meeting-rooms-ii/description/?envType=problem-list-v2&envId=2cktkvj
 
 
 
