@@ -1692,3 +1692,133 @@ public:
 };
 ```
 
+
+
+## [47. 全排列 II](https://leetcode.cn/problems/permutations-ii/)
+
+[面试题 08.08. 有重复字符串的排列组合](https://leetcode.cn/problems/permutation-ii-lcci/)
+
+给定一个可包含重复数字的序列 `nums` ，***按任意顺序*** 返回所有不重复的全排列。
+
+ 
+
+**示例 1：**
+
+```
+输入：nums = [1,1,2]
+输出：
+[[1,1,2],
+ [1,2,1],
+ [2,1,1]]
+```
+
+**示例 2：**
+
+```
+输入：nums = [1,2,3]
+输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+```
+
+ 
+
+![image-20250802133412817](assets/image-20250802133412817.png)
+
+我的理解是：
+
+（浅蓝色）同一个位置，是不可以出现多个一样的字母的
+
+如下图，q1，q2，符合num[i]==num[i-1]。且 ! used[j-1].也就是q1其实是当前序列中还没使用
+
+那么q1肯定在之前考虑过要不要放在这里呀（左边那列e q1 q2）
+
+那么q2必然不需要考虑放这里了
+
+<img src="assets/image-20250802134432942.png" alt="image-20250802134432942" style="zoom:67%;" />
+
+（深蓝色）但是 ，同一个字母，你出现在同一个path中的不同位置，是可以的，（下一轮次）
+
+如下图，蓝色框中的两个q1,q2,符合num[i]==num[i-1]。但是 used[j-1].也就是q1其实是被用在了之前的位置上，
+
+那么这一轮 q1并不会考虑当前位置（第3个位置位置，因为它用过了）
+
+那么就可以 eqq ok
+
+<img src="assets/image-20250802134109399.png" alt="image-20250802134109399" style="zoom:67%;" />
+
+
+
+写法1： 推荐
+
+```C++
+class Solution {
+public:
+    vector<string> permutation(string S) {
+        sort(S.begin(),S.end());
+        int n = S.size();
+        vector<int> visited(n,0);
+        vector<string> res;
+        string path(n,' ');
+        auto dfs = [&](this auto&& dfs,int i)->void
+        {
+            if(i==n)
+            {
+                res.push_back(path);
+                return;
+            }
+            for(int j=0;j<n;j++)
+            {
+                //去重
+                if(visited[j]||(j>0&&j<n&&S[j]==S[j-1]&&!visited[j-1]))continue;//!visited[j-1]
+                path[i] = S[j];
+                visited[j]=1;
+                dfs(i+1);
+                visited[j]=0;
+            }
+        };
+        dfs(0);
+        return res;
+    }
+};
+```
+
+
+
+写法2：
+
+```C++
+class Solution {
+public:
+    vector<string> permutation(string S) {
+        // q1 q2 e
+        // e q1 q2
+        sort(S.begin(),S.end());
+        int n = S.size();
+        vector<int> visited(n,0);
+        vector<string> res;
+        string path(n,' ');
+        auto dfs = [&](this auto&& dfs,int i)->void
+        {
+            if(i==n)
+            {
+                res.push_back(path);
+                return;
+            }
+            for(int j=0;j<n;j++)
+            {
+                //去重
+                while(j>0&&j<n&&S[j]==S[j-1]&&!visited[j-1])j++; // ！！while！不要写为if
+                if(j<n&&!visited[j])
+                {
+                    path[i] = S[j];
+                    visited[j]=1;
+                    dfs(i+1);
+                    visited[j]=0;
+                } 
+            }
+        };
+        dfs(0);
+        return res;
+    }
+};
+```
+
